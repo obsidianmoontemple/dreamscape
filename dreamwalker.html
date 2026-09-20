@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Dream Walker's Atlas</title>
+<style>
+:root{
+  --void:#07080B;
+  --deep:#0E1118;
+  --bone:#C9BEA8;
+  --dim:#6C6757;
+  --moon:#7C93B8;
+  --ember:#B8724A;
+  --line:rgba(201,190,168,0.14);
+  --serif: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans: ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--void);overflow:hidden}
+body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiased;touch-action:none}
+#world{position:fixed;inset:0;z-index:0}
+#world canvas{display:block}
+
+#scrim{
+  position:fixed;inset:0;z-index:10;
+  background:linear-gradient(180deg,rgba(7,8,11,0.55) 0%,rgba(7,8,11,0.80) 60%,rgba(7,8,11,0.94) 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 clamp(18px,5vw,64px) calc(28px + env(safe-area-inset-bottom,0px));
+  transition:opacity .5s ease, visibility .5s;
+}
+#scrim.hidden{opacity:0;visibility:hidden;pointer-events:none}
+
+#transcript{
+  font-family:var(--serif);
+  font-size:clamp(17px,2.4vw,23px);
+  line-height:1.75;
+  max-width:62ch;
+  color:var(--bone);
+  max-height:46vh;overflow-y:auto;
+  margin-bottom:26px;
+  text-wrap:pretty;
+}
+#transcript .interim{color:var(--dim)}
+#transcript:empty::before{
+  content:"Say what you remember. Fragments are enough.";
+  color:var(--dim);font-style:italic;
+}
+#transcript::-webkit-scrollbar{width:3px}
+#transcript::-webkit-scrollbar-thumb{background:var(--line)}
+
+#freetext{
+  width:100%;max-width:62ch;background:transparent;border:0;
+  border-top:1px solid var(--line);
+  color:var(--bone);font-family:var(--serif);font-size:17px;line-height:1.7;
+  padding:14px 0 0;resize:none;outline:none;height:64px;margin-bottom:20px;
+}
+#freetext::placeholder{color:var(--dim)}
+#freetext:focus{border-top-color:var(--moon)}
+
+.row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+
+#mic{
+  width:62px;height:62px;border-radius:50%;flex:0 0 auto;
+  background:transparent;border:1px solid var(--line);color:var(--bone);
+  cursor:pointer;display:grid;place-items:center;
+  transition:border-color .3s, background .3s;
+}
+#mic:hover{border-color:var(--bone)}
+#mic:focus-visible{outline:2px solid var(--moon);outline-offset:3px}
+#mic svg{width:22px;height:22px;fill:currentColor}
+#mic.live{border-color:var(--ember);color:var(--ember);background:rgba(184,114,74,0.07)}
+@media (prefers-reduced-motion: no-preference){
+  #mic.live{animation:breathe 2.6s ease-in-out infinite}
+}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(184,114,74,0.22)}50%{box-shadow:0 0 0 13px rgba(184,114,74,0)}}
+
+.btn{
+  background:transparent;border:1px solid var(--line);color:var(--dim);
+  font-family:var(--sans);font-size:13px;letter-spacing:.02em;
+  padding:9px 15px;border-radius:2px;cursor:pointer;transition:color .25s,border-color .25s;
+}
+.btn:hover{color:var(--bone);border-color:var(--bone)}
+.btn:focus-visible{outline:2px solid var(--moon);outline-offset:2px}
+
+#status{font-size:12.5px;color:var(--dim);min-height:1.3em;flex:1 1 180px}
+#status b{font-weight:500;color:var(--moon)}
+#status i{font-style:normal;color:var(--ember)}
+
+#hud{
+  position:fixed;z-index:12;top:0;left:0;right:0;
+  padding:calc(14px + env(safe-area-inset-top,0px)) clamp(18px,5vw,64px) 14px;
+  display:flex;align-items:baseline;gap:20px;pointer-events:none;
+}
+#hud>*{pointer-events:auto}
+#title{font-family:var(--serif);font-size:15px;letter-spacing:.04em;color:var(--dim);flex:1}
+#count{font-size:12.5px;color:var(--dim)}
+
+#walkhint{
+  position:fixed;z-index:11;left:50%;bottom:44px;transform:translateX(-50%);
+  font-size:13px;color:var(--dim);text-align:center;transition:opacity .4s;
+}
+#walkhint.gone{opacity:0}
+
+#panel{
+  position:fixed;z-index:20;inset:auto 0 0 0;
+  background:var(--deep);border-top:1px solid var(--line);
+  padding:26px clamp(18px,5vw,64px) calc(30px + env(safe-area-inset-bottom,0px));
+  transform:translateY(101%);transition:transform .45s cubic-bezier(.22,1,.36,1);
+  max-height:88vh;overflow-y:auto;
+}
+#panel.open{transform:none}
+#panel h2{font-family:var(--serif);font-weight:400;font-size:19px;margin:0 0 6px}
+#panel p{font-size:13.5px;line-height:1.65;color:var(--dim);max-width:58ch;margin:0 0 20px}
+#panel label{display:block;font-size:12.5px;color:var(--dim);margin:16px 0 6px}
+#panel input,#panel select{
+  width:100%;max-width:520px;background:var(--void);border:1px solid var(--line);
+  color:var(--bone);padding:10px 12px;font-family:var(--sans);font-size:14px;border-radius:2px;outline:none;
+}
+#panel input:focus,#panel select:focus{border-color:var(--moon)}
+#panel .row{margin-top:26px}
+#err{color:var(--ember);font-size:13px;margin-top:14px;max-width:58ch;line-height:1.6}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<h1 class="sr-only">The Dream Walker's Atlas — speak a dream and walk the world it builds</h1>
+
+<div id="world"></div>
+
+<div id="hud">
+  <span id="title">The Dream Walker&rsquo;s Atlas</span>
+  <span id="count">empty</span>
+</div>
+
+<div id="scrim">
+  <div id="transcript" aria-live="polite"></div>
+  <textarea id="freetext" placeholder="or type it here" aria-label="Type your dream"></textarea>
+  <div class="row">
+    <button id="mic" aria-label="Start listening">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+    </button>
+    <div id="status"></div>
+    <button class="btn" id="walkbtn">Walk it</button>
+    <button class="btn" id="newbtn">New dream</button>
+    <button class="btn" id="exportbtn">Export</button>
+    <button class="btn" id="setbtn">Settings</button>
+  </div>
+</div>
+
+<div id="walkhint" class="gone">Click to look &middot; W A S D to move &middot; Esc to return</div>
+
+<div id="panel" role="dialog" aria-label="Settings">
+  <h2>How the second pass reaches Grok</h2>
+  <p>Shapes appear instantly from local keywords with no network at all. A slower pass refines them into what you actually described. Direct mode puts your key in this browser only &mdash; fine for you, not for anyone you hand this to. Proxy mode keeps the key on your server.</p>
+  <label for="mode">Connection</label>
+  <select id="mode">
+    <option value="off">Keywords only &mdash; fully offline</option>
+    <option value="direct">Direct to api.x.ai &mdash; key stored here</option>
+    <option value="proxy">Through my proxy</option>
+  </select>
+  <label for="key">xAI API key</label>
+  <input id="key" type="password" placeholder="xai-..." autocomplete="off">
+  <label for="proxy">Proxy endpoint</label>
+  <input id="proxy" type="url" placeholder="https://xxxx.supabase.co/functions/v1/dream-parse">
+  <label for="model">Model</label>
+  <input id="model" type="text" placeholder="grok-4.3">
+  <div id="err"></div>
+  <div class="row">
+    <button class="btn" id="savebtn">Save</button>
+    <button class="btn" id="closebtn">Close</button>
+    <button class="btn" id="wipebtn">Erase everything</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   1. STORE  — renderer-agnostic schema, localStorage persistence
+   ============================================================ */
+var KEY = "dreamwalker.v1";
+var CFGKEY = "dreamwalker.cfg";
+
+var store = {
+  objects: [],      // {id, archetype, label, attrs, x, z, rot, ghost}
+  passages: [],     // {id, from, to, kind}
+  figures: [],      // {id, label, x, z}
+  transcript: "",
+  emotions: [],
+  lucidity: 0,
+  cursor: {x:0, z:-14, a:0},
+  lastId: null
+};
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){}
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return false;
+    var d = JSON.parse(raw);
+    if(d && d.objects){ store = Object.assign(store, d); return true; }
+  }catch(e){}
+  return false;
+}
+function cfg(){
+  try{ return JSON.parse(localStorage.getItem(CFGKEY)) || {mode:"off",model:"grok-4.3"}; }
+  catch(e){ return {mode:"off",model:"grok-4.3"}; }
+}
+function setCfg(c){ try{ localStorage.setItem(CFGKEY, JSON.stringify(c)); }catch(e){} }
+
+/* ============================================================
+   2. VOCABULARY — instant tier. Words to forms.
+   ============================================================ */
+var VOCAB = {
+  house:      ["house","home","cabin","cottage","bungalow","farmhouse","dwelling"],
+  tower:      ["tower","spire","skyscraper","lighthouse","steeple","obelisk","silo"],
+  institution:["hospital","school","church","cathedral","bank","library","museum","station","hotel","office","courthouse","prison","asylum","temple","factory","warehouse","mall"],
+  shop:       ["shop","store","market","cafe","diner","bar","pub","restaurant","stall","bakery"],
+  tree:       ["tree","trees","forest","woods","oak","pine","willow","orchard","grove"],
+  water:      ["water","river","lake","sea","ocean","pond","flood","canal","stream","pool"],
+  bridge:     ["bridge","crossing","overpass","viaduct"],
+  wall:       ["wall","fence","barrier","hedge","gate"],
+  stairs:     ["stairs","staircase","steps","stairway","ladder","escalator"],
+  portal:     ["door","doorway","portal","archway","mirror","threshold","opening","hatch","tunnel"],
+  hill:       ["hill","mountain","slope","dune","cliff","ridge","mound"],
+  road:       ["road","street","path","hallway","corridor","alley","lane","track","highway"],
+  figure:     ["man","woman","person","figure","child","stranger","someone","people","crowd","shadow","creature","animal","dog","bird"]
+};
+
+var MODIFIERS = {
+  tall:{h:2.1}, huge:{s:1.9}, giant:{s:2.2}, enormous:{s:2.3}, massive:{s:2.0},
+  towering:{h:2.4}, endless:{h:2.6}, "high":{h:1.6},
+  tiny:{s:0.45}, small:{s:0.6}, little:{s:0.6}, low:{h:0.6},
+  narrow:{w:0.45}, thin:{w:0.45}, wide:{w:1.9}, long:{d:2.2}, vast:{s:1.8},
+  old:{c:0x4A4438}, ruined:{c:0x3A342C,broken:1}, broken:{broken:1}, burnt:{c:0x241E1A},
+  abandoned:{c:0x3E3A32}, dark:{c:0x1B1D24}, white:{c:0xBFBAAE}, black:{c:0x121319},
+  red:{c:0x7A3128}, blue:{c:0x2E4566}, green:{c:0x33502F}, grey:{c:0x4B4C50},
+  gray:{c:0x4B4C50}, brown:{c:0x4C3B2C}, gold:{c:0x8A6A2E}, glass:{c:0x3C5A68},
+  brick:{c:0x5E3A30}, stone:{c:0x4E4C46}, wooden:{c:0x503C29}, concrete:{c:0x4A4A4C}
+};
+
+var EMOTIONS = ["afraid","scared","terrified","fear","dread","calm","peaceful","safe","joy","happy",
+  "sad","grief","crying","angry","rage","confused","lost","watched","chased","panic","ashamed",
+  "urgent","relieved","numb","longing","guilt","awe"];
+
+var LUCID = ["lucid","knew i was dreaming","realised i was dreaming","realized i was dreaming",
+  "aware i was dreaming","i was dreaming","took control","woke up inside"];
+
+var WORD_TO_ARCH = {};
+Object.keys(VOCAB).forEach(function(arch){
+  VOCAB[arch].forEach(function(w){ WORD_TO_ARCH[w] = arch; });
+});
+
+/* ============================================================
+   3. GEOMETRY — procedural archetypes, attribute-driven
+   ============================================================ */
+var DEFAULT_COLOR = {
+  house:0x4A3F33, tower:0x3D3E46, institution:0x45464C, shop:0x4C4034,
+  tree:0x2C3D2A, water:0x1E3A4E, bridge:0x484540, wall:0x3F3D38,
+  stairs:0x46443E, portal:0x6E7FA0, hill:0x2F3330, figure:0x2A2C34, road:0x2A2A2C
+};
+
+function mkMat(color, ghost){
+  return new THREE.MeshLambertMaterial({
+    color: color,
+    transparent: !!ghost,
+    opacity: ghost ? 0.30 : 1,
+    depthWrite: !ghost
+  });
+}
+
+function addWindows(group, w, h, d, rows, cols, ghost){
+  if(ghost) return;
+  var m = new THREE.MeshBasicMaterial({color:0xC9A86A, transparent:true, opacity:0.5});
+  var g = new THREE.PlaneGeometry(0.5, 0.7);
+  for(var r=0;r<rows;r++){
+    for(var c=0;c<cols;c++){
+      if(Math.random() < 0.38) continue;
+      var p = new THREE.Mesh(g, m);
+      p.position.set(-w/2 + (c+1)*(w/(cols+1)), 1.2 + r*(h-1.6)/Math.max(rows,1), d/2 + 0.03);
+      group.add(p);
+    }
+  }
+}
+
+function build(spec, ghost){
+  var a = spec.attrs || {};
+  var s = a.s || 1, wM = (a.w||1)*s, hM = (a.h||1)*s, dM = (a.d||1)*s;
+  var col = (a.c !== undefined) ? a.c : DEFAULT_COLOR[spec.archetype] || 0x45464C;
+  var mat = mkMat(ghost ? 0x7C93B8 : col, ghost);
+  var g = new THREE.Group();
+  var arch = spec.archetype;
+
+  if(arch === "house"){
+    var w=7*wM, h=5*hM, d=7*dM;
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+    body.position.y = h/2; g.add(body);
+    var roof = new THREE.Mesh(new THREE.ConeGeometry(w*0.78, h*0.55, 4), mat);
+    roof.position.y = h + h*0.275; roof.rotation.y = Math.PI/4; g.add(roof);
+    addWindows(g, w, h, d, 1, 3, ghost);
+
+  } else if(arch === "tower"){
+    var w2=4*wM, h2=20*hM, d2=4*dM;
+    var b2 = new THREE.Mesh(new THREE.BoxGeometry(w2,h2,d2), mat);
+    b2.position.y = h2/2; g.add(b2);
+    var cap = new THREE.Mesh(new THREE.ConeGeometry(w2*0.8, h2*0.16, 4), mat);
+    cap.position.y = h2 + h2*0.08; cap.rotation.y = Math.PI/4; g.add(cap);
+    addWindows(g, w2, h2, d2, Math.max(2,Math.round(h2/4)), 2, ghost);
+
+  } else if(arch === "institution"){
+    var w3=18*wM, h3=9*hM, d3=10*dM;
+    var m3 = new THREE.Mesh(new THREE.BoxGeometry(w3,h3,d3), mat);
+    m3.position.y = h3/2; g.add(m3);
+    [-1,1].forEach(function(sgn){
+      var wing = new THREE.Mesh(new THREE.BoxGeometry(w3*0.35, h3*0.7, d3*1.5), mat);
+      wing.position.set(sgn*(w3/2 - w3*0.175), h3*0.35, d3*0.3);
+      g.add(wing);
+    });
+    addWindows(g, w3, h3, d3, 2, 6, ghost);
+
+  } else if(arch === "shop"){
+    var w4=7*wM, h4=4.4*hM, d4=7*dM;
+    var b4 = new THREE.Mesh(new THREE.BoxGeometry(w4,h4,d4), mat);
+    b4.position.y = h4/2; g.add(b4);
+    var aw = new THREE.Mesh(new THREE.BoxGeometry(w4*1.1, 0.3, 2.2), mat);
+    aw.position.set(0, h4*0.62, d4/2 + 1); g.add(aw);
+    addWindows(g, w4, h4, d4, 1, 2, ghost);
+
+  } else if(arch === "tree"){
+    var th = 4*hM;
+    var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.34*wM, 0.48*wM, th, 6), mkMat(ghost?0x7C93B8:0x3A2C20, ghost));
+    trunk.position.y = th/2; g.add(trunk);
+    var can = new THREE.Mesh(new THREE.IcosahedronGeometry(2.6*s, 0), mat);
+    can.position.y = th + 1.5*s; can.scale.y = 1.25; g.add(can);
+
+  } else if(arch === "water"){
+    var wa = new THREE.Mesh(new THREE.PlaneGeometry(52*s, 52*s),
+      new THREE.MeshLambertMaterial({color: ghost?0x7C93B8:0x16384E, transparent:true, opacity: ghost?0.28:0.82}));
+    wa.rotation.x = -Math.PI/2; wa.position.y = 0.06; g.add(wa);
+
+  } else if(arch === "bridge"){
+    var bl = 26*(a.d||1)*s;
+    var deck = new THREE.Mesh(new THREE.BoxGeometry(6*wM, 0.5, bl), mat);
+    deck.position.y = 2.4; g.add(deck);
+    [-1,1].forEach(function(sgn){
+      var rail = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.3, bl), mat);
+      rail.position.set(sgn*3*wM, 3.3, 0); g.add(rail);
+      var post = new THREE.Mesh(new THREE.BoxGeometry(1, 2.6, 1), mat);
+      post.position.set(sgn*3*wM, 1.3, 0); g.add(post);
+    });
+
+  } else if(arch === "wall"){
+    var wl = new THREE.Mesh(new THREE.BoxGeometry(16*(a.d||1)*s, 3.4*hM, 0.7), mat);
+    wl.position.y = 1.7*hM; g.add(wl);
+
+  } else if(arch === "stairs"){
+    var n = 10;
+    for(var i=0;i<n;i++){
+      var st = new THREE.Mesh(new THREE.BoxGeometry(5*wM, 0.45, 1.3), mat);
+      st.position.set(0, 0.22 + i*0.62*hM, -i*1.3);
+      g.add(st);
+    }
+
+  } else if(arch === "portal"){
+    var pm = new THREE.MeshBasicMaterial({color: ghost?0x7C93B8:0x8FA4C4, transparent:true, opacity: ghost?0.3:0.62});
+    var fr = 4*s;
+    [[-1,0],[1,0]].forEach(function(p){
+      var jamb = new THREE.Mesh(new THREE.BoxGeometry(0.4, fr*1.6, 0.4), pm);
+      jamb.position.set(p[0]*fr*0.45, fr*0.8, 0); g.add(jamb);
+    });
+    var lint = new THREE.Mesh(new THREE.BoxGeometry(fr*1.3, 0.4, 0.4), pm);
+    lint.position.y = fr*1.6; g.add(lint);
+    var pane = new THREE.Mesh(new THREE.PlaneGeometry(fr*0.9, fr*1.55),
+      new THREE.MeshBasicMaterial({color:0x2A3A55, transparent:true, opacity:0.42, side:THREE.DoubleSide}));
+    pane.position.y = fr*0.8; g.add(pane);
+
+  } else if(arch === "hill"){
+    var hl = new THREE.Mesh(new THREE.ConeGeometry(15*s, 9*hM, 7), mat);
+    hl.position.y = 4.5*hM; g.add(hl);
+
+  } else if(arch === "figure"){
+    var fm = mkMat(ghost?0x7C93B8:0x1E2029, ghost);
+    var body = new THREE.Mesh(new THREE.CylinderGeometry(0.42*s, 0.6*s, 2.6*s, 7), fm);
+    body.position.y = 1.3*s; g.add(body);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.42*s, 8, 6), fm);
+    head.position.y = 2.95*s; g.add(head);
+
+  } else if(arch === "road"){
+    var rd = new THREE.Mesh(new THREE.PlaneGeometry(6, 24*(a.d||1)),
+      new THREE.MeshLambertMaterial({color:0x26262A}));
+    rd.rotation.x = -Math.PI/2; rd.position.y = 0.04; g.add(rd);
+
+  } else {
+    var fallback = new THREE.Mesh(new THREE.BoxGeometry(5*wM, 5*hM, 5*dM), mat);
+    fallback.position.y = 2.5*hM; g.add(fallback);
+  }
+
+  if(a.broken){ g.rotation.z = (Math.random()-0.5)*0.22; }
+  return g;
+}
+
+/* ============================================================
+   4. WORLD — three.js scene, fog, first person
+   ============================================================ */
+var scene, camera, renderer, meshes = {}, clock;
+var SKY = 0x0A0C12;
+
+function initWorld(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(SKY);
+  scene.fog = new THREE.FogExp2(SKY, 0.019);
+
+  camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 600);
+  camera.position.set(0, 1.7, 8);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:"high-performance"});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById("world").appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0x39405A, 0x0B0D11, 0.85));
+  var moon = new THREE.DirectionalLight(0x9FB0CC, 0.55);
+  moon.position.set(-40, 60, 20);
+  scene.add(moon);
+
+  var ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(1400, 1400),
+    new THREE.MeshLambertMaterial({color:0x141620})
+  );
+  ground.rotation.x = -Math.PI/2;
+  scene.add(ground);
+
+  var grid = new THREE.GridHelper(1400, 160, 0x1E2230, 0x1A1D28);
+  grid.position.y = 0.02;
+  scene.add(grid);
+
+  clock = new THREE.Clock();
+  window.addEventListener("resize", onResize);
+  animate();
+}
+
+function onResize(){
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function addMesh(spec){
+  var g = build(spec, spec.ghost);
+  g.position.set(spec.x, 0, spec.z);
+  g.rotation.y = spec.rot || 0;
+  scene.add(g);
+  meshes[spec.id] = g;
+}
+
+function replaceMesh(spec){
+  if(meshes[spec.id]){ scene.remove(meshes[spec.id]); disposeGroup(meshes[spec.id]); }
+  addMesh(spec);
+}
+
+function disposeGroup(g){
+  g.traverse(function(o){
+    if(o.geometry) o.geometry.dispose();
+    if(o.material){ Array.isArray(o.material) ? o.material.forEach(function(m){m.dispose();}) : o.material.dispose(); }
+  });
+}
+
+function addPassageMesh(p){
+  var from = findObj(p.from), to = findObj(p.to);
+  if(!from || !to) return;
+  var dx = to.x - from.x, dz = to.z - from.z;
+  var len = Math.sqrt(dx*dx + dz*dz);
+  if(len < 1) return;
+  var geo = new THREE.PlaneGeometry(4.5, len);
+  var mat = new THREE.MeshLambertMaterial({color: p.kind === "bridge" ? 0x3A382F : 0x24242A});
+  var m = new THREE.Mesh(geo, mat);
+  m.rotation.x = -Math.PI/2;
+  m.rotation.z = -Math.atan2(dx, dz);
+  m.position.set(from.x + dx/2, 0.05, from.z + dz/2);
+  scene.add(m);
+  meshes[p.id] = m;
+}
+
+function findObj(id){
+  for(var i=0;i<store.objects.length;i++) if(store.objects[i].id === id) return store.objects[i];
+  return null;
+}
+
+/* --- first person movement --- */
+var keys = {}, yaw = 0, pitch = 0, locked = false, walkMode = false;
+var touchWalk = false, lastTouch = null;
+
+function initControls(){
+  var el = renderer.domElement;
+  document.addEventListener("keydown", function(e){
+    keys[e.code] = true;
+    if(e.code === "Escape" && walkMode) setWalk(false);
+    if(walkMode && ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].indexOf(e.code) > -1) e.preventDefault();
+  });
+  document.addEventListener("keyup", function(e){ keys[e.code] = false; });
+
+  el.addEventListener("click", function(){
+    if(walkMode && el.requestPointerLock) el.requestPointerLock();
+  });
+  document.addEventListener("pointerlockchange", function(){
+    locked = (document.pointerLockElement === el);
+  });
+  document.addEventListener("mousemove", function(e){
+    if(!locked) return;
+    yaw   -= e.movementX * 0.0022;
+    pitch -= e.movementY * 0.0022;
+    pitch = Math.max(-1.35, Math.min(1.35, pitch));
+  });
+
+  el.addEventListener("touchstart", function(e){
+    if(!walkMode) return;
+    lastTouch = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    touchWalk = e.touches.length > 1;
+  }, {passive:true});
+  el.addEventListener("touchmove", function(e){
+    if(!walkMode || !lastTouch) return;
+    var t = e.touches[0];
+    yaw   -= (t.clientX - lastTouch.x) * 0.005;
+    pitch -= (t.clientY - lastTouch.y) * 0.005;
+    pitch = Math.max(-1.35, Math.min(1.35, pitch));
+    lastTouch = {x:t.clientX, y:t.clientY};
+  }, {passive:true});
+  el.addEventListener("touchend", function(){ lastTouch = null; touchWalk = false; }, {passive:true});
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  var dt = Math.min(clock.getDelta(), 0.1);
+
+  if(walkMode){
+    var speed = (keys["ShiftLeft"] || keys["ShiftRight"]) ? 26 : 11;
+    var fwd = 0, str = 0;
+    if(keys["KeyW"] || keys["ArrowUp"] || touchWalk) fwd += 1;
+    if(keys["KeyS"] || keys["ArrowDown"]) fwd -= 1;
+    if(keys["KeyA"] || keys["ArrowLeft"]) str -= 1;
+    if(keys["KeyD"] || keys["ArrowRight"]) str += 1;
+    if(fwd || str){
+      var len = Math.sqrt(fwd*fwd + str*str);
+      fwd /= len; str /= len;
+      camera.position.x += (Math.sin(yaw)*-fwd + Math.cos(yaw)*str) * speed * dt;
+      camera.position.z += (Math.cos(yaw)*-fwd - Math.sin(yaw)*str) * speed * dt;
+    }
+    camera.position.y = 1.7;
+  } else {
+    // slow drift above the scene while capturing
+    var t = clock.getElapsedTime();
+    var c = store.cursor;
+    camera.position.x = c.x + Math.sin(t*0.055) * 26;
+    camera.position.z = c.z + Math.cos(t*0.055) * 26 + 16;
+    camera.position.y = 13;
+    camera.lookAt(c.x, 3, c.z);
+  }
+
+  if(walkMode){
+    camera.rotation.order = "YXZ";
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+    camera.rotation.z = 0;
+  }
+  renderer.render(scene, camera);
+}
+
+function setWalk(on){
+  walkMode = on;
+  document.getElementById("scrim").classList.toggle("hidden", on);
+  document.getElementById("walkhint").classList.toggle("gone", !on);
+  document.getElementById("walkbtn").textContent = on ? "Back to capture" : "Walk it";
+  if(!on && document.exitPointerLock) document.exitPointerLock();
+  if(on){
+    yaw = 0; pitch = 0;
+    camera.position.set(store.cursor.x, 1.7, store.cursor.z + 22);
+  }
+}
+
+/* ============================================================
+   5. PLACEMENT — the dream lays itself out as it is told
+   ============================================================ */
+var TERRAIN = {water:1, hill:1, road:1};
+
+function nextSpot(arch){
+  var c = store.cursor;
+  if(TERRAIN[arch]){
+    return {x: c.x + (Math.random()-0.5)*16, z: c.z + (Math.random()-0.5)*16};
+  }
+  c.a += (Math.random() - 0.5) * 1.5;
+  var d = 26 + Math.random()*16;
+  c.x += Math.sin(c.a) * d;
+  c.z += Math.cos(c.a) * d;
+  return {x: c.x, z: c.z};
+}
+
+function place(arch, label, attrs, ghost){
+  var pos = nextSpot(arch);
+  var spec = {
+    id: uid(), archetype: arch, label: label || arch,
+    attrs: attrs || {}, x: pos.x, z: pos.z,
+    rot: Math.random()*Math.PI*2, ghost: ghost !== false
+  };
+  store.objects.push(spec);
+  addMesh(spec);
+
+  if(!TERRAIN[arch] && arch !== "figure" && store.lastId){
+    var p = {id: uid(), from: store.lastId, to: spec.id, kind: "path"};
+    store.passages.push(p);
+    addPassageMesh(p);
+  }
+  if(!TERRAIN[arch] && arch !== "figure") store.lastId = spec.id;
+
+  updateCount();
+  save();
+  return spec;
+}
+
+/* ============================================================
+   6. INSTANT TIER — keyword scan, fires in under a frame
+   ============================================================ */
+var scanned = 0;
+
+function instantScan(text){
+  var fresh = text.slice(scanned);
+  if(fresh.length < 3) return;
+  var words = fresh.toLowerCase().replace(/[^a-z\s']/g, " ").split(/\s+/).filter(Boolean);
+  var pendingMods = {};
+  var fired = 0;
+
+  words.forEach(function(w){
+    if(MODIFIERS[w]){ Object.assign(pendingMods, MODIFIERS[w]); return; }
+    var arch = WORD_TO_ARCH[w];
+    if(!arch) return;
+    place(arch, w, Object.assign({}, pendingMods), true);
+    pendingMods = {};
+    fired++;
+  });
+
+  var low = fresh.toLowerCase();
+  EMOTIONS.forEach(function(e){
+    if(low.indexOf(e) > -1 && store.emotions.indexOf(e) === -1) store.emotions.push(e);
+  });
+  LUCID.forEach(function(l){
+    if(low.indexOf(l) > -1) store.lucidity = Math.max(store.lucidity, 2);
+  });
+
+  scanned = text.length;
+  if(fired) setStatus("<b>" + fired + " form" + (fired>1?"s":"") + " took shape</b>");
+}
+
+/* ============================================================
+   7. SECOND TIER — Grok resolves what keywords could not
+   ============================================================ */
+var SYS = [
+"You read a fragment of a remembered dream and return the physical world it implies.",
+"Return ONLY valid JSON, no prose, no markdown fences, matching exactly:",
+'{"objects":[{"archetype":"","label":"","attrs":{"h":1,"w":1,"d":1,"s":1,"c":"#RRGGBB"}}],"figures":[{"label":""}],"emotions":[""],"lucidity":0}',
+"archetype MUST be one of: house, tower, institution, shop, tree, water, bridge, wall, stairs, portal, hill, road, figure.",
+"label is the dreamer's own words for the thing, short.",
+"attrs are multipliers around 1: h height, w width, d depth, s overall scale. Use the dream's own emphasis. Omit any you cannot infer.",
+"c is an approximate colour if one was described or strongly implied, otherwise omit.",
+"lucidity is 0 none, 1 faint unease, 2 knew it was a dream, 3 partial control, 4 full control.",
+"Include only things actually present in the fragment. Do not invent scenery. Do not tidy the dreamer's phrasing."
+].join(" ");
+
+var parseTimer = null;
+
+function scheduleParse(){
+  var c = cfg();
+  if(c.mode === "off") return;
+  clearTimeout(parseTimer);
+  parseTimer = setTimeout(runParse, 2000);
+}
+
+function runParse(){
+  var c = cfg();
+  var text = store.transcript.trim();
+  if(!text || c.mode === "off") return;
+
+  var url = c.mode === "proxy" ? c.proxy : "https://api.x.ai/v1/chat/completions";
+  if(!url){ setStatus("<i>No endpoint set.</i>"); return; }
+  var headers = {"Content-Type":"application/json"};
+  if(c.mode === "direct"){
+    if(!c.key){ setStatus("<i>No key set.</i>"); return; }
+    headers["Authorization"] = "Bearer " + c.key;
+  }
+
+  setStatus("Listening closer&hellip;");
+
+  fetch(url, {
+    method:"POST",
+    headers: headers,
+    body: JSON.stringify({
+      model: c.model || "grok-4.3",
+      temperature: 0.2,
+      max_tokens: 1200,
+      messages: [{role:"system", content:SYS}, {role:"user", content:text}]
+    })
+  })
+  .then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error(r.status + " " + t.slice(0,180)); });
+    return r.json();
+  })
+  .then(function(d){
+    var raw = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || "";
+    raw = raw.replace(/```json|```/g, "").trim();
+    var parsed = JSON.parse(raw);
+    reconcile(parsed);
+  })
+  .catch(function(e){
+    var msg = String(e.message || e);
+    if(/Failed to fetch|NetworkError|CORS/i.test(msg)){
+      setStatus("<i>The browser blocked that call. Use proxy mode.</i>");
+    } else {
+      setStatus("<i>" + msg.slice(0,110) + "</i>");
+    }
+  });
+}
+
+function hexToInt(h){
+  if(typeof h !== "string") return undefined;
+  var m = h.replace("#","");
+  var n = parseInt(m, 16);
+  return isNaN(n) ? undefined : n;
+}
+
+function reconcile(parsed){
+  var objs = parsed.objects || [];
+  var used = {};
+  var confirmed = 0, added = 0;
+
+  objs.forEach(function(o){
+    if(!o || !o.archetype) return;
+    var attrs = {};
+    ["h","w","d","s"].forEach(function(k){
+      if(typeof o.attrs === "object" && o.attrs && typeof o.attrs[k] === "number") attrs[k] = o.attrs[k];
+    });
+    if(o.attrs && o.attrs.c){ var ci = hexToInt(o.attrs.c); if(ci !== undefined) attrs.c = ci; }
+
+    // find a ghost of the same archetype to solidify in place
+    var match = null;
+    for(var i=0;i<store.objects.length;i++){
+      var s = store.objects[i];
+      if(s.ghost && !used[s.id] && s.archetype === o.archetype){ match = s; break; }
+    }
+    if(match){
+      used[match.id] = true;
+      match.ghost = false;
+      match.label = o.label || match.label;
+      match.attrs = Object.assign({}, match.attrs, attrs);
+      replaceMesh(match);
+      confirmed++;
+    } else {
+      var spec = place(o.archetype, o.label, attrs, false);
+      used[spec.id] = true;
+      added++;
+    }
+  });
+
+  (parsed.figures || []).forEach(function(f){
+    if(f && f.label) store.figures.push({id:uid(), label:f.label});
+  });
+  (parsed.emotions || []).forEach(function(e){
+    if(e && store.emotions.indexOf(e) === -1) store.emotions.push(e);
+  });
+  if(typeof parsed.lucidity === "number") store.lucidity = Math.max(store.lucidity, parsed.lucidity);
+
+  save();
+  updateCount();
+  var bits = [];
+  if(confirmed) bits.push(confirmed + " resolved");
+  if(added) bits.push(added + " added");
+  setStatus(bits.length ? "<b>" + bits.join(", ") + "</b>" : "Nothing new in that.");
+}
+
+/* ============================================================
+   8. SPEECH
+   ============================================================ */
+var rec = null, listening = false, finalText = "";
+
+function initSpeech(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById("mic").disabled = true;
+    document.getElementById("mic").style.opacity = 0.3;
+    setStatus("This browser has no speech recognition. Type instead.");
+    return;
+  }
+  rec = new SR();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = "en-US";
+
+  rec.onresult = function(e){
+    var interim = "";
+    for(var i = e.resultIndex; i < e.results.length; i++){
+      var t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) finalText += t + " ";
+      else interim += t;
+    }
+    store.transcript = finalText;
+    renderTranscript(finalText, interim);
+    instantScan(finalText);
+    scheduleParse();
+    save();
+  };
+  rec.onerror = function(e){
+    if(e.error === "not-allowed") setStatus("<i>Microphone permission refused.</i>");
+    else if(e.error !== "no-speech") setStatus("<i>" + e.error + "</i>");
+  };
+  rec.onend = function(){
+    if(listening){ try{ rec.start(); }catch(err){} }
+  };
+}
+
+function toggleMic(){
+  if(!rec) return;
+  listening = !listening;
+  document.getElementById("mic").classList.toggle("live", listening);
+  document.getElementById("mic").setAttribute("aria-label", listening ? "Stop listening" : "Start listening");
+  if(listening){ try{ rec.start(); setStatus("Listening."); }catch(e){} }
+  else{ rec.stop(); setStatus("Stopped."); }
+}
+
+/* ============================================================
+   9. UI
+   ============================================================ */
+function renderTranscript(fin, interim){
+  var el = document.getElementById("transcript");
+  el.innerHTML = escapeHtml(fin) + (interim ? '<span class="interim">' + escapeHtml(interim) + "</span>" : "");
+  el.scrollTop = el.scrollHeight;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function setStatus(html){ document.getElementById("status").innerHTML = html; }
+function updateCount(){
+  var n = store.objects.length;
+  document.getElementById("count").textContent = n ? n + (n===1?" form":" forms") : "empty";
+}
+
+function exportJSON(){
+  var blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "dreamscape-" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+
+function newDream(){
+  if(store.objects.length && !confirm("Start a new dream? The current one stays saved only if you exported it.")) return;
+  Object.keys(meshes).forEach(function(k){ scene.remove(meshes[k]); });
+  meshes = {};
+  store = {objects:[], passages:[], figures:[], transcript:"", emotions:[], lucidity:0,
+           cursor:{x:0,z:-14,a:0}, lastId:null};
+  finalText = ""; scanned = 0;
+  renderTranscript("", "");
+  document.getElementById("freetext").value = "";
+  updateCount(); save();
+  setStatus("Clear.");
+}
+
+function wire(){
+  document.getElementById("mic").addEventListener("click", toggleMic);
+  document.getElementById("walkbtn").addEventListener("click", function(){ setWalk(!walkMode); });
+  document.getElementById("newbtn").addEventListener("click", newDream);
+  document.getElementById("exportbtn").addEventListener("click", exportJSON);
+  document.getElementById("setbtn").addEventListener("click", openPanel);
+  document.getElementById("closebtn").addEventListener("click", function(){
+    document.getElementById("panel").classList.remove("open");
+  });
+  document.getElementById("savebtn").addEventListener("click", savePanel);
+  document.getElementById("wipebtn").addEventListener("click", function(){
+    if(confirm("Erase every dream stored in this browser?")){
+      try{ localStorage.removeItem(KEY); }catch(e){}
+      location.reload();
+    }
+  });
+
+  var ft = document.getElementById("freetext");
+  var typeTimer = null;
+  ft.addEventListener("input", function(){
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(function(){
+      var v = ft.value.trim();
+      if(!v) return;
+      finalText += v + " ";
+      store.transcript = finalText;
+      ft.value = "";
+      renderTranscript(finalText, "");
+      instantScan(finalText);
+      scheduleParse();
+      save();
+    }, 700);
+  });
+}
+
+function openPanel(){
+  var c = cfg();
+  document.getElementById("mode").value = c.mode || "off";
+  document.getElementById("key").value = c.key || "";
+  document.getElementById("proxy").value = c.proxy || "";
+  document.getElementById("model").value = c.model || "grok-4.3";
+  document.getElementById("err").textContent = "";
+  document.getElementById("panel").classList.add("open");
+}
+
+function savePanel(){
+  var c = {
+    mode: document.getElementById("mode").value,
+    key: document.getElementById("key").value.trim(),
+    proxy: document.getElementById("proxy").value.trim(),
+    model: document.getElementById("model").value.trim() || "grok-4.3"
+  };
+  if(c.mode === "direct" && !c.key){
+    document.getElementById("err").textContent = "Direct mode needs a key.";
+    return;
+  }
+  if(c.mode === "proxy" && !c.proxy){
+    document.getElementById("err").textContent = "Proxy mode needs an endpoint URL.";
+    return;
+  }
+  setCfg(c);
+  document.getElementById("panel").classList.remove("open");
+  setStatus("Saved.");
+}
+
+/* ============================================================
+   10. BOOT
+   ============================================================ */
+function boot(){
+  if(typeof THREE === "undefined"){
+    document.getElementById("status").innerHTML = "<i>three.js did not load. Check the connection and reload.</i>";
+    return;
+  }
+  initWorld();
+  initControls();
+  initSpeech();
+  wire();
+
+  if(load()){
+    finalText = store.transcript || "";
+    scanned = finalText.length;
+    store.objects.forEach(addMesh);
+    store.passages.forEach(addPassageMesh);
+    renderTranscript(finalText, "");
+  }
+  updateCount();
+  if(!store.objects.length) setStatus("Press the circle and talk.");
+}
+
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+
+})();
+</script>
+</body>
+</html>
