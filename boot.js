@@ -11,6 +11,7 @@ function boot(){
     return;
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot();
+  loadCloudConfig();
   if(load()){
     committed=store.transcript||"";
     store.streets=[];

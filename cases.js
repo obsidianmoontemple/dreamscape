@@ -273,3 +273,24 @@ T.test("a recorded detail is turned into the figure's own memory",function(){
   T.eq(toFirstPerson("I saw the woman near the old church.",c),"You saw me near the old church.");
   T.eq(toFirstPerson("He works nights at the mill.",{name:"Silas",aka:["silas"]}),"I work nights at the mill.");
 });
+
+/* ---------- the Atlas-wide settings from the admin page ---------- */
+T.test("a reading released from the admin page appears for everyone",function(){
+  books();
+  var keep=DW_CLOUD.config;
+  DW_CLOUD.config={miller_released:["w:Gypsy"]};
+  var r=interpretText("a gypsy by the road",null);
+  var shown=r.miller.some(function(m){ return m.w==="Gypsy"; });
+  DW_CLOUD.config=keep;
+  T.ok(shown,"released entry still held back");
+  var r2=interpretText("a gypsy by the road",null);
+  T.ok(!r2.miller.some(function(m){ return m.w==="Gypsy"; }),"held entry shown without release");
+});
+T.test("a secret key in the config is never treated as usable",function(){
+  var keep=DW_CONFIG.supabaseKey, keepU=DW_CONFIG.supabaseUrl;
+  DW_CONFIG.supabaseUrl="https://example.supabase.co"; DW_CONFIG.supabaseKey="sb_secret_abc";
+  T.ok(!cloudOn(),"a secret key was accepted");
+  DW_CONFIG.supabaseKey="sb_publishable_abc";
+  T.ok(cloudOn(),"a publishable key was refused");
+  DW_CONFIG.supabaseKey=keep; DW_CONFIG.supabaseUrl=keepU;
+});

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>The Atlas &mdash; Keeper's Desk</title>
+<style>
+:root{
+  --void:#07080B; --deep:#0E1118; --panel:#11141C; --bone:#C9BEA8; --dim:#6C6757;
+  --moon:#7C93B8; --ember:#B8724A; --line:rgba(201,190,168,0.14); --ok:#7C9B82;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--void);color:var(--bone);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{background:transparent;border:1px solid var(--line);color:var(--dim);font-size:12.5px;padding:7px 12px;border-radius:2px;cursor:pointer}
+.btn:hover{color:var(--bone);border-color:var(--bone)}
+.btn.primary{color:var(--bone);border-color:var(--moon)}
+.btn.warn:hover{color:var(--ember);border-color:var(--ember)}
+.btn:disabled{opacity:.35;cursor:default}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],select,textarea{
+  background:var(--void);border:1px solid var(--line);border-radius:2px;padding:8px 10px;font-size:14px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--moon)}
+textarea{font-family:var(--serif);line-height:1.6;resize:vertical}
+label{display:block;font-size:12px;color:var(--dim);margin:14px 0 5px}
+h1{font-family:var(--serif);font-weight:400;font-size:21px;margin:0;letter-spacing:.02em}
+h2{font-family:var(--serif);font-weight:400;font-size:19px;margin:0 0 4px}
+.dim{color:var(--dim)} .small{font-size:12px}
+.note{font-size:12.5px;color:var(--dim);line-height:1.6;max-width:70ch}
+.hidden{display:none!important}
+
+/* sign-in */
+#gate{min-height:100vh;display:grid;place-items:center;padding:24px}
+#gate .card{width:min(380px,100%);border:1px solid var(--line);background:var(--deep);padding:28px}
+#gate h1{margin-bottom:6px}
+
+/* the desk */
+#desk{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
+header{display:flex;align-items:baseline;gap:18px;padding:18px clamp(16px,4vw,40px) 12px;border-bottom:1px solid var(--line)}
+header h1{flex:1}
+#who{font-size:12px;color:var(--dim)}
+nav{display:flex;gap:4px;padding:0 clamp(16px,4vw,40px);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);padding:12px 12px 10px;font-size:13px;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--bone);border-bottom-color:var(--ember)}
+nav .count{color:var(--ember);margin-left:5px}
+main{padding:22px clamp(16px,4vw,40px) 40px}
+#bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);
+  padding:9px 16px;font-size:13px;max-width:90vw;opacity:0;transition:opacity .3s;pointer-events:none}
+#bar.on{opacity:1} #bar.err{border-color:var(--ember);color:var(--ember)}
+
+/* lists and details */
+.split{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:26px;align-items:start}
+@media (max-width:820px){.split{grid-template-columns:1fr}}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.filters .btn.on{color:var(--bone);border-color:var(--bone)}
+.row{padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
+.row:hover .rt,.row.on .rt{color:var(--moon)}
+.rt{font-family:var(--serif);font-size:15.5px}
+.rm{font-size:11.5px;color:var(--dim);margin-top:3px}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);
+  padding:1px 6px;margin-right:6px;color:var(--dim)}
+.tag.new{color:var(--ember);border-color:var(--ember)} .tag.dw{color:var(--moon);border-color:var(--moon)}
+.detail{border:1px solid var(--line);background:var(--deep);padding:20px 22px;min-height:200px}
+.detail .body{font-family:var(--serif);font-size:16px;line-height:1.75;white-space:pre-wrap;margin:14px 0}
+.detail .att{border-left:2px solid var(--line);padding-left:14px;margin:14px 0}
+.detail .att h4{margin:0 0 6px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.detail .att p{font-family:var(--serif);font-size:15px;line-height:1.7;margin:0 0 8px;white-space:pre-wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.empty{color:var(--dim);font-size:13px;padding:18px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;font-size:11.5px;color:var(--dim);letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td select,td input{padding:5px 7px;font-size:12.5px}
+.wrap{overflow-x:auto}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin:6px 0 20px}
+.stat b{display:block;font-family:var(--serif);font-weight:400;font-size:26px;color:var(--bone)}
+.stat span{font-size:11.5px;color:var(--dim)}
+.bar{height:4px;background:var(--line);margin-top:4px} .bar i{display:block;height:4px;background:var(--moon)}
+.hot td{color:var(--ember)}
+.held{border-top:1px solid var(--line);padding:14px 0}
+.held q{display:block;font-family:var(--serif);font-size:14.5px;line-height:1.65;color:var(--bone);margin:6px 0 10px;quotes:none}
+.switch{display:flex;align-items:center;gap:10px;font-size:13px;margin:14px 0}
+.switch input{width:auto}
+.narrow{max-width:620px}
+</style>
+</head>
+<body>
+
+<!-- sign-in -->
+<div id="gate">
+  <div class="card">
+    <h1>Keeper&rsquo;s Desk</h1>
+    <p class="note" id="gate-note">Sign in with your admin account.</p>
+    <div id="gate-form">
+      <label for="g-email">Email</label>
+      <input type="email" id="g-email" autocomplete="username">
+      <label for="g-pass">Password</label>
+      <input type="password" id="g-pass" autocomplete="current-password">
+      <div class="actions"><button class="btn primary" id="g-go">Sign in</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- the desk -->
+<div id="desk" class="hidden">
+  <header>
+    <h1>Keeper&rsquo;s Desk</h1>
+    <span id="who"></span>
+    <button class="btn" id="signout">Sign out</button>
+  </header>
+  <nav>
+    <button data-tab="inbox" class="on">Inbox<span class="count" id="n-inbox"></span></button>
+    <button data-tab="orders">Orders<span class="count" id="n-orders"></span></button>
+    <button data-tab="dreamers">Dreamers</button>
+    <button data-tab="research">Research</button>
+    <button data-tab="books">The books</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+  <main>
+
+    <section id="tab-inbox">
+      <div class="split">
+        <div>
+          <div class="filters" id="inbox-f">
+            <button class="btn on" data-f="open">Open</button>
+            <button class="btn" data-f="replied">Replied</button>
+            <button class="btn" data-f="closed">Closed</button>
+            <button class="btn" data-f="all">All</button>
+            <button class="btn" data-k="dreamwalker">Dream Walker</button>
+            <button class="btn" data-k="support">Support</button>
+          </div>
+          <div id="inbox-list"></div>
+        </div>
+        <div class="detail" id="inbox-detail"><div class="empty">Choose a message.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-orders" class="hidden">
+      <div class="split">
+        <div>
+          <div class="filters" id="orders-f">
+            <button class="btn on" data-f="active">Active</button>
+            <button class="btn" data-f="delivered">Delivered</button>
+            <button class="btn" data-f="cancelled">Cancelled</button>
+            <button class="btn" data-f="all">All</button>
+          </div>
+          <div id="orders-list"></div>
+        </div>
+        <div class="detail" id="orders-detail"><div class="empty">Choose an order.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-dreamers" class="hidden">
+      <h2>Dreamers</h2>
+      <p class="note">Accounts and plans only. No dream can be seen here, or anywhere on this desk: a dreamer&rsquo;s dreamscape is encrypted on their own device before it is ever stored, and this account has no access to where it is kept.</p>
+      <div class="stats" id="d-stats"></div>
+      <div class="wrap"><table id="d-table"></table></div>
+    </section>
+
+    <section id="tab-research" class="hidden">
+      <h2>Research</h2>
+      <p class="note">Abstract summaries from dreamers who agreed to share: a date, kinds of event, kinds of place, feelings, lucidity. Nothing here can be traced to an account. A convergence is several different dreamers reporting the same kind of event within three days of each other. With few dreamers, none of this means anything yet.</p>
+      <div class="stats" id="r-stats"></div>
+      <div class="split">
+        <div><h2 style="font-size:16px">How often each kind of event appears</h2><div class="wrap"><table id="r-events"></table></div></div>
+        <div><h2 style="font-size:16px">Convergences</h2><p class="note small" id="r-thresh"></p><div class="wrap"><table id="r-conv"></table></div></div>
+      </div>
+    </section>
+
+    <section id="tab-books" class="hidden">
+      <div class="narrow">
+        <h2>Held-back readings</h2>
+        <p class="note">Readings from Miller&rsquo;s 1901 text that are about a people outright, or use a people as an omen. They are held back from every dreamer&rsquo;s interpretations until you release them here. Releasing one applies to everyone. Nothing is ever deleted.</p>
+        <div id="b-list"><div class="empty">Loading the books&hellip;</div></div>
+        <div class="actions"><button class="btn primary" id="b-save" disabled>Save these decisions</button></div>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="hidden">
+      <div class="narrow">
+        <h2>Settings for every dreamer</h2>
+        <label for="s-ann">Announcement shown when the app opens (leave empty for none)</label>
+        <textarea id="s-ann" rows="2"></textarea>
+        <div class="switch"><input type="checkbox" id="s-dw"><label for="s-dw" style="margin:0;color:var(--bone)">Ask a Dream Walker is open</label></div>
+        <label for="s-plans">Plans, separated by commas (lowercase, no spaces)</label>
+        <input type="text" id="s-plans">
+        <label for="s-thr">Research: dreamers needed for a convergence</label>
+        <input type="number" id="s-thr" min="2" max="1000" step="1" style="max-width:140px">
+        <div class="actions"><button class="btn primary" id="s-save">Save settings</button></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="bar"></div>
+
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script>
+(function(){
+"use strict";
+var $=function(id){ return document.getElementById(id); };
+var sb=null, me=null, cfg={}, plans=["free","member"];
+var inboxF="open", inboxK=null, ordersF="active", selMsg=null, selOrd=null, msgs=[], ords=[];
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function when(t){ if(!t) return "\u2014"; var d=new Date(t); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})+" "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"}); }
+function day(t){ return t?new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"\u2014"; }
+var barT=null;
+function say(msg,err){
+  var b=$("bar"); b.textContent=msg; b.className="on"+(err?" err":"");
+  clearTimeout(barT); barT=setTimeout(function(){ b.className=""; },err?6000:2600);
+}
+function fail(e){ say((e&&(e.message||e.error_description))||String(e),true); }
+
+/* ---------------- sign-in ---------------- */
+function start(){
+  if(!window.DW_CONFIG||!DW_CONFIG.supabaseUrl||!DW_CONFIG.supabaseKey){
+    $("gate-note").innerHTML="Fill in <b>js/config.js</b> with your project URL and publishable key first.";
+    $("gate-form").classList.add("hidden"); return;
+  }
+  if(/^sb_secret_/.test(DW_CONFIG.supabaseKey)){
+    $("gate-note").innerHTML="<b style='color:var(--ember)'>js/config.js contains a secret key.</b> Remove it now, replace it with the publishable key, and rotate the secret key in your Supabase dashboard.";
+    $("gate-form").classList.add("hidden"); return;
+  }
+  if(!window.supabase){ $("gate-note").textContent="The Supabase library didn't load. Check the connection and reload."; return; }
+  sb=supabase.createClient(DW_CONFIG.supabaseUrl,DW_CONFIG.supabaseKey);
+  sb.auth.getSession().then(function(r){ if(r.data&&r.data.session) enter(r.data.session.user); });
+  $("g-go").onclick=signIn;
+  $("g-pass").onkeydown=function(e){ if(e.key==="Enter") signIn(); };
+}
+function signIn(){
+  $("g-go").disabled=true;
+  sb.auth.signInWithPassword({email:$("g-email").value.trim(),password:$("g-pass").value})
+    .then(function(r){
+      $("g-go").disabled=false;
+      if(r.error) return fail(r.error);
+      enter(r.data.user);
+    });
+}
+function enter(user){
+  sb.rpc("is_admin").then(function(r){
+    if(r.error) return fail(r.error);
+    if(r.data!==true){
+      $("gate-note").innerHTML="That account isn&rsquo;t an admin. Run the last line of <b>supabase/schema.sql</b> with its email, then sign in again.";
+      sb.auth.signOut(); return;
+    }
+    me=user;
+    $("gate").classList.add("hidden"); $("desk").classList.remove("hidden");
+    $("who").textContent=user.email;
+    loadConfig().then(function(){ loadInbox(); loadOrders(); });
+  });
+}
+$("signout").onclick=function(){ sb.auth.signOut().then(function(){ location.reload(); }); };
+
+/* ---------------- tabs ---------------- */
+var loaded={};
+Array.prototype.forEach.call(document.querySelectorAll("nav button"),function(b){
+  b.onclick=function(){
+    Array.prototype.forEach.call(document.querySelectorAll("nav button"),function(x){ x.classList.toggle("on",x===b); });
+    var t=b.getAttribute("data-tab");
+    ["inbox","orders","dreamers","research","books","settings"].forEach(function(n){ $("tab-"+n).classList.toggle("hidden",n!==t); });
+    if(t==="dreamers") loadDreamers();
+    if(t==="research") loadResearch();
+    if(t==="books"&&!loaded.books) loadBooks();
+    if(t==="settings") showSettings();
+  };
+});
+
+/* ---------------- settings shared with the app ---------------- */
+function loadConfig(){
+  return sb.from("app_config").select("key,value").then(function(r){
+    if(r.error) return fail(r.error);
+    cfg={}; r.data.forEach(function(x){ cfg[x.key]=x.value; });
+    if(Array.isArray(cfg.plans)&&cfg.plans.length) plans=cfg.plans;
+  });
+}
+function putConfig(key,value){
+  return sb.from("app_config").upsert({key:key,value:value,updated_at:new Date().toISOString()});
+}
+function showSettings(){
+  $("s-ann").value=typeof cfg.announcement==="string"?cfg.announcement:"";
+  $("s-dw").checked=cfg.dreamwalker_open!==false;
+  $("s-plans").value=plans.join(", ");
+  $("s-thr").value=cfg.research_threshold||5;
+}
+$("s-save").onclick=function(){
+  var ann=$("s-ann").value.trim();
+  var pl=$("s-plans").value.split(",").map(function(x){ return x.trim().toLowerCase(); }).filter(function(x){ return /^[a-z_]{1,30}$/.test(x); });
+  if(!pl.length) return say("At least one plan is needed.",true);
+  var thr=Math.max(2,parseInt($("s-thr").value,10)||5);
+  Promise.all([
+    putConfig("announcement",ann?ann:null),
+    putConfig("dreamwalker_open",$("s-dw").checked),
+    putConfig("plans",pl),
+    putConfig("research_threshold",thr)
+  ]).then(function(rs){
+    var bad=rs.filter(function(r){ return r.error; });
+    if(bad.length) return fail(bad[0].error);
+    return loadConfig().then(function(){ showSettings(); say("Saved. Dreamers see this the next time the app opens."); });
+  });
+};
+
+/* ---------------- inbox ---------------- */
+function loadInbox(){
+  sb.from("messages").select("id,kind,subject,body,attachments,status,reply,replied_at,created_at")
+    .order("created_at",{ascending:false}).limit(500)
+    .then(function(r){
+      if(r.error) return fail(r.error);
+      msgs=r.data;
+      var n=msgs.filter(function(m){ return m.status==="new"; }).length;
+      $("n-inbox").textContent=n?n:"";
+      renderInbox();
+      if(selMsg){ var m=msgs.find(function(x){ return x.id===selMsg; }); if(m) showMessage(m); }
+    });
+}
+Array.prototype.forEach.call(document.querySelectorAll("#inbox-f .btn"),function(b){
+  b.onclick=function(){
+    if(b.hasAttribute("data-f")){
+      inboxF=b.getAttribute("data-f");
+      Array.prototype.forEach.call(document.querySelectorAll("#inbox-f [data-f]"),function(x){ x.classList.toggle("on",x===b); });
+    } else {
+      var k=b.getAttribute("data-k"); inboxK=(inboxK===k)?null:k;
+      Array.prototype.forEach.call(document.querySelectorAll("#inbox-f [data-k]"),function(x){ x.classList.toggle("on",x.getAttribute("data-k")===inboxK); });
+    }
+    renderInbox();
+  };
+});
+function renderInbox(){
+  var list=msgs.filter(function(m){
+    if(inboxK&&m.kind!==inboxK) return false;
+    if(inboxF==="open") return m.status==="new"||m.status==="read";
+    if(inboxF==="all") return true;
+    return m.status===inboxF;
+  });
+  $("inbox-list").innerHTML=list.length?list.map(function(m){
+    return '<div class="row'+(m.id===selMsg?" on":"")+'" data-id="'+m.id+'">'+
+      '<div class="rt">'+(m.status==="new"?'<span class="tag new">new</span>':"")+
+      (m.kind==="dreamwalker"?'<span class="tag dw">dream walker</span>':'<span class="tag">support</span>')+
+      esc(m.subject||m.body.slice(0,60))+"</div>"+
+      '<div class="rm">'+when(m.created_at)+" \u00b7 "+m.status+"</div></div>";
+  }).join(""):'<div class="empty">Nothing here.</div>';
+  Array.prototype.forEach.call(document.querySelectorAll("#inbox-list .row"),function(d){
+    d.onclick=function(){ var m=msgs.find(function(x){ return x.id===d.getAttribute("data-id"); }); if(m) showMessage(m); };
+  });
+}
+function attachmentHTML(a){
+  if(!a||typeof a!=="object") return "";
+  var h="";
+  if(a.dream){
+    h+='<div class="att"><h4>The dream'+(a.dream.title?" \u2014 "+esc(a.dream.title):"")+(a.dream.sealed?" \u00b7 sealed "+esc(String(a.dream.sealed).slice(0,10)):"")+'</h4><p>'+esc(a.dream.text||"")+"</p></div>";
+  }
+  if(Array.isArray(a.passages)&&a.passages.length){
+    h+='<div class="att"><h4>Passages they included</h4>'+a.passages.map(function(p){
+      return '<p><span class="dim small">'+esc(p.book||"")+(p.head?" \u2014 "+esc(p.head):"")+"</span><br>"+esc(p.text||"")+"</p>"; }).join("")+"</div>";
+  }
+  if(a.dreamer){
+    var d=a.dreamer, bits=[];
+    if(d.name) bits.push("Called: "+d.name);
+    if(d.about) bits.push("About them: "+d.about);
+    if(d.practice) bits.push("Practice: "+d.practice);
+    if(Array.isArray(d.abilities)&&d.abilities.length) bits.push("In dreams they can: "+d.abilities.join(", "));
+    if(bits.length) h+='<div class="att"><h4>Who is dreaming, as they described themselves</h4><p>'+esc(bits.join("\n"))+"</p></div>";
+  }
+  return h;
+}
+function showMessage(m){
+  selMsg=m.id; renderInbox();
+  var el=$("inbox-detail");
+  el.innerHTML='<h2>'+esc(m.subject||"(no subject)")+"</h2>"+
+    '<div class="rm">'+(m.kind==="dreamwalker"?"Ask a Dream Walker":"Support")+" \u00b7 "+when(m.created_at)+" \u00b7 "+m.status+
+      ' \u00b7 <span id="m-from" class="dim">finding sender\u2026</span></div>'+
+    '<div class="body">'+esc(m.body)+"</div>"+attachmentHTML(m.attachments)+
+    '<label for="m-reply">Your reply'+(m.replied_at?" \u2014 last sent "+when(m.replied_at):"")+'</label>'+
+    '<textarea id="m-reply" rows="7" placeholder="Write your reading or answer. It appears in the dreamer\u2019s app.">'+esc(m.reply||"")+"</textarea>"+
+    '<div class="actions">'+
+      '<button class="btn primary" id="m-send">'+(m.reply?"Update reply":"Send reply")+"</button>"+
+      (m.status!=="closed"?'<button class="btn" id="m-close">Close</button>':'<button class="btn" id="m-open">Reopen</button>')+
+    "</div>"+
+    '<p class="note small" style="margin-top:14px">Replies are delivered inside the app, under the practice name. Your own email never appears to the dreamer.</p>';
+  sb.rpc("admin_message_sender",{p_message:m.id}).then(function(r){
+    var f=$("m-from"); if(!f) return;
+    f.textContent=r.error?"sender unknown":("from "+(r.data||"a deleted account"));
+  });
+  if(m.status==="new") setStatus(m,"read",true);
+  $("m-send").onclick=function(){
+    var t=$("m-reply").value.trim();
+    if(!t) return say("Write something first.",true);
+    sb.from("messages").update({reply:t,status:"replied",replied_at:new Date().toISOString()}).eq("id",m.id)
+      .then(function(r){ if(r.error) return fail(r.error); say("Reply sent."); loadInbox(); });
+  };
+  if($("m-close")) $("m-close").onclick=function(){ setStatus(m,"closed"); };
+  if($("m-open")) $("m-open").onclick=function(){ setStatus(m,m.reply?"replied":"read"); };
+}
+function setStatus(m,st,quiet){
+  sb.from("messages").update({status:st}).eq("id",m.id).then(function(r){
+    if(r.error) return fail(r.error);
+    m.status=st; if(!quiet) say("Marked "+st+"."); loadInbox();
+  });
+}
+
+/* ---------------- orders ---------------- */
+var STAGES=["requested","paid","printing","shipped","delivered","cancelled"];
+function loadOrders(){
+  sb.from("orders").select("*").order("created_at",{ascending:false}).limit(500).then(function(r){
+    if(r.error) return fail(r.error);
+    ords=r.data;
+    var n=ords.filter(function(o){ return o.status==="requested"||o.status==="paid"; }).length;
+    $("n-orders").textContent=n?n:"";
+    renderOrders();
+    if(selOrd){ var o=ords.find(function(x){ return x.id===selOrd; }); if(o) showOrder(o); }
+  });
+}
+Array.prototype.forEach.call(document.querySelectorAll("#orders-f .btn"),function(b){
+  b.onclick=function(){
+    ordersF=b.getAttribute("data-f");
+    Array.prototype.forEach.call(document.querySelectorAll("#orders-f .btn"),function(x){ x.classList.toggle("on",x===b); });
+    renderOrders();
+  };
+});
+function renderOrders(){
+  var list=ords.filter(function(o){
+    if(ordersF==="all") return true;
+    if(ordersF==="active") return ["requested","paid","printing","shipped"].indexOf(o.status)>-1;
+    return o.status===ordersF;
+  });
+  $("orders-list").innerHTML=list.length?list.map(function(o){
+    return '<div class="row'+(o.id===selOrd?" on":"")+'" data-id="'+o.id+'">'+
+      '<div class="rt">'+(o.status==="requested"?'<span class="tag new">new</span>':"")+esc(o.item)+(o.ship_name?" \u2014 "+esc(o.ship_name):"")+"</div>"+
+      '<div class="rm">'+when(o.created_at)+" \u00b7 "+o.status+"</div></div>";
+  }).join(""):'<div class="empty">No orders here.</div>';
+  Array.prototype.forEach.call(document.querySelectorAll("#orders-list .row"),function(d){
+    d.onclick=function(){ var o=ords.find(function(x){ return x.id===d.getAttribute("data-id"); }); if(o) showOrder(o); };
+  });
+}
+function showOrder(o){
+  selOrd=o.id; renderOrders();
+  var addr=o.ship_address&&typeof o.ship_address==="object"?Object.keys(o.ship_address).map(function(k){ return o.ship_address[k]; }).filter(Boolean).join("\n"):"";
+  $("orders-detail").innerHTML='<h2>'+esc(o.item)+"</h2>"+
+    '<div class="rm">Ordered '+when(o.created_at)+" \u00b7 last changed "+when(o.updated_at)+"</div>"+
+    (o.ship_name||addr?'<div class="att" style="margin-top:14px"><h4>Ship to</h4><p>'+esc((o.ship_name||"")+(addr?"\n"+addr:""))+"</p></div>":"")+
+    '<label for="o-st">Stage</label><select id="o-st">'+STAGES.map(function(s){ return '<option'+(s===o.status?" selected":"")+">"+s+"</option>"; }).join("")+"</select>"+
+    '<label for="o-pay">Payment reference (from the Temple site)</label><input type="text" id="o-pay" value="'+esc(o.payment_ref||"")+'">'+
+    '<label for="o-trk">Tracking</label><input type="text" id="o-trk" value="'+esc(o.tracking||"")+'">'+
+    '<label for="o-notes">Notes</label><textarea id="o-notes" rows="3">'+esc(o.notes||"")+"</textarea>"+
+    '<div class="actions"><button class="btn primary" id="o-save">Save</button></div>';
+  $("o-save").onclick=function(){
+    sb.from("orders").update({status:$("o-st").value,payment_ref:$("o-pay").value.trim()||null,
+      tracking:$("o-trk").value.trim()||null,notes:$("o-notes").value.trim()||null,updated_at:new Date().toISOString()})
+      .eq("id",o.id).then(function(r){ if(r.error) return fail(r.error); say("Order saved."); loadOrders(); });
+  };
+}
+
+/* ---------------- dreamers ---------------- */
+function loadDreamers(){
+  sb.rpc("admin_list_dreamers").then(function(r){
+    if(r.error) return fail(r.error);
+    var d=r.data||[], byPlan={}, res=0, recent=0, weekAgo=Date.now()-7*864e5;
+    d.forEach(function(x){ byPlan[x.plan]=(byPlan[x.plan]||0)+1; if(x.research_consent) res++;
+      if(x.last_sign_in_at&&new Date(x.last_sign_in_at).getTime()>weekAgo) recent++; });
+    $("d-stats").innerHTML='<div class="stat"><b>'+d.length+'</b><span>accounts</span></div>'+
+      '<div class="stat"><b>'+recent+'</b><span>signed in this week</span></div>'+
+      Object.keys(byPlan).map(function(p){ return '<div class="stat"><b>'+byPlan[p]+'</b><span>'+esc(p)+"</span></div>"; }).join("")+
+      '<div class="stat"><b>'+res+'</b><span>sharing for research</span></div>';
+    $("d-table").innerHTML="<tr><th>Account</th><th>Joined</th><th>Last seen</th><th>Plan</th><th>Until</th><th>Research</th><th></th></tr>"+
+      d.map(function(x,i){
+        return "<tr><td>"+esc(x.email||"")+"</td><td>"+day(x.created_at)+"</td><td>"+day(x.last_sign_in_at)+"</td>"+
+          '<td><select id="p-'+i+'">'+plans.concat(plans.indexOf(x.plan)>-1?[]:[x.plan]).map(function(p){ return "<option"+(p===x.plan?" selected":"")+">"+esc(p)+"</option>"; }).join("")+"</select></td>"+
+          '<td><input type="date" id="u-'+i+'" value="'+(x.plan_until?String(x.plan_until).slice(0,10):"")+'"></td>'+
+          "<td>"+(x.research_consent?"yes":"no")+"</td>"+
+          '<td><button class="btn" data-i="'+i+'">Save plan</button></td></tr>';
+      }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#d-table [data-i]"),function(b){
+      b.onclick=function(){
+        var i=+b.getAttribute("data-i"), u=$("u-"+i).value;
+        sb.rpc("admin_set_plan",{p_user:d[i].id,p_plan:$("p-"+i).value,p_until:u?new Date(u+"T23:59:59").toISOString():null})
+          .then(function(r2){ if(r2.error) return fail(r2.error); say("Plan saved for "+d[i].email+"."); });
+      };
+    });
+  });
+}
+
+/* ---------------- research ---------------- */
+function loadResearch(){
+  var since=new Date(Date.now()-180*864e5).toISOString();
+  sb.from("research_summaries").select("research_id,received_at,night_of,events,forms,feelings,lucidity")
+    .gte("received_at",since).order("received_at",{ascending:false}).limit(10000)
+    .then(function(r){
+      if(r.error) return fail(r.error);
+      var rows=r.data||[], people={}, ev={}, evPeople={};
+      rows.forEach(function(x){
+        people[x.research_id]=1;
+        (x.events||[]).forEach(function(e){ ev[e]=(ev[e]||0)+1; (evPeople[e]=evPeople[e]||{})[x.research_id]=1; });
+      });
+      var np=Object.keys(people).length, thr=cfg.research_threshold||5;
+      $("r-stats").innerHTML='<div class="stat"><b>'+rows.length+'</b><span>summaries, last 180 days</span></div>'+
+        '<div class="stat"><b>'+np+'</b><span>different dreamers</span></div>'+
+        '<div class="stat"><b>'+(rows.length?day(rows[rows.length-1].received_at):"\u2014")+'</b><span>earliest</span></div>';
+      var keys=Object.keys(ev).sort(function(a,b){ return ev[b]-ev[a]; });
+      $("r-events").innerHTML="<tr><th>Event</th><th>Summaries</th><th>Dreamers</th><th>Share of all</th></tr>"+
+        (keys.length?keys.map(function(k){
+          var pct=rows.length?Math.round(ev[k]/rows.length*100):0;
+          return "<tr><td>"+esc(k)+"</td><td>"+ev[k]+"</td><td>"+Object.keys(evPeople[k]).length+'</td><td>'+pct+'%<div class="bar"><i style="width:'+pct+'%"></i></div></td></tr>';
+        }).join(""):'<tr><td colspan="4" class="dim">Nothing shared yet.</td></tr>');
+
+      /* a convergence: distinct dreamers reporting the same kind of event, received within three days */
+      var byDay={};
+      rows.forEach(function(x){
+        var dk=String(x.received_at).slice(0,10);
+        (x.events||[]).forEach(function(e){ var k=e+"|"+dk; (byDay[k]=byDay[k]||{})[x.research_id]=1; });
+      });
+      var found=[];
+      keys.forEach(function(e){
+        var days=Object.keys(byDay).filter(function(k){ return k.indexOf(e+"|")===0; }).map(function(k){ return k.split("|")[1]; }).sort();
+        days.forEach(function(d0){
+          var t0=new Date(d0+"T00:00:00Z").getTime(), who={};
+          days.forEach(function(d1){
+            var t1=new Date(d1+"T00:00:00Z").getTime();
+            if(t1>=t0&&t1<=t0+2*864e5) Object.keys(byDay[e+"|"+d1]).forEach(function(p){ who[p]=1; });
+          });
+          var n=Object.keys(who).length;
+          if(n>=2) found.push({e:e,from:d0,n:n,base:rows.length?ev[e]/rows.length:0});
+        });
+      });
+      found.sort(function(a,b){ return b.n-a.n; });
+      var seen={}; found=found.filter(function(f){ var k=f.e+f.from; if(seen[k]) return false; seen[k]=1; return true; }).slice(0,40);
+      $("r-thresh").textContent="Shown when two or more dreamers converge; marked when "+thr+" or more do. The share column is how common that event is anyway \u2014 a convergence on something rare means more than one on something everyone dreams.";
+      $("r-conv").innerHTML="<tr><th>Event</th><th>Three days from</th><th>Dreamers</th><th>Usual share</th></tr>"+
+        (found.length?found.map(function(f){
+          return '<tr class="'+(f.n>=thr?"hot":"")+'"><td>'+esc(f.e)+"</td><td>"+day(f.from)+"</td><td>"+f.n+"</td><td>"+Math.round(f.base*100)+"%</td></tr>";
+        }).join(""):'<tr><td colspan="4" class="dim">None yet.</td></tr>');
+    });
+}
+
+/* ---------------- the books ---------------- */
+var heldItems=[], releasedSet={};
+function loadBooks(){
+  var s=document.createElement("script");
+  s.src="data/books.js";
+  s.onload=function(){ loaded.books=true; buildHeld(); };
+  s.onerror=function(){ $("b-list").innerHTML='<div class="empty">Couldn\u2019t load data/books.js. This page must sit beside index.html.</div>'; };
+  document.body.appendChild(s);
+}
+function buildHeld(){
+  heldItems=[];
+  window.DW_BOOKS.miller.entries.forEach(function(e){
+    if(e.hold) heldItems.push({key:"w:"+e.w,w:e.w,what:"the whole entry",text:e.p.join("\n\n")});
+    (e.hr||[]).forEach(function(k){ heldItems.push({key:"r:"+e.w+":"+k,w:e.w,what:"reading "+(k+1)+" of "+e.p.length,text:e.p[k]}); });
+  });
+  releasedSet={};
+  (Array.isArray(cfg.miller_released)?cfg.miller_released:[]).forEach(function(k){ releasedSet[k]=1; });
+  renderHeld();
+}
+function renderHeld(){
+  $("b-list").innerHTML=heldItems.map(function(it,i){
+    var on=!!releasedSet[it.key];
+    return '<div class="held"><b style="font-family:var(--serif);font-weight:400;font-size:16px">'+esc(it.w)+'</b> <span class="dim small">\u2014 '+it.what+" \u00b7 "+(on?"released to everyone":"held back")+"</span>"+
+      "<q>"+esc(it.text)+"</q>"+
+      '<button class="btn '+(on?"":"warn")+'" data-i="'+i+'">'+(on?"Hold it back again":"Release it")+"</button></div>";
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll("#b-list [data-i]"),function(b){
+    b.onclick=function(){
+      var it=heldItems[+b.getAttribute("data-i")];
+      if(releasedSet[it.key]) delete releasedSet[it.key]; else releasedSet[it.key]=1;
+      $("b-save").disabled=false; renderHeld();
+    };
+  });
+}
+$("b-save").onclick=function(){
+  putConfig("miller_released",Object.keys(releasedSet)).then(function(r){
+    if(r.error) return fail(r.error);
+    $("b-save").disabled=true;
+    loadConfig().then(function(){ say("Saved. Every dreamer\u2019s interpretations follow this the next time the app opens."); });
+  });
+};
+
+start();
+})();
+</script>
+</body>
+</html>
