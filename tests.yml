@@ -1,0 +1,13 @@
+# Runs the regression suite on every push and pull request.
+# Nothing to install: the tests use only Node's standard library.
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/run-node.js
