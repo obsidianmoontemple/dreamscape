@@ -96,6 +96,94 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
   font-family:var(--serif);font-size:15px;padding:9px 11px;resize:none;outline:none;border-radius:2px}
 #t-say:focus{border-color:var(--moon)}
 
+#viewing{position:fixed;z-index:13;left:50%;top:calc(84px + env(safe-area-inset-top,0px));transform:translateX(-50%);
+  background:rgba(14,17,24,.9);border:1px solid var(--line);padding:7px 10px 7px 14px;font-size:12.5px;
+  color:var(--bone);display:flex;align-items:center;gap:12px;transition:opacity .3s}
+#viewing.gone{opacity:0;pointer-events:none}
+#viewing .btn{padding:4px 9px;font-size:11.5px}
+
+#journal{position:fixed;z-index:18;inset:0;background:var(--void);display:flex;flex-direction:column;
+  padding:calc(22px + env(safe-area-inset-top,0px)) clamp(16px,5vw,60px) calc(18px + env(safe-area-inset-bottom,0px));
+  transform:translateY(101%);transition:transform .45s cubic-bezier(.22,1,.36,1)}
+#journal.open{transform:none}
+#j-head{display:flex;align-items:baseline;gap:16px;margin-bottom:10px}
+#j-head h2{flex:1;margin:0;font-family:var(--serif);font-weight:400;font-size:22px}
+#j-tally{font-size:12.5px;color:var(--dim);margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+#j-tally b{font-weight:500;color:var(--bone)}
+#j-body{flex:1;display:grid;grid-template-columns:minmax(200px,300px) 1fr;gap:26px;min-height:0}
+@media (max-width:760px){#j-body{grid-template-columns:1fr}}
+#j-list{overflow-y:auto;border-right:1px solid var(--line);padding-right:14px}
+@media (max-width:760px){#j-list{border-right:0;max-height:32vh}}
+.jn{padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
+.jn:hover .jt,.jn.on .jt{color:var(--moon)}
+.jt{font-family:var(--serif);font-size:16px;color:var(--bone)}
+.jm{font-size:11.5px;color:var(--dim);margin-top:3px}
+.jm .h{color:var(--ember)} .jm .p{color:var(--moon)}
+#j-detail{overflow-y:auto;padding-right:6px}
+.jd-empty{color:var(--dim);font-size:13px;padding-top:12px}
+.jd-title{font-family:var(--serif);font-size:24px;margin:2px 0 4px}
+.jd-meta{font-size:12px;color:var(--dim);margin-bottom:14px}
+.jd-seal{font-size:11.5px;color:var(--dim);margin-bottom:14px;font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.jd-seal .ok{color:var(--moon)} .jd-seal .bad{color:var(--ember)}
+.jd-text{font-family:var(--serif);font-size:16.5px;line-height:1.8;white-space:pre-wrap;max-width:68ch;
+  border-left:2px solid var(--line);padding-left:16px;margin-bottom:18px}
+.jd-h{font-size:12px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;margin:22px 0 8px}
+.jd-v{font-size:13px;color:var(--dim);margin:0 0 8px;font-family:var(--serif)}
+.jd-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.jd-out{font-size:13px;color:var(--bone);margin:0 0 6px}
+.jd-out i{font-style:normal;color:var(--dim)}
+#j-detail textarea,#j-detail input[type=text],#j-detail input[type=date]{width:100%;max-width:560px;background:var(--deep);
+  border:1px solid var(--line);color:var(--bone);padding:8px 10px;font-size:14px;border-radius:2px;outline:none;
+  font-family:var(--serif);margin-bottom:8px}
+#j-detail textarea:focus,#j-detail input:focus{border-color:var(--moon)}
+.jd-pre{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--dim);background:var(--deep);
+  border:1px solid var(--line);padding:10px 12px;white-space:pre-wrap;max-width:560px}
+#j-foot{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;display:flex;gap:26px;flex-wrap:wrap}
+#j-foot details{max-width:560px}
+#j-foot summary{font-size:12.5px;color:var(--dim);cursor:pointer}
+#j-foot p{font-size:12.5px;line-height:1.6;color:var(--dim)}
+.j-check{font-size:13px;color:var(--bone);display:flex;gap:8px;align-items:center;margin-top:6px}
+.jr{display:grid;grid-template-columns:130px 1fr 40px;gap:10px;align-items:center;font-size:12px;
+  color:var(--dim);margin:4px 0}
+.jr i{display:block;height:3px;background:var(--moon)}
+
+#story{position:fixed;z-index:18;inset:0;background:var(--void);
+  padding:calc(26px + env(safe-area-inset-top,0px)) clamp(18px,7vw,90px) calc(26px + env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:column;transform:translateY(101%);
+  transition:transform .45s cubic-bezier(.22,1,.36,1)}
+#story.open{transform:none}
+#story-head{display:flex;align-items:baseline;gap:16px;margin-bottom:16px}
+#story-title{flex:1;background:transparent;border:0;border-bottom:1px solid var(--line);
+  color:var(--bone);font-family:var(--serif);font-size:22px;padding:0 0 9px;outline:none}
+#story-title:focus{border-bottom-color:var(--moon)}
+#story-title::placeholder{color:var(--dim)}
+#story-count{font-size:11.5px;color:var(--dim);white-space:nowrap}
+#story-text{flex:1;background:transparent;border:0;color:var(--bone);resize:none;outline:none;
+  font-family:var(--serif);font-size:clamp(16px,1.5vw,18px);line-height:1.85;max-width:74ch;
+  padding:4px 0}
+#story-text::placeholder{color:var(--dim);font-style:italic}
+#story-text::-webkit-scrollbar{width:3px}
+#story-text::-webkit-scrollbar-thumb{background:var(--line)}
+
+#self{position:fixed;z-index:18;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
+  width:min(560px,94vw);max-height:86vh;overflow-y:auto;background:var(--deep);
+  border:1px solid var(--line);padding:24px 26px 26px;opacity:0;visibility:hidden;
+  transition:opacity .3s,transform .3s,visibility .3s}
+#self.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+#self h2{font-family:var(--serif);font-weight:400;font-size:20px;margin:0 0 6px}
+#self p{font-size:13px;line-height:1.6;color:var(--dim);margin:0 0 6px;max-width:56ch}
+#self label{display:block;font-size:12px;color:var(--dim);margin:16px 0 5px}
+#self input,#self textarea{width:100%;background:var(--void);border:1px solid var(--line);
+  color:var(--bone);padding:9px 11px;font-size:14px;border-radius:2px;outline:none;
+  font-family:var(--sans);resize:vertical}
+#self textarea{font-family:var(--serif);line-height:1.6}
+#self input:focus,#self textarea:focus{border-color:var(--moon)}
+#self-abilities{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:4px}
+.abil{font-size:12px;color:var(--bone);border:1px solid var(--line);padding:4px 9px;
+  border-radius:2px;cursor:pointer}
+.abil:hover{border-color:var(--ember);color:var(--ember)}
+.abil::after{content:" \00d7";color:var(--dim)}
+
 #greet{position:fixed;z-index:16;left:50%;bottom:34px;transform:translate(-50%,130%);
   width:min(440px,92vw);background:rgba(11,13,19,.96);border:1px solid var(--line);
   padding:18px 20px 20px;transition:transform .4s cubic-bezier(.22,1,.36,1)}
@@ -125,13 +213,26 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
 .rd s{text-decoration:none;color:var(--dim);font-size:10.5px;font-style:italic}
 .rq{font-family:var(--sans);font-size:11.5px;color:var(--dim)}
 .rfill{padding:4px 9px;font-size:11px;margin-top:5px}
+.rmerge{width:100%;background:var(--void);border:1px solid var(--line);color:var(--dim);
+  font-size:11.5px;padding:5px 7px;border-radius:2px;margin-top:6px;outline:none}
+.rmerge:focus{border-color:var(--moon)}
 .rbar{height:2px;background:var(--line);margin-top:6px}
 .rbar i{display:block;height:2px;background:var(--moon)}
 
-#clock{font-family:var(--sans);font-size:12.5px;color:var(--moon);letter-spacing:.06em}
-#timebar{position:fixed;z-index:12;top:calc(40px + env(safe-area-inset-top,0px));
-  right:clamp(18px,5vw,64px);display:flex;align-items:center;gap:10px;width:min(260px,40vw)}
-#timebar input{flex:1;accent-color:var(--moon);background:transparent}
+#clock{font-family:var(--sans);font-size:12.5px;color:var(--bone);letter-spacing:.03em;
+  display:inline-flex;align-items:center;gap:8px}
+#clock .cg{width:15px;height:15px;color:var(--ember)}
+#clock .cw{font-family:var(--serif);font-size:15px;color:var(--bone)}
+#clock .ct{color:var(--dim)}
+#clock .cm{color:var(--moon);font-size:11.5px}
+#timebar{position:fixed;z-index:12;top:calc(44px + env(safe-area-inset-top,0px));
+  right:clamp(18px,5vw,64px);display:flex;align-items:center;gap:10px;width:min(320px,46vw)}
+#timebar input{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;
+  outline:none;cursor:pointer;background:var(--line)}
+#timebar input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--bone);border:2px solid var(--void);box-shadow:0 0 0 1px var(--line)}
+#timebar input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--bone);
+  border:2px solid var(--void)}
 #timebar .btn{padding:4px 9px;font-size:11.5px}
 #place{position:fixed;z-index:11;left:50%;top:calc(52px + env(safe-area-inset-top,0px));
   transform:translateX(-50%);font-family:var(--serif);font-size:16px;color:var(--bone);
@@ -200,10 +301,15 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
     <div id="status"></div>
     <button class="btn" id="commitbtn">Commit</button>
     <button class="btn" id="walkbtn">Walk it</button>
+    <button class="btn" id="storybtn">Write a full dream</button>
+    <button class="btn" id="journalbtn">Dream journal</button>
     <button class="btn" id="rosterbtn">Who lives here</button>
+    <button class="btn" id="selfbtn">Who is dreaming</button>
     <button class="btn" id="soundbtn">Sound off</button>
     <button class="btn" id="newbtn">New dream</button>
     <button class="btn" id="exportbtn">Export</button>
+    <button class="btn" id="importbtn">Import</button>
+    <input type="file" id="importfile" accept="application/json,.json" style="display:none">
     <button class="btn" id="setbtn">Settings</button>
   </div>
 </div>
@@ -223,6 +329,63 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
     <button class="btn" id="t-send">Speak</button>
     <button class="btn" id="t-build">Build what they said</button>
     <button class="btn" id="t-close">Leave</button>
+  </div>
+</div>
+
+<div id="viewing" class="gone"><span id="viewing-t"></span> <button class="btn" id="viewing-clear">Show everything</button></div>
+
+<div id="journal">
+  <div id="j-head">
+    <h2>Dream journal</h2>
+    <button class="btn" id="j-close">Close</button>
+  </div>
+  <div id="j-tally"></div>
+  <div id="j-body">
+    <div id="j-list"></div>
+    <div id="j-detail"><div class="jd-empty">Choose a night.</div></div>
+  </div>
+  <div id="j-foot">
+    <details id="j-research">
+      <summary>Research sharing — <span id="j-rstate">off</span></summary>
+      <p>If you turn this on, a small abstract summary of each sealed dream could be pooled with other dreamers to look for shared premonitions. Never the dream itself, never names, never places, never who you are. Nothing is connected yet, so nothing is sent anywhere. Below each night you can see exactly what would leave.</p>
+      <label class="j-check"><input type="checkbox" id="j-consent"> I agree to share abstract summaries for research</label>
+    </details>
+    <details id="j-rates">
+      <summary>How often things appear in your dreams</summary>
+      <div id="j-rates-body"></div>
+    </details>
+  </div>
+</div>
+
+<div id="story">
+  <div id="story-head">
+    <input type="text" id="story-title" placeholder="what to call this dream" aria-label="Dream title">
+    <span id="story-count"></span>
+  </div>
+  <textarea id="story-text" aria-label="Write the dream" placeholder="Write it out. All of it, in the order it happened &mdash; where you were, what you could do, who was there, how you got from one place to the next. Passages, doors, things that should not have been possible. Nothing gets tidied."></textarea>
+  <div class="row" style="margin-top:12px">
+    <button class="btn" id="story-render">Build this dream</button>
+    <button class="btn" id="story-close">Close</button>
+  </div>
+</div>
+
+<div id="self">
+  <h2>Who is dreaming</h2>
+  <p>This is told to every figure you meet, and used to read your dreams. None of it leaves this browser.</p>
+  <label for="self-name">What you are called in dreams</label>
+  <input type="text" id="self-name" placeholder="a name, a title, or nothing">
+  <label for="self-about">Who you are</label>
+  <textarea id="self-about" rows="3" placeholder="whatever matters for how your dreams should be read"></textarea>
+  <label for="self-practice">Your practice, if you keep one</label>
+  <textarea id="self-practice" rows="3" placeholder="tradition, training, the work you do"></textarea>
+  <label>What you can do in dreams</label>
+  <div id="self-abilities"></div>
+  <input type="text" id="self-ability-add" placeholder="add one and press enter">
+  <label for="self-notes">Anything else the system should know</label>
+  <textarea id="self-notes" rows="3" placeholder="recurring themes, things that always appear, rules your dreams follow"></textarea>
+  <div class="row" style="margin-top:18px">
+    <button class="btn" id="self-save">Save</button>
+    <button class="btn" id="self-close">Close</button>
   </div>
 </div>
 
@@ -258,6 +421,8 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
   <input type="text" id="i-label">
   <label for="i-sign">Sign on it</label>
   <input type="text" id="i-sign" placeholder="lettering, if any">
+  <label for="i-link">Same place as one from another night?</label>
+  <select id="i-link"><option value="">—</option></select>
   <label for="i-scale">Size</label>
   <input type="range" id="i-scale" min="0.3" max="4" step="0.05" value="1">
   <label for="i-height">Height</label>
@@ -877,6 +1042,100 @@ A("creature","being",[2.4,3,2.4],[
   {g:"sph",s:[.36],p:[0,2.7,.3],c:"dark"}
 ]);
 
+A("gasstation","structure",[20,6,15],[
+  {g:"box",s:[9,4,9],p:[-5,2,-3],c:"body"},
+  {g:"box",s:[7,2.4,.2],p:[-5,2,1.6],c:"glass"},
+  {g:"box",s:[19,.7,12],p:[2,5.5,3],c:"white"},
+  {g:"cyl",s:[.3,.3,5.2,8],p:[-5,2.6,8],c:"metal",rep:[2,13,0,0]},
+  {g:"box",s:[1,2,.7],p:[0,1,1],c:"paint",rep:[2,5.5,0,0]},
+  {g:"box",s:[1,.5,.7],p:[0,2.2,1],c:"dark",rep:[2,5.5,0,0]}
+],{sign:[2,6.4,9.1,9,1.7]});
+
+A("parking","infra",[30,.3,22],[
+  {g:"pln",s:[30,22],p:[0,.06,0],r:[-1.5708,0,0],c:"road"},
+  {g:"pln",s:[.22,5],p:[-12,.09,-6],r:[-1.5708,0,0],c:"white",rep:[9,3,0,0]},
+  {g:"cyl",s:[.12,.15,.9,8],p:[-14,.45,9],c:"dark",rep:[4,9,0,0]}
+]);
+
+A("playground","infra",[14,4,12],[
+  {g:"pln",s:[14,12],p:[0,.07,0],r:[-1.5708,0,0],c:"paint"},
+  {g:"cyl",s:[.1,.1,3,6],p:[-4,1.5,-2],c:"metal",rep:[2,4,0,0]},
+  {g:"box",s:[4.4,.14,.14],p:[-2,3,-2],c:"metal"},
+  {g:"box",s:[.7,.06,1],p:[-3,1.1,-2],c:"bark",rep:[2,2,0,0]},
+  {g:"box",s:[1.1,.12,5],p:[4,1.6,2],r:[.42,0,0],c:"metal"},
+  {g:"box",s:[1.6,2.6,1.6],p:[4,1.3,4.4],c:"paint"}
+]);
+
+A("pool","nature",[18,.6,11],[
+  {g:"box",s:[20,.4,13],p:[0,.2,0],c:"white"},
+  {g:"pln",s:[17,10],p:[0,.42,0],r:[-1.5708,0,0],c:"water",opa:.84}
+]);
+
+A("busstop","infra",[4,2.8,1.8],[
+  {g:"box",s:[4,.16,1.8],p:[0,2.7,0],c:"metal"},
+  {g:"cyl",s:[.08,.08,2.7,6],p:[-1.9,1.35,-.8],c:"metal",rep:[2,3.8,0,0]},
+  {g:"pln",s:[4,2.4],p:[0,1.35,-.85],c:"glass",opa:.3},
+  {g:"box",s:[3,.1,.4],p:[0,.85,-.5],c:"bark"}
+]);
+
+/* ---------- the parts of a dream that obey no ordinance ---------- */
+A("circle","infra",[9,.6,9],[
+  {g:"cyl",s:[4.5,4.5,.12,32],p:[0,.07,0],c:"stone"},
+  {g:"cyl",s:[4.2,4.2,.16,32],p:[0,.14,0],c:"dark"},
+  {g:"cyl",s:[.22,.28,.7,7],p:[0,.35,-4],c:"stone",rep:[4,0,0,2.7]},
+  {g:"cyl",s:[.22,.28,.7,7],p:[-4,.35,0],c:"stone",rep:[4,2.7,0,0]},
+  {g:"pln",s:[7,7],p:[0,.2,0],r:[-1.5708,0,0],c:"light",opa:.16,glow:1}
+]);
+
+A("altar","structure",[3.4,1.9,2],[
+  {g:"box",s:[3,1.3,1.7],p:[0,.65,0],c:"stone"},
+  {g:"box",s:[3.4,.22,2],p:[0,1.4,0],c:"dark"},
+  {g:"cyl",s:[.14,.14,.55,8],p:[-1,1.78,0],c:"white",rep:[3,1,0,0]},
+  {g:"sph",s:[.12],p:[-1,2.12,0],c:"light",glow:1,rep:[3,1,0,0]}
+]);
+
+A("standingstones","nature",[20,5,20],[
+  {g:"box",s:[1.4,5,.9],p:[0,2.5,-9],r:[0,0,.05],c:"stone"},
+  {g:"box",s:[1.3,4.4,.9],p:[6.4,2.2,-6.4],r:[0,.8,-.06],c:"stone"},
+  {g:"box",s:[1.4,4.8,.9],p:[9,2.4,0],r:[0,1.57,.04],c:"stone"},
+  {g:"box",s:[1.2,4.2,.9],p:[6.4,2.1,6.4],r:[0,2.3,-.05],c:"stone"},
+  {g:"box",s:[1.4,4.6,.9],p:[0,2.3,9],r:[0,3.14,.06],c:"stone"},
+  {g:"box",s:[1.3,4.4,.9],p:[-6.4,2.2,6.4],r:[0,3.9,-.04],c:"stone"},
+  {g:"box",s:[1.4,5,.9],p:[-9,2.5,0],r:[0,4.71,.05],c:"stone"},
+  {g:"box",s:[1.2,4.2,.9],p:[-6.4,2.1,-6.4],r:[0,5.5,-.06],c:"stone"}
+]);
+
+A("rift","infra",[3,9,.4],[
+  {g:"pln",s:[2.2,8.6],p:[0,4.3,0],r:[0,0,.07],c:"dark",opa:.95},
+  {g:"pln",s:[3,9],p:[0,4.5,-.05],r:[0,0,.07],c:"glass",opa:.5,glow:1},
+  {g:"pln",s:[.7,9],p:[0,4.5,.06],c:"white",opa:.35,glow:1}
+]);
+
+A("impossiblestair","infra",[12,14,12],[
+  {g:"box",s:[3,.4,1.4],p:[-4.5,.5,-4.5],c:"stone",rep:[8,1.3,1.5,0]},
+  {g:"box",s:[1.4,.4,3],p:[5.6,12.5,-4.5],c:"stone",rep:[7,0,0,1.3]},
+  {g:"box",s:[3,.4,1.4],p:[5,13,5.4],r:[0,0,3.14],c:"stone",rep:[7,-1.3,0,0]},
+  {g:"box",s:[.2,13,.2],p:[-4.5,6.5,-4.5],c:"stone"}
+]);
+
+A("veil","infra",[8,6,.3],[
+  {g:"pln",s:[8,6],p:[0,3,0],c:"glass",opa:.28,glow:1},
+  {g:"cyl",s:[.1,.1,6,6],p:[-4,3,0],c:"metal",rep:[2,8,0,0]},
+  {g:"box",s:[8.4,.14,.14],p:[0,6,0],c:"metal"}
+]);
+
+A("brazier","infra",[1.4,2.2,1.4],[
+  {g:"cyl",s:[.12,.2,1.5,7],p:[0,.75,0],c:"metal"},
+  {g:"cyl",s:[.62,.36,.5,10],p:[0,1.7,0],c:"metal"},
+  {g:"cone",s:[.5,.9,7],p:[0,2.2,0],c:"light",glow:1,opa:.75}
+]);
+
+A("secretdoor","infra",[2.2,4.4,.4],[
+  {g:"box",s:[2.2,4.2,.3],p:[0,2.1,0],c:"stone"},
+  {g:"box",s:[.16,4.2,.34],p:[-1.1,2.1,0],c:"dark",rep:[2,2.2,0,0]},
+  {g:"pln",s:[1.7,3.7],p:[0,2.1,.2],c:"glass",opa:.22,glow:1}
+]);
+
 A("portal","infra",[4.5,7,.5],[
   {g:"box",s:[.42,7,.42],p:[-2,3.5,0],c:"stone",rep:[2,4,0,0]},
   {g:"box",s:[4.5,.42,.42],p:[0,7,0],c:"stone"},
@@ -891,7 +1150,9 @@ var store = blank();
 function blank(){
   return {objects:[],passages:[],transcript:"",emotions:[],lucidity:0,
           grid:{bx:0,bz:0,lot:0},streets:[],lastId:null,open:0,
-          characters:[],sessions:[],session:1,blocks:{}};
+          characters:[],sessions:[],session:1,blocks:{},lots:{},lastLot:null,
+          dreamer:{name:"",about:"",practice:"",notes:"",abilities:[]},
+          research:{consent:false,since:null}};
 }
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function save(){
@@ -939,7 +1200,9 @@ function resolveColor(c, spec){
 /* fidelity: how well this thing is remembered, 0..1 */
 function fidelity(spec){
   if(spec.filler) return 0.34;
+  if(viewNight!==null && spec.nights && spec.nights.indexOf(viewNight)===-1) return 0.06;
   var d=1, a=spec.attrs||{};
+  if(spec.nights && spec.nights.length>1) d+=Math.min(3,spec.nights.length-1);
   if(a.c!==undefined) d++;
   if(a.s||a.h||a.w||a.d) d++;
   if(spec.sign) d++;
@@ -981,6 +1244,7 @@ function build(spec){
     } else if(pt.glow){
       mat=new THREE.MeshBasicMaterial({color:col,transparent:true,
         opacity:(pt.opa!==undefined?pt.opa:1)*Math.max(opa,0.35),side:THREE.DoubleSide});
+      if(LAMPED[spec.archetype]){ if(!g.userData.lamps) g.userData.lamps=[]; g.userData.lamps.push(mat); }
     } else {
       mat=new THREE.MeshLambertMaterial({color:ghosty?blend(col,0x7C93B8,1-f):col,
         transparent:opa<0.995||pt.opa!==undefined,
@@ -1012,8 +1276,24 @@ function build(spec){
     g.add(board);
   }
 
+  if(LAMPED[spec.archetype]){
+    var pool=new THREE.Mesh(new THREE.CircleGeometry(spec.archetype==="streetlight"?7:4.5,24),
+      new THREE.MeshBasicMaterial({color:0xE8C27A,transparent:true,opacity:0,depthWrite:false}));
+    pool.rotation.x=-Math.PI/2;
+    pool.position.set(spec.archetype==="streetlight"?2.1:0,0.08,0);
+    g.add(pool); g.userData.pool=pool;
+  }
   g.scale.set(sx,sy,sz);
   return g;
+}
+
+var LAMPED={streetlight:1,brazier:1,altar:1,lighthouse:1,gasstation:1,busstop:1};
+function lampsForNight(night){
+  for(var id in meshes){
+    var m=meshes[id];
+    if(m.userData.lamps) m.userData.lamps.forEach(function(mat){ mat.opacity=0.08+night*0.92; });
+    if(m.userData.pool) m.userData.pool.material.opacity=night*0.34;
+  }
 }
 
 function blend(a,b,t){
@@ -1025,14 +1305,14 @@ function blend(a,b,t){
 /* ============================================================
    5. WORLD
    ============================================================ */
-var scene,camera,renderer,clock,meshes={},raycaster,SKY=0x090B11;
+var scene,camera,renderer,clock,meshes={},raycaster,ground,SKY=0x090B11;
 
 function initWorld(){
   scene=new THREE.Scene();
   scene.background=new THREE.Color(SKY);
   setFog(cfg().density);
 
-  camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,4000);
+  camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,6000);
   renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(innerWidth,innerHeight);
@@ -1043,19 +1323,25 @@ function initWorld(){
   sun=new THREE.DirectionalLight(0xA6B6D0,0.6);
   sun.position.set(-300,500,180); scene.add(sun);
 
-  var ground=new THREE.Mesh(new THREE.PlaneGeometry(6000,6000),
+  ground=new THREE.Mesh(new THREE.PlaneGeometry(6000,6000),
     new THREE.MeshLambertMaterial({color:0x101219}));
   ground.rotation.x=-Math.PI/2; scene.add(ground);
+  buildSky();
 
   raycaster=new THREE.Raycaster();
   clock=new THREE.Clock();
   addEventListener("resize",onResize);
   animate();
 }
+var fogBase=26;
 function setFog(sl){
-  var dist=sl*10;
-  var d=1.9/dist;
-  if(scene){ scene.fog=new THREE.FogExp2(SKY,d); }
+  fogBase=sl;
+  if(scene){ scene.fog=new THREE.FogExp2(SKY,1.9/(sl*10)); }
+}
+function fogForLight(dl){
+  if(!scene||!scene.fog) return;
+  var dist=fogBase*10*(0.55+dl*1.1);
+  scene.fog.density=1.9/Math.max(dist,20);
 }
 function onResize(){
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
@@ -1224,6 +1510,108 @@ var BLOCK=90, STREET=18, PITCH=BLOCK+STREET, LOTS=20;
 
 function blockOrigin(bx,bz){ return {x:bx*PITCH, z:bz*PITCH}; }
 
+/* ---- lot occupancy: one building to a lot, ever ---- */
+function lotKey(bx,bz,k){ return bx+":"+bz+":"+k; }
+function lotFree(bx,bz,k){
+  if(!store.lots) store.lots={};
+  return !store.lots[lotKey(bx,bz,k)];
+}
+function takeLot(bx,bz,k,id){
+  if(!store.lots) store.lots={};
+  store.lots[lotKey(bx,bz,k)]=id;
+}
+/* nearest free lot on the same side, then anywhere on the block, then next block */
+function freeLotNear(bx,bz,k){
+  if(lotFree(bx,bz,k)) return {bx:bx,bz:bz,k:k};
+  var side=Math.floor(k/5)%4, i=k%5;
+  for(var d=1;d<5;d++){
+    if(i+d<5 && lotFree(bx,bz,side*5+i+d)) return {bx:bx,bz:bz,k:side*5+i+d};
+    if(i-d>=0 && lotFree(bx,bz,side*5+i-d)) return {bx:bx,bz:bz,k:side*5+i-d};
+  }
+  for(var j=0;j<LOTS;j++) if(lotFree(bx,bz,j)) return {bx:bx,bz:bz,k:j};
+  for(var r=1;r<4;r++){
+    for(var dx=-r;dx<=r;dx++) for(var dz=-r;dz<=r;dz++){
+      if(Math.abs(dx)!==r&&Math.abs(dz)!==r) continue;
+      for(var m=0;m<LOTS;m++) if(lotFree(bx+dx,bz+dz,m)) return {bx:bx+dx,bz:bz+dz,k:m};
+    }
+  }
+  return {bx:bx,bz:bz,k:k};
+}
+
+/* ---- what the dreamer said about where it stands ---- */
+var SPATIAL=[
+  [/\b(?:on|at)\s+the\s+(?:other|opposite)\s+side(?:\s+of\s+the\s+(?:street|road))?\b/,"opposite",1],
+  [/\bacross\s+(?:the\s+(?:street|road)\s+)?from\b/,"opposite",1],
+  [/\bopposite\b/,"opposite",1],
+  [/\b(?:two|2)\s+blocks?\b/,"blocks",2],
+  [/\b(?:three|3)\s+blocks?\b/,"blocks",3],
+  [/\b(?:four|4)\s+blocks?\b/,"blocks",4],
+  [/\b(?:a|one|1)\s+block\b/,"blocks",1],
+  [/\bblocks?\s+(?:down|over|away|up)\b/,"blocks",1],
+  [/\baround\s+the\s+corner\b/,"corner",1],
+  [/\bon\s+the\s+corner\b/,"cornerlot",1],
+  [/\bat\s+the\s+(?:end|bottom|top)\s+of\s+the\s+(?:street|road|block)\b/,"end",1],
+  [/\b(?:next\s+to|beside|alongside|adjacent\s+to|right\s+by)\b/,"next",1],
+  [/\b(?:behind|at\s+the\s+back\s+of|round\s+the\s+back)\b/,"behind",1],
+  [/\b(?:further\s+)?(?:down|along|up)\s+the\s+(?:street|road)\b/,"along",2]
+];
+function spatialIn(text){
+  if(!text) return null;
+  var low=" "+String(text).toLowerCase()+" ";
+  for(var i=0;i<SPATIAL.length;i++) if(SPATIAL[i][0].test(low))
+    return {rel:SPATIAL[i][1], n:SPATIAL[i][2]};
+  return null;
+}
+
+/* one step of a relative instruction. no lot is claimed here. */
+function stepLot(dir,from){
+  var bx=from.bx, bz=from.bz, k=from.lot;
+  var side=Math.floor(k/5)%4, i=k%5;
+  if(dir.rel==="opposite"){
+    var ob={0:[0,1,2],1:[1,0,3],2:[0,-1,0],3:[-1,0,1]}[side];
+    return {bx:bx+ob[0], bz:bz+ob[1], lot:ob[2]*5+(4-i)};
+  }
+  if(dir.rel==="blocks"){
+    var step=(side===0||side===2)?[dir.n,0]:[0,dir.n];
+    return {bx:bx+step[0], bz:bz+step[1], lot:k};
+  }
+  if(dir.rel==="along")     return {bx:bx, bz:bz, lot:side*5+Math.min(4,i+dir.n)};
+  if(dir.rel==="corner")    return {bx:bx, bz:bz, lot:((side+1)%4)*5+0};
+  if(dir.rel==="cornerlot") return {bx:bx, bz:bz, lot:side*5+(i<2?0:4)};
+  if(dir.rel==="end")       return {bx:bx, bz:bz, lot:side*5+4};
+  if(dir.rel==="next")      return {bx:bx, bz:bz, lot:side*5+Math.min(4,i+1)};
+  if(dir.rel==="behind")    return {bx:bx, bz:bz, lot:((side+2)%4)*5+(4-i)};
+  return {bx:bx, bz:bz, lot:k};
+}
+
+/* "two blocks down, on the opposite side" is two steps, applied in order */
+function relativeLot(dirs,from){
+  if(!from || from.lot===undefined || from.lot===null) return null;
+  if(!dirs || !dirs.length) return null;
+  var at={bx:from.bx, bz:from.bz, lot:from.lot};
+  for(var i=0;i<dirs.length;i++) at=stepLot(dirs[i],at);
+  return freeLotNear(at.bx,at.bz,at.lot);
+}
+
+function nextLot(dir){
+  var g=store.grid;
+  var slot=null;
+  if(dir && store.lastLot) slot=relativeLot(dir,store.lastLot);
+  if(!slot) slot=freeLotNear(g.bx,g.bz,g.lot);
+  ensureStreets(slot.bx,slot.bz);
+  var spot=lotSpot(slot.bx,slot.bz,slot.k);
+  spot.addr=addressOf(slot.bx,slot.bz,slot.k);
+  spot.lot=slot.k; spot.bx=slot.bx; spot.bz=slot.bz;
+  g.bx=slot.bx; g.bz=slot.bz;
+  g.lot=slot.k+1;
+  if(g.lot>=LOTS){
+    g.lot=0;
+    if(Math.random()<0.5) g.bx+=(Math.random()<0.5?1:-1);
+    else g.bz+=(Math.random()<0.5?1:-1);
+  }
+  return spot;
+}
+
 function lotSpot(bx,bz,k){
   var o=blockOrigin(bx,bz);
   var side=Math.floor(k/5)%4, i=k%5;
@@ -1245,20 +1633,6 @@ function ensureStreets(bx,bz){
   drawStreet(o.x-h,o.z-h,o.x-h,o.z+h);
 }
 
-function nextLot(){
-  var g=store.grid;
-  ensureStreets(g.bx,g.bz);
-  var spot=lotSpot(g.bx,g.bz,g.lot);
-  spot.addr=addressOf(g.bx,g.bz,g.lot);
-  g.lot++;
-  if(g.lot>=LOTS){
-    g.lot=0;
-    if(Math.random()<0.5) g.bx+=(Math.random()<0.5?1:-1);
-    else g.bz+=(Math.random()<0.5?1:-1);
-  }
-  return spot;
-}
-
 /* push a point out from a lot toward the street it faces, and
    give the along-street direction so things can line up on it */
 function outward(base,dist,along){
@@ -1269,11 +1643,11 @@ function outward(base,dist,along){
   return {x:base.x-dist, z:base.z+a};
 }
 
-function spotFor(arch){
+function spotFor(arch,dir){
   var def=KIT[arch]||KIT.house, cat=def.cat;
   var g=store.grid, o=blockOrigin(g.bx,g.bz);
 
-  if(cat==="structure") return nextLot();
+  if(cat==="structure") return nextLot(dir);
 
   var base=lotSpot(g.bx,g.bz,Math.max(0,g.lot-1));
   base.addr=addressOf(g.bx,g.bz,Math.max(0,g.lot-1));
@@ -1306,6 +1680,7 @@ function place(arch,label,attrs,opts){
   if(!KIT[arch]) arch="house";
   opts=opts||{};
   if(KIT[arch].cat==="being" && !opts.forceNew){
+    /* fall through to a new body when the dreamer said "another" */
     var ch=resolveCharacter(arch,label,attrs);
     if(ch.objId){
       var ex=specById(ch.objId);
@@ -1317,18 +1692,23 @@ function place(arch,label,attrs,opts){
       }
     }
   }
-  var s=spotFor(arch);
+  var s=spotFor(arch,opts.dir);
   var spec={id:uid(),archetype:arch,label:label||arch,attrs:attrs||{},
             x:s.x,z:s.z,rot:s.rot,sign:opts.sign||null,note:opts.note||null,
-            solid:!!opts.solid,detail:1,addr:s.addr||null,name:null};
+            solid:!!opts.solid,detail:1,addr:s.addr||null,name:null,nights:[store.session],
+            bx:s.bx,bz:s.bz,lot:(s.lot===undefined?null:s.lot)};
   if(opts.name){ spec.name=opts.name; spec.named="stated"; }
   else { spec.name=nameFor(spec,s.addr||{num:1,street:streetName("ns",0)}); spec.named="provisional"; }
   markStale(spec.x,spec.z);
+  if(KIT[arch].cat==="structure" && s.lot!==undefined){
+    takeLot(s.bx,s.bz,s.lot,spec.id);
+    store.lastLot={bx:s.bx,bz:s.bz,lot:s.lot};
+  }
   store.objects.push(spec);
   addMesh(spec);
   if(KIT[arch].cat==="being"){
     clearFillersNear(spec.x,spec.z,12);
-    var c=resolveCharacter(arch,label,attrs);
+    var c=opts.forceNew?newCharacter(arch,label,attrs):resolveCharacter(arch,label,attrs);
     c.objId=spec.id; c.x=spec.x; c.z=spec.z; c.anchor={x:spec.x,z:spec.z};
     spec.charId=c.id;
   }
@@ -1499,6 +1879,57 @@ function assignLife(c){
   /* a home is never guessed for a primary. unknown stays unknown. */
 }
 
+/* two names, one person. keep the older record and take everything from the other. */
+function mergeCharacters(keepId,dropId){
+  var keep=null,drop=null;
+  store.characters.forEach(function(c){
+    if(c.id===keepId) keep=c;
+    if(c.id===dropId) drop=c;
+  });
+  if(!keep||!drop||keep===drop) return false;
+
+  drop.aka.forEach(function(a){ if(keep.aka.indexOf(a)===-1) keep.aka.push(a); });
+  if(drop.name && keep.aka.indexOf(normName(drop.name))===-1) keep.aka.push(normName(drop.name));
+  drop.details.forEach(function(d){ addDetail(keep,d); });
+  drop.sessions.forEach(function(n){ if(keep.sessions.indexOf(n)===-1) keep.sessions.push(n); });
+  keep.sessions.sort(function(a,b){ return a-b; });
+  keep.log=(drop.log||[]).concat(keep.log||[]);
+  if(drop.born && (!keep.born || drop.born<keep.born)) keep.born=drop.born;
+
+  /* a fact the dream stated beats one that was only read or filled */
+  ["home","work","routine","role","shift"].forEach(function(k){
+    var ks=(keep.src&&keep.src[k])||null, ds=(drop.src&&drop.src[k])||null;
+    var rank={stated:3,parsed:2,filled:1};
+    if(drop[k] && (!keep[k] || (rank[ds]||0)>(rank[ks]||0))){
+      keep[k]=drop[k];
+      if(!keep.src) keep.src={};
+      keep.src[k]=ds;
+    }
+  });
+
+  /* the body the dreamer last saw is the one that stays standing */
+  var dropSpec=drop.objId?specById(drop.objId):null;
+  var keepSpec=keep.objId?specById(keep.objId):null;
+  if(dropSpec){
+    if(keepSpec && keepSpec.id!==dropSpec.id){
+      if(meshes[keepSpec.id]){ scene.remove(meshes[keepSpec.id]); delete meshes[keepSpec.id]; }
+      var ki=store.objects.indexOf(keepSpec); if(ki>-1) store.objects.splice(ki,1);
+    }
+    dropSpec.charId=keep.id;
+    dropSpec.label=keep.name;
+    keep.objId=dropSpec.id;
+    keep.x=dropSpec.x; keep.z=dropSpec.z;
+    keep.anchor={x:dropSpec.x,z:dropSpec.z};
+    refresh(dropSpec);
+  }
+
+  var di=store.characters.indexOf(drop);
+  if(di>-1) store.characters.splice(di,1);
+  checkWake(keep);
+  save(); tickClock(true); updateCount();
+  return true;
+}
+
 function knownGaps(c){
   var g=[];
   if(!c.home) g.push("where they live");
@@ -1572,23 +2003,144 @@ function offsetAt(o,c,d){
   return {x:o.x+Math.cos(a)*r, z:o.z+Math.sin(a)*r};
 }
 
-/* ---- sky, light and the hour ---- */
-var SKYKEY=[[0,0x070810],[4.5,0x0B0D18],[6,0x1B1A28],[7,0x3A2E30],[8,0x4E4A50],
-            [11,0x6A7280],[14,0x6E7684],[17,0x5E5A56],[19,0x4A3730],[20.5,0x241E2A],[22,0x0D0E16],[24,0x070810]];
+/* ---- sky, light and the hour ----
+   two colours per key hour: the zenith overhead and the horizon at the edge.
+   the fog takes the horizon, so the world fades into the sky at its rim. */
+var SKYKEY=[
+ [0,   0x04050B,0x0B0E1C],
+ [4.5, 0x060812,0x121729],
+ [5.5, 0x141A33,0x3B3148],
+ [6.25,0x2A3558,0x9A5E4E],
+ [7,   0x4A6A98,0xD69A72],
+ [8.5, 0x5E8CC2,0xB8C6D2],
+ [12,  0x5A8FD0,0xC7D7E4],
+ [16,  0x5C88C0,0xC4CFD6],
+ [17.75,0x55709E,0xE0A878],
+ [18.75,0x3A3F6A,0xC56A52],
+ [19.6,0x1C2040,0x5A3A50],
+ [20.75,0x0A0D1E,0x1A1B30],
+ [22,  0x05060E,0x0D1020],
+ [24,  0x04050B,0x0B0E1C]];
+
 function skyAt(h){
   for(var i=0;i<SKYKEY.length-1;i++){
-    if(h>=SKYKEY[i][0]&&h<=SKYKEY[i+1][0]){
-      var t=(h-SKYKEY[i][0])/(SKYKEY[i+1][0]-SKYKEY[i][0]);
-      return blend(SKYKEY[i][1],SKYKEY[i+1][1],t);
+    var a=SKYKEY[i], b=SKYKEY[i+1];
+    if(h>=a[0]&&h<=b[0]){
+      var t=(h-a[0])/(b[0]-a[0]);
+      return {top:blend(a[1],b[1],t), low:blend(a[2],b[2],t)};
     }
   }
-  return SKYKEY[0][1];
+  return {top:SKYKEY[0][1], low:SKYKEY[0][2]};
 }
 function daylight(h){
-  if(h<5||h>=21) return 0;
-  if(h<7.5) return (h-5)/2.5;
-  if(h<18) return 1;
-  return 1-(h-18)/3;
+  if(h<5||h>=20.5) return 0;
+  if(h<7.25) return (h-5)/2.25;
+  if(h<17.5) return 1;
+  return 1-(h-17.5)/3;
+}
+
+/* the moon is the real one: its phase comes from today's date */
+function moonPhase(d){
+  var ref=Date.UTC(2000,0,6,18,14);
+  var days=((d||new Date()).getTime()-ref)/86400000;
+  var p=(days/29.530588853)%1;
+  return p<0?p+1:p;
+}
+function moonName(p){
+  if(p<0.03||p>=0.97) return "new moon";
+  if(p<0.22) return "waxing crescent";
+  if(p<0.28) return "first quarter";
+  if(p<0.47) return "waxing gibbous";
+  if(p<0.53) return "full moon";
+  if(p<0.72) return "waning gibbous";
+  if(p<0.78) return "last quarter";
+  return "waning crescent";
+}
+function moonLit(p){ return (1-Math.cos(p*2*Math.PI))/2; }
+
+function moonTexture(p){
+  var c=document.createElement("canvas"); c.width=c.height=128;
+  var x=c.getContext("2d"), r=58, cx=64, cy=64;
+  x.clearRect(0,0,128,128);
+  var glow=x.createRadialGradient(cx,cy,r*0.9,cx,cy,r*1.08);
+  glow.addColorStop(0,"rgba(220,226,240,0.28)"); glow.addColorStop(1,"rgba(220,226,240,0)");
+  x.fillStyle=glow; x.beginPath(); x.arc(cx,cy,r*1.08,0,Math.PI*2); x.fill();
+  x.fillStyle="#1a1d27"; x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2); x.fill();
+  var waxing=p<0.5, k=Math.cos(p*2*Math.PI);
+  x.fillStyle="#E4E6EE";
+  x.beginPath();
+  x.arc(cx,cy,r,-Math.PI/2,Math.PI/2,!waxing);
+  x.ellipse(cx,cy,Math.abs(k)*r,r,0,Math.PI/2,-Math.PI/2,(k>0)===waxing);
+  x.closePath(); x.fill();
+  x.globalAlpha=0.12; x.fillStyle="#5a5f72";
+  [[-18,-14,9],[14,10,12],[-6,22,7],[20,-20,6]].forEach(function(m){
+    x.beginPath(); x.arc(cx+m[0],cy+m[1],m[2],0,Math.PI*2); x.fill();
+  });
+  var t=new THREE.CanvasTexture(c); return t;
+}
+
+var sky=null, sunDisc=null, moonDisc=null, stars=null, curPhase=-1;
+var SKY_R=2600;
+
+function buildSky(){
+  var geo=new THREE.SphereGeometry(SKY_R,32,20);
+  var mat=new THREE.ShaderMaterial({
+    uniforms:{top:{value:new THREE.Color(0x04050B)},low:{value:new THREE.Color(0x0B0E1C)}},
+    vertexShader:"varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+    fragmentShader:"uniform vec3 top; uniform vec3 low; varying vec3 vP; void main(){ float h=clamp(vP.y,0.0,1.0); float t=pow(h,0.55); gl_FragColor=vec4(mix(low,top,t),1.0); }",
+    side:THREE.BackSide, depthWrite:false, fog:false
+  });
+  sky=new THREE.Mesh(geo,mat);
+  sky.renderOrder=-10;
+  scene.add(sky);
+
+  sunDisc=new THREE.Mesh(new THREE.CircleGeometry(90,40),
+    new THREE.MeshBasicMaterial({color:0xFFF1D0,transparent:true,opacity:1,fog:false,depthWrite:false}));
+  var halo=new THREE.Mesh(new THREE.CircleGeometry(230,40),
+    new THREE.MeshBasicMaterial({color:0xFFD9A0,transparent:true,opacity:0.18,fog:false,depthWrite:false}));
+  halo.position.z=-2; sunDisc.add(halo); sunDisc.userData.halo=halo;
+  sunDisc.renderOrder=-9;
+  scene.add(sunDisc);
+
+  moonDisc=new THREE.Mesh(new THREE.PlaneGeometry(210,210),
+    new THREE.MeshBasicMaterial({transparent:true,opacity:1,fog:false,depthWrite:false}));
+  moonDisc.renderOrder=-9;
+  scene.add(moonDisc);
+
+  var n=1400, pos=new Float32Array(n*3);
+  for(var i=0;i<n;i++){
+    var u=Math.random(), v=Math.random()*0.92+0.04;
+    var th=u*Math.PI*2, ph=Math.acos(1-v);
+    var r=SKY_R*0.97;
+    pos[i*3]=r*Math.sin(ph)*Math.cos(th);
+    pos[i*3+1]=r*Math.cos(ph);
+    pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+  }
+  var sg=new THREE.BufferGeometry();
+  sg.setAttribute("position",new THREE.BufferAttribute(pos,3));
+  stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xE8ECF6,size:2.2,sizeAttenuation:false,
+    transparent:true,opacity:0,fog:false,depthWrite:false}));
+  stars.renderOrder=-9;
+  scene.add(stars);
+}
+
+/* where a body sits on the sky dome for a given hour.
+   the sun rises in the east at six and sets in the west at eighteen. */
+function arcPos(hourAngle){
+  var a=hourAngle*Math.PI;
+  var R=SKY_R*0.9;
+  return {x:Math.cos(a)*R, y:Math.sin(a)*R*0.92, z:-R*0.34};
+}
+
+function phaseWord(h){
+  if(h<4.5||h>=22) return "Night";
+  if(h<5.75) return "Before dawn";
+  if(h<7.25) return "Dawn";
+  if(h<11.5) return "Morning";
+  if(h<13.5) return "Midday";
+  if(h<17.25) return "Afternoon";
+  if(h<19.25) return "Dusk";
+  return "Evening";
 }
 
 var hemi,sun,lastHour=-1;
@@ -1596,18 +2148,102 @@ function tickClock(force){
   var h=dreamHour();
   if(!force && Math.abs(h-lastHour)<0.004) return;
   lastHour=h;
-  var el=document.getElementById("clock");
-  if(el) el.textContent=hhmm(h)+(scrubOffset!==null?" \u25b8":"");
 
-  var sky=skyAt(h), dl=daylight(h);
-  scene.background.setHex(sky);
-  if(scene.fog) scene.fog.color.setHex(sky);
-  if(hemi) hemi.intensity=0.35+dl*0.85;
-  if(sun){ sun.intensity=0.18+dl*0.75; sun.color.setHex(blend(0x8FA6C8,0xE8DCC0,dl)); }
+  var sk=skyAt(h), dl=daylight(h);
+  var ph=moonPhase(), lit=moonLit(ph);
+
+  if(sky){
+    sky.material.uniforms.top.value.setHex(sk.top);
+    sky.material.uniforms.low.value.setHex(sk.low);
+  }
+  scene.background.setHex(sk.low);
+  if(scene.fog) scene.fog.color.setHex(sk.low);
+
+  /* the sun: up from six to eighteen */
+  var sa=arcPos((h-6)/12);
+  var sunUp=sa.y>-SKY_R*0.05;
+  if(sunDisc){
+    sunDisc.visible=sunUp;
+    sunDisc.userData.base=sa;
+    var warm=1-Math.min(1,Math.max(0,sa.y/(SKY_R*0.35)));
+    sunDisc.material.color.setHex(blend(0xFFF6E0,0xFF9A5A,warm));
+    sunDisc.userData.halo.material.color.setHex(blend(0xFFE6B8,0xFF7A4A,warm));
+    sunDisc.userData.halo.material.opacity=0.14+warm*0.22;
+  }
+
+  /* the moon rises later each night as it waxes, as the real one does */
+  if(Math.abs(ph-curPhase)>0.005 && moonDisc){
+    curPhase=ph;
+    if(moonDisc.material.map) moonDisc.material.map.dispose();
+    moonDisc.material.map=moonTexture(ph);
+    moonDisc.material.needsUpdate=true;
+  }
+  var ma=arcPos((h-6-ph*24)/12);
+  var moonUp=ma.y>-SKY_R*0.05 && lit>0.03;
+  if(moonDisc){
+    moonDisc.visible=moonUp;
+    moonDisc.userData.base=ma;
+    moonDisc.material.opacity=Math.max(0.25,1-dl*0.72);
+  }
+
+  if(stars) stars.material.opacity=Math.max(0,1-dl*1.6)*0.95;
+
+  /* the light comes from whichever body is up */
+  if(hemi){
+    hemi.intensity=0.22+dl*1.05;
+    hemi.color.setHex(blend(0x3A4468,0xCFDCEA,dl));
+    hemi.groundColor.setHex(blend(0x07080D,0x5A5040,dl));
+  }
+  if(sun){
+    if(sunUp && dl>0.02){
+      sun.position.set(sa.x,Math.max(sa.y,40),sa.z);
+      sun.intensity=0.15+dl*1.05;
+      var warm2=1-Math.min(1,Math.max(0,sa.y/(SKY_R*0.35)));
+      sun.color.setHex(blend(0xFFF4E2,0xFF9E6A,warm2));
+    } else if(moonUp){
+      sun.position.set(ma.x,Math.max(ma.y,40),ma.z);
+      sun.intensity=0.06+lit*0.30;
+      sun.color.setHex(0x9FB4D8);
+    } else {
+      sun.position.set(-300,500,180);
+      sun.intensity=0.05;
+      sun.color.setHex(0x6E7FA0);
+    }
+  }
+  if(ground) ground.material.color.setHex(blend(0x0F1118,0x5B5A52,dl));
+  fogForLight(dl);
+  lampsForNight(1-dl);
+
+  var el=document.getElementById("clock");
+  if(el){
+    var word=phaseWord(h);
+    var glyph=(dl>0.35)?SUN_SVG:MOON_SVG;
+    el.innerHTML=glyph+'<span class="cw">'+word+'</span><span class="ct">'+hhmm(h)+
+      (scrubOffset!==null?" \u25b8":"")+"</span>"+
+      (dl<0.35?'<span class="cm">'+moonName(ph)+"</span>":"");
+  }
 
   seedNearby();
   balanceCrowds(h);
   moveEveryone(h,dl);
+}
+
+var SUN_SVG='<svg class="cg" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.3" fill="currentColor"/>'+
+  '<g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M8 1.2v1.9M8 12.9v1.9M1.2 8h1.9M12.9 8h1.9M3.2 3.2l1.3 1.3M11.5 11.5l1.3 1.3M3.2 12.8l1.3-1.3M11.5 4.5l1.3-1.3"/></g></svg>';
+var MOON_SVG='<svg class="cg" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.6 2.2A6 6 0 1 0 13.8 10 4.8 4.8 0 0 1 10.6 2.2z" fill="currentColor"/></svg>';
+
+/* the sky and its bodies stay centred on you, so the horizon never arrives */
+function skyFollow(){
+  if(!sky) return;
+  var p=camera.position;
+  sky.position.set(p.x,0,p.z);
+  stars.position.set(p.x,0,p.z);
+  [sunDisc,moonDisc].forEach(function(d){
+    if(!d||!d.userData.base) return;
+    var b=d.userData.base;
+    d.position.set(p.x+b.x,b.y,p.z+b.z);
+    d.lookAt(p.x,p.y,p.z);
+  });
 }
 
 /* a block is only populated once there is a reason to be near it */
@@ -1645,6 +2281,108 @@ function moveEveryone(h,dl){
   }
 }
 
+
+/* ============================================================
+   6e. THE DREAMER — what you are, and what you can do in there
+   ============================================================ */
+function dreamer(){
+  if(!store.dreamer) store.dreamer={name:"",about:"",practice:"",notes:"",abilities:[]};
+  if(!store.dreamer.abilities) store.dreamer.abilities=[];
+  return store.dreamer;
+}
+
+/* powers are recorded the way everything else is: only if the dream said so */
+var ABILITY=[
+["flying",["i flew","i was flying","i could fly","i lifted off","i rose into the air"]],
+["floating",["i floated","floating above","i hovered","i was hovering"]],
+["passing through walls",["through the wall","through solid","i passed through","walked through walls"]],
+["breathing underwater",["breathe underwater","breathing underwater","i could breathe under"]],
+["becoming unseen",["i was invisible","became invisible","i could not be seen"]],
+["changing shape",["i changed shape","shapeshift","i took the form"]],
+["summoning",["i summoned","i conjured","i called forth"]],
+["stopping time",["time stopped","i stopped time","everything froze"]],
+["moving without walking",["teleport","i blinked to","i was suddenly in","i appeared in"]],
+["changing size",["i grew huge","i shrank","i became small","i was enormous"]],
+["speaking with the dead",["spoke with the dead","the dead spoke","i heard the dead"]],
+["knowing it was a dream",["i knew i was dreaming","i realised i was dreaming","i realized i was dreaming"]],
+["changing the dream",["i willed it","i remade","i rewrote it","i made it become"]],
+["seeing what was hidden",["i could see through","i saw what was hidden","the true shape"]],
+["walking on water",["walked on the water","i walked on water"]],
+["healing",["i healed","i mended","the wound closed"]]
+];
+
+function scanAbilities(text){
+  if(!text) return 0;
+  var low=" "+String(text).toLowerCase().replace(/\s+/g," ")+" ";
+  var d=dreamer(), found=0;
+  ABILITY.forEach(function(pair){
+    for(var i=0;i<pair[1].length;i++){
+      if(low.indexOf(pair[1][i])>-1){
+        var have=null;
+        d.abilities.forEach(function(a){ if(a.name===pair[0]) have=a; });
+        if(have){ if(have.nights.indexOf(store.session)===-1) have.nights.push(store.session); }
+        else { d.abilities.push({name:pair[0],nights:[store.session],src:"stated"}); found++; }
+        return;
+      }
+    }
+  });
+  return found;
+}
+function hasAbility(name){
+  var d=dreamer();
+  for(var i=0;i<d.abilities.length;i++) if(d.abilities[i].name===name) return true;
+  return false;
+}
+
+/* ============================================================
+   6f. PASSAGES — how one place reaches another, including the
+       ways that should not be possible
+   ============================================================ */
+var LINKWORD=[
+[/\bcame\s+out\s+(?:in|at|into)\b/,"portal"],
+[/\btook\s+me\s+(?:to|into)\b/,"portal"],
+[/\bstepped\s+through\s+(?:it\s+)?(?:in)?to\b/,"portal"],
+[/\bon\s+the\s+other\s+side\b/,"portal"],
+[/\b(?:behind|beneath|under)\s+(?:it|the\s+\w+)\s+(?:was|lay|i\s+found)\b/,"secret"],
+[/\b(?:a\s+)?(?:secret|hidden|concealed)\s+(?:door|passage|way|stair)\b/,"secret"],
+[/\bclimbed\s+(?:up|down)\s+(?:in)?to\b/,"stairs"],
+[/\bfell\s+(?:in)?to\b/,"fall"],
+[/\b(?:led|leads|opened|opens)\s+(?:through\s+)?(?:on)?to\b/,"door"]
+];
+
+function linkIn(text){
+  if(!text) return null;
+  var low=" "+String(text).toLowerCase()+" ";
+  for(var i=0;i<LINKWORD.length;i++) if(LINKWORD[i][0].test(low)) return LINKWORD[i][1];
+  return null;
+}
+
+function addPassage(fromId,toId,kind,hidden){
+  if(!fromId||!toId||fromId===toId) return null;
+  if(!store.passages) store.passages=[];
+  for(var i=0;i<store.passages.length;i++){
+    var p=store.passages[i];
+    if((p.from===fromId&&p.to===toId)||(p.from===toId&&p.to===fromId)) return p;
+  }
+  var pg={id:uid(),from:fromId,to:toId,kind:kind||"door",hidden:!!hidden,found:!hidden};
+  store.passages.push(pg);
+  return pg;
+}
+
+/* a portal or secret way carries you across the map when you step into it */
+function passageAt(x,z,r){
+  if(!store.passages) return null;
+  for(var i=0;i<store.passages.length;i++){
+    var p=store.passages[i];
+    if(p.kind!=="portal"&&p.kind!=="secret") continue;
+    if(!p.found) continue;
+    var a=specById(p.from), b=specById(p.to);
+    if(!a||!b) continue;
+    if((a.x-x)*(a.x-x)+(a.z-z)*(a.z-z)<r*r) return {at:a,to:b,p:p};
+    if((b.x-x)*(b.x-x)+(b.z-z)*(b.z-z)<r*r) return {at:b,to:a,p:p};
+  }
+  return null;
+}
 
 /* ============================================================
    6d. FILLERS — a town needs bodies, but none of them are yours
@@ -1820,6 +2558,11 @@ function resolveCharacter(arch,label,attrs){
       return c;
     }
   }
+  return newCharacter(arch,label,attrs,n);
+}
+
+function newCharacter(arch,label,attrs,n){
+  n=n||normName(label)||arch;
   var ch={id:uid(),archetype:arch,name:label||arch,aka:[n],details:[],
           sessions:[store.session],awake:false,log:[],objId:null,x:0,z:0,
           primary:true,src:{name:"stated"},role:null,shift:null,routine:null,
@@ -1908,6 +2651,7 @@ function awakeNear(pos,range){
 
 
 var walkMode=false, locked=false, keys={}, yaw=0, pitch=0;
+var canFly=false, flyY=0, portalCool=0;
 var orb={r:180,t:0.9,p:0.95,tx:0,tz:0}, dragging=null, idle=0;
 
 function initControls(){
@@ -1922,6 +2666,9 @@ function initControls(){
       return;
     }
     if(e.code==="Escape"){
+      if(storyOpen){ closeStory(); return; }
+      if(document.getElementById("journal").classList.contains("open")){ closeJournal(); return; }
+      if(document.getElementById("self").classList.contains("open")){ closeSelf(); return; }
       if(greetOpen){ closeGreet(); return; }
       if(talkOpen){ closeTalk(); return; }
       document.getElementById("roster").classList.remove("open");
@@ -1998,9 +2745,15 @@ function animate(){
       camera.position.x+=(Math.sin(yaw)*-f+Math.cos(yaw)*s)*sp*dt;
       camera.position.z+=(Math.cos(yaw)*-f-Math.sin(yaw)*s)*sp*dt;
     }
-    camera.position.y=1.72;
+    if(canFly){
+      if(keys["Space"]) flyY+=sp*dt;
+      if(keys["KeyC"]||keys["ControlLeft"]) flyY-=sp*dt;
+      flyY=Math.max(0,Math.min(420,flyY));
+      camera.position.y=1.72+flyY;
+    } else camera.position.y=1.72;
     camera.rotation.order="YXZ";
     camera.rotation.set(pitch,yaw,0);
+    stepThrough();
     proximity(dt);
   } else {
     idle+=dt;
@@ -2017,8 +2770,26 @@ function animate(){
     camera.lookAt(orb.tx,12,orb.tz);
   }
   tickClock(false);
+  skyFollow();
   if(audio.on) audioTick();
   renderer.render(scene,camera);
+}
+
+/* a portal or a secret way moves you when you step into it */
+function stepThrough(){
+  if(portalCool>0){ portalCool-=1; return; }
+  var hit=passageAt(camera.position.x,camera.position.z,3.2);
+  if(!hit) return;
+  var ang=Math.random()*6.283;
+  camera.position.x=hit.to.x+Math.cos(ang)*5;
+  camera.position.z=hit.to.z+Math.sin(ang)*5;
+  flyY=0;
+  portalCool=140;
+  var nm=placeName(hit.to);
+  setStatus("<b>Through \u2014 "+esc(nm)+".</b>");
+  var pel=document.getElementById("place");
+  pel.innerHTML=esc(nm); pel.classList.remove("gone");
+  lastPlace=hit.to;
 }
 
 /* awake figures turn to watch you when you come close */
@@ -2068,7 +2839,12 @@ function setWalk(on){
            document.getElementById("place").classList.add("gone"); lastPlace=null; }
   else{
     var t=lookTarget();
-    yaw=0; pitch=0;
+    yaw=0; pitch=0; flyY=0; portalCool=60;
+    canFly=hasAbility("flying")||hasAbility("floating");
+    document.getElementById("walkhint").innerHTML=
+      "click to look &middot; wasd move &middot; shift run"+
+      (canFly?" &middot; space/c to rise and fall":"")+
+      " &middot; click a form to inspect &middot; e to speak &middot; esc back";
     camera.position.set(t.x, 1.72, t.z+70);
   }
 }
@@ -2098,8 +2874,18 @@ function openInspect(id){
   if(!picked) return;
   if(document.exitPointerLock) document.exitPointerLock();
   document.getElementById("i-name").textContent=placeName(picked);
+  var lk=document.getElementById("i-link"), opts=['<option value="">\u2014</option>'];
+  store.objects.forEach(function(o){
+    if(o===picked||o.filler||o.archetype!==picked.archetype||!o.nights||!picked.nights) return;
+    var shared=o.nights.some(function(n){ return picked.nights.indexOf(n)>-1; });
+    if(shared) return;
+    opts.push('<option value="'+o.id+'">'+esc(placeName(o))+" \u2014 night"+(o.nights.length>1?"s ":" ")+o.nights.join(", ")+"</option>");
+  });
+  lk.innerHTML=opts.join("");
+  lk.disabled=opts.length<2;
   document.getElementById("i-name-in").value=picked.name||"";
-  document.getElementById("i-sub").textContent=picked.archetype+" \u00b7 "+Math.round(fidelity(picked)*100)+"% remembered";
+  document.getElementById("i-sub").textContent=picked.archetype+" \u00b7 "+Math.round(fidelity(picked)*100)+"% remembered"+
+    (picked.nights&&picked.nights.length>1?(" \u00b7 "+picked.nights.length+" nights"):"");
   document.getElementById("i-label").value=picked.label||"";
   document.getElementById("i-sign").value=picked.sign||"";
   document.getElementById("i-scale").value=picked.attrs.s||1;
@@ -2153,6 +2939,18 @@ function firstWords(c){
   return d?"\u2026":"\u2026";
 }
 
+function dreamerBrief(){
+  var d=dreamer(), bits=[];
+  if(d.name) bits.push("The dreamer is called "+d.name+" here.");
+  if(d.about) bits.push("About them: "+d.about);
+  if(d.practice) bits.push("Their practice: "+d.practice);
+  if(d.abilities.length) bits.push("In dreams they can: "+
+    d.abilities.map(function(a){ return a.name; }).join(", ")+".");
+  if(d.notes) bits.push("They also say: "+d.notes);
+  if(!bits.length) return "";
+  return bits.join(" ")+" Treat this as true of them, but never claim to know their waking life beyond it.";
+}
+
 function charSystem(c){
   var where=[];
   store.objects.forEach(function(o){
@@ -2163,6 +2961,7 @@ function charSystem(c){
   });
   return [
     "You are "+c.name+", a figure inside a dream that the dreamer recorded.",
+    dreamerBrief(),
     "It is "+hhmm(dreamHour())+". You are "+(c.doing||"here")+
       (c.atId&&specById(c.atId)?(" at "+placeName(specById(c.atId))):"")+".",
     c.home&&specById(c.home)?("You live at "+placeName(specById(c.home))+"."):"",
@@ -2241,17 +3040,43 @@ function sendTalk(){
   });
 }
 
+/* a figure speaks in the first person; the record needs it in the third,
+   or nothing it says about itself can be attached to it */
+function deFirstPerson(text,name){
+  if(!name) return text;
+  var t=" "+text+" ";
+  var poss=name+(/s$/i.test(name)?"'":"'s");
+  t=t.replace(/([\s"(])I'm(\W)/gi,"$1"+name+" is$2");
+  t=t.replace(/([\s"(])I've(\W)/gi,"$1"+name+" has$2");
+  t=t.replace(/([\s"(])I'll(\W)/gi,"$1"+name+" will$2");
+  t=t.replace(/([\s"(])I am(\W)/g,"$1"+name+" is$2");
+  t=t.replace(/([\s"(])I have(\W)/g,"$1"+name+" has$2");
+  t=t.replace(/([\s"(])I was(\W)/g,"$1"+name+" was$2");
+  t=t.replace(/([\s"(])I do(\W)/g,"$1"+name+" does$2");
+  t=t.replace(/([\s"(])I don't(\W)/gi,"$1"+name+" does not$2");
+  t=t.replace(/([\s"(])I (\w+)/g,function(m,p,v){
+    if(/^(am|is|was|have|has|do|does|will|would|can|could|had)$/i.test(v)) return p+name+" "+v;
+    return p+name+" "+v+(/[sd]$/.test(v)?"":"s");
+  });
+  t=t.replace(/([\s"(])my(\W)/gi,"$1"+poss+"$2");
+  t=t.replace(/([\s"(])me(\W)/gi,"$1"+name+"$2");
+  t=t.replace(/([\s"(])myself(\W)/gi,"$1"+name+"$2");
+  return t.trim();
+}
+
 /* what a figure describes becomes part of the dreamscape */
 function buildFromReply(){
   if(!lastReply){ setStatus("<i>Nothing said yet.</i>"); return; }
-  var n=scanText(lastReply);
-  feedContext(lastReply);
-  committed+=lastReply+" ";
+  var who=talkWith?talkWith.name:null;
+  var said=deFirstPerson(lastReply,who);
+  var n=scanText(said);
+  feedContext(said);
+  committed+=said+" ";
   store.transcript=committed;
   renderTranscript(committed,"");
   scheduleParse(300);
   save(); updateCount();
-  setStatus(n?("<b>"+n+" form"+(n>1?"s":"")+" rose from what they said</b>"):"Nothing buildable in that.");
+  setStatus(n?("<b>"+n+" form"+(n>1?"s":"")+" rose from what they said</b>"):"Taken down.");
 }
 
 /* ============================================================
@@ -2387,6 +3212,16 @@ function srcMark(c,k){
   return ' <s>filled in</s>';
 }
 
+function mergeControl(c){
+  var others=store.characters.filter(function(x){
+    return x.primary!==false && x.id!==c.id && x.archetype===c.archetype;
+  });
+  if(!others.length) return "";
+  var opts=['<option value="">\u2014 same as someone else? \u2014</option>'];
+  others.forEach(function(x){ opts.push('<option value="'+x.id+'">'+esc(x.name)+"</option>"); });
+  return '<select class="rmerge" data-keep="'+c.id+'">'+opts.join("")+"</select>";
+}
+
 function openRoster(){
   tickClock(true);
   var el=document.getElementById("r-list");
@@ -2410,10 +3245,31 @@ function openRoster(){
           " dream"+(c.sessions.length>1?"s":"")+(c.awake?' \u00b7 <em>awake</em>':"")+"</div>"+
         (gaps.length?('<div class="rd"><button class="btn rfill" data-fill="'+c.id+
           '" type="button">Fill in '+gaps.length+' gap'+(gaps.length>1?"s":"")+"</button></div>"):"")+
+        mergeControl(c)+
         '<div class="rbar"><i style="width:'+Math.min(Math.round(awareness(c)*100),100)+'%"></i></div></div>';
     }).join("")+
     (fill?('<div class="rd" style="margin-top:12px">and '+fill+" nameless others, who were never dreamt</div>"):"");
 
+    Array.prototype.forEach.call(el.querySelectorAll(".rmerge"),function(sel){
+      sel.addEventListener("click",function(ev){ ev.stopPropagation(); });
+      sel.addEventListener("change",function(ev){
+        ev.stopPropagation();
+        var keepId=sel.getAttribute("data-keep"), dropId=sel.value;
+        if(!dropId) return;
+        var kn="",dn="";
+        store.characters.forEach(function(x){
+          if(x.id===keepId) kn=x.name;
+          if(x.id===dropId) dn=x.name;
+        });
+        if(!confirm("Fold \""+dn+"\" into \""+kn+"\"?\n\nEverything recorded about both becomes one person, under the name \""+kn+"\".")){
+          sel.value=""; return;
+        }
+        if(mergeCharacters(keepId,dropId)){
+          setStatus("<b>"+esc(dn)+" and "+esc(kn)+" were the same person.</b>");
+          openRoster();
+        }
+      });
+    });
     Array.prototype.forEach.call(el.querySelectorAll(".rfill"),function(b){
       b.addEventListener("click",function(ev){
         ev.stopPropagation();
@@ -2527,7 +3383,7 @@ function stopAudio(){
    ============================================================ */
 var VOCAB={
 house:["house","home","cabin","bungalow","farmhouse","dwelling","residence"],
-cottage:["cottage","hut","shack","cabin"],
+cottage:["log cabin","wooden cabin","cottage","shack","hut","cabin"],
 apartment:["apartment","flat","tenement","block of flats","condo","projects"],
 tower:["tower","highrise","high-rise","spire"],
 skyscraper:["skyscraper","tower block"],
@@ -2538,23 +3394,23 @@ hospital:["hospital","clinic","infirmary","ward","emergency room","surgery"],
 school:["school","classroom","college","university","academy","gymnasium"],
 church:["church","chapel","parish","steeple","mosque","synagogue","shrine"],
 cathedral:["cathedral","basilica","minster"],
-bank:["bank","vault","treasury"],
+bank:["bank vault","bank","treasury"],
 library:["library","archive","records"],
-station:["station","depot","terminal","platform","airport"],
+station:["train depot","bus depot","railway station","train station","bus station","station","terminal","platform","airport","depot"],
 courthouse:["courthouse","court","tribunal","city hall","town hall"],
 shop:["shop","store","market","cafe","diner","bar","pub","restaurant","bakery","boutique","pharmacy"],
-warehouse:["warehouse","depot","hangar","storage"],
-factory:["factory","mill","plant","refinery","foundry"],
+warehouse:["storage depot","supply depot","goods depot","warehouse","hangar","storage"],
+factory:["steel mill","cotton mill","paper mill","factory","plant","refinery","foundry","mill"],
 barn:["barn","stable","silo"],
-shed:["shed","outhouse","hut"],
+shed:["garden shed","tool shed","shed","outhouse"],
 garage:["garage","carport","workshop"],
 ruin:["ruin","ruins","rubble","wreckage","derelict","collapsed"],
 tent:["tent","teepee","canopy","marquee"],
-bunker:["bunker","shelter","pillbox","vault"],
+bunker:["bomb shelter","air raid shelter","bunker","shelter","pillbox","vault"],
 bridge:["bridge","crossing","overpass","viaduct","footbridge"],
 stairs:["stairs","staircase","steps","stairway","stairwell","escalator"],
 tunnel:["tunnel","underpass","subway","passage","culvert"],
-gate:["gate","gateway","entrance","archway"],
+gate:["stone archway","iron gate","garden gate","gateway","entrance","gate"],
 statue:["statue","effigy","idol","figure on a plinth"],
 monument:["monument","obelisk","memorial","pillar"],
 fountain:["fountain","basin"],
@@ -2562,7 +3418,7 @@ well:["well","cistern"],
 tomb:["tomb","mausoleum","crypt","sepulchre"],
 grave:["grave","headstone","gravestone","graveyard","cemetery"],
 lighthouse:["lighthouse","beacon"],
-windmill:["windmill","mill"],
+windmill:["windmill","water mill","watermill","old mill"],
 pier:["pier","jetty","dock","wharf","boardwalk"],
 booth:["booth","phone box","telephone box","kiosk","stall"],
 tree:["tree","trees","oak","elm","willow","birch","orchard","grove","woods","forest"],
@@ -2572,7 +3428,12 @@ palm:["palm tree","palm trees","palm"],
 bush:["bush","shrub","thicket","bracken"],
 hedge:["hedge","hedgerow"],
 grass:["grass","lawn","meadow","field","clearing"],
-water:["water","river","lake","sea","ocean","pond","flood","canal","stream","pool","marsh","bay"],
+water:["water","river","lake","sea","ocean","pond","flood","canal","stream","marsh","bay"],
+gasstation:["gas station","petrol station","filling station","service station","gas pumps","forecourt"],
+parking:["parking lot","car park","parking garage","parking"],
+playground:["playground","swings","play park","swing set"],
+pool:["swimming pool","pool","lido"],
+busstop:["bus stop","bus shelter"],
 hill:["hill","mound","rise","dune","knoll"],
 mountain:["mountain","peak","summit","range","cliff","ridge"],
 rock:["rock","boulder","stone","crag"],
@@ -2611,7 +3472,15 @@ cat:["cat","kitten","feline"],
 horse:["horse","pony","mare","stallion","deer","stag","cow","sheep"],
 bird:["bird","crow","raven","gull","owl","pigeon","hawk"],
 creature:["creature","beast","monster","thing","entity","animal"],
-portal:["door","doorway","portal","threshold","mirror","opening","hatch","archway"]
+portal:["door","doorway","portal","threshold","mirror","opening","hatch"],
+circle:["ritual circle","stone circle","summoning circle","circle of salt","sigil on the ground","circle"],
+altar:["altar","shrine table","offering table"],
+standingstones:["standing stones","stone ring","menhirs","henge"],
+rift:["rift","tear in the air","fissure","crack in the world","seam"],
+impossiblestair:["impossible stairs","escher stairs","stairs that went nowhere","endless staircase","stairs that folded"],
+veil:["veil","curtain of light","membrane","barrier of light","shimmer"],
+brazier:["brazier","fire bowl","burning bowl","censer"],
+secretdoor:["secret door","hidden door","concealed door","false wall","hidden panel","secret passage","hidden passage"]
 };
 
 var MODIFIERS={
@@ -2650,6 +3519,21 @@ PHRASES.sort(function(a,b){ return b[0].length-a[0].length; });
 function scanText(chunk){
   if(!chunk || chunk.length<3) return 0;
   var low=" "+chunk.toLowerCase().replace(/[^a-z\s'-]/g," ").replace(/\s+/g," ")+" ";
+
+  /* where-it-stands phrases are read first and then blanked out, so that
+     "on the opposite side of the street" positions a building instead of
+     building a street */
+  var spats=[];
+  SPATIAL.forEach(function(sp){
+    var re=new RegExp(sp[0].source,"g"), m;
+    while((m=re.exec(low))!==null){
+      spats.push({at:m.index, rel:sp[1], n:sp[2]});
+      low=low.slice(0,m.index)+new Array(m[0].length+1).join("\u0000")+low.slice(m.index+m[0].length);
+      re.lastIndex=m.index+m[0].length;
+    }
+  });
+  spats.sort(function(a,b){ return a.at-b.at; });
+
   var found=[];
   PHRASES.forEach(function(pr){
     var needle=" "+pr[0]+" ", idx=0;
@@ -2666,22 +3550,72 @@ function scanText(chunk){
   });
   found.sort(function(a,b){ return a.at-b.at; });
 
-  /* a modifier belongs to the next noun after it, and to nothing else */
+  /* a where-phrase belongs to the noun it sits nearest, which in English
+     is usually the one just before it: "a gas station two blocks down" */
+  spats.forEach(function(sp){
+    var best=null,bd=Infinity;
+    found.forEach(function(f){
+      var d=Math.abs(sp.at-f.at)*(sp.at>f.at?1:1.6);
+      if(d<bd){ bd=d; best=f; }
+    });
+    sp.owner=best?best.at:null;
+  });
+
+  /* a modifier belongs to the next noun after it, and to nothing else.
+     the words before a noun also say whether it is new and where it stands. */
   var fired=0, prev=-1;
   found.forEach(function(f){
     var attrs={};
     mods.forEach(function(md){
       if(md.at>prev && md.at<f.at) Object.assign(attrs,MODIFIERS[md.m]);
     });
-    place(f.arch,f.word,attrs);
+    var dirs=[];
+    for(var si=0;si<spats.length;si++) if(spats[si].owner===f.at) dirs.push(spats[si]);
+    var art=articleBefore(low,f.at);
+    var fresh=/\b(another|other|different|second|third|new)\s*$/.test(low.slice(Math.max(0,f.at-22),f.at));
+    var again=(art==="definite"&&!fresh)?findExisting(f.arch,f.word):null;
+    if(again){
+      /* the same place, mentioned again — sharpen it, do not build a second one */
+      var grew=false;
+      for(var k in attrs){ if(again.attrs[k]===undefined){ again.attrs[k]=attrs[k]; grew=true; } }
+      again.detail=(again.detail||1)+1;
+      if(grew||again.detail===2) refresh(again);
+    } else {
+      place(f.arch,f.word,attrs,{dir:dirs.length?dirs:null,forceNew:fresh});
+      fired++;
+    }
     prev=f.at;
-    fired++;
   });
 
   var raw=chunk.toLowerCase();
   EMOTIONS.forEach(function(e){ if(raw.indexOf(e)>-1 && store.emotions.indexOf(e)===-1) store.emotions.push(e); });
   LUCID.forEach(function(l){ if(raw.indexOf(l)>-1) store.lucidity=Math.max(store.lucidity,2); });
   return fired;
+}
+
+var DEFINITE=["the","that","this","same","her","his","its","their","my","our","said"];
+var INDEFINITE=["a","an","another","one","some","new","other","second","third"];
+
+function articleBefore(low,at){
+  var before=low.slice(Math.max(0,at-24),at).trim();
+  var words=before.split(/\s+/);
+  for(var i=words.length-1;i>=0 && i>=words.length-3;i--){
+    var w=words[i];
+    if(INDEFINITE.indexOf(w)>-1) return "indefinite";
+    if(DEFINITE.indexOf(w)>-1) return "definite";
+  }
+  return "none";
+}
+
+/* the most recent thing of that kind, which is what "the house" means */
+function findExisting(arch,word){
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if(o.filler||o.archetype!==arch) continue;
+    if(!o.nights || o.nights.indexOf(store.session)===-1) continue;
+    return o;
+  }
+  return null;
 }
 
 /* ============================================================
@@ -2701,7 +3635,10 @@ var SYS=[
 "name is the proper name of the place ONLY if the dreamer gave one. Never invent a name.",
 "people: every person, animal or presence in the fragment. role is their stated occupation if given, else omit. shift is day or night ONLY if the dream said when they are about, else \"none\". livesAt and worksAt are place names ONLY if the dream said. doing is what they were doing, in the dreamer\u2019s words.",
 "This is the strict rule: report only what the fragment states or unmistakably implies. Leave a field out rather than filling it. An empty field is correct; an invented one is not.",
-"Include only what is actually present in the fragment. Do not invent scenery."
+"Include only what is actually present in the fragment. Do not invent scenery.",
+"The dreamer's dreams contain magic, secret ways and impossible things. Take them literally. A hidden door is a hidden door, not a metaphor.",
+"passages: any way the dreamer moved between two named places. kind is door, stairs, street, portal, secret or fall. Use portal when the way is not physically possible, secret when it was hidden. Only report ways actually travelled or described.",
+"Add a passages array: [{\"from\":\"\",\"to\":\"\",\"kind\":\"\"}] using place names as given."
 ].join(" ");
 
 var parseTimer=null;
@@ -2750,10 +3687,18 @@ function reconcile(p){
       if(o.attrs&&typeof o.attrs[k]==="number") attrs[k]=Math.max(0.2,Math.min(6,o.attrs[k]));
     });
     if(o.attrs&&o.attrs.c){ var ci=hexToInt(o.attrs.c); if(ci!==undefined) attrs.c=ci; }
-    var match=null;
-    for(var i=0;i<store.objects.length;i++){
-      var s=store.objects[i];
-      if(!s.solid&&!used[s.id]&&s.archetype===o.archetype){ match=s; break; }
+    var match=null, want=normName(o.label||"");
+    /* first, something already standing that carries the same name */
+    if(want) for(var i=store.objects.length-1;i>=0;i--){
+      var s1=store.objects[i];
+      if(s1.filler||used[s1.id]||s1.archetype!==o.archetype) continue;
+      if(normName(s1.label||"")===want||normName(s1.name||"")===want){ match=s1; break; }
+    }
+    /* otherwise the nearest unresolved ghost of that kind */
+    if(!match) for(var j=0;j<store.objects.length;j++){
+      var s2=store.objects[j];
+      if(s2.filler) continue;
+      if(!s2.solid&&!used[s2.id]&&s2.archetype===o.archetype){ match=s2; break; }
     }
     if(match){
       used[match.id]=true; match.solid=true;
@@ -2766,6 +3711,11 @@ function reconcile(p){
       var sp=place(o.archetype,o.label,attrs,{solid:true,sign:o.sign||null,name:o.name||null});
       used[sp.id]=true; added++;
     }
+  });
+  (p.passages||[]).forEach(function(pa){
+    if(!pa||!pa.from||!pa.to) return;
+    var A=byName(pa.from), B=byName(pa.to);
+    if(A&&B) addPassage(A.id,B.id,pa.kind||"door",pa.kind==="secret");
   });
   var lives=0;
   (p.people||[]).forEach(function(pe){
@@ -2783,9 +3733,15 @@ function reconcile(p){
     if(pe.doing) addDetail(c,"was "+pe.doing);
     if(pe.livesAt){ var h=byName(pe.livesAt); if(h){ c.home=h.id; c.src.home="stated"; } }
     if(pe.worksAt){ var w=byName(pe.worksAt); if(w){ c.work=w.id; c.src.work="stated"; } }
-    if(!c.routine){
+    var RANK={stated:3,parsed:2,filled:1};
+    if(!c.routine || (RANK[c.src.routine]||0)<2){
       var r=routineFrom((c.details.join(". ")+" "+(pe.doing||"")),c.role,c.shift);
       if(r){ c.routine=r; c.src.routine="parsed"; lives++; }
+    }
+    /* if the figure itself named its hours, that outranks anything inferred */
+    if(pe.shift&&pe.shift!=="none"){
+      var r2=routineFrom((pe.doing||""),c.role,pe.shift);
+      if(r2 && (RANK[c.src.routine]||0)<3){ c.routine=r2; c.src.routine="stated"; lives++; }
     }
     checkWake(c);
   });
@@ -2799,6 +3755,485 @@ function reconcile(p){
   if(lives) bits.push(lives+" given hours");
   tickClock(true);
   setStatus(bits.length?"<b>"+bits.join(", ")+"</b>":"Nothing new in that.");
+}
+
+/* ============================================================
+   12a. THE SEALED RECORD — the first telling is never changed
+   ============================================================ */
+var viewNight=null;
+
+/* a fingerprint of the text as it was first written. if anything is ever
+   altered, the fingerprint will no longer match. */
+function seal(text){
+  var enc=new TextEncoder().encode(text);
+  if(window.crypto&&crypto.subtle&&crypto.subtle.digest){
+    return crypto.subtle.digest("SHA-256",enc).then(function(buf){
+      return {algo:"SHA-256",hex:Array.prototype.map.call(new Uint8Array(buf),function(b){
+        return ("0"+b.toString(16)).slice(-2); }).join("")};
+    });
+  }
+  var h=2166136261;
+  for(var i=0;i<enc.length;i++){ h^=enc[i]; h=Math.imul(h,16777619); }
+  return Promise.resolve({algo:"FNV-1a (no secure context)",hex:(h>>>0).toString(16)});
+}
+
+function nightRecord(n){
+  for(var i=0;i<store.sessions.length;i++) if(store.sessions[i].n===n) return store.sessions[i];
+  return null;
+}
+
+/* every way of finishing a dream goes through here, so a night is only ever filed once */
+function closeNight(title,text,full){
+  var n=store.session;
+  if(nightRecord(n)){ return null; }
+  var at=new Date();
+  var rec={n:n,title:title||("Night "+n),date:at.toISOString().slice(0,10),
+           sealedAt:at.toISOString(),original:text,versions:[],
+           lucidity:store.lucidity,emotions:store.emotions.slice(),
+           full:!!full,outcomes:[],fingerprint:null};
+  store.sessions.push(rec);
+  seal(text).then(function(fp){ rec.fingerprint=fp; save(); });
+  store.session++;
+  store.transcript=""; store.emotions=[]; store.lucidity=0;
+  committed=""; draftScanned=0;
+  store.grid.lot=0;
+  store.grid.bx+=(Math.random()<0.5?1:-1);
+  renderTranscript("","");
+  save();
+  return rec;
+}
+
+/* an amendment is kept beside the original, never over it */
+function amendNight(n,text){
+  var r=nightRecord(n);
+  if(!r||!text.trim()||text===currentText(r)) return false;
+  r.versions.push({at:new Date().toISOString(),text:text});
+  save();
+  return true;
+}
+function currentText(r){ return r.versions.length?r.versions[r.versions.length-1].text:r.original; }
+
+/* checking the fingerprint against the original, now */
+function verifyNight(n){
+  var r=nightRecord(n);
+  if(!r||!r.fingerprint) return Promise.resolve(null);
+  return seal(r.original).then(function(fp){ return fp.hex===r.fingerprint.hex; });
+}
+
+/* ---- what came of it: hits and misses both ---- */
+function recordOutcome(n,kind,note,eventDate){
+  var r=nightRecord(n);
+  if(!r) return;
+  r.outcomes.push({kind:kind,note:note||"",eventDate:eventDate||null,
+                   recordedAt:new Date().toISOString()});
+  save();
+}
+function outcomeTally(){
+  var t={hit:0,partial:0,miss:0,unchecked:0};
+  store.sessions.forEach(function(r){
+    if(!r.outcomes||!r.outcomes.length){ t.unchecked++; return; }
+    var last=r.outcomes[r.outcomes.length-1].kind;
+    t[last]=(t[last]||0)+1;
+  });
+  return t;
+}
+
+/* how common each thing is across all your dreams — a match on something
+   you dream every night means far less than a match on something rare */
+function baseRates(){
+  var total=store.sessions.length||1, count={};
+  store.objects.forEach(function(o){
+    if(o.filler||!o.nights) return;
+    var seen={};
+    o.nights.forEach(function(n){ if(n<store.session) seen[n]=1; });
+    var k=o.archetype;
+    if(!count[k]) count[k]={};
+    for(var n in seen) count[k][n]=1;
+  });
+  var out=[];
+  for(var k in count){
+    var nights=Object.keys(count[k]).length;
+    out.push({archetype:k,nights:nights,rate:nights/total});
+  }
+  out.sort(function(a,b){ return b.rate-a.rate; });
+  return out;
+}
+
+/* ============================================================
+   12d. RESEARCH — only an abstract summary, and only if agreed.
+        this is a whitelist: anything not named here never leaves.
+   ============================================================ */
+var EVENTS=[
+ ["fire",["fire","burning","flames","smoke","blaze","on fire"]],
+ ["flood",["flood","drowning","rising water","tidal","the water rose","underwater"]],
+ ["collapse",["collapse","collapsed","crumbling","caved in","gave way","fell down"]],
+ ["crash",["crash","collision","wreck","derailed","crashed"]],
+ ["storm",["storm","lightning","hurricane","tornado","gale"]],
+ ["earthquake",["earthquake","the ground shook","tremor"]],
+ ["explosion",["explosion","exploded","blast","bomb"]],
+ ["illness",["sick","illness","plague","fever","infection"]],
+ ["death",["died","dead","death","funeral","corpse","killed"]],
+ ["conflict",["war","soldiers","fighting","gunfire","army","invasion"]],
+ ["falling",["falling","fell from","plunged"]],
+ ["pursuit",["fleeing","running from","chased","hunted","escape"]],
+ ["darkness",["darkness","lights went out","blackout","eclipse","the sun went out"]],
+ ["crowd",["crowd","panic","stampede","everyone was running"]]
+];
+var SHAREABLE_ARCH={};
+Object.keys(KIT).forEach(function(k){ if(KIT[k].cat!=="being") SHAREABLE_ARCH[k]=1; });
+
+function researchSummary(r){
+  var low=" "+currentText(r).toLowerCase()+" ";
+  var ev=[];
+  EVENTS.forEach(function(e){
+    for(var i=0;i<e[1].length;i++) if(low.indexOf(e[1][i])>-1){ ev.push(e[0]); return; }
+  });
+  var sym={};
+  store.objects.forEach(function(o){
+    if(o.filler||!o.nights||o.nights.indexOf(r.n)===-1) return;
+    if(SHAREABLE_ARCH[o.archetype]) sym[o.archetype]=1;
+  });
+  return {
+    night_of: r.date,
+    events: ev,
+    forms: Object.keys(sym).sort(),
+    feelings: (r.emotions||[]).slice(0,8),
+    lucidity: r.lucidity||0
+  };
+}
+
+function research(){
+  if(!store.research) store.research={consent:false,since:null};
+  return store.research;
+}
+
+/* ============================================================
+   12e. THE JOURNAL
+   ============================================================ */
+var jSel=null;
+
+function openJournal(){
+  var rs=research();
+  document.getElementById("j-consent").checked=!!rs.consent;
+  document.getElementById("j-rstate").textContent=rs.consent?("on since "+rs.since):"off";
+  renderTally(); renderRates(); renderJournalList();
+  if(jSel!==null && nightRecord(jSel)) renderJournalDetail(jSel);
+  document.getElementById("journal").classList.add("open");
+}
+function closeJournal(){ document.getElementById("journal").classList.remove("open"); }
+
+function wordsIn(t){ t=(t||"").trim(); return t?t.split(/\s+/).length:0; }
+function formsIn(n){
+  var c=0;
+  store.objects.forEach(function(o){ if(!o.filler&&o.nights&&o.nights.indexOf(n)>-1) c++; });
+  return c;
+}
+function outcomeOf(r){ return (r.outcomes&&r.outcomes.length)?r.outcomes[r.outcomes.length-1].kind:null; }
+
+function renderTally(){
+  var t=outcomeTally();
+  document.getElementById("j-tally").innerHTML=
+    "<span><b>"+store.sessions.length+"</b> sealed</span>"+
+    "<span><b>"+t.hit+"</b> came true</span>"+
+    "<span><b>"+t.partial+"</b> partly</span>"+
+    "<span><b>"+t.miss+"</b> came to nothing</span>"+
+    "<span><b>"+t.unchecked+"</b> not yet checked</span>";
+}
+
+function renderRates(){
+  var r=baseRates(), el=document.getElementById("j-rates-body");
+  if(!r.length||store.sessions.length<2){
+    el.innerHTML='<p>Needs a few sealed dreams before this means anything.</p>'; return;
+  }
+  el.innerHTML='<p>A match on something near the top means little \u2014 you dream it often. A match on something near the bottom means much more.</p>'+
+    r.slice(0,14).map(function(x){
+      return '<div class="jr"><span>'+esc(x.archetype)+'</span><span><i style="width:'+
+        Math.round(x.rate*100)+'%"></i></span><span>'+Math.round(x.rate*100)+'%</span></div>';
+    }).join("");
+}
+
+function renderJournalList(){
+  var el=document.getElementById("j-list");
+  if(!store.sessions.length){
+    el.innerHTML='<div class="jd-empty">No sealed dreams yet. Record one, then press New dream, or write a full dream.</div>';
+    return;
+  }
+  el.innerHTML=store.sessions.slice().reverse().map(function(r){
+    var o=outcomeOf(r);
+    var tag=o==="hit"?' \u00b7 <span class="h">came true</span>':
+            o==="partial"?' \u00b7 <span class="p">partly</span>':
+            o==="miss"?" \u00b7 came to nothing":"";
+    return '<div class="jn'+(jSel===r.n?" on":"")+'" data-n="'+r.n+'">'+
+      '<div class="jt">'+esc(r.title)+"</div>"+
+      '<div class="jm">'+r.date+" \u00b7 "+wordsIn(currentText(r))+" words \u00b7 "+
+        formsIn(r.n)+" forms"+(r.lucidity>=2?" \u00b7 lucid":"")+tag+"</div></div>";
+  }).join("");
+  Array.prototype.forEach.call(el.querySelectorAll(".jn"),function(d){
+    d.addEventListener("click",function(){
+      jSel=parseInt(d.getAttribute("data-n"),10);
+      renderJournalList(); renderJournalDetail(jSel);
+    });
+  });
+}
+
+function renderJournalDetail(n){
+  var r=nightRecord(n), el=document.getElementById("j-detail");
+  if(!r){ el.innerHTML='<div class="jd-empty">Choose a night.</div>'; return; }
+  var edited=r.versions.length>0;
+  var outs=(r.outcomes||[]).map(function(o){
+    var w={hit:"Came true",partial:"Partly came true",miss:"Came to nothing"}[o.kind]||o.kind;
+    return '<p class="jd-out">'+w+(o.eventDate?(" \u2014 "+esc(o.eventDate)):"")+
+      (o.note?(": "+esc(o.note)):"")+' <i>recorded '+o.recordedAt.slice(0,10)+"</i></p>";
+  }).join("");
+  var summary=researchSummary(r);
+
+  el.innerHTML=
+    '<div class="jd-title">'+esc(r.title)+"</div>"+
+    '<div class="jd-meta">Night '+r.n+" \u00b7 sealed "+r.sealedAt.replace("T"," ").slice(0,16)+
+      " \u00b7 "+formsIn(r.n)+" forms"+(r.lucidity>=2?" \u00b7 lucid":"")+
+      ((r.emotions&&r.emotions.length)?(" \u00b7 "+esc(r.emotions.slice(0,5).join(", "))):"")+"</div>"+
+    '<div class="jd-seal" id="jd-seal">'+(r.fingerprint?("fingerprint "+r.fingerprint.algo+" "+r.fingerprint.hex.slice(0,24)+"\u2026 <span id=\"jd-verify\">checking</span>"):"fingerprint pending")+"</div>"+
+    '<div class="jd-h">As first written</div>'+
+    '<div class="jd-text">'+esc(r.original)+"</div>"+
+    (edited?('<div class="jd-h">Later additions ('+r.versions.length+')</div>'+
+      r.versions.map(function(v){ return '<p class="jd-v"><i>'+v.at.replace("T"," ").slice(0,16)+"</i> \u2014 "+esc(v.text)+"</p>"; }).join("")):"")+
+    '<div class="jd-row">'+
+      '<button class="btn" id="jd-view">See it in the world</button>'+
+      '<button class="btn" id="jd-amend-open">Add to it</button>'+
+      '<button class="btn" id="jd-del">Delete this dream</button></div>'+
+    '<div id="jd-amend" style="display:none">'+
+      '<textarea id="jd-amend-t" rows="4" placeholder="What you remembered later. The original stays exactly as it was."></textarea>'+
+      '<div class="jd-row"><button class="btn" id="jd-amend-save">Keep this addition</button></div></div>'+
+    '<div class="jd-h">What came of it</div>'+
+    (outs||'<p class="jd-out"><i>Not checked yet.</i></p>')+
+    '<input type="text" id="jd-o-note" placeholder="what happened, in waking life">'+
+    '<input type="date" id="jd-o-date" aria-label="when it happened">'+
+    '<div class="jd-row">'+
+      '<button class="btn" data-o="hit">It came true</button>'+
+      '<button class="btn" data-o="partial">Partly</button>'+
+      '<button class="btn" data-o="miss">Nothing came of it</button></div>'+
+    '<div class="jd-h">What research sharing would send</div>'+
+    '<div class="jd-pre">'+esc(JSON.stringify(summary,null,2))+"</div>"+
+    '<p class="jd-out"><i>'+(research().consent?"You have agreed to share this. Nothing is connected yet, so nothing has been sent.":"Research sharing is off. Nothing leaves this browser.")+"</i></p>";
+
+  if(r.fingerprint) verifyNight(n).then(function(ok){
+    var v=document.getElementById("jd-verify"); if(!v) return;
+    v.className=ok?"ok":"bad";
+    v.textContent=ok?"\u2014 intact":"\u2014 DOES NOT MATCH";
+  });
+
+  document.getElementById("jd-view").onclick=function(){ viewOnly(n); closeJournal(); };
+  document.getElementById("jd-amend-open").onclick=function(){
+    var a=document.getElementById("jd-amend"); a.style.display=a.style.display==="none"?"block":"none";
+    if(a.style.display==="block") document.getElementById("jd-amend-t").focus();
+  };
+  document.getElementById("jd-amend-save").onclick=function(){
+    var t=document.getElementById("jd-amend-t").value.trim();
+    if(!t) return;
+    scanText(t); feedContext(t); scanAbilities(t);
+    amendNight(n,t);
+    renderJournalDetail(n); renderJournalList();
+    setStatus("<b>Added. The original is unchanged.</b>");
+  };
+  document.getElementById("jd-del").onclick=function(){
+    if(!confirm("Delete \""+r.title+"\" for good?\n\nPlaces that only appeared in this dream go with it. Places you dreamt on other nights stay, and simply lose this night from their record.")) return;
+    deleteNight(n); jSel=null;
+    renderTally(); renderRates(); renderJournalList();
+    document.getElementById("j-detail").innerHTML='<div class="jd-empty">Deleted.</div>';
+  };
+  Array.prototype.forEach.call(el.querySelectorAll("[data-o]"),function(b){
+    b.onclick=function(){
+      recordOutcome(n,b.getAttribute("data-o"),
+        document.getElementById("jd-o-note").value.trim(),
+        document.getElementById("jd-o-date").value||null);
+      renderTally(); renderJournalList(); renderJournalDetail(n);
+    };
+  });
+}
+
+/* ---- seeing one night alone, in the world it belongs to ---- */
+function viewOnly(n){
+  viewNight=n;
+  store.objects.forEach(function(o){ if(!o.filler) refresh(o); });
+  var r=nightRecord(n);
+  document.getElementById("viewing-t").textContent="Viewing "+(r?r.title:("night "+n));
+  document.getElementById("viewing").classList.remove("gone");
+  var first=null;
+  store.objects.forEach(function(o){ if(!first&&!o.filler&&o.nights&&o.nights.indexOf(n)>-1) first=o; });
+  if(first){ orb.tx=first.x; orb.tz=first.z; store.grid.bx=Math.round(first.x/PITCH); store.grid.bz=Math.round(first.z/PITCH); }
+}
+function clearView(){
+  viewNight=null;
+  store.objects.forEach(function(o){ if(!o.filler) refresh(o); });
+  document.getElementById("viewing").classList.add("gone");
+}
+
+/* ---- deleting a night: its own places go, shared places lose it ---- */
+function deleteNight(n){
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if(o.filler||!o.nights) continue;
+    var k=o.nights.indexOf(n);
+    if(k===-1) continue;
+    o.nights.splice(k,1);
+    if(!o.nights.length){
+      if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+      if(store.lots && o.bx!==undefined && o.lot!==null && o.lot!==undefined)
+        delete store.lots[lotKey(o.bx,o.bz,o.lot)];
+      store.objects.splice(i,1);
+    } else refresh(o);
+  }
+  for(var j=store.characters.length-1;j>=0;j--){
+    var c=store.characters[j];
+    if(c.primary===false||!c.sessions) continue;
+    var q=c.sessions.indexOf(n);
+    if(q>-1) c.sessions.splice(q,1);
+    if(!c.sessions.length){
+      if(c.objId&&meshes[c.objId]){ scene.remove(meshes[c.objId]); delete meshes[c.objId]; }
+      var sp=c.objId?specById(c.objId):null;
+      if(sp){ var si=store.objects.indexOf(sp); if(si>-1) store.objects.splice(si,1); }
+      store.characters.splice(j,1);
+    }
+  }
+  store.sessions=store.sessions.filter(function(r){ return r.n!==n; });
+  if(viewNight===n) clearView();
+  save(); updateCount(); tickClock(true);
+}
+
+/* ---- telling the world two places are the same, across nights ---- */
+function linkPlaces(keepId,dropId){
+  var keep=specById(keepId), drop=specById(dropId);
+  if(!keep||!drop||keep===drop) return false;
+  (drop.nights||[]).forEach(function(n){ if(keep.nights.indexOf(n)===-1) keep.nights.push(n); });
+  keep.nights.sort(function(a,b){ return a-b; });
+  for(var k in drop.attrs) if(keep.attrs[k]===undefined) keep.attrs[k]=drop.attrs[k];
+  if(!keep.sign&&drop.sign) keep.sign=drop.sign;
+  store.characters.forEach(function(c){
+    if(c.home===drop.id) c.home=keep.id;
+    if(c.work===drop.id) c.work=keep.id;
+  });
+  (store.passages||[]).forEach(function(p){
+    if(p.from===drop.id) p.from=keep.id;
+    if(p.to===drop.id) p.to=keep.id;
+  });
+  if(meshes[drop.id]){ scene.remove(meshes[drop.id]); delete meshes[drop.id]; }
+  if(store.lots && drop.bx!==undefined && drop.lot!==null && drop.lot!==undefined)
+    delete store.lots[lotKey(drop.bx,drop.bz,drop.lot)];
+  var di=store.objects.indexOf(drop); if(di>-1) store.objects.splice(di,1);
+  refresh(keep); save(); updateCount();
+  return true;
+}
+
+/* ============================================================
+   12b. STORY — a whole dream, read in the order it happened
+   ============================================================ */
+var storyOpen=false;
+
+function openStory(){
+  storyOpen=true;
+  document.getElementById("story-title").value="";
+  document.getElementById("story-text").value="";
+  updateStoryCount();
+  document.getElementById("story").classList.add("open");
+  setTimeout(function(){ document.getElementById("story-text").focus(); },420);
+}
+function closeStory(){
+  storyOpen=false;
+  document.getElementById("story").classList.remove("open");
+}
+function updateStoryCount(){
+  var v=document.getElementById("story-text").value.trim();
+  var w=v?v.split(/\s+/).length:0;
+  document.getElementById("story-count").textContent=w?(w+" words"):"";
+}
+
+/* a full dream is built sentence by sentence, so the order you walked it
+   becomes the way the places connect */
+function renderStory(){
+  var title=document.getElementById("story-title").value.trim();
+  var text=document.getElementById("story-text").value.trim();
+  if(text.length<12){ setStatus("<i>Write a little more first.</i>"); return; }
+
+  var abil=scanAbilities(text);
+  var parts=text.split(/(?<=[.!?])\s+|\n+/).filter(function(x){ return x.trim().length>1; });
+  var built=0, linked=0, prevPlace=null;
+
+  parts.forEach(function(sentence){
+    var before=store.objects.length;
+    var n=scanText(sentence);
+    feedContext(sentence);
+    built+=n;
+
+    /* the last structure this sentence raised, if any */
+    var here=null;
+    for(var i=store.objects.length-1;i>=before;i--){
+      var o=store.objects[i];
+      if(o.filler) continue;
+      var d=KIT[o.archetype];
+      if(d&&(d.cat==="structure"||o.archetype==="portal"||o.archetype==="secretdoor"||
+             o.archetype==="rift"||o.archetype==="tunnel"||o.archetype==="cave")){ here=o; break; }
+    }
+    if(here){
+      var kind=linkIn(sentence);
+      if(prevPlace){
+        var secret=(kind==="secret");
+        if(addPassage(prevPlace.id,here.id,kind||"door",secret)) linked++;
+      }
+      prevPlace=here;
+    }
+  });
+
+  populate();
+  if(store.transcript.trim()){ text=store.transcript.trim()+"\n\n"+text; }
+  closeNight(title,text,true);
+  scheduleParse(500);
+  save(); updateCount(); tickClock(true);
+  closeStory();
+
+  var bits=[built+" form"+(built===1?"":"s")];
+  if(linked) bits.push(linked+" passage"+(linked===1?"":"s"));
+  if(abil) bits.push(abil+" thing"+(abil===1?"":"s")+" you could do");
+  setStatus("<b>"+bits.join(", ")+".</b>");
+}
+
+/* ============================================================
+   12c. WHO IS DREAMING
+   ============================================================ */
+function openSelf(){
+  var d=dreamer();
+  document.getElementById("self-name").value=d.name||"";
+  document.getElementById("self-about").value=d.about||"";
+  document.getElementById("self-practice").value=d.practice||"";
+  document.getElementById("self-notes").value=d.notes||"";
+  renderAbilities();
+  document.getElementById("self").classList.add("open");
+}
+function closeSelf(){ document.getElementById("self").classList.remove("open"); }
+function renderAbilities(){
+  var d=dreamer(), el=document.getElementById("self-abilities");
+  if(!d.abilities.length){
+    el.innerHTML='<span style="font-size:12px;color:var(--dim)">nothing recorded yet</span>';
+    return;
+  }
+  el.innerHTML=d.abilities.map(function(a,i){
+    return '<span class="abil" data-i="'+i+'" title="'+
+      (a.src==="stated"?"from your dreams":"you added this")+'">'+esc(a.name)+"</span>";
+  }).join("");
+  Array.prototype.forEach.call(el.querySelectorAll(".abil"),function(sp){
+    sp.addEventListener("click",function(){
+      d.abilities.splice(parseInt(sp.getAttribute("data-i"),10),1);
+      save(); renderAbilities();
+    });
+  });
+}
+function saveSelf(){
+  var d=dreamer();
+  d.name=document.getElementById("self-name").value.trim();
+  d.about=document.getElementById("self-about").value.trim();
+  d.practice=document.getElementById("self-practice").value.trim();
+  d.notes=document.getElementById("self-notes").value.trim();
+  save(); closeSelf();
+  setStatus("Saved.");
 }
 
 /* ============================================================
@@ -2825,6 +4260,7 @@ function initSpeech(){
       store.transcript=committed;
       var n=scanText(fresh);
       feedContext(fresh);
+      scanAbilities(fresh);
       if(n) setStatus("<b>"+n+" form"+(n>1?"s":"")+" took shape</b>");
       scheduleParse(2200);
       save();
@@ -2885,6 +4321,7 @@ function commitDraft(){
   var tail=v.slice(draftScanned).trim();
   if(tail) scanText(tail);
   feedContext(v);
+  scanAbilities(v);
   committed+=v+" ";
   store.transcript=committed;
   ta.value=""; ta.style.height="auto";
@@ -2896,6 +4333,102 @@ function commitDraft(){
   setStatus("Committed.");
 }
 
+/* ---- reading a dreamscape back in ---- */
+function importJSON(file){
+  var r=new FileReader();
+  r.onerror=function(){ setStatus("<i>Could not read that file.</i>"); };
+  r.onload=function(){
+    var d;
+    try{ d=JSON.parse(r.result); }
+    catch(e){ setStatus("<i>That is not a dreamscape file.</i>"); return; }
+    if(!d||!d.objects||!Array.isArray(d.objects)){
+      setStatus("<i>That file has no dreamscape in it.</i>"); return;
+    }
+    var mine=store.objects.filter(function(o){ return !o.filler; }).length;
+    var theirs=d.objects.filter(function(o){ return !o.filler; }).length;
+    var merge=false;
+    if(mine){
+      merge=confirm("You already have "+mine+" form"+(mine===1?"":"s")+" standing.\n\n"+
+        "OK to add the "+theirs+" incoming form"+(theirs===1?"":"s")+" alongside them.\n"+
+        "Cancel to replace everything with the file.");
+    }
+    if(merge) mergeWorld(d); else replaceWorld(d);
+  };
+  r.readAsText(file);
+}
+
+function clearScene(){
+  Object.keys(meshes).forEach(function(k){ scene.remove(meshes[k]); });
+  meshes={};
+  for(var i=scene.children.length-1;i>=0;i--){
+    var c=scene.children[i];
+    if(c.isMesh&&c.geometry&&c.geometry.type==="PlaneGeometry"&&c.position.y<0.2&&c.position.y>0)
+      scene.remove(c);
+  }
+}
+
+function rebuild(){
+  store.blocks={};
+  store.streets=[];
+  store.objects.forEach(function(o){
+    if(!KIT[o.archetype]) o.archetype="house";
+    ensureStreets(Math.round(o.x/PITCH),Math.round(o.z/PITCH));
+    addMesh(o);
+  });
+  store.characters.forEach(assignLife);
+  populate();
+  tickClock(true);
+  updateCount();
+  save();
+}
+
+function replaceWorld(d){
+  clearScene();
+  store=Object.assign(blank(),d);
+  store.objects=store.objects.filter(function(o){ return !o.filler; });
+  store.characters=(store.characters||[]).filter(function(c){ return c.primary!==false; });
+  store.blocks={};
+  if(!store.lots) store.lots={};
+  committed=store.transcript||"";
+  draftScanned=0;
+  document.getElementById("freetext").value="";
+  renderTranscript(committed,"");
+  rebuild();
+  setStatus("<b>Dreamscape restored \u2014 "+store.objects.length+" forms.</b>");
+}
+
+/* an incoming world is shifted clear of the one already standing */
+function mergeWorld(d){
+  var maxB=0;
+  store.objects.forEach(function(o){
+    maxB=Math.max(maxB,Math.abs(Math.round(o.x/PITCH)),Math.abs(Math.round(o.z/PITCH)));
+  });
+  var shift=(maxB+2)*PITCH;
+  var idMap={};
+  (d.objects||[]).filter(function(o){ return !o.filler; }).forEach(function(o){
+    var old=o.id; o.id=uid(); idMap[old]=o.id;
+    o.x+=shift;
+    if(o.bx!==undefined&&o.bx!==null) o.bx+=(maxB+2);
+    if(o.lot!==undefined&&o.lot!==null&&o.bx!==undefined&&o.bx!==null)
+      takeLot(o.bx,o.bz,o.lot,o.id);
+    store.objects.push(o);
+    addMesh(o);
+  });
+  (d.characters||[]).filter(function(c){ return c.primary!==false; }).forEach(function(c){
+    c.id=uid();
+    if(c.objId&&idMap[c.objId]) c.objId=idMap[c.objId]; else c.objId=null;
+    if(c.home&&idMap[c.home]) c.home=idMap[c.home]; else c.home=null;
+    if(c.work&&idMap[c.work]) c.work=idMap[c.work]; else c.work=null;
+    c.x+=shift;
+    if(c.anchor) c.anchor.x+=shift;
+    store.characters.push(c);
+    var sp=c.objId?specById(c.objId):null;
+    if(sp) sp.charId=c.id;
+  });
+  rebuild();
+  setStatus("<b>Merged \u2014 "+store.objects.length+" forms now standing.</b>");
+}
+
 function exportJSON(){
   var blob=new Blob([JSON.stringify(store,null,2)],{type:"application/json"});
   var a=document.createElement("a");
@@ -2905,17 +4438,12 @@ function exportJSON(){
   setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
 }
 function newDream(){
-  if(!confirm("Begin a new dream? The dreamscape and everyone in it stays \u2014 this night adds to it.")) return;
-  store.sessions.push({n:store.session,date:new Date().toISOString().slice(0,10),
-                       transcript:store.transcript,lucidity:store.lucidity,emotions:store.emotions.slice()});
-  store.session++;
-  store.transcript=""; store.emotions=[]; store.lucidity=0;
-  committed=""; draftScanned=0;
-  store.grid.lot=0;
-  store.grid.bx+=(Math.random()<0.5?1:-1);
+  var text=store.transcript.trim();
+  if(!text){ setStatus("Nothing recorded tonight yet."); return; }
+  if(!confirm("Seal this dream and begin another?\n\nWhat you recorded tonight is filed exactly as written and can never be altered. The dreamscape and everyone in it stays.")) return;
+  closeNight(null,text,false);
   document.getElementById("freetext").value="";
-  renderTranscript("","");
-  save(); setStatus("Night "+store.session+". Everything you built is still standing.");
+  setStatus("Sealed. Night "+store.session+" \u2014 everything you built is still standing.");
 }
 
 function wire(){
@@ -2925,6 +4453,11 @@ function wire(){
   $("walkbtn").addEventListener("click",function(){ setWalk(!walkMode); });
   $("newbtn").addEventListener("click",newDream);
   $("exportbtn").addEventListener("click",exportJSON);
+  $("importbtn").addEventListener("click",function(){ $("importfile").click(); });
+  $("importfile").addEventListener("change",function(){
+    if(this.files&&this.files[0]) importJSON(this.files[0]);
+    this.value="";
+  });
   $("setbtn").addEventListener("click",openPanel);
   $("closebtn").addEventListener("click",function(){ $("panel").classList.remove("open"); });
   $("savebtn").addEventListener("click",savePanel);
@@ -2953,6 +4486,42 @@ function wire(){
   $("g-confirm").addEventListener("click",claimStranger);
   $("g-name").addEventListener("keydown",function(e){
     if(e.key==="Enter"){ e.preventDefault(); claimStranger(); }
+  });
+  $("journalbtn").addEventListener("click",openJournal);
+  $("j-close").addEventListener("click",closeJournal);
+  $("viewing-clear").addEventListener("click",clearView);
+  $("j-consent").addEventListener("change",function(){
+    var rs=research();
+    rs.consent=this.checked;
+    rs.since=this.checked?new Date().toISOString().slice(0,10):null;
+    save();
+    $("j-rstate").textContent=rs.consent?("on since "+rs.since):"off";
+    if(jSel!==null) renderJournalDetail(jSel);
+  });
+  $("i-link").addEventListener("change",function(){
+    if(!picked||!this.value) return;
+    var other=specById(this.value);
+    if(!other) return;
+    if(!confirm("Treat this as the same "+picked.archetype+" as "+placeName(other)+"?\n\nIt becomes one place that has appeared on several nights.")){ this.value=""; return; }
+    var keepId=other.id;
+    linkPlaces(keepId,picked.id);
+    closeInspect();
+    setStatus("<b>One place, "+specById(keepId).nights.length+" nights.</b>");
+  });
+  $("storybtn").addEventListener("click",openStory);
+  $("story-close").addEventListener("click",closeStory);
+  $("story-render").addEventListener("click",renderStory);
+  $("story-text").addEventListener("input",updateStoryCount);
+  $("selfbtn").addEventListener("click",openSelf);
+  $("self-close").addEventListener("click",closeSelf);
+  $("self-save").addEventListener("click",saveSelf);
+  $("self-ability-add").addEventListener("keydown",function(e){
+    if(e.key!=="Enter") return;
+    e.preventDefault();
+    var v=this.value.trim();
+    if(!v) return;
+    dreamer().abilities.push({name:v,nights:[store.session],src:"added"});
+    this.value=""; save(); renderAbilities();
   });
   $("rosterbtn").addEventListener("click",openRoster);
   $("r-close").addEventListener("click",function(){ $("roster").classList.remove("open"); });
@@ -2998,6 +4567,16 @@ function wire(){
   });
 }
 
+/* the slider's track is a strip of the day itself, midnight to midnight */
+function paintScrub(){
+  var stops=[];
+  for(var h=0;h<=24;h+=1){
+    var c=skyAt(Math.min(h,23.99)).low;
+    stops.push("#"+("000000"+c.toString(16)).slice(-6)+" "+(h/24*100).toFixed(1)+"%");
+  }
+  document.getElementById("tscrub").style.background="linear-gradient(90deg,"+stops.join(",")+")";
+}
+
 function openPanel(){
   var c=cfg(),$=function(i){return document.getElementById(i);};
   $("mode").value=c.mode||"off"; $("key").value=c.key||"";
@@ -3028,6 +4607,22 @@ function boot(){
     committed=store.transcript||"";
     store.streets=[];
     store.blocks={};
+    if(!store.dreamer) store.dreamer={name:"",about:"",practice:"",notes:"",abilities:[]};
+    if(!store.dreamer.abilities) store.dreamer.abilities=[];
+    if(!store.passages) store.passages=[];
+    if(!store.research) store.research={consent:false,since:null};
+    store.objects.forEach(function(o){ if(!o.nights) o.nights=[0]; });
+    (store.sessions||[]).forEach(function(r){
+      if(r.original===undefined){
+        r.original=r.transcript||"";
+        r.sealedAt=(r.date||new Date().toISOString().slice(0,10))+"T00:00:00.000Z";
+        r.title=r.title||("Night "+r.n);
+        r.versions=[]; r.outcomes=[]; r.fingerprint=null;
+        (function(rec){ seal(rec.original).then(function(fp){ rec.fingerprint=fp; save(); }); })(r);
+      }
+      if(!r.versions) r.versions=[];
+      if(!r.outcomes) r.outcomes=[];
+    });
     store.characters.forEach(function(c){
       if(!c.aka) c.aka=[normName(c.name)]; if(!c.log) c.log=[];
       if(c.primary===undefined) c.primary=true;
@@ -3050,6 +4645,7 @@ function boot(){
   store.characters.forEach(assignLife);
   populate();
   document.getElementById("tscrub").value=Math.round(dreamHour()*60);
+  paintScrub();
   tickClock(true);
   updateCount();
   if(!store.objects.length) setStatus("Press the circle and talk, or type below.");
