@@ -320,6 +320,25 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
 #p-status{font-size:12.5px;color:var(--dim);margin-top:9px;min-height:1.2em}
 #slatebtn{border-color:rgba(184,114,74,.35)}
 #slatebtn:hover{color:var(--ember);border-color:var(--ember)}
+
+#inspect{max-height:calc(100vh - 90px);overflow-y:auto;width:280px}
+#i-look .lk-row{margin-top:12px}
+#i-look .lk-h{font-size:11.5px;color:var(--dim);margin-bottom:5px}
+.lk-p{font-size:10.5px;color:var(--moon);margin-left:4px}
+#i-look select{width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px;font-size:12.5px;border-radius:2px;outline:none}
+.sw.on{outline:2px solid var(--bone);outline-offset:1px}
+.lk-pick{width:26px;height:21px;padding:0;border:1px solid var(--line);background:none;cursor:pointer;border-radius:2px}
+#land{position:fixed;z-index:18;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:min(420px,94vw);
+  max-height:88vh;overflow-y:auto;background:var(--deep);border:1px solid var(--line);padding:22px 24px 24px;
+  opacity:0;visibility:hidden;transition:opacity .3s,transform .3s,visibility .3s}
+#land.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+#land h2{font-family:var(--serif);font-weight:400;font-size:20px;margin:0 0 6px}
+#land p{font-size:12.5px;line-height:1.6;color:var(--dim);margin:0 0 4px}
+#land label{display:block;font-size:12px;color:var(--dim);margin:14px 0 5px}
+#land select{width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;font-size:13.5px;border-radius:2px;outline:none}
+#land .l-check{display:flex;align-items:center;gap:8px;margin-top:12px}
+#land .l-check label{margin:0;color:var(--bone);font-size:13px}
+#land .small-note{font-size:11.5px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -354,6 +373,7 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
     <button class="btn" id="commitbtn">Commit</button>
     <button class="btn" id="walkbtn">Walk it</button>
     <button class="btn" id="plotbtn">Plot</button>
+    <button class="btn" id="landbtn">The land</button>
     <button class="btn" id="storybtn">Write a full dream</button>
     <button class="btn" id="journalbtn">Dream journal</button>
     <button class="btn" id="interpbtn">Interpret tonight</button>
@@ -475,6 +495,36 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
   <div class="row" style="margin-top:14px"><button class="btn" id="r-close">Close</button></div>
 </div>
 
+<div id="land" role="dialog" aria-label="The land">
+  <h2>The land</h2>
+  <p>What the dreamscape stands on. This belongs to this dreamscape, and travels with it when you export.</p>
+  <label for="l-ground">Ground</label>
+  <select id="l-ground">
+    <option value="grass">Grass</option><option value="earth">Bare earth</option><option value="sand">Sand</option>
+    <option value="snow">Snow</option><option value="paving">Cobbles</option><option value="void">The old dark ground</option>
+  </select>
+  <label for="l-hills">Hills beyond the town</label>
+  <select id="l-hills">
+    <option value="0">Flat</option><option value="1">Gentle</option><option value="2">Rolling</option><option value="3">Wild</option>
+  </select>
+  <label for="l-season">Season <span id="l-now" class="lk-p"></span></label>
+  <select id="l-season">
+    <option value="calendar">Follow the calendar</option><option value="spring">Spring</option><option value="summer">Summer</option>
+    <option value="autumn">Autumn</option><option value="winter">Winter</option><option value="still">Unchanging</option>
+  </select>
+  <label for="l-sky">Sky</label>
+  <select id="l-sky">
+    <option value="hour">As the hour</option><option value="overcast">Overcast</option><option value="pale">Pale</option>
+    <option value="eerie">Eerie green</option><option value="ember">Ember</option><option value="violet">Violet</option>
+  </select>
+  <label>Water</label>
+  <div class="swatches" id="l-water"></div>
+  <div class="l-check"><input type="checkbox" id="l-shadows"><label for="l-shadows">Shadows</label></div>
+  <div class="l-check"><input type="checkbox" id="l-detail"><label for="l-detail">Surface detail &mdash; brick, stone, wood, grass</label></div>
+  <p class="small-note">Turn shadows or surface detail off if an older phone runs slowly.</p>
+  <div class="row" style="margin-top:14px"><button class="btn" id="l-close">Done</button></div>
+</div>
+
 <div id="plotbar" class="gone">
   <div class="p-row">
     <select id="p-kind" aria-label="What to place"></select>
@@ -509,8 +559,7 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
   <input type="range" id="i-scale" min="0.3" max="4" step="0.05" value="1">
   <label for="i-height">Height</label>
   <input type="range" id="i-height" min="0.3" max="5" step="0.05" value="1">
-  <label>Colour</label>
-  <div class="swatches" id="i-sw"></div>
+  <div id="i-look"></div>
   <div class="row" style="margin-top:16px">
     <button class="btn" id="i-solid">Solidify</button>
     <button class="btn" id="i-del">Remove</button>
@@ -1255,6 +1304,750 @@ A("portal","infra",[4.5,7,.5],[
 
 
 </script>
+<script>/* js/colors.js */
+/* Dream Walker's Atlas — colors.js
+   the colour vocabulary, materials, and how residents look.
+   a dreamt figure's look comes only from the dream or from the dreamer's hand;
+   the nameless crowd is varied at random. skin is never inferred from words.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+/* ---- fifty-odd named colours, tuned to read well under the Atlas's light ---- */
+var NAMED={
+  white:0xE8E4DA, ivory:0xE6DCC2, cream:0xE0D2B0, bone:0xC9BEA8, silver:0xA7AAB0,
+  grey:0x7B7D82, gray:0x7B7D82, charcoal:0x3A3C42, black:0x1B1C20,
+  red:0xA8322B, crimson:0x8E1F2A, scarlet:0xC0392B, maroon:0x5E1E22, burgundy:0x6B1E2E,
+  rose:0xC47A86, pink:0xD99AAE, coral:0xD9745A, salmon:0xD98E78,
+  orange:0xC8662A, amber:0xC8902E, rust:0x8A4526, copper:0xA35F3A, ochre:0xB08A3A,
+  gold:0xC7A043, golden:0xC7A043, yellow:0xD4B83C, mustard:0xB89A2E,
+  brown:0x6B4A32, tan:0xB08F66, beige:0xC9B38E, khaki:0xA89A6C, chestnut:0x7A4028, chocolate:0x4E3222,
+  green:0x3F7A3A, olive:0x6B6A34, emerald:0x2E8A5E, forest:0x2C4F2A, sage:0x8FA283,
+  lime:0x8FB83A, mint:0x9CCDB0, jade:0x3E8C73,
+  teal:0x2F7A7A, turquoise:0x3AA3A0, cyan:0x4AA8C0, aqua:0x5BB8C4,
+  blue:0x2F5E9E, navy:0x1F2E55, azure:0x4A86C8, cobalt:0x2A4DA0, indigo:0x3A2E6E, denim:0x3A4E72,
+  purple:0x5E3A7E, violet:0x7A55A8, lavender:0xA99BC8, plum:0x6A3B5A, lilac:0xB7A0C6, magenta:0xA83A7E,
+  blonde:0xC9A96A, auburn:0x7A3A22
+};
+var TWOWORD={"sky blue":0x86AED4,"navy blue":0x1F2E55,"dark green":0x24462A,"light blue":0x9DBCDC,
+  "dark blue":0x1E3560,"blood red":0x7A1414,"bright red":0xD03A2E,"light grey":0xB0B2B6,"dark grey":0x45474C,
+  "light gray":0xB0B2B6,"dark gray":0x45474C,"forest green":0x2C4F2A,"bottle green":0x1F4A34,"midnight blue":0x1A2244};
+
+function colorWord(w){ return NAMED[String(w).toLowerCase()]; }
+function shade(c,k){ return blend(c,k>0?0xFFFFFF:0x000000,Math.abs(k)); }
+
+/* ---- what walls and roofs are made of ---- */
+var WALLWORDS={brick:"brick",bricks:"brick",stone:"stone",stones:"stone",wooden:"wood",wood:"wood",timber:"wood",
+  log:"wood",plank:"siding",clapboard:"siding",concrete:"concrete",cement:"concrete",glass:"glass",mirrored:"glass",
+  marble:"marble",plaster:"plaster",stucco:"plaster",whitewashed:"plaster",adobe:"plaster",iron:"metal",
+  steel:"metal",metal:"metal",tin:"metal",corrugated:"metal"};
+var ROOFWORDS={thatched:"thatch",thatch:"thatch",tiled:"tile",slate:"slate",shingled:"shingle",flat:"flat"};
+
+var MATCOLOR={brick:0x8E5040,stone:0x8A857A,wood:0x7A5A3C,siding:0xA9A294,plaster:0xB7AD98,concrete:0x8E8C88,
+  glass:0x5E7C94,marble:0xC9C4B8,metal:0x7A7F86,shingle:0x4A4744,tile:0x9A5238,slate:0x3E4450,
+  thatch:0x9A8456,metalroof:0x6E747A};
+
+var WALL_DEFAULT={house:"siding",cottage:"plaster",apartment:"brick",tower:"concrete",skyscraper:"glass",
+  motel:"plaster",hotel:"concrete",institution:"stone",hospital:"plaster",school:"brick",church:"stone",
+  cathedral:"stone",bank:"stone",library:"stone",station:"brick",courthouse:"stone",shop:"brick",
+  warehouse:"metal",factory:"brick",barn:"wood",shed:"wood",garage:"concrete",gasstation:"concrete",
+  bunker:"concrete",ruin:"stone",lighthouse:"plaster",windmill:"stone",altar:"stone"};
+var ROOF_DEFAULT={house:"shingle",cottage:"thatch",church:"slate",cathedral:"slate",barn:"metalroof",
+  tower:"slate",lighthouse:"metalroof",windmill:"shingle",courthouse:"slate",shed:"metalroof",tent:"",well:"shingle"};
+
+/* ---- residents ---- */
+var SKIN=[0xF1D5C0,0xE6BD9C,0xD6A27C,0xC28862,0xA66C48,0x875335,0x683F28,0x48291B];
+var HAIR=[0x16130F,0x3A2618,0x5E3E26,0x7A3A22,0xA4472A,0xC9A96A,0xE0D6B8,0x8E8C88,0xE4E1DA];
+var TOPS=[NAMED.white,NAMED.black,NAMED.grey,NAMED.navy,NAMED.blue,NAMED.red,NAMED.maroon,NAMED.green,
+          NAMED.olive,NAMED.mustard,NAMED.cream,NAMED.purple];
+var BOTTOMS=[NAMED.black,NAMED.charcoal,NAMED.denim,NAMED.khaki,NAMED.brown,NAMED.grey,NAMED.navy,NAMED.olive,NAMED.tan,NAMED.burgundy];
+var SHOES=[NAMED.black,NAMED.brown,NAMED.white,NAMED.tan,NAMED.red,NAMED.grey];
+var HAIRSTYLES=["short","long","bun","curly","ponytail","bald"];
+var HATS=["none","cap","brimmed","hood"];
+var TOPKINDS=["shirt","coat","dress","robe"];
+var BOTTOMKINDS=["trousers","skirt"];
+
+/* how an unremembered figure looks: plainly not yet dreamt */
+var UNSEEN={skin:0x8F8C86,hair:0x5A5854,top:0x5E5E64,bottom:0x4E4E54,shoes:0x3A3A3E};
+
+var FEMALE=/^(woman|women|girl|lady|mother|mum|mom|grandmother|grandma|granny|sister|daughter|aunt|nun|queen|wife|bride|widow|maiden|old woman|she)$/;
+var MALE=/^(man|men|boy|gentleman|father|dad|grandfather|grandpa|brother|son|uncle|monk|king|husband|groom|widower|old man|he)$/;
+function sexOfWord(w){ w=String(w||"").toLowerCase().trim(); return FEMALE.test(w)?"f":MALE.test(w)?"m":null; }
+
+function pickSeed(arr,seed){ return arr[Math.abs(seed)%arr.length]; }
+
+/* the crowd: varied, seeded so a stranger keeps their clothes while you watch */
+function randomLook(seed,kind){
+  var h=hash(String(seed));
+  var sex=(h%2)?"f":"m";
+  var top=pickSeed(TOPKINDS.slice(0,2).concat(sex==="f"?["dress"]:["shirt"]),h>>>3);
+  return {sex:sex,age:kind==="child"?"child":"adult",
+    skin:pickSeed(SKIN,h>>>5),hair:pickSeed(HAIR,h>>>7),
+    hairStyle:pickSeed(sex==="f"?["long","bun","ponytail","curly","short"]:["short","short","curly","bald","long"],h>>>9),
+    top:pickSeed(TOPS,h>>>11),topKind:top,
+    bottom:pickSeed(BOTTOMS,h>>>13),bottomKind:(sex==="f"&&(h>>>15)%3===0)?"skirt":"trousers",
+    shoes:pickSeed(SHOES,h>>>17),hat:((h>>>19)%7===0)?pickSeed(["cap","brimmed","hood"],h>>>21):"none",
+    build:0.94+((h>>>23)%12)/100,src:{}};
+}
+/* a dreamt figure starts with nothing but what the dream said */
+function blankLook(kind){
+  return {sex:null,age:kind==="child"?"child":"adult",skin:null,hair:null,hairStyle:null,top:null,topKind:null,
+    bottom:null,bottomKind:null,shoes:null,hat:null,build:1,src:{}};
+}
+function lookOf(spec){
+  if(!spec.look) spec.look=spec.filler?randomLook(spec.id,spec.archetype):blankLook(spec.archetype);
+  return spec.look;
+}
+function setLook(spec,field,value,src){
+  var L=lookOf(spec); L[field]=value; if(!L.src) L.src={}; L.src[field]=src||"stated";
+}
+
+/* ---- reading appearance out of a dream ----
+   "a woman in a red coat", "wearing a navy dress", "grey-haired", "with long black hair" */
+var GARMENT={coat:["top","coat"],overcoat:["top","coat"],raincoat:["top","coat"],jacket:["top","coat"],
+  blazer:["top","coat"],cloak:["top","robe"],cape:["top","robe"],robe:["top","robe"],robes:["top","robe"],
+  gown:["top","dress"],dress:["top","dress"],frock:["top","dress"],shirt:["top","shirt"],blouse:["top","shirt"],
+  sweater:["top","shirt"],jumper:["top","shirt"],hoodie:["top","shirt"],top:["top","shirt"],vest:["top","shirt"],
+  uniform:["top","shirt"],suit:["suit","shirt"],trousers:["bottom","trousers"],pants:["bottom","trousers"],
+  jeans:["bottom","trousers"],slacks:["bottom","trousers"],shorts:["bottom","trousers"],skirt:["bottom","skirt"],
+  shoes:["shoes",null],boots:["shoes",null],sneakers:["shoes",null],heels:["shoes",null],sandals:["shoes",null],
+  slippers:["shoes",null],hat:["hat","brimmed"],cap:["hat","cap"],hood:["hat","hood"],bonnet:["hat","hood"]};
+
+function colorAt(words,i){
+  var two=(words[i-1]&&(words[i-1]+" "+words[i]));
+  if(two&&TWOWORD[two]) return {c:TWOWORD[two],n:2};
+  var c=NAMED[words[i]]; if(c===undefined) return null;
+  if(words[i-1]==="dark"||words[i-1]==="deep") return {c:shade(c,-0.35),n:2};
+  if(words[i-1]==="light"||words[i-1]==="pale"||words[i-1]==="bright") return {c:shade(c,0.3),n:2};
+  return {c:c,n:1};
+}
+
+/* returns what each clothing phrase says, with the span of text it used,
+   so those colour words are not also read as the colour of some building */
+function appearanceIn(low){
+  var out=[], words=[], pos=[], m, re=/[a-z]+(?:-[a-z]+)?/g;
+  while((m=re.exec(low))){ words.push(m[0]); pos.push(m.index); }
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    var hy=/^([a-z]+)-haired$/.exec(w);
+    if(hy){
+      var hc=NAMED[hy[1]]!==undefined?NAMED[hy[1]]:({fair:NAMED.blonde,dark:HAIR[0],white:HAIR[8],silver:HAIR[7]})[hy[1]];
+      if(hc!==undefined) out.push({at:pos[i],end:pos[i]+w.length,field:"hair",value:hc});
+      continue;
+    }
+    if(w==="hair"){
+      var c=null, start=pos[i], style=null;
+      for(var k=i-1;k>=Math.max(0,i-3);k--){
+        var ca=colorAt(words,k); if(ca&&c===null){ c=ca.c; start=pos[k-ca.n+1]; }
+        if(/^(long|flowing)$/.test(words[k])) style="long";
+        if(/^(curly|wild|frizzy)$/.test(words[k])) style="curly";
+        if(/^(short|cropped)$/.test(words[k])) style="short";
+      }
+      if(c!==null) out.push({at:start,end:pos[i]+4,field:"hair",value:c});
+      if(style) out.push({at:start,end:pos[i]+4,field:"hairStyle",value:style});
+      continue;
+    }
+    if(/^(bald|shaven)$/.test(w)){ out.push({at:pos[i],end:pos[i]+w.length,field:"hairStyle",value:"bald"}); continue; }
+    var G=GARMENT[w]; if(!G) continue;
+    var col=null, st=pos[i];
+    for(var j=i-1;j>=Math.max(0,i-3);j--){
+      var cj=colorAt(words,j); if(cj){ col=cj.c; st=pos[j-cj.n+1]; break; }
+      if(/^(in|wearing|with|and)$/.test(words[j])) break;
+    }
+    /* without a colour, a garment word only counts when the sentence is about wearing it:
+       "in a coat", "wearing boots", "her dress" — not "the top of the stairs" */
+    if(col===null){
+      var ctx=false;
+      for(var c2=i-1;c2>=Math.max(0,i-3);c2--) if(/^(in|wearing|wore|dressed|his|her|their|with)$/.test(words[c2])) ctx=true;
+      if(!ctx) continue;
+    }
+    var slot=G[0], kind=G[1];
+    if(slot==="suit"){
+      if(col!==null){ out.push({at:st,end:pos[i]+w.length,field:"top",value:col}); out.push({at:st,end:pos[i]+w.length,field:"bottom",value:col}); }
+      out.push({at:st,end:pos[i]+w.length,field:"topKind",value:"coat"});
+      continue;
+    }
+    if(slot==="hat"){ out.push({at:st,end:pos[i]+w.length,field:"hat",value:kind}); continue; }
+    if(col!==null) out.push({at:st,end:pos[i]+w.length,field:slot,value:col});
+    if(kind&&slot==="top") out.push({at:st,end:pos[i]+w.length,field:"topKind",value:kind});
+    if(kind&&slot==="bottom") out.push({at:st,end:pos[i]+w.length,field:"bottomKind",value:kind});
+    if(kind==="dress"&&col!==null) out.push({at:st,end:pos[i]+w.length,field:"bottom",value:col});
+  }
+  return out;
+}
+
+</script>
+<script>/* js/textures.js */
+/* Dream Walker's Atlas — textures.js
+   every texture is painted in code: brick, stone, wood, siding, plaster, concrete,
+   glass, marble, metal, shingle, tile, slate, thatch, foliage, bark, and ground.
+   they are pale detail maps, multiplied by a colour, so the colour system still
+   decides what colour a wall is; the texture only decides what it's made of.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+/* metres of wall one copy of each texture covers */
+var TILE={brick:1.6,stone:2.4,wood:2.4,siding:2.4,plaster:4,concrete:3,glass:3.2,marble:3,metal:2,
+  shingle:2,tile:2,slate:2,thatch:2.5,metalroof:2,foliage:2,bark:1.2,asphalt:6,
+  grass:8,earth:8,sand:8,snow:8,paving:4,void:8,dash:6};
+
+function rng(seed){ var s=seed>>>0||1; return function(){ s^=s<<13; s^=s>>>17; s^=s<<5; return ((s>>>0)%100000)/100000; }; }
+function grey(v){ v=Math.max(0,Math.min(255,Math.round(v))); return "rgb("+v+","+v+","+v+")"; }
+function speckle(x,N,r,amt,count){
+  for(var i=0;i<count;i++){ x.fillStyle=grey(200+(r()-0.5)*amt*2); x.globalAlpha=0.35; x.fillRect(r()*N,r()*N,1+r()*2,1+r()*2); }
+  x.globalAlpha=1;
+}
+
+var PAINT={
+  brick:function(x,N,r){
+    x.fillStyle=grey(150); x.fillRect(0,0,N,N);
+    var rows=8, h=N/rows, w=N/4;
+    for(var j=0;j<rows;j++){ var off=(j%2)?w/2:0;
+      for(var i=-1;i<5;i++){ x.fillStyle=grey(214+(r()-0.5)*56); x.fillRect(i*w+off+3,j*h+3,w-6,h-6); } }
+    speckle(x,N,r,40,900);
+  },
+  stone:function(x,N,r){
+    x.fillStyle=grey(150); x.fillRect(0,0,N,N);
+    var y=0; while(y<N){ var h=34+r()*30, px=0;
+      while(px<N){ var w=44+r()*70; x.fillStyle=grey(200+(r()-0.5)*56); x.fillRect(px+3,y+3,w-6,h-6); px+=w; } y+=h; }
+    speckle(x,N,r,60,1400);
+  },
+  wood:function(x,N,r){
+    var rows=6, h=N/rows;
+    for(var j=0;j<rows;j++){ x.fillStyle=grey(200+(r()-0.5)*36); x.fillRect(0,j*h,N,h);
+      x.strokeStyle=grey(150); x.globalAlpha=0.35;
+      for(var k=0;k<5;k++){ x.beginPath(); var yy=j*h+r()*h; x.moveTo(0,yy);
+        for(var s=0;s<=8;s++) x.lineTo(s*N/8,yy+Math.sin(s+r()*3)*2); x.stroke(); }
+      x.globalAlpha=1; x.fillStyle=grey(110); x.fillRect(0,j*h,N,2); }
+  },
+  siding:function(x,N,r){
+    var rows=10, h=N/rows;
+    for(var j=0;j<rows;j++){ var gr=x.createLinearGradient(0,j*h,0,(j+1)*h);
+      gr.addColorStop(0,grey(232)); gr.addColorStop(0.85,grey(206)); gr.addColorStop(1,grey(150));
+      x.fillStyle=gr; x.fillRect(0,j*h,N,h); }
+    speckle(x,N,r,20,500);
+  },
+  plaster:function(x,N,r){
+    x.fillStyle=grey(222); x.fillRect(0,0,N,N);
+    for(var i=0;i<40;i++){ x.fillStyle=grey(205+r()*30); x.globalAlpha=0.18; x.beginPath(); x.arc(r()*N,r()*N,10+r()*40,0,7); x.fill(); }
+    x.globalAlpha=1; speckle(x,N,r,30,1600);
+  },
+  concrete:function(x,N,r){
+    x.fillStyle=grey(208); x.fillRect(0,0,N,N); speckle(x,N,r,50,2200);
+    x.fillStyle=grey(150); x.fillRect(0,N/2-1,N,2); x.fillRect(N/2-1,0,2,N);
+    for(var i=0;i<4;i++) for(var j=0;j<4;j++){ x.fillStyle=grey(160); x.beginPath(); x.arc(i*64+32,j*64+32,2,0,7); x.fill(); }
+  },
+  glass:function(x,N,r){
+    for(var i=0;i<4;i++) for(var j=0;j<4;j++){ var gr=x.createLinearGradient(i*64,j*64,i*64+64,j*64+64);
+      var b=190+r()*40; gr.addColorStop(0,grey(b+25)); gr.addColorStop(1,grey(b-20)); x.fillStyle=gr; x.fillRect(i*64,j*64,64,64); }
+    x.fillStyle=grey(95); for(var k=0;k<=4;k++){ x.fillRect(k*64-2,0,4,N); x.fillRect(0,k*64-2,N,4); }
+  },
+  marble:function(x,N,r){
+    x.fillStyle=grey(236); x.fillRect(0,0,N,N); x.strokeStyle=grey(170); x.lineWidth=1.3;
+    for(var i=0;i<9;i++){ x.globalAlpha=0.25+r()*0.3; x.beginPath(); var px=r()*N, py=0; x.moveTo(px,py);
+      while(py<N){ px+=(r()-0.5)*30; py+=10+r()*16; x.lineTo(px,py); } x.stroke(); }
+    x.globalAlpha=1;
+  },
+  metal:function(x,N,r){
+    for(var i=0;i<16;i++){ var gr=x.createLinearGradient(i*16,0,i*16+16,0);
+      gr.addColorStop(0,grey(170)); gr.addColorStop(0.5,grey(232)); gr.addColorStop(1,grey(170)); x.fillStyle=gr; x.fillRect(i*16,0,16,N); }
+    speckle(x,N,r,30,500);
+  },
+  metalroof:function(x,N,r){
+    x.fillStyle=grey(205); x.fillRect(0,0,N,N);
+    for(var i=0;i<8;i++){ x.fillStyle=grey(236); x.fillRect(i*32,0,4,N); x.fillStyle=grey(160); x.fillRect(i*32+4,0,2,N); }
+  },
+  shingle:function(x,N,r){
+    x.fillStyle=grey(120); x.fillRect(0,0,N,N);
+    for(var j=0;j<8;j++){ var off=(j%2)?16:0;
+      for(var i=-1;i<9;i++){ x.fillStyle=grey(190+(r()-0.5)*50); x.fillRect(i*32+off+1,j*32+1,30,30);
+        x.fillStyle=grey(140); x.fillRect(i*32+off+1,j*32+26,30,5); } }
+  },
+  tile:function(x,N,r){
+    x.fillStyle=grey(140); x.fillRect(0,0,N,N);
+    for(var j=0;j<9;j++) for(var i=-1;i<9;i++){ var cx=i*32+((j%2)?16:0)+16, cy=j*30;
+      var gr=x.createRadialGradient(cx,cy,2,cx,cy,20); gr.addColorStop(0,grey(232)); gr.addColorStop(1,grey(176));
+      x.fillStyle=gr; x.beginPath(); x.arc(cx,cy+8,16,0,Math.PI); x.fill(); x.fillRect(cx-16,cy-8,32,16); }
+  },
+  slate:function(x,N,r){
+    x.fillStyle=grey(100); x.fillRect(0,0,N,N);
+    for(var j=0;j<9;j++){ var off=(j%2)?20:0;
+      for(var i=-1;i<7;i++){ x.fillStyle=grey(176+(r()-0.5)*40); x.fillRect(i*40+off+2,j*28+2,36,24); } }
+  },
+  thatch:function(x,N,r){
+    x.fillStyle=grey(170); x.fillRect(0,0,N,N);
+    for(var i=0;i<2600;i++){ var px=r()*N, py=r()*N; x.strokeStyle=grey(150+r()*95); x.globalAlpha=0.6;
+      x.beginPath(); x.moveTo(px,py); x.lineTo(px+(r()-0.5)*4,py+8+r()*10); x.stroke(); }
+    x.globalAlpha=1;
+  },
+  foliage:function(x,N,r){
+    x.fillStyle=grey(180); x.fillRect(0,0,N,N);
+    for(var i=0;i<1800;i++){ x.fillStyle=grey(150+r()*105); x.globalAlpha=0.55; x.beginPath(); x.arc(r()*N,r()*N,2+r()*5,0,7); x.fill(); }
+    x.globalAlpha=1;
+  },
+  bark:function(x,N,r){
+    x.fillStyle=grey(185); x.fillRect(0,0,N,N);
+    for(var i=0;i<70;i++){ x.strokeStyle=grey(110+r()*60); x.lineWidth=1+r()*3; x.globalAlpha=0.6; x.beginPath();
+      var px=r()*N; x.moveTo(px,0); for(var y=0;y<=N;y+=16) x.lineTo(px+(r()-0.5)*8,y); x.stroke(); }
+    x.globalAlpha=1;
+  },
+  asphalt:function(x,N,r){ x.fillStyle=grey(190); x.fillRect(0,0,N,N); speckle(x,N,r,70,5200); },
+  grass:function(x,N,r){
+    x.fillStyle=grey(196); x.fillRect(0,0,N,N);
+    for(var i=0;i<3600;i++){ x.fillStyle=grey(150+r()*105); x.globalAlpha=0.45; x.beginPath(); x.arc(r()*N,r()*N,0.8+r()*1.8,0,7); x.fill(); }
+    for(var k=0;k<24;k++){ x.fillStyle=grey(170+r()*60); x.globalAlpha=0.12; x.beginPath(); x.arc(r()*N,r()*N,20+r()*50,0,7); x.fill(); }
+    x.globalAlpha=1;
+  },
+  earth:function(x,N,r){
+    x.fillStyle=grey(196); x.fillRect(0,0,N,N); speckle(x,N,r,70,3800);
+    for(var k=0;k<30;k++){ x.fillStyle=grey(160+r()*70); x.globalAlpha=0.14; x.beginPath(); x.arc(r()*N,r()*N,14+r()*40,0,7); x.fill(); }
+    x.globalAlpha=1;
+  },
+  sand:function(x,N,r){
+    x.fillStyle=grey(220); x.fillRect(0,0,N,N); speckle(x,N,r,30,3000);
+    x.strokeStyle=grey(190); x.globalAlpha=0.3;
+    for(var j=0;j<14;j++){ x.beginPath(); for(var i=0;i<=16;i++) x.lineTo(i*16,j*19+Math.sin(i*0.9+j)*4); x.stroke(); }
+    x.globalAlpha=1;
+  },
+  snow:function(x,N,r){ x.fillStyle=grey(238); x.fillRect(0,0,N,N); speckle(x,N,r,14,1600); },
+  paving:function(x,N,r){
+    x.fillStyle=grey(140); x.fillRect(0,0,N,N);
+    for(var j=0;j<8;j++) for(var i=0;i<8;i++){ x.fillStyle=grey(190+(r()-0.5)*50); x.beginPath();
+      x.arc(i*32+16+(r()-0.5)*6,j*32+16+(r()-0.5)*6,13,0,7); x.fill(); }
+  },
+  void:function(x,N,r){ x.fillStyle=grey(200); x.fillRect(0,0,N,N); },
+  dash:function(x,N,r){ x.clearRect(0,0,N,N); x.fillStyle="#ffffff"; x.fillRect(0,0,N,N*0.5); }
+};
+
+var TEXCACHE={};
+function texOf(kind){
+  if(TEXCACHE[kind]) return TEXCACHE[kind];
+  if(!PAINT[kind]||typeof document==="undefined") return null;
+  var c=document.createElement("canvas"); c.width=c.height=256;
+  var x=c.getContext("2d"); if(!x) return null;
+  try{ PAINT[kind](x,256,rng(hash(kind))); }catch(e){ return null; }
+  var t=new THREE.CanvasTexture(c);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;
+  var tile=TILE[kind]||2; if(t.repeat&&t.repeat.set) t.repeat.set(1/tile,1/tile);
+  t.anisotropy=(renderer&&renderer.capabilities&&renderer.capabilities.getMaxAnisotropy)?Math.min(8,renderer.capabilities.getMaxAnisotropy()):4;
+  TEXCACHE[kind]=t; return t;
+}
+
+/* geometry UVs measured in metres, so a texture's tile is the same size on a
+   shed and on a cathedral, rather than one brick stretched over a whole wall */
+function metreUVs(g,kind,s){
+  var uv=g.attributes&&g.attributes.uv; if(!uv||!uv.array) return;
+  var a=uv.array;
+  if(kind==="box"){
+    var w=s[0],h=s[1],d=s[2], dims=[[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];
+    for(var f=0;f<6;f++) for(var v=0;v<4;v++){ var i=(f*4+v)*2; if(i+1<a.length){ a[i]*=dims[f][0]; a[i+1]*=dims[f][1]; } }
+  } else if(kind==="cyl"||kind==="cone"){
+    var r=kind==="cyl"?Math.max(s[0],s[1]):s[0], hh=kind==="cyl"?s[2]:s[1], circ=2*Math.PI*r;
+    for(var k=0;k<a.length;k+=2){ a[k]*=circ; a[k+1]*=hh; }
+  } else if(kind==="pln"){
+    for(var p=0;p<a.length;p+=2){ a[p]*=s[0]; a[p+1]*=s[1]; }
+  } else if(kind==="sph"||kind==="ico"){
+    var R=s[0]; for(var q=0;q<a.length;q+=2){ a[q]*=2*Math.PI*R; a[q+1]*=Math.PI*R; }
+  }
+  uv.needsUpdate=true;
+}
+
+/* which texture a part of a form wears, if any. vague memories stay smooth:
+   detail arrives with detail. */
+function surfaceOf(pt,def,spec,f){
+  if(!landOpt("detail")) return null;
+  if(f<0.5||pt.glow||pt.c==="glass") return null;
+  var big=Math.max.apply(null,(pt.s||[0]).slice(0,3));
+  if(big<0.7) return null;
+  var a=spec.attrs||{}, arch=spec.archetype;
+  if(def.cat==="structure"){
+    if(pt.c==="body") return {tex:a.m||WALL_DEFAULT[arch]||"plaster",wall:true};
+    if(pt.c==="stone") return {tex:"stone"};
+    if(pt.c==="trim"&&(pt.g==="cone"||(pt.g==="cyl"&&big>6))) {
+      var rm=a.rm||ROOF_DEFAULT[arch]||"shingle"; return rm&&rm!=="flat"?{tex:rm,roof:true}:null;
+    }
+    if(pt.c==="white") return {tex:"marble"};
+    if(pt.c==="bark") return {tex:"wood"};
+    if(pt.c==="metal") return {tex:"metal"};
+    return null;
+  }
+  if(pt.c==="nature"&&(pt.g==="ico"||pt.g==="cone"||pt.g==="sph")) return {tex:"foliage"};
+  if(pt.c==="bark") return {tex:(pt.g==="cyl"&&def.cat==="nature")?"bark":"wood"};
+  if(pt.c==="road") return {tex:"asphalt"};
+  if(pt.c==="stone"&&big>1.5) return {tex:"stone"};
+  return null;
+}
+
+</script>
+<script>/* js/figures.js */
+/* Dream Walker's Atlas — figures.js
+   people: bodies with jointed limbs, hair, clothes and hats, drawn from a look;
+   smooth walking between where they are and where they're going.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var PEOPLE={human:1,child:1};
+function isPerson(spec){ return !!PEOPLE[spec.archetype]; }
+
+var FIGGEO={};
+/* an unremembered figure is a pale stone likeness until the dream says more */
+var STATUE={skin:0xB8B0A2,hair:0x6E6860,top:0x8E877B,bottom:0x77716A,shoes:0x55514C};
+function fg(key,make){ return FIGGEO[key]||(FIGGEO[key]=make()); }
+
+/* a material for one colour on one figure, honouring how well they're remembered */
+function figMat(col,f,filler){
+  var opa, c;
+  if(filler) c=blend(col,0x8A8C90,0.22);
+  else c=f<0.99?blend(col,0xB4BCCB,(1-f)*0.35):col;
+  return new THREE.MeshLambertMaterial({color:c});
+}
+
+/* the ground-darkening under anything standing, so nothing floats */
+function contactShadow(r){
+  var m=new THREE.Mesh(fg("shadow",function(){ return new THREE.CircleGeometry(1,20); }),
+    new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.28,depthWrite:false,
+      polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4}));
+  m.rotation.x=-Math.PI/2; m.position.y=0.08; m.scale.set(r,r,r);
+  m.userData.contact=1;
+  return m;
+}
+
+function buildFigure(spec,f){
+  var L=lookOf(spec), filler=!!spec.filler;
+  var child=spec.archetype==="child"||L.age==="child";
+  var sex=L.sex;
+  function pick(v,fallback){ return v!==null&&v!==undefined?v:fallback; }
+  var U=STATUE;
+  var skin=pick(L.skin,U.skin), hair=pick(L.hair,U.hair), top=pick(L.top,U.top),
+      bottom=pick(L.bottom,U.bottom), shoes=pick(L.shoes,U.shoes);
+  var topKind=L.topKind||"shirt", bottomKind=L.bottomKind||"trousers";
+  var style=L.hairStyle||(sex==="f"?"long":sex==="m"?"short":"short");
+  var M={skin:figMat(skin,f,filler),hair:figMat(hair,f,filler),top:figMat(top,f,filler),
+         bottom:figMat(bottom,f,filler),shoes:figMat(shoes,f,filler)};
+
+  var shoulder=sex==="f"?0.185:sex==="m"?0.225:0.205;
+  var hip=sex==="f"?0.19:sex==="m"?0.165:0.175;
+  var g=new THREE.Group(), body=new THREE.Group();
+  g.add(body);
+  function mesh(geoKey,make,mat,x,y,z){
+    var m=new THREE.Mesh(fg(geoKey,make),mat); m.position.set(x||0,y||0,z||0); return m;
+  }
+
+  /* legs, each on a hip joint so they can swing */
+  var legs=[];
+  [-1,1].forEach(function(sd){
+    var pivot=new THREE.Group(); pivot.position.set(sd*0.095,0.92,0);
+    var legMat=(bottomKind==="skirt"||topKind==="dress")?M.skin:M.bottom;
+    pivot.add(mesh("leg",function(){ return new THREE.CylinderGeometry(0.072,0.058,0.84,8); },legMat,0,-0.42,0));
+    pivot.add(mesh("shoe",function(){ return new THREE.BoxGeometry(0.11,0.08,0.25); },M.shoes,0,-0.87,0.045));
+    body.add(pivot); legs.push(pivot);
+  });
+
+  var dressLike=topKind==="dress", robe=topKind==="robe";
+  body.add(mesh("hips"+hip,function(){ return new THREE.CylinderGeometry(hip-0.01,hip,0.17,10); },
+    dressLike?M.top:M.bottom,0,0.95,0));
+  if(bottomKind==="skirt"&&!dressLike&&!robe)
+    body.add(mesh("skirt",function(){ return new THREE.CylinderGeometry(0.185,0.27,0.44,12); },M.bottom,0,0.76,0));
+  if(dressLike)
+    body.add(mesh("dress",function(){ return new THREE.CylinderGeometry(0.19,0.3,0.56,12); },M.top,0,0.7,0));
+  if(robe)
+    body.add(mesh("robe",function(){ return new THREE.CylinderGeometry(0.2,0.31,1.0,12); },M.top,0,0.55,0));
+  if(topKind==="coat")
+    body.add(mesh("coattail",function(){ return new THREE.CylinderGeometry(0.19,0.235,0.38,10); },M.top,0,0.8,0));
+
+  var torso=mesh("torso"+shoulder,function(){ return new THREE.CylinderGeometry(shoulder,0.165,0.58,10); },M.top,0,1.28,0);
+  torso.scale.z=0.62; body.add(torso);
+  if(sex==="f"){ var bust=mesh("bust",function(){ return new THREE.SphereGeometry(0.07,8,6); },M.top,0,1.36,0.07); bust.scale.set(2.1,0.9,0.8); body.add(bust); }
+
+  /* arms on shoulder joints */
+  var arms=[];
+  [-1,1].forEach(function(sd){
+    var pivot=new THREE.Group(); pivot.position.set(sd*(shoulder+0.045),1.52,0);
+    pivot.rotation.z=sd*0.07;
+    pivot.add(mesh("arm",function(){ return new THREE.CylinderGeometry(0.052,0.043,0.6,8); },M.top,0,-0.3,0));
+    pivot.add(mesh("hand",function(){ return new THREE.SphereGeometry(0.046,8,6); },M.skin,0,-0.63,0));
+    body.add(pivot); arms.push(pivot);
+  });
+
+  body.add(mesh("neck",function(){ return new THREE.CylinderGeometry(0.05,0.055,0.1,8); },M.skin,0,1.6,0));
+  var head=mesh("head",function(){ return new THREE.SphereGeometry(0.112,14,10); },M.skin,0,1.72,0);
+  head.scale.y=1.1; body.add(head);
+  /* a face arrives with memory: the barely remembered have none yet */
+  if(filler||f>=0.5){
+    var eyeMat=new THREE.MeshBasicMaterial({color:0x1A1614});
+    [-1,1].forEach(function(sd){ body.add(mesh("eye",function(){ return new THREE.SphereGeometry(0.014,6,4); },eyeMat,sd*0.04,1.735,0.1)); });
+  }
+
+  /* hair */
+  var cap=function(r,t){ return function(){ return new THREE.SphereGeometry(r,14,8,0,Math.PI*2,0,Math.PI*t); }; };
+  if(style!=="bald" && !(L.hat==="hood")){
+    if(style==="curly"){
+      var cu=mesh("curly",function(){ return new THREE.IcosahedronGeometry(0.15,1); },M.hair,0,1.77,-0.015); cu.scale.y=0.85; body.add(cu);
+    } else {
+      var hc=mesh("haircap",cap(0.121,0.56),M.hair,0,1.735,-0.005); hc.scale.y=1.08; body.add(hc);
+      if(style==="long") body.add(mesh("hairlong",function(){ return new THREE.BoxGeometry(0.235,0.36,0.07); },M.hair,0,1.56,-0.085));
+      if(style==="bun") body.add(mesh("bun",function(){ return new THREE.SphereGeometry(0.058,10,8); },M.hair,0,1.82,-0.085));
+      if(style==="ponytail"){ var pt=mesh("tail",function(){ return new THREE.CylinderGeometry(0.03,0.02,0.28,6); },M.hair,0,1.6,-0.14); pt.rotation.x=0.35; body.add(pt); }
+    }
+  }
+  /* hats */
+  var hatMat=L.hatColor!==undefined&&L.hatColor!==null?figMat(L.hatColor,f,filler):(L.hat==="hood"?M.top:M.shoes);
+  if(L.hat==="cap"){
+    body.add(mesh("hatcap",cap(0.126,0.5),hatMat,0,1.74,0));
+    body.add(mesh("brimcap",function(){ return new THREE.BoxGeometry(0.17,0.014,0.11); },hatMat,0,1.745,0.1));
+  } else if(L.hat==="brimmed"){
+    body.add(mesh("crown",function(){ return new THREE.CylinderGeometry(0.1,0.11,0.13,12); },hatMat,0,1.84,0));
+    body.add(mesh("brim",function(){ return new THREE.CylinderGeometry(0.2,0.2,0.014,16); },hatMat,0,1.775,0));
+  } else if(L.hat==="hood"){
+    var hd=mesh("hood",cap(0.145,0.66),hatMat,0,1.72,-0.02); hd.scale.y=1.1; body.add(hd);
+  }
+
+  body.scale.set(L.build||1,1,L.build||1);
+  var H=child?0.7:(sex==="f"?0.965:sex==="m"?1.015:1);
+  body.scale.multiplyScalar(H);
+  g.add(contactShadow(child?0.26:0.36));
+  g.userData.limbs={ll:legs[0],rl:legs[1],la:arms[0],ra:arms[1]};
+  return g;
+}
+
+/* a knot of strangers, each dressed differently */
+function buildCrowd(spec,f){
+  var g=new THREE.Group(), h=hash(spec.id);
+  for(var i=0;i<7;i++){
+    var p={id:spec.id+":"+i,archetype:(i===5?"child":"human"),filler:true,attrs:{}};
+    p.look=randomLook(p.id,p.archetype);
+    var one=buildFigure(p,f);
+    one.position.set(((hash(p.id)%100)/100-0.5)*5,0,((hash(p.id+"z")%100)/100-0.5)*3.6);
+    one.rotation.y=((hash(p.id+"r")%628)/100);
+    g.add(one);
+  }
+  return g;
+}
+
+/* ---- walking: figures move to where the hour puts them, at a walking pace ---- */
+function stepFigures(dt){
+  for(var id in meshes){
+    var g=meshes[id], u=g.userData;
+    if(!u.target) continue;
+    var dx=u.target.x-g.position.x, dz=u.target.z-g.position.z, d=Math.sqrt(dx*dx+dz*dz), moving=false;
+    if(d>160){ g.position.x=u.target.x; g.position.z=u.target.z; }
+    else if(d>0.2){
+      var pace=1.35*(d>30?2.6:1);
+      var st=Math.min(d,pace*dt);
+      g.position.x+=dx/d*st; g.position.z+=dz/d*st; moving=true;
+      if(!u.facingPlayer){
+        var want=Math.atan2(dx,dz), diff=((want-g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
+        g.rotation.y+=diff*Math.min(dt*5,1);
+      }
+    }
+    var L=u.limbs;
+    if(L){
+      u.amp=(u.amp||0)+((moving?0.55:0)-(u.amp||0))*Math.min(dt*6,1);
+      u.phase=(u.phase||0)+dt*(moving?(d>30?11:7.2):0);
+      var s=Math.sin(u.phase)*u.amp;
+      L.ll.rotation.x=s; L.rl.rotation.x=-s; L.la.rotation.x=-s*0.75; L.ra.rotation.x=s*0.75;
+    }
+  }
+}
+
+/* people cast shadows; the patch of shade beneath them does not */
+function shadowsFor(g,cast){
+  if(!g.traverse) return;
+  g.traverse(function(m){
+    if(!m.isMesh||m.userData.contact) return;
+    m.castShadow=!!cast; m.receiveShadow=true;
+  });
+}
+
+</script>
+<script>/* js/land.js */
+/* Dream Walker's Atlas — land.js
+   the ground the dreamscape stands on: what it's made of, whether hills rise beyond
+   the town, the season, the colour of water, the mood of the sky, and shadows.
+   hills are only ever raised where nothing stands, so nothing floats or sinks.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var LAND_DEFAULT={ground:"grass",hills:1,season:"calendar",water:0x2E5E78,sky:"hour",shadows:null,detail:true};
+function land(){
+  if(!store.land) store.land={};
+  for(var k in LAND_DEFAULT) if(store.land[k]===undefined) store.land[k]=LAND_DEFAULT[k];
+  if(store.land.shadows===null) store.land.shadows=!(typeof matchMedia==="function"&&matchMedia("(pointer:coarse)").matches);
+  return store.land;
+}
+function landOpt(k){ return land()[k]; }
+
+var GROUNDCOL={grass:0x587A40,earth:0x7A6248,sand:0xB8A47C,snow:0xAEB6BE,paving:0x8A857C,void:0x5B5A52};
+var HILLS=[0,9,26,60];
+
+/* ---- seasons ---- */
+function seasonNow(){
+  var s=landOpt("season");
+  if(s!=="calendar") return s;
+  var m=new Date().getMonth();
+  return m<2||m===11?"winter":m<5?"spring":m<8?"summer":"autumn";
+}
+var FOLIAGE={spring:[0x6E9A4E,0x7FA85A,0x5E8C44],summer:[0x4A7A3A,0x3F6E34,0x56853F],
+  autumn:[0xB0662E,0xC8862E,0x8E3A22,0xA0522D],winter:[0xB4BAC2,0xA8AEB6,0xBEC3CA],still:[ROLE.nature]};
+function natureColor(spec){
+  var s=seasonNow(), set=FOLIAGE[s]||FOLIAGE.summer;
+  if(spec&&spec.attrs&&spec.attrs.c!==undefined) return spec.attrs.c;
+  var arch=spec&&spec.archetype;
+  if(arch==="grass"){ return s==="winter"?0xB0B8C0:s==="autumn"?0x7A7040:s==="spring"?0x6E9A4E:0x557A40; }
+  if(arch==="pine"&&s==="autumn") return 0x3A5E36;
+  return set[hash(String(spec&&spec.id||"x"))%set.length];
+}
+function waterColor(){ return landOpt("water"); }
+function groundColor(){
+  var g=landOpt("ground"), s=seasonNow();
+  if(g==="grass"&&s==="winter") return GROUNDCOL.snow;
+  if(g==="grass"&&s==="autumn") return 0x646838;
+  if(g==="grass"&&s==="spring") return 0x5E8448;
+  return GROUNDCOL[g]||GROUNDCOL.grass;
+}
+function groundTex(){
+  var g=landOpt("ground");
+  if(g==="grass"&&seasonNow()==="winter") return "snow";
+  return g==="void"?null:g;
+}
+
+/* ---- sky mood, laid over the hour's own colours ---- */
+var MOODS={hour:null,overcast:[0x6E7278,0.55],pale:[0xD8D4CC,0.4],eerie:[0x2E6A4A,0.45],
+  ember:[0x8A3A22,0.45],violet:[0x5A3A7E,0.45]};
+function moodSky(sk){
+  var m=MOODS[landOpt("sky")]; if(!m) return sk;
+  return {top:blend(sk.top,m[0],m[1]),low:blend(sk.low,m[0],m[1]*0.85)};
+}
+
+/* ---- the terrain: hills beyond the town, flat wherever anything stands ---- */
+var terrain=null, terrainSig="";
+function vnoise(x,z){
+  function h(i,j){ var n=Math.sin(i*127.1+j*311.7)*43758.5453; return n-Math.floor(n); }
+  var xi=Math.floor(x), zi=Math.floor(z), xf=x-xi, zf=z-zi;
+  var u=xf*xf*(3-2*xf), v=zf*zf*(3-2*zf);
+  var a=h(xi,zi), b=h(xi+1,zi), c=h(xi,zi+1), d=h(xi+1,zi+1);
+  return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;
+}
+function fbm(x,z){ return vnoise(x/300,z/300)*0.6+vnoise(x/120,z/120)*0.3+vnoise(x/48,z/48)*0.1; }
+function smooth(a,b,x){ var t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); }
+
+function flatZones(){
+  var z=[];
+  (store.streets||[]).forEach(function(k){
+    var p=k.split(":"), o=blockOrigin(+p[0],+p[1]); z.push([o.x,o.z,86]);
+  });
+  store.objects.forEach(function(o){
+    if(o.filler) return;
+    var d=KIT[o.archetype]; if(!d) return;
+    var s=(o.attrs&&o.attrs.s)||1;
+    z.push([o.x,o.z,Math.max(d.size[0],d.size[2])*0.6*s+10]);
+  });
+  return z;
+}
+
+function buildTerrain(){
+  if(!scene) return;
+  var amp=HILLS[landOpt("hills")]||0, SIZE=3000, SEG=150;
+  var fresh=!terrain;
+  var geo=terrain?terrain.geometry:new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG);
+  if(!geo.attributes||!geo.attributes.position) return;
+  var pos=geo.attributes.position, Z=flatZones();
+  for(var i=0;i<pos.count;i++){
+    var x=pos.getX(i), zz=-pos.getY(i), h=0;
+    if(amp>0){
+      var near=Infinity;
+      for(var k=0;k<Z.length;k++){ var dx=x-Z[k][0], dz=zz-Z[k][1]; var d=Math.sqrt(dx*dx+dz*dz)-Z[k][2]; if(d<near) near=d; }
+      var mask=smooth(8,90,near)*(1-smooth(1150,1450,Math.sqrt(x*x+zz*zz)));
+      h=fbm(x+5000,zz+5000)*amp*mask*1.6;
+    }
+    pos.setZ(i,h);
+  }
+  pos.needsUpdate=true;
+  if(geo.computeVertexNormals) geo.computeVertexNormals();
+  if(fresh) metreUVs(geo,"pln",[SIZE,SIZE]);
+  if(ground&&!ground.userData.uv){ metreUVs(ground.geometry,"pln",[6000,6000]); ground.userData.uv=1; }
+  if(!terrain){
+    terrain=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:groundColor(),polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:4}));
+    terrain.rotation.x=-Math.PI/2;
+    terrain.position.y=-0.06;
+    terrain.receiveShadow=true;
+    terrain.userData.terrain=1;
+    scene.add(terrain);
+  }
+  var t=groundTex(), tx=t&&landOpt("detail")?texOf(t):null;
+  terrain.material.map=tx; terrain.material.needsUpdate=true;
+  if(ground){ ground.position.y=-0.35; ground.material.map=tx; ground.material.polygonOffset=true;
+    ground.material.polygonOffsetFactor=4; ground.material.polygonOffsetUnits=8; ground.material.needsUpdate=true; }
+  terrainSig=landSignature();
+}
+function landSignature(){
+  var n=0; store.objects.forEach(function(o){ if(!o.filler) n++; });
+  return n+"|"+(store.streets||[]).length+"|"+landOpt("hills");
+}
+function terrainTick(){ if(scene&&landSignature()!==terrainSig) buildTerrain(); }
+
+/* ---- shadows: the sun's light follows wherever you're looking ---- */
+var sunDir={x:-0.5,y:0.8,z:0.3};
+function applyShadows(){
+  if(!renderer||!sun||!renderer.shadowMap) return;
+  var on=!!landOpt("shadows");
+  renderer.shadowMap.enabled=on;
+  if(THREE.PCFSoftShadowMap!==undefined) renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  sun.castShadow=on;
+  if(on&&sun.shadow){
+    sun.shadow.mapSize.width=sun.shadow.mapSize.height=2048;
+    var c=sun.shadow.camera; c.left=-150; c.right=150; c.top=150; c.bottom=-150; c.near=10; c.far=1600;
+    if(c.updateProjectionMatrix) c.updateProjectionMatrix();
+    sun.shadow.bias=-0.0006; if("normalBias" in sun.shadow) sun.shadow.normalBias=0.35;
+    if(sun.target&&!sun.target.parent) scene.add(sun.target);
+  }
+}
+function followSun(){
+  if(!sun||!sun.target) return;
+  var fx=walkMode?camera.position.x:orb.tx, fz=walkMode?camera.position.z:orb.tz;
+  sun.position.set(fx+sunDir.x*600,Math.max(40,sunDir.y*600),fz+sunDir.z*600);
+  sun.target.position.set(fx,0,fz);
+  sun.target.updateMatrixWorld&&sun.target.updateMatrixWorld();
+}
+
+/* ---- applying a change: everything that shows the land is redrawn ---- */
+function reland(){
+  buildTerrain();
+  applyShadows();
+  store.objects.forEach(function(o){ if(meshes[o.id]) refresh(o); });
+  tickClock(true);
+  save();
+}
+
+/* ---- the panel ---- */
+var WATERS=[0x2E5E78,0x2F7A7A,0x2C5A3A,0x14161C,0x9AA6B0,0x7A1E1E];
+function openLand(){
+  var L=land(), $=function(i){ return document.getElementById(i); };
+  $("l-ground").value=L.ground; $("l-hills").value=String(L.hills); $("l-season").value=L.season;
+  $("l-sky").value=L.sky; $("l-shadows").checked=!!L.shadows; $("l-detail").checked=!!L.detail;
+  $("l-now").textContent=L.season==="calendar"?("(it's "+seasonNow()+" now)"):"";
+  var sw=$("l-water"); sw.innerHTML="";
+  WATERS.forEach(function(c){
+    var b=document.createElement("button"); b.type="button"; b.className="sw"+(c===L.water?" on":"");
+    b.style.background="#"+("000000"+c.toString(16)).slice(-6); b.setAttribute("aria-label","water colour");
+    b.onclick=function(){ L.water=c; reland(); openLand(); };
+    sw.appendChild(b);
+  });
+  $("land").classList.add("open");
+}
+function closeLand(){ document.getElementById("land").classList.remove("open"); }
+function wireLand(){
+  var $=function(i){ return document.getElementById(i); };
+  $("landbtn").addEventListener("click",openLand);
+  $("l-close").addEventListener("click",closeLand);
+  $("l-ground").addEventListener("change",function(){ land().ground=this.value; reland(); });
+  $("l-hills").addEventListener("change",function(){ land().hills=parseInt(this.value,10); reland(); });
+  $("l-season").addEventListener("change",function(){ land().season=this.value; reland(); openLand(); });
+  $("l-sky").addEventListener("change",function(){ land().sky=this.value; tickClock(true); save(); });
+  $("l-shadows").addEventListener("change",function(){ land().shadows=this.checked; reland(); });
+  $("l-detail").addEventListener("change",function(){ land().detail=this.checked; reland(); });
+}
+
+</script>
 <script>/* js/store.js */
 /* Dream Walker's Atlas — store.js
    the saved record: schema, save, load, settings
@@ -1317,12 +2110,15 @@ function geo(kind,s){
   else if(kind==="pln") g=new THREE.PlaneGeometry(s[0],s[1]);
   else if(kind==="tor") g=new THREE.TorusGeometry(s[0],s[1],6,14);
   else g=new THREE.BoxGeometry(s[0]||1,s[1]||1,s[2]||1);
+  metreUVs(g,kind,s);
   GEOCACHE[k]=g; return g;
 }
 
 function resolveColor(c, spec){
   if(typeof c==="number") return c;
   if(c==="body" && spec.attrs && spec.attrs.c!==undefined) return spec.attrs.c;
+  if(c==="nature") return natureColor(spec);
+  if(c==="water") return waterColor();
   return ROLE[c]!==undefined ? ROLE[c] : ROLE.body;
 }
 
@@ -1333,6 +2129,7 @@ function fidelity(spec){
   var d=1, a=spec.attrs||{};
   if(spec.nights && spec.nights.length>1) d+=Math.min(3,spec.nights.length-1);
   if(a.c!==undefined) d++;
+  if(a.m||a.rm) d++;
   if(a.s||a.h||a.w||a.d) d++;
   if(spec.sign) d++;
   if(spec.note) d++;
@@ -1392,14 +2189,26 @@ function build(spec){
   var ghosty=f<0.99;
   var sx=(a.s||1)*(a.w||1), sy=(a.s||1)*(a.h||1), sz=(a.s||1)*(a.d||1);
 
+  /* people and crowds have their own builder */
+  if(isPerson(spec)||spec.archetype==="crowd"){
+    var pg=spec.archetype==="crowd"?buildCrowd(spec,f):buildFigure(spec,f);
+    pg.userData.id=spec.id;
+    shadowsFor(pg,true);
+    pg.scale.set(sx,sy,sz);
+    return pg;
+  }
+
   var g=new THREE.Group();
   g.userData.id=spec.id;
 
   levelParts(def,spec).forEach(function(pt){
     var col=resolveColor(pt.c,spec);
+    var surf=surfaceOf(pt,def,spec,f);
+    if(surf&&surf.wall&&a.c===undefined) col=MATCOLOR[surf.tex]||col;
+    if(surf&&surf.roof) col=(a.rc!==undefined)?a.rc:(MATCOLOR[surf.tex]||col);
     var mat;
     if(pt.c==="glass" && !pt.glow && def.cat==="structure"){
-      mat=new THREE.MeshBasicMaterial({color:ROLE.light,transparent:true,opacity:0.1,side:THREE.DoubleSide});
+      mat=new THREE.MeshBasicMaterial({color:0x3A4654,transparent:true,opacity:0.94,side:THREE.DoubleSide});
     } else if(pt.glow){
       mat=new THREE.MeshBasicMaterial({color:col,transparent:true,
         opacity:(pt.opa!==undefined?pt.opa:1)*Math.max(opa,0.35),side:THREE.DoubleSide});
@@ -1411,6 +2220,7 @@ function build(spec){
         side:pt.g==="pln"?THREE.DoubleSide:THREE.FrontSide,
         depthWrite:opa>0.24,
         polygonOffset:pt.g==="pln",polygonOffsetFactor:-1,polygonOffsetUnits:-2});
+      if(surf){ var tx=texOf(surf.tex); if(tx){ mat.map=tx; mat.needsUpdate=true; } }
     }
     if(pt.c==="glass" && !pt.glow){ if(!g.userData.glass) g.userData.glass=[]; g.userData.glass.push(mat); mat.transparent=true; }
     var G=geo(pt.g,pt.s);
@@ -1423,6 +2233,9 @@ function build(spec){
         var pz=pt.p[2]+(pt.rep?pt.rep[3]*i:0)+(pt.rep2?pt.rep2[3]*j:0);
         m.position.set(px,py,pz);
         if(pt.r) m.rotation.set(pt.r[0],pt.r[1],pt.r[2]);
+        var big=Math.max(pt.s[0]||0,pt.s[1]||0,(pt.s[2]||0));
+        m.castShadow=!pt.glow&&pt.c!=="glass"&&pt.g!=="pln"&&big>=1.2;
+        m.receiveShadow=!pt.glow;
         g.add(m);
       }
     }
@@ -1444,6 +2257,9 @@ function build(spec){
     pool.material.polygonOffset=true; pool.material.polygonOffsetFactor=-2; pool.material.polygonOffsetUnits=-4;
     g.add(pool); g.userData.pool=pool;
   }
+  /* trees, bushes, vehicles and small things get a patch of shade beneath them */
+  if(def.cat==="nature"&&def.size[0]<12) g.add(contactShadow(def.size[0]*0.42));
+  if(def.cat==="vehicle"&&def.size[2]<14) g.add(contactShadow(Math.max(def.size[0],def.size[2])*0.55));
   g.scale.set(sx,sy,sz);
   return g;
 }
@@ -1476,7 +2292,7 @@ function initWorld(){
   /* near plane pulled in no closer than it needs to be, and a logarithmic depth
      buffer, so surfaces a few centimetres apart stay apart even far away */
   camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.3,6000);
-  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance",logarithmicDepthBuffer:true});
+  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance",logarithmicDepthBuffer:canFragDepth()});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(innerWidth,innerHeight);
   document.getElementById("world").appendChild(renderer.domElement);
@@ -1544,6 +2360,18 @@ function removeSpec(spec){
   if(i>-1) store.objects.splice(i,1);
 }
 
+/* the logarithmic depth buffer only helps where the device can write depth per
+   pixel. without that it falls back to a rough approximation that loses flat things
+   near the ground and punches holes by the camera, so it is only used where it works. */
+function canFragDepth(){
+  try{
+    var c=document.createElement("canvas");
+    if(c.getContext&&c.getContext("webgl2")) return true;
+    var g=c.getContext&&(c.getContext("webgl")||c.getContext("experimental-webgl"));
+    return !!(g&&g.getExtension&&g.getExtension("EXT_frag_depth"));
+  }catch(e){ return false; }
+}
+
 /* street slabs. neighbouring blocks share streets, so each street is drawn once;
    north-south streets stop short of the crossings, which the east-west ones carry,
    so no two surfaces ever lie on the same ground */
@@ -1556,13 +2384,27 @@ function drawStreet(ax,az,bx2,bz2){
   if(len<1) return;
   var ns=Math.abs(dz)>Math.abs(dx);
   if(ns) len=Math.max(1,len-STREET);
-  var m=new THREE.Mesh(new THREE.PlaneGeometry(STREET,len),
-    new THREE.MeshLambertMaterial({color:ROLE.road,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
+  var sg=new THREE.PlaneGeometry(STREET,len); metreUVs(sg,"pln",[STREET,len]);
+  var detail=landOpt("detail"), at=detail?texOf("asphalt"):null;
+  var m=new THREE.Mesh(sg,
+    new THREE.MeshLambertMaterial({color:at?0x55575C:ROLE.road,map:at||null}));
   m.rotation.x=-Math.PI/2;
   m.rotation.z=-Math.atan2(dx,dz);
-  m.position.set(ax+dx/2,0.03,az+dz/2);
+  m.position.set(ax+dx/2,0.02,az+dz/2);
+  m.receiveShadow=true;
   m.userData.street=1;
   scene.add(m);
+  var dash=detail?texOf("dash"):null;
+  if(dash){
+    var lg=new THREE.PlaneGeometry(0.28,len); metreUVs(lg,"pln",[0.28,len]);
+    var line=new THREE.Mesh(lg,new THREE.MeshLambertMaterial({map:dash,transparent:true,alphaTest:0.4,
+      color:0xE8E0C0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}));
+    line.rotation.copy?line.rotation.copy(m.rotation):null;
+    line.position.set(ax+dx/2,0.05,az+dz/2);
+    line.renderOrder=1;
+    line.userData.street=1;
+    scene.add(line);
+  }
 }
 
 
@@ -1862,6 +2704,14 @@ function spotFor(arch,dir){
   return {x:n.x+jitter()*0.4, z:n.z+jitter()*0.4, rot:Math.random()*6.283, addr:base.addr};
 }
 
+/* what the dream said about how someone looks, recorded as stated */
+function applyLook(spec,look,sex){
+  if(!PEOPLE[spec.archetype]) return;
+  lookOf(spec);
+  if(sex) setLook(spec,"sex",sex,"stated");
+  if(look) for(var k in look) setLook(spec,k,look[k],"stated");
+}
+
 function place(arch,label,attrs,opts){
   if(!KIT[arch]) arch="house";
   opts=opts||{};
@@ -1873,6 +2723,7 @@ function place(arch,label,attrs,opts){
       if(ex){
         ex.attrs=Object.assign({},ex.attrs,attrs||{});
         if(ch.awake) ex.solid=true;
+        applyLook(ex,opts.look,opts.sex);
         refresh(ex); save();
         return ex;
       }
@@ -1890,6 +2741,7 @@ function place(arch,label,attrs,opts){
     takeLot(s.bx,s.bz,s.lot,spec.id);
     store.lastLot={bx:s.bx,bz:s.bz,lot:s.lot};
   }
+  if(PEOPLE[arch]) applyLook(spec,opts.look,opts.sex);
   store.objects.push(spec);
   addMesh(spec);
   if(KIT[arch].cat==="being"){
@@ -2275,6 +3127,16 @@ function moonTexture(p){
 var sky=null, sunDisc=null, moonDisc=null, stars=null, curPhase=-1;
 var SKY_R=2600;
 
+function softGlow(){
+  if(typeof document==="undefined") return null;
+  var c=document.createElement("canvas"); c.width=c.height=128;
+  var x=c.getContext&&c.getContext("2d"); if(!x||!x.createRadialGradient) return null;
+  var g=x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,"rgba(255,255,255,1)"); g.addColorStop(0.35,"rgba(255,255,255,0.45)"); g.addColorStop(1,"rgba(255,255,255,0)");
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+
 function buildSky(){
   var geo=new THREE.SphereGeometry(SKY_R,32,20);
   var mat=new THREE.ShaderMaterial({
@@ -2289,8 +3151,8 @@ function buildSky(){
 
   sunDisc=new THREE.Mesh(new THREE.CircleGeometry(90,40),
     new THREE.MeshBasicMaterial({color:0xFFF1D0,transparent:true,opacity:1,fog:false,depthWrite:false}));
-  var halo=new THREE.Mesh(new THREE.CircleGeometry(230,40),
-    new THREE.MeshBasicMaterial({color:0xFFD9A0,transparent:true,opacity:0.18,fog:false,depthWrite:false}));
+  var halo=new THREE.Mesh(new THREE.CircleGeometry(260,40),
+    new THREE.MeshBasicMaterial({color:0xFFD9A0,transparent:true,opacity:0.18,fog:false,depthWrite:false,map:softGlow()}));
   halo.position.z=-2; sunDisc.add(halo); sunDisc.userData.halo=halo;
   sunDisc.renderOrder=-9;
   scene.add(sunDisc);
@@ -2342,7 +3204,7 @@ function tickClock(force){
   if(!force && Math.abs(h-lastHour)<0.004) return;
   lastHour=h;
 
-  var sk=skyAt(h), dl=daylight(h);
+  var sk=moodSky(skyAt(h)), dl=daylight(h);
   var ph=moonPhase(), lit=moonLit(ph);
 
   if(sky){
@@ -2383,18 +3245,22 @@ function tickClock(force){
 
   /* the light comes from whichever body is up */
   if(hemi){
-    hemi.intensity=0.22+dl*1.05;
+    hemi.intensity=0.32+dl*0.58;
     hemi.color.setHex(blend(0x3A4468,0xCFDCEA,dl));
     hemi.groundColor.setHex(blend(0x07080D,0x5A5040,dl));
   }
   if(sun){
     if(sunUp && dl>0.02){
       sun.position.set(sa.x,Math.max(sa.y,40),sa.z);
-      sun.intensity=0.15+dl*1.05;
+      var sl=Math.sqrt(sa.x*sa.x+Math.max(sa.y,40)*Math.max(sa.y,40)+sa.z*sa.z);
+      sunDir={x:sa.x/sl,y:Math.max(sa.y,40)/sl,z:sa.z/sl};
+      sun.intensity=0.12+dl*0.72;
       var warm2=1-Math.min(1,Math.max(0,sa.y/(SKY_R*0.35)));
       sun.color.setHex(blend(0xFFF4E2,0xFF9E6A,warm2));
     } else if(moonUp){
       sun.position.set(ma.x,Math.max(ma.y,40),ma.z);
+      var ml=Math.sqrt(ma.x*ma.x+Math.max(ma.y,40)*Math.max(ma.y,40)+ma.z*ma.z);
+      sunDir={x:ma.x/ml,y:Math.max(ma.y,40)/ml,z:ma.z/ml};
       sun.intensity=0.06+lit*0.30;
       sun.color.setHex(0x9FB4D8);
     } else {
@@ -2403,7 +3269,10 @@ function tickClock(force){
       sun.color.setHex(0x6E7FA0);
     }
   }
-  if(ground) ground.material.color.setHex(blend(0x0F1118,0x5B5A52,dl));
+  var gc=groundColor(), gnight=blend(gc,0x07080C,0.84);
+  if(ground) ground.material.color.setHex(blend(gnight,gc,dl));
+  if(terrain) terrain.material.color.setHex(blend(gnight,gc,dl));
+  terrainTick();
   fogForLight(dl);
   lampsForNight(1-dl);
 
@@ -2427,6 +3296,7 @@ var MOON_SVG='<svg class="cg" viewBox="0 0 16 16" aria-hidden="true"><path d="M1
 
 /* the sky and its bodies stay centred on you, so the horizon never arrives */
 function skyFollow(){
+  followSun();
   if(!sky) return;
   var p=camera.position;
   sky.position.set(p.x,0,p.z);
@@ -2456,8 +3326,7 @@ function moveEveryone(h,dl){
     var g=meshes[c.objId];
     if(g){
       g.visible=w.visible;
-      g.position.x+=(w.x-g.position.x)*0.25;
-      g.position.z+=(w.z-g.position.z)*0.25;
+      g.userData.target={x:w.x,z:w.z};
     }
     if(w.at && !w.asleep) lit[w.at.id]=1;
     if(w.at && w.asleep && w.where==="home") lit[w.at.id]=lit[w.at.id]||0;
@@ -2467,9 +3336,12 @@ function moveEveryone(h,dl){
   for(var id in meshes){
     var m=meshes[id];
     if(!m.userData.glass) continue;
-    var base=night*(lit[id]?0.92:0.16);
+    var litOn=lit[id];
+    var glassCol=blend(0x3A4654,0x0E1116,night);
     m.userData.glass.forEach(function(mat,k){
-      mat.opacity=Math.min(1,base*(0.55+((hash(id+k)%100)/100)*0.75));
+      var glow=Math.min(1,night*(litOn?0.92:0.16)*(0.55+((hash(id+k)%100)/100)*0.75));
+      if(mat.color&&mat.color.setHex) mat.color.setHex(blend(glassCol,0xE8C27A,glow));
+      mat.opacity=0.94;
     });
   }
 }
@@ -2996,6 +3868,7 @@ function animate(){
     camera.lookAt(orb.tx,12,orb.tz);
   }
   tickClock(false);
+  stepFigures(dt);
   skyFollow();
   if(audio.on) audioTick();
   renderer.render(scene,camera);
@@ -3028,6 +3901,7 @@ function proximity(dt){
     var g=meshes[c.objId];
     if(!g) continue;
     var dx=p.x-c.x, dz=p.z-c.z, d2=dx*dx+dz*dz;
+    g.userData.facingPlayer=d2<900;
     if(d2<900){
       var want=Math.atan2(dx,dz);
       var diff=((want-g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
@@ -3119,6 +3993,7 @@ function openInspect(id){
   document.getElementById("i-sign").value=picked.sign||"";
   document.getElementById("i-scale").value=picked.attrs.s||1;
   document.getElementById("i-height").value=picked.attrs.h||1;
+  renderLookEditor();
   document.getElementById("inspect").classList.add("open");
 }
 function closeInspect(){ picked=null; document.getElementById("inspect").classList.remove("open"); }
@@ -3870,6 +4745,15 @@ function describeFigure(c,text){
     if(wm){ var w=placeFromWords(wm[1],c); if(w){ c.work=w.id; c.src.work="stated"; } }
     if(hm){ var h=placeFromWords(hm[1],c); if(h){ c.home=h.id; c.src.home="stated"; } }
   });
+  /* what they wear and how they look, from the same sentences */
+  var body=c.objId?specById(c.objId):null;
+  if(body&&PEOPLE[body.archetype]){
+    var lowAll=" "+String(text).toLowerCase().replace(/[^a-z\s'-]/g," ").replace(/\s+/g," ")+" ";
+    appearanceIn(lowAll).forEach(function(L){ setLook(body,L.field,L.value,"stated"); });
+    var lead=/^\s*(she|her)\b/i.test(text)?"f":/^\s*(he|his)\b/i.test(text)?"m":null;
+    if(!lead){ var m2=/(?:^|[.!?]\s+)(She|He)\b/.exec(text); if(m2) lead=m2[1]==="She"?"f":"m"; }
+    if(lead&&!(body.look&&body.look.src&&body.look.src.sex==="chosen")) setLook(body,"sex",lead,"stated");
+  }
   if(c.shift&&!c.routine){ var r0=routineFrom(c.details.join(". "),c.role||"worker",c.shift); if(r0){ c.routine=r0; c.src.routine="stated"; } }
   if(c.sessions.indexOf(store.session)===-1) c.sessions.push(store.session);
   if(typeof assignLife==="function") assignLife(c);
@@ -4034,7 +4918,7 @@ pool:["swimming pool","pool","lido"],
 busstop:["bus stop","bus shelter"],
 hill:["hill","mound","rise","dune","knoll"],
 mountain:["mountain","peak","summit","range","cliff","ridge"],
-rock:["rock","boulder","stone","crag"],
+rock:["rock","boulder","crag","stones"],
 cave:["cave","cavern","grotto","hollow","burrow"],
 stump:["stump"],
 log:["log","fallen tree","trunk"],
@@ -4061,7 +4945,9 @@ train:["train","carriage","locomotive","railcar","boxcar"],
 boat:["boat","ship","ferry","yacht","barge","canoe","raft"],
 bicycle:["bicycle","bike","cycle","motorcycle","moped"],
 plane:["plane","aeroplane","airplane","aircraft","jet"],
-human:["man","woman","person","stranger","someone","somebody","figure","adult","guard","nurse","priest","driver","teacher","doctor","soldier"],
+human:["man","woman","person","stranger","someone","somebody","figure","adult","guard","nurse","priest","driver","teacher","doctor","soldier",
+  "lady","gentleman","mother","father","grandmother","grandfather","grandma","grandpa","sister","brother","aunt","uncle",
+  "husband","wife","nun","monk","king","queen","bride","groom","widow","old man","old woman"],
 child:["child","kid","boy","girl","infant","baby","toddler"],
 crowd:["crowd","people","mob","queue","congregation","audience","throng"],
 shadow:["shadow","shade","dark figure","silhouette","presence","watcher"],
@@ -4092,9 +4978,13 @@ dark:{c:0x181A20},black:{c:0x101116},white:{c:0xB9B3A6},pale:{c:0x9A9486},
 red:{c:0x7A3128},crimson:{c:0x6B2420},blue:{c:0x2E4566},green:{c:0x33502F},
 yellow:{c:0x8A7A2E},gold:{c:0x8A6A2E},golden:{c:0x8A6A2E},grey:{c:0x4B4C50},gray:{c:0x4B4C50},
 brown:{c:0x4C3B2C},rust:{c:0x6A3A22},rusted:{c:0x6A3A22},silver:{c:0x6E7278},
-brick:{c:0x5E3A30},stone:{c:0x4E4C46},wooden:{c:0x503C29},concrete:{c:0x4A4A4C},
-glass:{c:0x2E4560},marble:{c:0xA8A398},iron:{c:0x3C3E44},steel:{c:0x53565C}
+"flat-roofed":{rm:"flat"}
 };
+/* what things are made of: a brick house has brick walls, whatever colour it is */
+Object.keys(WALLWORDS).forEach(function(w){ MODIFIERS[w]={m:WALLWORDS[w]}; });
+Object.keys(ROOFWORDS).forEach(function(w){ if(w!=="flat") MODIFIERS[w]={rm:ROOFWORDS[w]}; });
+/* every named colour is a modifier, at its true colour */
+Object.keys(NAMED).forEach(function(w){ MODIFIERS[w]={c:NAMED[w]}; });
 
 var EMOTIONS=["afraid","scared","terrified","fear","dread","panic","calm","peaceful","safe",
 "joy","happy","elated","sad","grief","crying","weeping","angry","rage","furious","confused",
@@ -4132,6 +5022,13 @@ function scanText(chunk){
   });
   spats.sort(function(a,b){ return a.at-b.at; });
 
+  /* how people look ("a woman in a red coat") is read now and blanked out,
+     so that red goes to her coat and not to the next building mentioned */
+  var looks=appearanceIn(low);
+  looks.forEach(function(L){
+    low=low.slice(0,L.at)+new Array(L.end-L.at+1).join("\u0000")+low.slice(L.end);
+  });
+
   var found=[];
   PHRASES.forEach(function(pr){
     var needle=" "+pr[0]+" ", idx=0;
@@ -4151,7 +5048,27 @@ function scanText(chunk){
     var needle=" "+m+" ", idx=0;
     while((idx=low.indexOf(needle,idx))>-1){ mods.push({at:idx,m:m}); idx+=needle.length-1; }
   });
+  mods.sort(function(a,b){ return a.at-b.at; });
+  /* "dark red" is a darker red, not dark and then red */
+  mods.forEach(function(md,i){
+    var nx=mods[i+1];
+    if(/^(dark|pale|deep|light|bright)$/.test(md.m)&&nx&&NAMED[nx.m]!==undefined&&nx.at-md.at<=md.m.length+2){
+      md.skip=true;
+      nx.shade=(md.m==="dark"||md.m==="deep")?-0.35:0.3;
+    }
+  });
   found.sort(function(a,b){ return a.at-b.at; });
+
+  /* each piece of appearance belongs to the person it's closest to */
+  looks.forEach(function(L){
+    var best=null,bd=Infinity;
+    found.forEach(function(f){
+      if(!PEOPLE[f.arch]) return;
+      var d=L.at>f.at?(L.at-f.at):(f.at-L.at)*1.5;
+      if(d<bd&&d<110){ bd=d; best=f; }
+    });
+    if(best){ best.look=best.look||{}; best.look[L.field]=L.value; }
+  });
 
   /* a where-phrase belongs to the noun it sits nearest, which in English
      is usually the one just before it: "a gas station two blocks down" */
@@ -4170,8 +5087,12 @@ function scanText(chunk){
   found.forEach(function(f){
     var attrs={};
     mods.forEach(function(md){
-      if(md.at>prev && md.at<f.at) Object.assign(attrs,MODIFIERS[md.m]);
+      if(md.skip||!(md.at>prev && md.at<f.at)) return;
+      var v=Object.assign({},MODIFIERS[md.m]);
+      if(md.shade&&v.c!==undefined) v.c=shade(v.c,md.shade);
+      Object.assign(attrs,v);
     });
+    if(f.word==="log cabin") attrs.m="wood";
     /* floors stated just before the noun, or just after it ("a tower of twelve floors") */
     levelsAt.forEach(function(L){
       if((L.at>prev && L.at<f.at) || (L.at>f.at && L.at-f.at<24)) attrs.lv=L.lv;
@@ -4184,11 +5105,12 @@ function scanText(chunk){
     if(again){
       /* the same place, mentioned again — sharpen it, do not build a second one */
       var grew=false;
+      if(PEOPLE[again.archetype]&&(f.look||sexOfWord(f.word))){ applyLook(again,f.look,sexOfWord(f.word)); grew=true; }
       for(var k in attrs){ if(again.attrs[k]===undefined){ again.attrs[k]=attrs[k]; grew=true; } }
       again.detail=(again.detail||1)+1;
       if(grew||again.detail===2) refresh(again);
     } else {
-      place(f.arch,f.word,attrs,{dir:dirs.length?dirs:null,forceNew:fresh});
+      place(f.arch,f.word,attrs,{dir:dirs.length?dirs:null,forceNew:fresh,look:f.look||null,sex:sexOfWord(f.word)});
       fired++;
     }
     prev=f.at;
@@ -5696,15 +6618,7 @@ function wire(){
   $("i-solid").addEventListener("click",function(){ if(picked){ picked.solid=!picked.solid; touchPicked(); } });
   $("i-del").addEventListener("click",function(){ if(picked){ removeSpec(picked); closeInspect(); updateCount(); save(); } });
 
-  var sw=$("i-sw");
-  SWATCH.forEach(function(c){
-    var b=document.createElement("button");
-    b.className="sw"; b.type="button";
-    b.style.background="#"+("000000"+c.toString(16)).slice(-6);
-    b.setAttribute("aria-label","set colour");
-    b.addEventListener("click",function(){ if(picked){ picked.attrs.c=c; touchPicked(); } });
-    sw.appendChild(b);
-  });
+  wireLand();
 }
 
 /* the slider's track is a strip of the day itself, midnight to midnight */
@@ -5985,6 +6899,90 @@ function wirePlot(){
 }
 
 </script>
+<script>/* js/looks-ui.js */
+/* Dream Walker's Atlas — looks-ui.js
+   the inspector's colour and look editor: walls and roofs for buildings,
+   everything about a person for people, a plain colour for everything else.
+   anything set here is recorded as chosen by the dreamer, never as dreamt.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var GENERAL=[NAMED.white,NAMED.cream,NAMED.bone,NAMED.silver,NAMED.grey,NAMED.charcoal,NAMED.black,
+  NAMED.red,NAMED.maroon,NAMED.rust,NAMED.ochre,NAMED.gold,NAMED.brown,NAMED.tan,NAMED.olive,
+  NAMED.green,NAMED.teal,NAMED.navy,NAMED.blue,NAMED.purple];
+var WALLMATS=["brick","stone","wood","siding","plaster","concrete","glass","marble","metal"];
+var ROOFMATS=["shingle","tile","slate","thatch","metalroof","flat"];
+function hex6(c){ return "#"+("000000"+(c>>>0).toString(16)).slice(-6); }
+
+function provenance(src){
+  return src==="stated"?"dreamt":src==="chosen"?"chosen by you":src==="parsed"?"read from the dream":"";
+}
+
+/* one row: a label, its provenance, swatches, and a free colour picker */
+function swatchRow(title,src,colors,current,onPick){
+  var id="lk"+Math.floor(Math.random()*1e9);
+  var h='<div class="lk-row"><div class="lk-h">'+title+
+    (current===null||current===undefined?' <span class="lk-p">not dreamt</span>':(src?' <span class="lk-p">'+provenance(src)+"</span>":""))+'</div><div class="swatches">';
+  colors.forEach(function(c,i){
+    h+='<button type="button" class="sw'+(c===current?" on":"")+'" data-lk="'+id+'" data-c="'+c+'" style="background:'+hex6(c)+'" aria-label="colour '+(i+1)+'"></button>';
+  });
+  h+='<input type="color" class="lk-pick" data-lkp="'+id+'" value="'+hex6(current===null||current===undefined?0x888888:current)+'" aria-label="any colour"></div></div>';
+  LKH[id]=onPick;
+  return h;
+}
+function selectRow(title,src,options,current,onPick,labels){
+  var id="lk"+Math.floor(Math.random()*1e9);
+  var h='<div class="lk-row"><div class="lk-h">'+title+(src?' <span class="lk-p">'+provenance(src)+"</span>":"")+'</div><select data-lks="'+id+'">';
+  if(current===null||current===undefined) h+='<option value="" selected>not dreamt</option>';
+  options.forEach(function(o,i){ h+='<option value="'+o+'"'+(o===current?" selected":"")+">"+((labels&&labels[i])||o)+"</option>"; });
+  h+="</select></div>";
+  LKH[id]=onPick;
+  return h;
+}
+var LKH={};
+
+function renderLookEditor(){
+  var el=document.getElementById("i-look"); if(!el||!picked) return;
+  LKH={};
+  var p=picked, a=p.attrs||(p.attrs={}), def=KIT[p.archetype]||{}, h="";
+  function done(){ touchPicked(); renderLookEditor(); }
+  if(isPerson(p)){
+    var L=lookOf(p), S=L.src||{};
+    function set(k,v){ setLook(p,k,v,"chosen"); done(); }
+    h+=selectRow("Body",S.sex,["f","m"],L.sex,function(v){ set("sex",v||null); },["woman","man"]);
+    h+=swatchRow("Skin",S.skin,SKIN,L.skin,function(v){ set("skin",v); });
+    h+=swatchRow("Hair",S.hair,HAIR,L.hair,function(v){ set("hair",v); });
+    h+=selectRow("Hair style",S.hairStyle,HAIRSTYLES,L.hairStyle,function(v){ set("hairStyle",v||null); });
+    h+=swatchRow("Top",S.top,TOPS,L.top,function(v){ set("top",v); });
+    h+=selectRow("What they wear on top",S.topKind,TOPKINDS,L.topKind,function(v){ set("topKind",v||null); },["shirt","coat","dress","robe"]);
+    h+=swatchRow("Bottom",S.bottom,BOTTOMS,L.bottom,function(v){ set("bottom",v); });
+    h+=selectRow("Below",S.bottomKind,BOTTOMKINDS,L.bottomKind,function(v){ set("bottomKind",v||null); },["trousers","skirt"]);
+    h+=swatchRow("Shoes",S.shoes,SHOES,L.shoes,function(v){ set("shoes",v); });
+    h+=selectRow("Hat",S.hat,HATS,L.hat,function(v){ set("hat",v||null); },["none","cap","brimmed hat","hood"]);
+  } else if(def.cat==="structure"){
+    h+=selectRow("Walls made of",a.m?"stated":null,WALLMATS,a.m||WALL_DEFAULT[p.archetype]||"plaster",function(v){ a.m=v; done(); });
+    h+=swatchRow("Wall colour",a.c!==undefined?"stated":null,GENERAL,a.c,function(v){ a.c=v; done(); });
+    if(ROOF_DEFAULT[p.archetype]!==undefined||p.archetype==="house"||p.archetype==="cottage"){
+      h+=selectRow("Roof",a.rm?"stated":null,ROOFMATS,a.rm||ROOF_DEFAULT[p.archetype]||"shingle",function(v){ a.rm=v; done(); },
+        ["shingle","tile","slate","thatch","metal","flat"]);
+      h+=swatchRow("Roof colour",a.rc!==undefined?"stated":null,GENERAL,a.rc,function(v){ a.rc=v; done(); });
+    }
+  } else {
+    h+=swatchRow("Colour",a.c!==undefined?"stated":null,GENERAL,a.c,function(v){ a.c=v; done(); });
+  }
+  el.innerHTML=h;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-lk]"),function(b){
+    b.onclick=function(){ LKH[b.getAttribute("data-lk")](parseInt(b.getAttribute("data-c"),10)); };
+  });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-lkp]"),function(inp){
+    inp.onchange=function(){ LKH[inp.getAttribute("data-lkp")](parseInt(inp.value.slice(1),16)); };
+  });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-lks]"),function(s){
+    s.onchange=function(){ LKH[s.getAttribute("data-lks")](s.value); };
+  });
+}
+
+</script>
 <script>/* js/cloud.js */
 /* Dream Walker's Atlas — cloud.js
    the Atlas's shared settings, set from the admin page: which held-back book
@@ -6081,6 +7079,7 @@ function boot(){
     });
     renderTranscript(committed,"");
   }
+  buildTerrain(); applyShadows();
   store.characters.forEach(assignLife);
   populate();
   document.getElementById("tscrub").value=Math.round(dreamHour()*60);
