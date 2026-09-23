@@ -2552,6 +2552,8 @@ function stepFigures(dt){
     if(L){
       u.amp=(u.amp||0)+((moving?0.55:0)-(u.amp||0))*Math.min(dt*6,1);
       u.phase=(u.phase||0)+dt*(moving?(d>30?11:7.2):0);
+      /* nobody sits in a parked vehicle */
+      if(u.seat&&u.drives&&!u.seatRide) u.seat.visible=moving;
       var s=Math.sin(u.phase)*u.amp;
       var pz=u.pose||{la:0,ra:0};
       L.ll.rotation.x=s; L.rl.rotation.x=-s; L.la.rotation.x=pz.la-s*0.75; L.ra.rotation.x=pz.ra+s*0.75;
@@ -2869,7 +2871,7 @@ function resolveColor(c, spec){
 
 /* fidelity: how well this thing is remembered, 0..1 */
 function fidelity(spec){
-  if(spec.filler) return 0.34;
+  if(spec.filler) return spec.solid?1:0.34;
   if(viewNight!==null && spec.nights && spec.nights.indexOf(viewNight)===-1) return 0.06;
   var d=1, a=spec.attrs||{};
   if(spec.nights && spec.nights.length>1) d+=Math.min(3,spec.nights.length-1);
@@ -3107,7 +3109,25 @@ function addMesh(spec){
       g.userData.awake=1;
     }
   }
-  if(typeof ROADGOING!=="undefined"&&ROADGOING[spec.archetype]) g.userData.drives=1;
+  if(typeof ROADGOING!=="undefined"&&ROADGOING[spec.archetype]){
+    g.userData.drives=1;
+    /* nothing drives itself: somebody sits in it when it moves, and rides it when it's a bike */
+    var seat=new THREE.Group(), sm=new THREE.MeshLambertMaterial({color:0x6B5A4A}), cl=new THREE.MeshLambertMaterial({color:0x3E4A5E});
+    var dh=new THREE.Mesh(new THREE.SphereGeometry(0.11,10,8),sm); dh.position.y=0.28; seat.add(dh);
+    var db=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.3,0.22),cl); db.position.y=0.05; seat.add(db);
+    if(spec.archetype==="bicycle"){
+      seat.position.set(0,0.95,-0.05);
+      var la=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.035,0.4,6),cl); la.position.set(0,0.02,0.3); la.rotation.x=1.1; seat.add(la);
+      var ll=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.04,0.45,6),cl); ll.position.set(0.08,-0.28,0.05); ll.rotation.x=-0.5; seat.add(ll);
+      var lr=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.04,0.45,6),cl); lr.position.set(-0.08,-0.3,0.12); lr.rotation.x=0.3; seat.add(lr);
+      var ch=charOf(spec);
+      seat.visible=!!((ch&&ch.rider)||(spec.attrs&&spec.attrs.ridden));
+      g.userData.seatRide=1;
+    } else {
+      seat.position.set(-0.32,1.0,0.35); seat.visible=false;
+    }
+    g.userData.seat=seat; g.add(seat);
+  }
   scene.add(g); meshes[spec.id]=g;
 }
 function refresh(spec){
@@ -5518,6 +5538,134 @@ EFFECTS.papelpicado=EFFECTS.prayerflags;
 EFFECTS.windchimes=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i>1) m.rotation.z=Math.sin(t*2+i)*.12; }); }; };
 
 </script>
+<script>/* js/magic-transport.js */
+/* Dream Walker's Atlas — magic-transport.js
+   ways of travelling that aren't roads. stand on a carpet, a broom, a sleigh or a
+   chariot and you can rise and fly while you are on it. step into a teleport ring,
+   a wardrobe, a whirlpool or onto the rainbow bridge and, if there is another of
+   its kind, it carries you there.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var RIDDEN={broomstick:1,flyingcarpet:1,sleigh:1,firechariot:1},
+    GATEWAY={teleportpad:1,wardrobedoor:1,whirlpool:1,rainbowbridge:1,soulferry:1},
+    magicCool=0, magicRiding=null, magicGranted=false;
+
+S("broomstick","infra",[2.4,1.2,.6],[
+  {g:"cyl",s:[.05,.06,2.2,8],p:[0,.95,0],r:[0,0,Math.PI/2],c:0x6B4A32},
+  {g:"cone",s:[.16,.5,8],p:[-1.1,.95,0],r:[0,0,-Math.PI/2],c:0xB8945A},
+  {g:"cyl",s:[.09,.09,.16,8],p:[-.82,.95,0],r:[0,0,Math.PI/2],c:0x4A3A2A},
+  {g:"sph",s:[.09],p:[.9,.95,0],c:0xE8C27A,glow:1,pulse:1}
+],["broomstick","witch's broom","flying broom","a broom","besom"]);
+S("flyingcarpet","infra",[3.4,.6,2.4],[
+  {g:"box",s:[3.2,.08,2.2],p:[0,.55,0],r:[.04,0,.02],c:0x8A2A3A},
+  {g:"box",s:[2.9,.05,1.9],p:[0,.6,0],r:[.04,0,.02],c:0xC7A043},
+  {g:"box",s:[2.5,.04,1.5],p:[0,.63,0],r:[.04,0,.02],c:0x2E5EA8},
+  {g:"sph",s:[.07],p:[1.5,.5,1],c:0xE8C27A,glow:1,rep:[2,-3,0,-2]}
+],["flying carpet","magic carpet","carpet that flew","persian carpet in the air"]);
+S("sleigh","vehicle",[2.6,1.8,4.4],[
+  {g:"box",s:[2,1,3.4],p:[0,.9,0],c:0x7A1E22},
+  {g:"box",s:[2.1,.3,3.5],p:[0,1.45,0],c:0xC7A043},
+  {g:"cyl",s:[.07,.07,4.2,8],p:[-.9,.3,0],r:[Math.PI/2,0,0],c:0x8A8C92},
+  {g:"cyl",s:[.07,.07,4.2,8],p:[.9,.3,0],r:[Math.PI/2,0,0],c:0x8A8C92},
+  {g:"tor",s:[.5,.07,Math.PI],p:[-.9,.45,2.1],r:[0,Math.PI/2,0],c:0x8A8C92},
+  {g:"tor",s:[.5,.07,Math.PI],p:[.9,.45,2.1],r:[0,Math.PI/2,0],c:0x8A8C92}
+],["sleigh","flying sleigh","sledge","sled pulled through the air"]);
+S("firechariot","vehicle",[2.6,2.4,3.4],[
+  {g:"box",s:[1.8,1.1,2],p:[0,1,0],c:0x6A1A14},
+  {g:"box",s:[1.9,.2,2.1],p:[0,1.6,0],c:GOLD},
+  {g:"tor",s:[.8,.12],p:[-1,.8,-.3],r:[0,Math.PI/2,0],c:GOLD},
+  {g:"tor",s:[.8,.12],p:[1,.8,-.3],r:[0,Math.PI/2,0],c:GOLD},
+  {g:"cyl",s:[.06,.06,2.4,6],p:[0,1.1,1.8],r:[Math.PI/2,0,0],c:GOLD},
+  {g:"cone",s:[.3,.9,6],p:[-1,.8,-.3],c:0xFF7A1E,glow:1,pulse:1},
+  {g:"cone",s:[.3,.9,6],p:[1,.8,-.3],c:0xFF7A1E,glow:1,pulse:1}
+],["chariot of fire","fiery chariot","burning chariot","chariot that flew"]);
+S("teleportpad","infra",[6,1,6],[
+  {g:"cyl",s:[2.6,2.6,.12,28],p:[0,.07,0],c:0x2A2C38},
+  {g:"tor",s:[2.2,.1],p:[0,.18,0],r:[Math.PI/2,0,0],c:0x6AE8FF,glow:1,pulse:1},
+  {g:"tor",s:[1.4,.07],p:[0,.18,0],r:[Math.PI/2,0,0],c:0xC050FF,glow:1,pulse:1},
+  {g:"cyl",s:[.1,.1,2.4,6],p:[2.2,1.2,0],c:0x3A3C48,rep:[4,-1.47,0,1.47]}
+],["teleport ring","teleport pad","ring of light on the ground","circle that moved me","transporter ring"]);
+S("wardrobedoor","structure",[2.4,3.2,1.2],[
+  {g:"box",s:[2.2,3,1],p:[0,1.5,0],c:0x4A3222},
+  {g:"box",s:[.95,2.6,.08],p:[-.52,1.5,.52],c:0x5E4230},
+  {g:"box",s:[.95,2.6,.08],p:[.52,1.5,.52],c:0x5E4230},
+  {g:"sph",s:[.06],p:[-.06,1.4,.6],c:GOLD},{g:"sph",s:[.06],p:[.06,1.4,.6],c:GOLD},
+  {g:"box",s:[2.4,.18,1.2],p:[0,3.05,0],c:0x3A2A1E},
+  {g:"pln",s:[.9,2.4],p:[0,1.5,.58],c:0x9FD8FF,glow:1,opa:.35}
+],["wardrobe that led somewhere","magic wardrobe","door in a wardrobe","cupboard that went through"]);
+S("whirlpool","nature",[10,1,10],[
+  {g:"cyl",s:[4.4,3.6,.4,28],p:[0,.1,0],c:"water"},
+  {g:"cyl",s:[3,2,.8,24],p:[0,-.1,0],c:0x1A3A4A},
+  {g:"cyl",s:[1.4,.3,1.4,18],p:[0,-.5,0],c:0x0E2430},
+  {g:"tor",s:[3.8,.16],p:[0,.24,0],r:[Math.PI/2,0,0],c:0xBFE8FF,glow:1,opa:.7}
+],["whirlpool","maelstrom","spinning water","vortex in the water"]);
+S("rainbowbridge","structure",[10,14,46],[
+  {g:"box",s:[7,.4,44],p:[0,7,0],r:[0,0,0],c:0xC0392B,glow:1,opa:.55},
+  {g:"box",s:[7,.4,44],p:[0,7.45,0],c:0xE8A04A,glow:1,opa:.55},
+  {g:"box",s:[7,.4,44],p:[0,7.9,0],c:0xD4D43C,glow:1,opa:.55},
+  {g:"box",s:[7,.4,44],p:[0,8.35,0],c:0x3FA03A,glow:1,opa:.55},
+  {g:"box",s:[7,.4,44],p:[0,8.8,0],c:0x2F5EE8,glow:1,opa:.55},
+  {g:"box",s:[7,.4,44],p:[0,9.25,0],c:0x8A3AE8,glow:1,opa:.55}
+],["rainbow bridge","bifrost","bridge of light","bridge of colours"]);
+S("soulferry","vehicle",[3.4,3.4,11],[
+  {g:"box",s:[2.6,1,9.4],p:[0,.7,0],c:0x2A2622},
+  {g:"box",s:[2.8,.2,9.6],p:[0,1.25,0],c:0x3A342E},
+  {g:"cone",s:[1.3,2,4],p:[0,.9,4.9],r:[Math.PI/2,0,0],c:0x2A2622},
+  {g:"cyl",s:[.07,.07,4,6],p:[.9,2.6,-2],r:[0,0,.2],c:0x4A4238},
+  {g:"box",s:[.4,.5,.4],p:[0,2.9,3.4],c:0xFFB23A,glow:1,pulse:1}
+],["ferry of the dead","black boat","ferryman's boat","boat that crossed the dark water"]);
+
+EFFECTS.whirlpool=function(g){ return function(t){ g.children.forEach(function(m,i){ m.rotation.y=t*(0.6+i*0.4)*(i%2?-1:1); }); }; };
+EFFECTS.teleportpad=function(g){ return function(t){ g.children.forEach(function(m,i){ if(m.geometry&&m.geometry.type==="TorusGeometry") m.rotation.z=t*(i%2?0.8:-0.5); }); }; };
+EFFECTS.flyingcarpet=function(g){ var y=g.position.y; return function(t){ g.position.y=y+0.25+Math.sin(t*1.1)*0.12; g.rotation.z=Math.sin(t*0.9)*0.05; }; };
+EFFECTS.broomstick=EFFECTS.flyingcarpet;
+
+/* ---- riding, and being carried ---- */
+function magicTick(dt){
+  if(magicCool>0) magicCool-=dt;
+  if(!walkMode||store.inside){ endRide(); return; }
+  var P=camera.position, feet=P.y-1.72, here=store.here||0, on=null, gate=null;
+  for(var i=0;i<store.objects.length;i++){
+    var o=store.objects[i];
+    if((o.realm||0)!==here||o.filler) continue;
+    if(Math.abs(o.x-P.x)>6||Math.abs(o.z-P.z)>6) continue;
+    var d=Math.hypot(o.x-P.x,o.z-P.z);
+    if(RIDDEN[o.archetype]&&d<2.2&&feet<3) on=o;
+    if(GATEWAY[o.archetype]&&d<2.2&&magicCool<=0) gate=o;
+  }
+  if(on&&magicRiding!==on.id) startRide(on);
+  else if(!on&&magicRiding) endRide();
+  if(gate) goThrough(gate);
+}
+function startRide(o){
+  magicRiding=o.id;
+  if(typeof canFly!=="undefined"&&!canFly){ canFly=true; magicGranted=true; }
+  setStatus("<b>You are on "+esc(placeName(o))+".</b> Rise and fall while you ride it.");
+}
+function endRide(){
+  if(!magicRiding) return;
+  magicRiding=null;
+  if(magicGranted&&typeof canFly!=="undefined"){
+    canFly=hasAbility("flying")||hasAbility("floating");
+    magicGranted=false;
+    if(!canFly&&typeof flyY!=="undefined"&&flyY>0) setStatus("You step off, and come back down.");
+  }
+}
+/* a gateway takes you to the next one of its kind */
+function goThrough(o){
+  var same=store.objects.filter(function(x){ return x.archetype===o.archetype&&x.id!==o.id&&!x.filler; });
+  if(!same.length){ if(magicCool<=0){ magicCool=3; setStatus("<b>"+esc(placeName(o))+"</b> — and nowhere yet on the other side. Dream another one."); } return; }
+  var far=same[0], best=1e9;
+  same.forEach(function(x){ var d=Math.hypot(x.x-o.x,x.z-o.z); if(d<best&&d>8){ best=d; far=x; } });
+  magicCool=3;
+  var ang=Math.random()*6.283;
+  camera.position.set(far.x+Math.cos(ang)*3,camera.position.y,far.z+Math.sin(ang)*3);
+  if((far.realm||0)!==(store.here||0)&&typeof beHere==="function") beHere(far.realm||0);
+  setStatus("<b>Carried through "+esc(placeName(o))+".</b> You are somewhere else now.");
+}
+
+</script>
 <script>/* js/vocab-extra.js */
 /* Dream Walker's Atlas — vocab-extra.js
    many more ways of saying the same thing. people don't dream in the app's
@@ -6098,9 +6246,10 @@ function place(arch,label,attrs,opts){
     clearFillersNear(spec.x,spec.z,12);
     var c=opts.forceNew?newCharacter(arch,label,attrs):resolveCharacter(arch,label,attrs);
     c.objId=spec.id; c.x=spec.x; c.z=spec.z; c.anchor={x:spec.x,z:spec.z};
+    if(attrs&&attrs.ridden) c.rider="dreamt";
     spec.charId=c.id;
   }
-  if(KIT[arch].cat==="structure") store.lastId=spec.id;
+  if(KIT[arch].cat==="structure"){ store.lastId=spec.id; if(typeof housePeople==="function") housePeople(spec); }
   if(KIT[arch].cat!=="being"&&KIT[arch].cat!=="vehicle") store.lastAny=spec.id;
   updateCount(); save();
   return spec;
@@ -6257,7 +6406,7 @@ function releaseLots(spec){
    loaded as a plain script; shares scope with the other files */
 "use strict";
 
-var ROADGOING={car:1,truck:1,bus:1,bicycle:1};
+var ROADGOING={car:1,truck:1,bus:1,bicycle:1};   /* sleighs, chariots and ferries go their own way */
 var DRIVE_LANE=3.5, KERB_LANE=STREET/2-1.6;
 var DRIVEWAYED={house:1,cottage:1,garage:1,barn:1,farmhouse:1};
 
@@ -6398,7 +6547,7 @@ var ROUTINE={
 };
 var ROAMING=[[0,24,"roam","wandering"]];
 function routineOf(c){
-  if(c.routine) return c.routine;                 // came out of the dream
+  if(c.routine) return c.routine;                 // came out of the dream, or from what they do here
   if(typeof CREATURE!=="undefined"&&CREATURE[c.archetype]&&CREATURE[c.archetype].roam) return ROAMING;
   if(!c.primary) return ROUTINE[c.archetype]||ROUTINE.human;  // fillers may borrow
   return null;                                     // a primary with no recorded life
@@ -6940,7 +7089,10 @@ function moveEveryone(h,dl){
     var g=meshes[c.objId];
     if(g){
       g.visible=w.visible;
-      if(ROADGOING[c.archetype]){
+      if(c.archetype==="bicycle"&&!c.rider){
+        /* a bicycle goes nowhere on its own: it waits for somebody to get on */
+        g.userData.target={x:g.position.x,z:g.position.z}; g.userData.path=null;
+      } else if(ROADGOING[c.archetype]){
         /* a vehicle goes by road: to the kerb nearest where its hour sends it, turning at corners */
         var vt=vehicleTarget(w), old=g.userData.target;
         if(!old||Math.abs(old.x-vt.x)+Math.abs(old.z-vt.z)>1){
@@ -7258,6 +7410,149 @@ function populate(){
 
 
 </script>
+<script>/* js/households.js */
+/* Dream Walker's Atlas — households.js
+   nothing stands empty. a house gets the people who live in it, a shop gets the
+   one who keeps it, a hospital keeps somebody awake at four in the morning.
+   their hours come from the building they belong to, not from a single template.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+/* hours by what somebody does, not by what they are */
+var SHIFT={
+  resident:ROUTINE.human,
+  child:ROUTINE.child,
+  shopkeeper:[[0,6.5,"home","asleep"],[6.5,7.5,"travel","opening up"],[7.5,13,"work","behind the counter"],
+    [13,13.75,"out","a bite to eat"],[13.75,17.5,"work","behind the counter"],[17.5,18.25,"travel","closing up"],
+    [18.25,22,"home","at home"],[22,24,"home","asleep"]],
+  innkeeper:[[0,2,"work","last orders"],[2,9.5,"home","asleep"],[9.5,11,"work","cleaning through"],
+    [11,15,"work","the midday trade"],[15,17,"home","resting"],[17,24,"work","the evening trade"]],
+  teacher:[[0,6.5,"home","asleep"],[6.5,8,"travel","on the way in"],[8,15.5,"work","teaching"],
+    [15.5,17,"work","marking"],[17,18,"travel","going home"],[18,22.5,"home","at home"],[22.5,24,"home","asleep"]],
+  nurse_day:[[0,6,"home","asleep"],[6,7,"travel","on the way in"],[7,19.5,"work","on the ward"],
+    [19.5,20.5,"travel","going home"],[20.5,24,"home","at home"]],
+  nurse_night:[[0,7.5,"work","on the night ward"],[7.5,8.5,"travel","going home"],[8.5,17,"home","asleep"],
+    [17,19,"home","about the house"],[19,20,"travel","on the way in"],[20,24,"work","on the night ward"]],
+  clerk:[[0,7,"home","asleep"],[7,8.75,"home","getting ready"],[8.75,9.25,"travel","on the way in"],
+    [9.25,13,"work","at the desk"],[13,14,"out","out at midday"],[14,17,"work","at the desk"],
+    [17,17.75,"travel","going home"],[17.75,22.5,"home","at home"],[22.5,24,"home","asleep"]],
+  priest:[[0,5.5,"home","asleep"],[5.5,7,"work","before anyone comes"],[7,9,"work","morning prayers"],
+    [9,12,"out","visiting"],[12,14,"home","at home"],[14,18,"work","about the church"],
+    [18,20,"work","evening prayers"],[20,24,"home","at home"]],
+  farmer:[[0,4.5,"home","asleep"],[4.5,8,"work","the morning round"],[8,9,"home","breakfast"],
+    [9,13,"work","in the fields"],[13,14,"home","dinner"],[14,18.5,"work","in the fields"],
+    [18.5,21,"home","at home"],[21,24,"home","asleep"]],
+  worker:[[0,5.5,"home","asleep"],[5.5,6.5,"travel","on the way in"],[6.5,14.5,"work","on shift"],
+    [14.5,15.5,"travel","going home"],[15.5,22,"home","at home"],[22,24,"home","asleep"]],
+  nightwatch:[[0,6,"work","on watch"],[6,7,"travel","going home"],[7,15,"home","asleep"],
+    [15,18,"home","about the house"],[18,19,"travel","on the way in"],[19,24,"work","on watch"]],
+  keeper:[[0,7,"home","asleep"],[7,9,"work","about the place"],[9,17,"work","about the place"],
+    [17,19,"out","out for a while"],[19,23,"home","at home"],[23,24,"home","asleep"]],
+  guest:[[0,8,"work","asleep in their room"],[8,9.5,"work","at breakfast"],[9.5,17,"out","out for the day"],
+    [17,19,"out","out for the evening"],[19,23,"work","in their room"],[23,24,"work","asleep in their room"]],
+  patient:[[0,24,"work","in the ward"]],
+  prisoner:[[0,24,"work","in the cell"]]
+};
+
+/* who belongs in what. n is how many, kind is what they look like */
+var BELONGS={
+  house:[{n:[2,4],kind:"human",role:"resident",lives:true},{n:[0,2],kind:"child",role:"child",lives:true}],
+  cottage:[{n:[1,3],kind:"human",role:"resident",lives:true},{n:[0,1],kind:"child",role:"child",lives:true}],
+  apartment:[{n:[3,6],kind:"human",role:"resident",lives:true},{n:[0,3],kind:"child",role:"child",lives:true}],
+  toadstoolhouse:[{n:[1,2],kind:"fairy",role:"resident",lives:true}],
+  hanok:[{n:[2,4],kind:"human",role:"resident",lives:true}],
+  izba:[{n:[2,3],kind:"human",role:"resident",lives:true}],
+  yurt:[{n:[2,4],kind:"human",role:"resident",lives:true}],
+  pueblo:[{n:[3,5],kind:"human",role:"resident",lives:true}],
+  hacienda:[{n:[2,4],kind:"human",role:"resident",lives:true},{n:[1,2],kind:"human",role:"worker"}],
+  riad:[{n:[2,4],kind:"human",role:"resident",lives:true}],
+  roundhouse:[{n:[2,4],kind:"human",role:"resident",lives:true}],
+  longhouse:[{n:[3,6],kind:"human",role:"resident",lives:true}],
+  stilthouse:[{n:[2,4],kind:"human",role:"resident",lives:true}],
+  cycladic:[{n:[2,3],kind:"human",role:"resident",lives:true}],
+  machiya:[{n:[2,3],kind:"human",role:"resident",lives:true}],
+  shanty:[{n:[1,3],kind:"scavenger",role:"resident",lives:true}],
+  castle:[{n:[2,3],kind:"human",role:"keeper"},{n:[2,4],kind:"knight",role:"nightwatch"}],
+  shop:[{n:[1,2],kind:"human",role:"shopkeeper"}],
+  gasstation:[{n:[1,1],kind:"human",role:"shopkeeper"}],
+  school:[{n:[2,4],kind:"human",role:"teacher"},{n:[5,10],kind:"child",role:"child"}],
+  hospital:[{n:[2,3],kind:"human",role:"nurse_day"},{n:[1,2],kind:"human",role:"nurse_night"},{n:[2,4],kind:"human",role:"patient"}],
+  church:[{n:[1,1],kind:"human",role:"priest"}],
+  cathedral:[{n:[2,3],kind:"human",role:"priest"}],
+  mosque:[{n:[1,2],kind:"human",role:"priest"}],
+  mandir:[{n:[1,2],kind:"human",role:"priest"}],
+  stupa:[{n:[1,1],kind:"human",role:"priest"}],
+  bank:[{n:[2,3],kind:"human",role:"clerk"}],
+  courthouse:[{n:[2,4],kind:"human",role:"clerk"}],
+  library:[{n:[1,2],kind:"human",role:"keeper"}],
+  station:[{n:[1,2],kind:"human",role:"clerk"}],
+  hotel:[{n:[1,2],kind:"human",role:"keeper"},{n:[2,5],kind:"human",role:"guest"}],
+  motel:[{n:[1,1],kind:"human",role:"keeper"},{n:[1,3],kind:"human",role:"guest"}],
+  institution:[{n:[2,3],kind:"human",role:"keeper"},{n:[3,6],kind:"human",role:"prisoner"}],
+  factory:[{n:[3,6],kind:"human",role:"worker"}],
+  warehouse:[{n:[2,4],kind:"human",role:"worker"}],
+  barn:[{n:[1,2],kind:"human",role:"farmer"},{n:[2,4],kind:"horse",role:"beast"}],
+  windmill:[{n:[1,1],kind:"human",role:"worker"}],
+  lighthouse:[{n:[1,1],kind:"human",role:"nightwatch"}],
+  skyscraper:[{n:[4,8],kind:"human",role:"clerk"}],
+  garage:[{n:[1,2],kind:"human",role:"worker"}],
+  bunker:[{n:[1,3],kind:"human",role:"nightwatch"}],
+  falloutshelter:[{n:[1,3],kind:"scavenger",role:"resident",lives:true}],
+  merpalace:[{n:[2,4],kind:"merman",role:"keeper"}],
+  icepalace:[{n:[1,3],kind:"frostgiant",role:"keeper"}],
+  cloudpalace:[{n:[2,4],kind:"angel",role:"keeper"}],
+  faethrone:[{n:[2,4],kind:"fairy",role:"keeper"}],
+  volcanolair:[{n:[2,5],kind:"human",role:"worker"}],
+  bedouintent:[{n:[2,4],kind:"human",role:"resident",lives:true}],
+  igloo:[{n:[1,3],kind:"human",role:"resident",lives:true}],
+  hollowtree:[{n:[1,2],kind:"pixie",role:"resident",lives:true}],
+  crypt:[{n:[0,1],kind:"ghost",role:"nightwatch"}],
+  graveyard:[{n:[0,2],kind:"ghost",role:"nightwatch"}]
+};
+
+function countFor(pair,seed){
+  var lo=pair[0], hi=pair[1];
+  return lo+(Math.abs(hash(seed+"n"))%(hi-lo+1));
+}
+/* fill a building with the people who belong to it, once */
+function housePeople(spec){
+  if(!spec||spec.peopled||spec.filler) return 0;
+  var plan=BELONGS[spec.archetype]; if(!plan) return 0;
+  spec.peopled=true;
+  var made=0;
+  plan.forEach(function(row,ri){
+    var n=countFor(row.n,spec.id+":"+ri);
+    for(var i=0;i<n;i++){
+      var seed=spec.id+":"+ri+":"+i, a=(hash(seed)%628)/100, r=6+(hash(seed+"r")%9);
+      var x=spec.x+Math.cos(a)*r, z=spec.z+Math.sin(a)*r;
+      var ps={id:uid(),archetype:row.kind,label:null,attrs:{},x:x,z:z,rot:(hash(seed+"t")%628)/100,
+        sign:null,note:null,solid:false,detail:0,addr:spec.addr||null,name:null,named:null,filler:true,
+        belongs:spec.id};
+      if(spec.realm) ps.realm=spec.realm;
+      var c={id:uid(),archetype:row.kind,name:"someone",aka:[],details:[],sessions:[],awake:false,log:[],
+        objId:ps.id,x:x,z:z,primary:false,src:{role:"belongs"},role:row.role,shift:null,
+        routine:SHIFT[row.role]||null,home:null,work:null,anchor:{x:x,z:z},born:""};
+      if(row.role==="beast") c.routine=null;
+      if(row.lives) c.home=spec.id; else c.work=spec.id;
+      /* somebody who works here still sleeps somewhere: the nearest home, if there is one */
+      if(!c.home){ var h=nearestOf(spec.x,spec.z,RESIDENTIAL); if(h) c.home=h.id; }
+      if(!c.work&&row.lives){ var w=nearestOf(spec.x,spec.z,WORKPLACE); if(w) c.work=w.id; }
+      ps.charId=c.id;
+      store.objects.push(ps); store.characters.push(c);
+      if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(ps);
+      made++;
+    }
+  });
+  return made;
+}
+/* anything already standing that nobody lives in yet */
+function peopleEverything(){
+  var n=0;
+  store.objects.slice().forEach(function(o){ if(!o.filler&&BELONGS[o.archetype]) n+=housePeople(o); });
+  return n;
+}
+
+</script>
 <script>/* js/characters.js */
 /* Dream Walker's Atlas — characters.js
    figures: resolution, detail, waking, merging
@@ -7282,6 +7577,22 @@ function resolveCharacter(arch,label,attrs){
   }
   return newCharacter(arch,label,attrs,n);
 }
+
+/* a someone is a person: an animal, a vehicle or a swarm is a thing that moves */
+var NOT_SOMEONE={car:1,truck:1,bus:1,bicycle:1,train:1,boat:1,ship:1,plane:1,hotairballoon:1,
+  dog:1,cat:1,horse:1,bird:1,crowd:0};
+function isSomeone(c){
+  if(!c) return false;
+  var a=c.archetype;
+  if(NOT_SOMEONE[a]) return false;
+  if(typeof CREATURE!=="undefined"&&CREATURE[a]){
+    var k=CREATURE[a].kind;
+    return k==="folk";
+  }
+  return true;
+}
+/* an animal only answers if the dream itself gave it a voice */
+function canSpeakTo(c){ return isSomeone(c)||(c.awake&&c.src&&c.src.name==="stated"); }
 
 function newCharacter(arch,label,attrs,n){
   n=n||normName(label)||arch;
@@ -7367,6 +7678,7 @@ function awakeNear(pos,range){
     var c=store.characters[i];
     if(!c.objId) continue;
     if(c.visible===false) continue;
+    if(!canSpeakTo(c)) continue;
     var dx=c.x-pos.x, dz=c.z-pos.z, d=dx*dx+dz*dz;
     /* a great dragon can be spoken to from much further off */
     var big=c.deity&&DEITY[c.deity]&&DEITY[c.deity].dragon;
@@ -7522,7 +7834,8 @@ function animate(){
   skyFollow();
   if(audio.on) audioTick();
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
-  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt);
+  if(store.peopleLater){ store.peopleLater=false; peopleEverything(); }
+  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt);
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
   renderView();
@@ -7685,7 +7998,10 @@ var TRUNK={tree:.55,pine:.5,deadtree:.45,palm:.4,worldtree:4,giantmushroom:1,cac
   sign:.2,pylon:.8,hydrant:.3,bollard:.25,mailbox:.35,trashcan:.4,statue:1.2,runestone:.6,glyphobelisk:1.4,crystalspire:4};
 var WALLS=[], wallsAt=-1;
 function solidWalls(){
-  if(typeof INT!=="undefined"&&INT) return INT.walls;
+  if(typeof INT!=="undefined"&&INT){
+    var L=INT.level||0;
+    return INT.walls.filter(function(w){ return (w.level||0)===L; });
+  }
   if(wallsAt>0&&performance.now()-wallsAt<500) return WALLS;
   wallsAt=performance.now(); WALLS=[];
   var here=store.here||0;
@@ -8991,6 +9307,9 @@ function scanText(chunk){
     /* stairs, an altar, a throne or a mirror dreamt indoors belong to the room, not the street */
     if((INDOOR_ONLY[f.arch]||(f.arch==="portal"&&/mirror/.test(f.word)))&&
        (/\b(inside|indoors|room|hallway|corridor|upstairs|downstairs|kitchen|bedroom|living room|ballroom|attic|basement)\b/.test(rawLow.slice(Math.max(0,f.at-70),f.at))||/^ *[a-z]* ?room\b/.test(rawLow.slice(f.at+f.word.length+1,f.at+f.word.length+12)))){ prev=f.at; return; }
+    /* somebody on the bicycle: "she rode a bike", "a boy on a bicycle" */
+    if(f.arch==="bicycle"&&/\b(rode|riding|ride|on a bike|on a bicycle|on his bike|on her bike|cycling|pedalling|pedaling)\b/
+       .test(rawLow.slice(Math.max(0,f.at-60),f.at+60))) attrs.ridden=1;
     /* a driveway is the driveway of the house just dreamt */
     if(f.arch==="driveway"){
       var hm=store.lastId?specById(store.lastId):null;
@@ -10520,7 +10839,17 @@ function wire(){
   $("i-sign").addEventListener("change",function(){ if(picked){ picked.sign=this.value||null; touchPicked(); } });
   $("i-scale").addEventListener("input",function(){ if(picked){ picked.attrs.s=parseFloat(this.value); touchPicked(); } });
   $("i-height").addEventListener("input",function(){ if(picked){ picked.attrs.h=parseFloat(this.value); touchPicked(); } });
-  $("i-solid").addEventListener("click",function(){ if(picked){ picked.solid=!picked.solid; touchPicked(); } });
+  $("i-solid").addEventListener("click",function(){
+    if(!picked) return;
+    picked.solid=!picked.solid;
+    /* solidifying something the town made keeps it for good, instead of it being swept away */
+    if(picked.solid&&picked.filler){
+      picked.filler=false; picked.placed=true; picked.nights=[store.session];
+      var c=charOf(picked); if(c){ c.primary=true; c.src=c.src||{}; c.src.name=c.src.name||"chosen"; }
+      setStatus("<b>"+esc(placeName(picked))+"</b> is yours now, and will stay.");
+    }
+    touchPicked();
+  });
   $("i-del").addEventListener("click",function(){ if(picked){ removeSpec(picked); closeInspect(); updateCount(); save(); } });
 
   wireLand();
@@ -11978,6 +12307,28 @@ var PLANS={
 };
 var DEFAULT_PLAN={mode:"hall",w:8,d:8,fill:"cozy",wall:0xDCD4C4,floor:"wood"};
 function planOf(spec){ return PLANS[spec.archetype]||DEFAULT_PLAN; }
+/* how many floors inside: what the dream said, else what the kind of building suggests */
+var STOREYS={house:2,cottage:1,apartment:3,hotel:3,motel:2,institution:2,skyscraper:6,castle:2,tower:3,
+  lighthouse:3,windmill:2,hanok:1,machiya:2,izba:1,hacienda:2,riad:2,longhouse:1,stilthouse:1,cycladic:2,
+  pueblo:2,shop:1,school:2,hospital:2,library:2,bank:2,courthouse:2,factory:1,warehouse:1,barn:1};
+function levelsOf(spec){
+  var a=spec.attrs||{}, n=a.lv||STOREYS[spec.archetype]||1;
+  if((spec.inside||{}).endless) n=Math.max(n,3);
+  return Math.max(1,Math.min(8,n));
+}
+/* what belongs on the ground floor, and what belongs upstairs */
+var GROUND_ROOMS={living:1,kitchen:1,dining:1,hallway:1,lobby:1,office:1,classroom:1,ballroom:1,throneroom:1};
+function roomsByLevel(rooms,levels){
+  var out=[]; for(var i=0;i<levels;i++) out.push([]);
+  var ground=[], upper=[];
+  rooms.forEach(function(r){ (GROUND_ROOMS[r]?ground:upper).push(r); });
+  if(!ground.length) ground=upper.splice(0,Math.max(1,Math.ceil(upper.length/levels)));
+  out[0]=ground;
+  var per=Math.max(1,Math.ceil(upper.length/Math.max(1,levels-1)));
+  for(var L=1;L<levels;L++) out[L]=upper.splice(0,per);
+  for(var L2=1;L2<levels;L2++) if(!out[L2].length) out[L2]=["bedroom","bathroom"];
+  return out;
+}
 function enterable(spec){
   if(!spec||KIT[spec.archetype]&&KIT[spec.archetype].cat!=="structure") return false;
   if(spec.archetype==="volcanolair"||spec.archetype==="ruin"||spec.archetype==="collapsedtower") return false;
@@ -12054,7 +12405,9 @@ function makeInterior(spec){
   var wallCol=I.wall!==undefined?I.wall:plan.wall, floorKind=I.floor||plan.floor;
   var wallMat=new THREE.MeshLambertMaterial({color:wallCol,side:THREE.DoubleSide});
   var walls=[], spots=[], items=[], lights=[], windows=[];
-  function wallBox(x,z,w,d,h){ var m=P(box(w,h||H,d),wallMat,x,(h||H)/2,z); root.add(m); walls.push({x:ox+x,z:oz+z,rot:0,hw:w/2,hd:d/2,h:h||H}); }
+  var yOff=0, lvl=0;
+  function wallBox(x,z,w,d,h){ var m=P(box(w,h||H,d),wallMat,x,yOff+(h||H)/2,z); root.add(m);
+    walls.push({x:ox+x,z:oz+z,rot:0,hw:w/2,hd:d/2,h:h||H,level:lvl}); }
   /* a wall from (x1,z1) to (x2,z2), axis-aligned, with door gaps at the given centres */
   function wallLine(x1,z1,x2,z2,gaps,gw){
     gw=gw||1.4; var horiz=Math.abs(z1-z2)<0.01, a=horiz?Math.min(x1,x2):Math.min(z1,z2), b=horiz?Math.max(x1,x2):Math.max(z1,z2);
@@ -12062,53 +12415,83 @@ function makeInterior(spec){
     cuts.concat([null]).forEach(function(c){
       var end=c===null?b:c-gw/2;
       if(end-at>0.05){ var mid=(at+end)/2, len=end-at; if(horiz) wallBox(mid,z1,len,.2); else wallBox(x1,mid,.2,len); }
-      if(c!==null){ var lint=P(box(horiz?gw:.2,H-2.3,horiz?.2:gw),wallMat,horiz?c:x1,2.3+(H-2.3)/2,horiz?z1:c); root.add(lint); at=c+gw/2; }
+      if(c!==null){ var lint=P(box(horiz?gw:.2,H-2.3,horiz?.2:gw),wallMat,horiz?c:x1,yOff+2.3+(H-2.3)/2,horiz?z1:c); root.add(lint); at=c+gw/2; }
     });
   }
   function put(k,x,z,rot){
-    if(!FURN[k]) return; var it=FURN[k](); it.userData.furn=k; it.position.set(x,0,z); it.rotation.y=rot||0; root.add(it);
+    if(!FURN[k]) return; var it=FURN[k](); it.userData.furn=k; it.position.set(x,yOff,z); it.rotation.y=rot||0; root.add(it);
     if(SOLIDFURN[k]){ var bb=furnBox(k); var c=Math.abs(Math.cos(rot||0)), s=Math.abs(Math.sin(rot||0));
-      walls.push({x:ox+x,z:oz+z,rot:0,hw:(c*bb[0]+s*bb[1])/2,hd:(s*bb[0]+c*bb[1])/2,h:1.2}); }
+      walls.push({x:ox+x,z:oz+z,rot:0,hw:(c*bb[0]+s*bb[1])/2,hd:(s*bb[0]+c*bb[1])/2,h:1.2,level:lvl}); }
     items.push(it);
   }
-  var W,D, exitZ;
+  var W,D, exitZ, levels=levelsOf(spec), FLOOR=H+0.5, stairsAt=[];
   if(plan.mode==="rooms"){
     var rooms=plan.rooms.slice();
     (I.rooms||[]).forEach(function(r){ if(rooms.indexOf(r)===-1) rooms.push(r); });
     (I.items||[]).forEach(function(it){ if(it.room&&rooms.indexOf(it.room)===-1) rooms.push(it.room); });
     if(I.endless) for(var e=0;e<8;e++) rooms.push(["bedroom","study","hallway","living"][e%4]);
+    var byLevel=roomsByLevel(rooms,levels);
     var rw=7*big, rd=6*big, hall=3;
-    var left=[], right=[]; rooms.forEach(function(r,i){ (i%2?right:left).push(r); });
-    var n=Math.max(left.length,right.length);
-    W=hall+rw*2; D=n*rd+4;
+    /* every floor is the same footprint, so the walls line up above one another */
+    var widest=0;
+    byLevel.forEach(function(list){ widest=Math.max(widest,Math.ceil(list.length/2)); });
+    W=hall+rw*2; D=Math.max(2,widest)*rd+4;
     var zTop=-D/2, zFront=D/2;
-    /* the outer walls; the way out is in the middle of the front */
-    wallLine(-W/2,zFront,W/2,zFront,[0],1.8); wallLine(-W/2,zTop,W/2,zTop); wallLine(-W/2,zTop,-W/2,zFront); wallLine(W/2,zTop,W/2,zFront);
-    [[left,-1],[right,1]].forEach(function(side){
-      var list=side[0], sd=side[1], gaps=[];
-      list.forEach(function(r,i){
-        var z0=zTop+i*rd, zc=z0+rd/2, xc=sd*(hall/2+rw/2);
-        gaps.push(zc);
-        if(i>0) wallLine(sd*hall/2,z0,sd*W/2,z0);
-        furnishRoom(r,xc,zc,rw,rd,sd,put);
-        spots.push({x:xc,z:zc+rd*.2,room:r});
-        lights.push({x:xc,z:zc});
-        windows.push({x:sd*(W/2-.12),z:zc,ry:sd>0?-Math.PI/2:Math.PI/2});
+    for(var L=0;L<levels;L++){
+      lvl=L; yOff=L*FLOOR;
+      var here=byLevel[L], left=[], right=[];
+      here.forEach(function(r,i){ (i%2?right:left).push(r); });
+      /* the outer walls; the way out of the building is on the ground floor only */
+      if(L===0) wallLine(-W/2,zFront,W/2,zFront,[0],1.8);
+      else wallLine(-W/2,zFront,W/2,zFront);
+      wallLine(-W/2,zTop,W/2,zTop); wallLine(-W/2,zTop,-W/2,zFront); wallLine(W/2,zTop,W/2,zFront);
+      [[left,-1],[right,1]].forEach(function(side){
+        var list=side[0], sd=side[1], gaps=[];
+        list.forEach(function(r,i){
+          var z0=zTop+i*rd, zc=z0+rd/2, xc=sd*(hall/2+rw/2);
+          gaps.push(zc);
+          if(i>0) wallLine(sd*hall/2,z0,sd*W/2,z0);
+          furnishRoom(r,xc,zc,rw,rd,sd,put);
+          spots.push({x:xc,z:zc+rd*.2,room:r,level:L});
+          lights.push({x:xc,z:zc,y:yOff});
+          windows.push({x:sd*(W/2-.12),z:zc,ry:sd>0?-Math.PI/2:Math.PI/2,y:yOff});
+        });
+        if(list.length) wallLine(sd*hall/2,zTop+list.length*rd,sd*W/2,zTop+list.length*rd);
+        wallLine(sd*hall/2,zTop,sd*hall/2,zTop+list.length*rd,gaps);
       });
-      if(list.length) wallLine(sd*hall/2,zTop+list.length*rd,sd*W/2,zTop+list.length*rd);
-      wallLine(sd*hall/2,zTop,sd*hall/2,zTop+list.length*rd,gaps);
-    });
-    furnishRoom("hallway",0,zFront-2.5,hall,4,1,put);
-    for(var hz=zTop+3;hz<zFront-3;hz+=6) lights.push({x:0,z:hz});
-    spots.push({x:0,z:zFront-4,room:"hallway"});
+      if(L===0) furnishRoom("hallway",0,zFront-2.5,hall,4,1,put);
+      for(var hz=zTop+3;hz<zFront-3;hz+=6) lights.push({x:0,z:hz,y:yOff});
+      /* the stair up, at the far end of the hall */
+      if(L<levels-1){
+        put("stairs",0,zTop+2.2,Math.PI);
+        stairsAt.push({x:ox+0,z:oz+zTop+2.6,from:L});
+        /* the hole it comes up through */
+        root.add(P(box(1.6,.06,2.6),new THREE.MeshLambertMaterial({color:shade(wallCol,-.25)}),0,yOff+FLOOR-0.03,zTop+2.4));
+      }
+      if(L===0) spots.push({x:0,z:zFront-4,room:"hallway",level:0});
+      /* the floor of every storey above the ground */
+      if(L>0) root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+    }
+    lvl=0; yOff=0;
     exitZ=zFront;
   } else {
     W=plan.w*big; D=plan.d*big;
     if(I.endless) D*=3;
-    wallLine(-W/2,D/2,W/2,D/2,[0],2.2); wallLine(-W/2,-D/2,W/2,-D/2); wallLine(-W/2,-D/2,-W/2,D/2); wallLine(W/2,-D/2,W/2,D/2);
-    fillHall(plan.fill,W,D,put,spots);
-    for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz});
-    for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2}); }
+    for(var HL=0;HL<levels;HL++){
+      lvl=HL; yOff=HL*FLOOR;
+      if(HL===0) wallLine(-W/2,D/2,W/2,D/2,[0],2.2); else wallLine(-W/2,D/2,W/2,D/2);
+      wallLine(-W/2,-D/2,W/2,-D/2); wallLine(-W/2,-D/2,-W/2,D/2); wallLine(W/2,-D/2,W/2,D/2);
+      fillHall(HL===0?plan.fill:(plan.fill==="church"||plan.fill==="castle"?plan.fill:"office"),W,D,put,HL===0?spots:[]);
+      for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz,y:yOff});
+      for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff}); }
+      if(HL<levels-1){
+        put("spiralstair",W/2-2,-D/2+2.4,0);
+        stairsAt.push({x:ox+W/2-2,z:oz-D/2+2.4,from:HL});
+        root.add(P(box(2.6,.06,2.6),new THREE.MeshLambertMaterial({color:shade(wallCol,-.25)}),W/2-2,yOff+FLOOR-0.03,-D/2+2.4));
+      }
+      if(HL>0) root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+    }
+    lvl=0; yOff=0;
     exitZ=D/2;
   }
   /* things dreamt inside that aren't in the plan: set about the room they were dreamt in, or the first */
@@ -12123,15 +12506,16 @@ function makeInterior(spec){
   root.add(fl);
   if(floorKind==="checker") for(var ci=0;ci<Math.min(W*D/4,900);ci++){ var cx=-W/2+1+(ci%Math.floor(W/2))*2, cz=-D/2+1+Math.floor(ci/Math.floor(W/2))*2; if(cz>D/2) break;
     if(((Math.round(cx/2)+Math.round(cz/2))&1)===0) root.add(P(box(2,.02,2),mL(0x1A1A1E),cx,.01,cz)); }
-  root.add(P(box(W,.1,D),new THREE.MeshLambertMaterial({color:shade(wallCol,-.1),side:THREE.DoubleSide}),0,H+.05,0));
+  root.add(P(box(W,.1,D),new THREE.MeshLambertMaterial({color:shade(wallCol,-.1),side:THREE.DoubleSide}),0,(levels-1)*FLOOR+H+.05,0));
   var winMats=[];
   windows.forEach(function(w){ var wm=new THREE.MeshBasicMaterial({color:0xCFE0F0}); winMats.push(wm);
-    var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,1.7,w.z); wp.rotation.y=w.ry; root.add(wp); });
-  lights.slice(0,10).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.78,15,1.7); pl.position.set(l.x,H-.3,l.z); root.add(pl);
-    root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,H-.12,l.z)); });
+    var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,(w.y||0)+1.7,w.z); wp.rotation.y=w.ry; root.add(wp); });
+  lights.slice(0,14).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.52,13,1.9); pl.position.set(l.x,(l.y||0)+H-.3,l.z); root.add(pl);
+    root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,(l.y||0)+H-.12,l.z)); });
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
-  return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},winMats:winMats,W:W,D:D};
+  return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
+    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,level:0};
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
   fireplace:[2,.6],stove:[.8,.7],fridge:[.75,.7],bathtub:[1.7,.8],desk:[1.4,.7],pew:[3.4,.6],altarinside:[2.3,1],throneseat:[1.4,1.4],shelfgoods:[2.4,.5],till:[2,.7],
@@ -12212,7 +12596,8 @@ function bringOccupants(){
   store.characters.forEach(function(c){
     if(!c.objId||c.atId!==INT.spec.id) return;
     var g=meshes[c.objId]; if(!g) return;
-    var sp=INT.spots[n%INT.spots.length]||{x:0,z:0}; n++;
+    var ground=INT.spots.filter(function(q){ return !q.level; });
+    var sp=(ground.length?ground:INT.spots)[n%Math.max(1,(ground.length||INT.spots.length))]||{x:0,z:0}; n++;
     var x=INT.ox+sp.x+(n%3-1)*.8, z=INT.oz+sp.z+((n>>2)%2)*.8;
     g.position.x=x; g.position.z=z; g.userData.target={x:x,z:z}; g.userData.path=null; g.visible=true;
     c.x=x; c.z=z; c.insideAt=INT.spec.id;
@@ -12226,6 +12611,17 @@ function interiorTick(dt){
   if(INT){
     var day=daylight(dreamHour()), wc=blend(0x1A2238,0xCFE0F0,day);
     INT.winMats.forEach(function(m){ m.color.setHex(wc); });
+    /* the stairs: step onto them and you are on the floor above, or below */
+    if(intCool<=0&&INT.stairs&&INT.stairs.length){
+      for(var si=0;si<INT.stairs.length;si++){
+        var st=INT.stairs[si];
+        if(Math.hypot(P.x-st.x,P.z-st.z)>1.5) continue;
+        if(INT.level===st.from&&INT.level<INT.levels-1){ INT.level++; camera.position.y+=INT.floor; intCool=0.9; wallsAt=-1;
+          setStatus("Upstairs \u2014 floor "+(INT.level+1)+" of "+INT.levels+"."); break; }
+        if(INT.level===st.from+1){ INT.level--; camera.position.y-=INT.floor; intCool=0.9; wallsAt=-1;
+          setStatus(INT.level?"Floor "+(INT.level+1)+" of "+INT.levels+".":"Back on the ground floor."); break; }
+      }
+    }
     if(intCool<=0&&Math.hypot(P.x-INT.exit.x,P.z-INT.exit.z)<0.9) exitInterior(false);
     return;
   }
@@ -12786,6 +13182,7 @@ function boot(){
     store.objects.forEach(function(o){ if(!o.nights) o.nights=[0]; });
     /* worlds reached before they had scenery of their own are dressed now */
     store.dressLater=true;
+    store.peopleLater=true;
     (store.sessions||[]).forEach(function(r){
       if(r.original===undefined){
         r.original=r.transcript||"";
