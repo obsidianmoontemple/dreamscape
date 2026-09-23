@@ -385,6 +385,10 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
   -webkit-tap-highlight-color:transparent;backdrop-filter:blur(3px);cursor:pointer;padding:0}
 .pd.on{background:rgba(201,168,104,.28);border-color:var(--gold);color:var(--gold)}
 .pd-run{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+#pdside{position:fixed;z-index:17;right:calc(14px + env(safe-area-inset-right,0px));top:calc(78px + env(safe-area-inset-top,0px));
+  display:none;grid-template-columns:52px 52px;gap:6px;justify-items:stretch}
+#pdside .pd-wide{grid-column:span 2;height:44px;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+#pdside .pd{height:52px}
 #pd-fold{position:fixed;z-index:17;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(200px + env(safe-area-inset-bottom,0px));
   display:none;background:rgba(7,8,11,.72);border:1px solid var(--line);color:var(--dim);border-radius:12px;
   font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;cursor:pointer}
@@ -697,6 +701,29 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   </details>
   <label for="density">Fog &mdash; how far you can see</label>
   <input id="density" type="range" min="4" max="60" step="1" value="26">
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Your account</h3>
+  <div id="acc-out">
+    <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">An account is only so the Temple knows who you are and what you have bought. Your dreams stay on this device &mdash; they are never sent, and nobody at the Temple can read them. The Atlas works fully without one.</p>
+    <input id="acc-email" type="email" placeholder="your email" autocomplete="email">
+    <input id="acc-pass" type="password" placeholder="a password" autocomplete="current-password" style="margin-top:8px">
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="acc-signin" type="button">Sign in</button>
+      <button class="btn" id="acc-create" type="button">Create an account</button>
+      <button class="btn" id="acc-forgot" type="button">Forgot it</button>
+    </div>
+  </div>
+  <div id="acc-in" style="display:none">
+    <p class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px">Signed in as <b id="acc-who"></b>.</p>
+    <button class="btn" id="acc-signout" type="button">Sign out</button>
+  </div>
+  <div id="acc-msg" class="hint" style="font-size:12px;color:var(--dim);margin:8px 0 0;min-height:16px"></div>
+
+  <label for="skies" style="margin-top:14px">Skies in the other worlds</label>
+  <select id="skies">
+    <option value="on">Strange &mdash; each world gets its own living sky</option>
+    <option value="off">Plain &mdash; a quiet sky everywhere</option>
+  </select>
+
   <label for="padmode" style="margin-top:14px">On-screen controls</label>
   <select id="padmode">
     <option value="automatic">Automatic &mdash; shown on phones and tablets</option>
@@ -1983,7 +2010,14 @@ var UNSEEN={skin:0x8F8C86,hair:0x5A5854,top:0x5E5E64,bottom:0x4E4E54,shoes:0x3A3
 
 var FEMALE=/^(goddess|woman|women|girl|lady|mother|mum|mom|grandmother|grandma|granny|sister|daughter|aunt|nun|queen|wife|bride|widow|maiden|old woman|she)$/;
 var MALE=/^(god|man|men|boy|gentleman|father|dad|grandfather|grandpa|brother|son|uncle|monk|king|husband|groom|widower|old man|he)$/;
-function sexOfWord(w){ w=String(w||"").toLowerCase().trim(); return FEMALE.test(w)?"f":MALE.test(w)?"m":null; }
+function sexOfWord(w){
+  w=String(w||"").toLowerCase().trim();
+  if(FEMALE.test(w)) return "f";
+  if(MALE.test(w)) return "m";
+  /* phrases too: "the woman", "an old man", "my sister" — the telling word is the last one */
+  var last=w.split(/[\s-]+/).pop();
+  return FEMALE.test(last)?"f":MALE.test(last)?"m":null;
+}
 
 function pickSeed(arr,seed){ return arr[Math.abs(seed)%arr.length]; }
 
@@ -5483,6 +5517,229 @@ EFFECTS.papelpicado=EFFECTS.prayerflags;
 EFFECTS.windchimes=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i>1) m.rotation.z=Math.sin(t*2+i)*.12; }); }; };
 
 </script>
+<script>/* js/vocab-extra.js */
+/* Dream Walker's Atlas — vocab-extra.js
+   many more ways of saying the same thing. people don't dream in the app's
+   words, they dream in their own: "the block of flats", "granny's place",
+   "a lock-up", "a dirt track", "the woods". anything already understood keeps
+   its meaning — these are only added where a word is going spare.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var EXTRA_VOCAB={
+  /* ---- where people live and work ---- */
+  house:["my house","our house","the old house","childhood home","family home","a home","semi","a place to live","the house i grew up in","my parents house","my parents' house","my childhood house","two-up two-down","a dwelling","the family place"],
+  cottage:["bungalow","cabin","chalet","lodge","croft","hut","little house","small house","country cottage","log cabin","summer house","one-room house","wee house"],
+  apartment:["flat","block of flats","apartment block","tenement","condo","studio flat","high-rise flats","bedsit","my flat","apartment building","walk-up","duplex"],
+  tower:["turret","spire","belfry","keep","watchtower","bell tower","campanile","clock tower","round tower","tall tower","stone tower"],
+  skyscraper:["office tower","glass tower","high rise","tower block","city tower","corporate tower","glass and steel tower"],
+  hotel:["inn","guest house","boarding house","bed and breakfast","tavern with rooms","hostel","lodging house","the hotel lobby"],
+  motel:["roadside motel","motor lodge","motor inn"],
+  hospital:["clinic","infirmary","surgery","ward block","asylum","sanatorium","medical centre","medical center","emergency room","a&e"],
+  school:["schoolhouse","classroom block","college","university building","academy","lecture hall","kindergarten","nursery school","my old school","primary school","high school building"],
+  church:["basilica","abbey","priory","meeting house","kirk","chantry","sanctuary building","the old church","country church","white church"],
+  cathedral:["minster","great cathedral","cathedral nave","duomo"],
+  bank:["counting house","savings bank","bank branch","vault house","money house"],
+  library:["reading room","book hall","archive","hall of books","records room","reading library"],
+  station:["railway station","train station","platform building","terminus","depot","bus station","subway station","metro station","underground station","waiting room building"],
+  courthouse:["court","court house","magistrates court","hall of justice","town hall","civic hall","assembly hall"],
+  shop:["store","corner shop","bakery","butcher","grocer","boutique","chemist","pharmacy","newsagent","bookshop","record shop","dress shop","the shop on the corner","general store","cafe","coffee shop","diner","restaurant","bar","pub","teahouse","tea shop","pizzeria","takeaway"],
+  warehouse:["depot building","storehouse","godown","goods shed","storage building","loading dock"],
+  factory:["mill","foundry","refinery","assembly hall","industrial building","smokestack building"],
+  barn:["byre","stable","stables","cowshed","hayloft","granary","farm building","threshing barn"],
+  shed:["lock-up","outhouse","potting shed","garden shed","tool shed","lean-to shed","workshop shed"],
+  garage:["carport","car park building","auto shop","repair shop","mechanic's","chop shop"],
+  ruin:["ruins","derelict building","abandoned building","wreck of a building","burnt-out building","shell of a house","crumbling walls","old ruin","gutted building"],
+  tent:["canvas tent","camping tent","pavilion","marquee","circus tent","big top","camp"],
+  bunker:["pillbox","blockhouse","dugout","concrete bunker","war bunker","command post"],
+  statue:["effigy","figure of stone","carved figure","bronze figure","marble figure","memorial statue","a statue of someone"],
+  monument:["memorial","cenotaph","war memorial","column","stone column","victory column","plinth"],
+  tomb:["mausoleum","sepulchre","sepulcher","burial vault","family tomb","sarcophagus tomb","resting place"],
+  lighthouse:["light tower","beacon tower","harbour light","the lighthouse beam"],
+  windmill:["wind pump","old mill","mill with sails","water mill","mill house"],
+  castle:["fortress","citadel","stronghold","palace","chateau","manor","mansion","stately home","great house","fort","keep and walls"],
+  crypt:["undercroft","burial chamber","charnel house","vault beneath","stone crypt"],
+  hiddenroom:["secret room","hidden chamber","concealed room","room behind the wall","room that shouldn't be there","room i never knew about","priest hole"],
+  mineshaft:["pit head","colliery","quarry workings","old mine"],
+  altar:["shrine table","offering stone","stone altar","high altar","household shrine"],
+
+  /* ---- ground, water, weather, growing things ---- */
+  tree:["trees","an old tree","great tree","oak","elm","ash tree","beech","birch","willow","maple","sycamore","chestnut tree","apple tree","cherry tree","orchard tree","the woods","woodland","copse","grove","thicket of trees","treeline","forest"],
+  pine:["fir","spruce","conifer","cedar","evergreen","pine trees","pine wood"],
+  deadtree:["bare tree","leafless tree","blasted tree","withered tree","skeleton of a tree","dead trees","burnt tree"],
+  palm:["palm trees","coconut palm","date palm","palms"],
+  bush:["shrub","shrubbery","bushes","undergrowth","scrub","thicket","gorse","heather"],
+  hedge:["hedgerow","privet","box hedge","garden hedge","hedges"],
+  grass:["lawn","meadow","field","grassland","pasture","village green","paddock","playing field","clearing"],
+  water:["river","stream","brook","creek","canal","lake","pond","the sea","ocean","bay","lagoon","estuary","loch","fjord","reservoir","harbour","harbor","the water","flowing water","still water","the shore","shoreline","beach","waves"],
+  hill:["knoll","hillside","slope","mound","ridge","hillock","downs","bank of earth","embankment"],
+  mountain:["mountains","peak","summit","crag","alp","massif","mountainside","cliff","cliffs","escarpment","bluff","mountain range"],
+  rock:["boulder","boulders","stone","stones","outcrop","rocks","rubble","scree","standing rock"],
+  cave:["cavern","grotto","hollow in the rock","cave mouth","tunnel in the rock","underground cavern","the cave entrance"],
+  flowers:["blossom","blooms","wildflowers","poppies","roses","daisies","lilies","tulips","lavender bushes","flower bed","garden flowers","a garden"],
+  waterfall:["cascade","cataract","water falling","a fall of water"],
+  volcano:["fire mountain","smoking mountain","caldera","erupting mountain"],
+  crater:["impact crater","hollow in the ground","blast crater","pit in the ground"],
+  graveyard:["cemetery","churchyard","burial ground","gravestones","headstones","the graves","necropolis","boneyard"],
+  dune:["sand dunes","dunes of sand","rolling sand","sand hills","sand ridge"],
+  oasis:["watering hole","green place in the desert","palms and water","desert spring"],
+  giantmushroom:["huge mushroom","enormous toadstool","mushrooms as tall as trees","giant toadstool"],
+  reeds:["rushes","bulrushes","marsh grass","reed bed","papyrus"],
+  stormcloud:["thunderhead","black clouds","gathering storm","storm rolling in","dark clouds","the storm"],
+  tornado:["twister","whirlwind","funnel cloud","cyclone"],
+  flood:["floodwater","rising water","the water rose","deluge","inundation","flooding"],
+  tidalwave:["tsunami","great wave","wall of water","rogue wave","the wave came"],
+  wildfire:["forest fire","bushfire","the fire spread","burning forest","blaze in the trees"],
+  blizzard:["snowstorm","whiteout","driving snow","snow storm"],
+  sandstorm:["dust storm","haboob","wall of sand","sand in the air"],
+  lavaflow:["molten rock","river of lava","magma","flowing lava"],
+  fissure:["crack in the earth","chasm","rift in the ground","the ground split","crevasse","ravine","gorge"],
+  sinkhole:["hole in the ground","the ground gave way","pit opened","collapsed ground"],
+  meteor:["falling star","shooting star","fireball in the sky","meteorite","something falling from the sky"],
+
+  /* ---- streets and the things along them ---- */
+  road:["street","lane","avenue","boulevard","track","dirt track","path","pathway","footpath","alley","alleyway","highway","motorway","freeway","main street","high street","the road home","cobbled street","gravel road","country road","crossroads","junction","roundabout"],
+  sidewalk:["pavement","footway","kerb","curb","paved walk"],
+  bridge:["footbridge","overpass","viaduct","aqueduct","crossing over the water","stone bridge","rope bridge","covered bridge"],
+  tunnel:["underpass","subway tunnel","culvert","passage under","tunnel mouth","the tunnel ahead"],
+  stairs:["steps","stairway","staircase","flight of steps","stone steps","fire escape stairs"],
+  gate:["gateway","gates","garden gate","iron gate","farm gate","turnstile","entrance gate"],
+  fence:["fencing","picket fence","wooden fence","paling","railing","railings","post and rail"],
+  chainlink:["wire fence","chain link fence","mesh fence","security fence"],
+  stonewall:["dry stone wall","garden wall","old wall","brick wall","boundary wall","rampart"],
+  fountain:["water feature","drinking fountain","town fountain","stone fountain","jet of water"],
+  well:["wishing well","old well","water well","well head"],
+  streetlight:["lamppost","lamp post","street lamp","gas lamp","the streetlights","a light on a pole"],
+  trafficlight:["traffic lights","stop light"],
+  sign:["signpost","street sign","road sign","shop sign","name plate","notice board"],
+  billboard:["hoarding","advertising board","poster board","big sign"],
+  bench:["park bench","wooden bench","benches"],
+  pylon:["electricity pylon","power lines","transmission tower","telegraph pole","utility pole"],
+  mailbox:["post box","letter box","mail box","pillar box"],
+  trashcan:["bin","dustbin","rubbish bin","waste bin","garbage can","skip"],
+  parking:["car park","parking lot","parking spaces","the car park"],
+  playground:["swings","play park","climbing frame","see-saw","slide and swings","children's playground"],
+  busstop:["bus shelter","stop for the bus","the bus stop"],
+  marketstall:["market stalls","barrow","street market","bazaar stall","souk stall","fruit stall"],
+  brazier:["fire basket","burning brazier","coal fire in a basket"],
+  portal:["doorway to somewhere","way through","gateway of light","opening in the air","shimmering doorway","threshold"],
+  rift:["tear in the air","tear in the world","split in reality","gash of light"],
+  sigil:["symbol on the ground","drawn circle","painted symbol","magic circle","chalk circle","sign drawn in chalk"],
+  wisps:["will o the wisps","floating lights","lights in the dark","witch lights","dancing lights","spirit lights","fireflies"],
+  crystal:["gemstone","great crystal","quartz","geode","crystals growing","shard of crystal"],
+  runestone:["carved stone","rune stone","inscribed stone","stone with writing","memorial stone"],
+  cauldron:["great pot","witch's cauldron","cooking pot over a fire","iron pot"],
+  throne:["seat of a king","great chair","seat of power","carved throne"],
+  banner:["flag","pennant","heraldic banner","flags hanging"],
+  scarecrow:["straw man","man of straw","figure in the field"],
+
+  /* ---- things that move ---- */
+  car:["motor car","saloon","sedan","hatchback","estate car","station wagon","taxi","cab","police car","old banger","my car","the family car","jeep","van"],
+  truck:["lorry","pickup","pick-up truck","semi truck","articulated lorry","delivery truck","dump truck","fire engine","ambulance"],
+  bus:["coach","double decker","school bus","minibus","the bus came"],
+  train:["locomotive","steam train","freight train","carriages","the train pulled in","tram","streetcar","underground train","subway train"],
+  boat:["rowing boat","dinghy","canoe","kayak","punt","raft","fishing boat","little boat","gondola"],
+  ship:["vessel","liner","steamer","galleon","schooner","frigate","tanker","ferry","tall ship","sailing ship"],
+  bicycle:["bike","pushbike","cycle","my bike","bicycles"],
+  plane:["aeroplane","airplane","jet","airliner","biplane","helicopter","aircraft"],
+  hotairballoon:["balloon in the sky","air balloon","basket under a balloon"],
+
+  /* ---- people ---- */
+  human:["figure","person","someone","somebody","a stranger","the stranger","a man","the man","a woman","the woman","people","folk","a passer-by","passerby","neighbour","neighbor","teacher","nurse","doctor","priest","soldier","guard","officer","driver","shopkeeper","baker","butcher","farmer","fisherman","sailor","beggar","musician","dancer","singer","painter","gardener","librarian","postman","cleaner","waiter","barman","old man","old woman","young man","young woman","my mother","my father","my sister","my brother","my friend","an old friend","my grandmother","my grandfather","my aunt","my uncle","my cousin","my wife","my husband","my partner","my teacher","my boss","a colleague","someone i knew","someone i used to know","a familiar face"],
+  child:["kid","children","little girl","little boy","toddler","baby","infant","my son","my daughter","schoolchildren","a child i didn't know"],
+  crowd:["throng","mob","gathering","congregation","queue","line of people","procession","audience","a crowd of people","press of bodies","market crowd"],
+  shadow:["shadowy figure","dark figure","silhouette","shape in the dark","something in the corner","a shade","dark shape","figure with no face"],
+  dog:["hound","puppy","stray dog","my dog","the neighbour's dog","wolfhound","collie","alsatian","terrier","barking dog"],
+  cat:["kitten","tomcat","stray cat","my cat","black cat","tabby"],
+  horse:["mare","stallion","pony","foal","colt","carthorse","racehorse","donkey","mule","ox","cattle","goat","sheep","lamb","pig","hog","chickens","hens","rooster"],
+  bird:["birds","sparrow","starling","swallow","magpie","pigeon","dove","gull","seagull","heron","swan","duck","goose","geese","robin","blackbird","kingfisher","eagle","hawk","falcon","owl","parrot","flock of birds","birdsong"],
+  creature:["thing","beast","animal","something alive","strange animal","unknown animal","something moving"],
+  ghost:["spirit of someone","dead relative","the dead","shade of a person","someone who died","a haunting","presence in the room"],
+
+  /* ---- other worlds and their furniture ---- */
+  coral:["reef of coral","coral garden","brain coral","coral heads"],
+  kelp:["kelp beds","weed forest","sea kelp","waving seaweed"],
+  shipwreck:["broken hull","sunken wreck","hulk on the sea floor","ship on the bottom"],
+  bonepile:["bone heap","scattered bones","boneyard pile"],
+  spiritlanterns:["lanterns drifting","lights on the water","floating lights of the dead"],
+  icespire:["ice pillar","frozen spire","pinnacle of ice","ice shard tower"],
+  frozenlake:["ice sheet","frozen water","lake of ice","frozen surface"],
+  cloudbank:["clouds below","bank of cloud","sea of cloud","cloud floor"],
+  lightpillar:["column of light","shaft from heaven","beam from the sky","light coming down"],
+  firepillar:["column of flame","tower of fire","pillar of flame"],
+  emberfield:["glowing ground","field of embers","coals underfoot","burning ground"],
+  voidshards:["broken pieces in the air","floating rubble","debris hanging","fragments in the dark"],
+  starcrystal:["star fallen to earth","shard of starlight","glowing crystal from the sky"],
+  moonrock:["grey rock of the moon","lunar rock","dust and craters"],
+  alienflora:["plants unlike any i knew","luminous growths","strange growths","unearthly plants"],
+  wreckedcar:["burnt out car","rusted wreck","car on its roof","stripped car","cars left to rot"],
+  barricade:["makeshift barrier","piled defences","blockade","wall of junk"],
+  scrapheap:["heap of metal","pile of wreckage","salvage pile","mountain of junk"],
+  shanty:["tin shack","corrugated hut","shelter of scrap","hovel"],
+  watertower:["tank on legs","water tank tower","rusted water tower"],
+  falloutshelter:["blast shelter","shelter hatch","survival shelter"],
+  dustbowl:["parched ground","cracked earth","dead ground","poisoned ground","barren plain"],
+
+  /* ---- creatures ---- */
+  fairy:["fae folk","little folk","flower fairy","winged folk","the fair ones"],
+  elf:["elven folk","tall fair folk","elf lord","elf woman"],
+  dwarf:["mountain folk","dwarf smith","bearded folk of the mountain"],
+  goblin:["gremlin","imp-like creature","green goblin","goblin folk"],
+  troll:["bridge troll","cave troll","great troll"],
+  giant:["colossus","titan","giant man","giant woman","towering figure"],
+  witch:["cunning woman","wise woman","old witch","village witch","woman who cursed me"],
+  wizard:["old wizard","robed figure with a staff","spellcaster","conjuror","seer"],
+  vampire:["blood drinker","the undead lord","creature that drank blood","one of the nosferatu"],
+  werewolf:["wolf man","shape-shifter","man who became a wolf","beast that was a man"],
+  zombie:["the risen dead","walking corpse","shambling dead","corpses walking"],
+  skeleton:["bones walking","walking skeleton","animated bones"],
+  ghostly:["apparition of a person"],
+  angel:["winged figure of light","messenger of light","shining one","being of light"],
+  demon:["hellish creature","infernal being","thing from below","horned creature"],
+  mermaid:["woman of the sea","fish-tailed woman","sea maiden"],
+  merman:["man of the sea","fish-tailed man","sea people"],
+  dragon:["great wyrm","winged serpent","fire-breathing beast","dragon of old","scaled beast"],
+  snake:["serpent in the grass","coiled snake","slithering thing","python-like snake"],
+  spider:["web spinner","great spider","spiders everywhere","web and spider"],
+  bats:["colony of bats","bats pouring out","flitting bats"],
+  wolfpack:["pack of wolves"],
+  unicorn:["horned horse","white horse with a horn"],
+  kraken:["monster of the deep","many-armed monster","thing with tentacles"],
+  whale:["great whale","leviathan of the sea","whale breaching"],
+  phoenix:["bird of fire","burning bird","bird reborn from ash"],
+  floatingeye:["watching eye","eye that followed me","great eye above"],
+
+  /* ---- cultural ---- */
+  torii:["gate of two posts","vermilion gate","shinto gate"],
+  pagoda:["many-roofed tower","stepped tower with eaves"],
+  mosque:["dome and minaret","house of prayer with a dome"],
+  mandir:["carved stone temple","temple with a spire"],
+  stupa:["dome shrine","white dome of stone"],
+  yurt:["felt tent","round felt house","steppe tent"],
+  pueblo:["adobe terraces","earth-walled village","mud houses stacked"],
+  hacienda:["ranch house","estate house with arches"],
+  riad:["house with an inner court","moroccan courtyard"],
+  roundhouse:["thatched round house","round dwelling"],
+  longhouse:["hall of timber","long timber hall"],
+  cycladic:["white cube house","blue-domed house"],
+  redlanterns:["lanterns strung above the street","row of red lanterns"],
+  prayerflags:["flags strung between poles","coloured flags on a line"],
+  papelpicado:["paper flags over the street","cut-paper bunting"],
+  ofrenda:["table of remembrance","altar with photographs","candles and marigolds"],
+  zengarden:["garden of sand and stone","raked gravel garden"],
+  koipond:["pond with orange fish","fish pond with lilies"],
+  bonsai:["dwarf tree in a pot","tiny tree in a dish"],
+  tiledfountain:["fountain of blue tiles","patterned fountain"],
+  marketawning:["awning over the stalls","striped canopy"],
+  incenseburner:["smoking censer","bowl of incense"],
+  windchimes:["chimes in the wind","bells that rang in the breeze"],
+  maypole:["pole with ribbons","ribboned pole"],
+  stringlights:["little lights strung overhead","lights across the street"],
+  pergola:["walkway of vines","climbing plants over a frame"],
+  monolith:["single great slab","standing slab of black stone"]
+};
+
+</script>
 <script>/* js/names.js */
 /* Dream Walker's Atlas — names.js
    streets, addresses and the names of places
@@ -7264,7 +7521,7 @@ function animate(){
   skyFollow();
   if(audio.on) audioTick();
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
-  navTick(); interiorTick(dt); padTick();
+  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt);
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
   renderView();
@@ -8540,6 +8797,26 @@ var LUCID=["lucid","knew i was dreaming","realised i was dreaming","realized i w
 
 /* the larger library's words join the rest */
 Object.keys(MORE_VOCAB).forEach(function(k){ VOCAB[k]=(VOCAB[k]||[]).concat(MORE_VOCAB[k]); });
+/* many more ways of saying the same thing — added only where a word is going spare,
+   so nothing already understood ever changes meaning */
+if(typeof EXTRA_VOCAB!=="undefined"){
+  var taken={};
+  Object.keys(VOCAB).forEach(function(k){ VOCAB[k].forEach(function(w){ taken[w]=k; }); });
+  Object.keys(EXTRA_VOCAB).forEach(function(k){
+    if(!KIT[k]) return;
+    EXTRA_VOCAB[k].forEach(function(w){
+      w=String(w).toLowerCase().trim();
+      if(!w||taken[w]) return;
+      taken[w]=k; (VOCAB[k]=VOCAB[k]||[]).push(w);
+      /* and the plural, where nothing else has claimed it */
+      if(w.indexOf(" ")===-1&&!/(s|x|z|ch|sh)$/.test(w)){
+        var pl=/[^aeiou]y$/.test(w)?w.slice(0,-1)+"ies":w+"s";
+        if(!taken[pl]){ taken[pl]=k; VOCAB[k].push(pl); }
+      }
+    });
+  });
+}
+
 /* a driveway belongs to a house, not to the road */
 if(VOCAB.road) VOCAB.road=VOCAB.road.filter(function(w){ return w!=="driveway"&&w!=="drive way"; });
 
@@ -10265,7 +10542,7 @@ function openPanel(){
   $("density").value=c.density||26; $("err").textContent="";
   $("counted").checked=c.counted!==false;
   $("nm-on").value=c.nightmares===false?"off":"on"; $("nm-catch").value=c.nightmareCatch||"wake";
-  $("padmode").value=c.pad||"automatic";
+  $("padmode").value=c.pad||"automatic"; $("skies").value=c.skies===false?"off":"on";
   renderHeld();
   $("panel").classList.add("open");
 }
@@ -10274,7 +10551,7 @@ function savePanel(){
   var was=cfg().counted!==false;
   var c={mode:$("mode").value,key:$("key").value.trim(),proxy:$("proxy").value.trim(),
          model:$("model").value.trim()||LLM_MODEL,density:parseInt($("density").value,10),
-         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value};
+         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value,skies:$("skies").value!=="off"};
   if(was&&!c.counted) forgetDevice();
   if(!was&&c.counted) setTimeout(checkin,50);
   if(c.mode==="direct"&&!c.key){ $("err").textContent="Direct mode needs a key."; return; }
@@ -10352,6 +10629,8 @@ function plotInit(){
 function setPlot(on){
   plotOn=on;
   if(on&&walkMode) setWalk(false);
+  /* always open on something: frame the town, so the map can never come up empty */
+  if(on) frameTown();
   document.getElementById("scrim").classList.toggle("hidden",on);
   document.getElementById("plotbar").classList.toggle("gone",!on);
   if(!on){ plotArmed=null; plotSelect(null); }
@@ -10567,6 +10846,21 @@ function wirePlot(){
   $("p-del").addEventListener("click",plotRemove);
   $("p-detail").addEventListener("click",function(){ if(plotSel) openInspect(plotSel.id); });
   addEventListener("keydown",function(e){ if(plotKeyDown(e)){ e.preventDefault(); e.stopImmediatePropagation(); } },true);
+}
+
+
+/* put the overview back over the dreamscape, whatever happened before */
+function frameTown(){
+  var t=(typeof lookTarget==="function")?lookTarget():{x:0,z:0};
+  var here=store.here||0, minx=1e9,maxx=-1e9,minz=1e9,maxz=-1e9,n=0;
+  store.objects.forEach(function(o){
+    if(o.filler||(o.realm||0)!==here) return;
+    n++; minx=Math.min(minx,o.x); maxx=Math.max(maxx,o.x); minz=Math.min(minz,o.z); maxz=Math.max(maxz,o.z);
+  });
+  if(n){ orb.tx=(minx+maxx)/2; orb.tz=(minz+maxz)/2;
+    orb.r=Math.max(90,Math.min(1200,Math.max(maxx-minx,maxz-minz)*1.5+90)); }
+  else { orb.tx=t.x; orb.tz=t.z; orb.r=260; }
+  orb.t=orb.t||0.9; orb.p=Math.min(1.25,Math.max(0.5,orb.p||0.95));
 }
 
 </script>
@@ -10845,6 +11139,168 @@ function visitRealm(id){
 /* the other worlds' scenery, new worlds and mythic names (realm-kit.js) */
 if(typeof extendRealms==="function") extendRealms();
 if(typeof extendRealms2==="function") extendRealms2();
+
+</script>
+<script>/* js/skies.js */
+/* Dream Walker's Atlas — skies.js
+   the other worlds do not get our sky. each one gets its own, alive and moving:
+   aurora curtains over Faerie and the frozen north, rolling smoke in the
+   underworld, shafts of light in the heavens, caustics overhead in the Deep,
+   a kaleidoscope in the mirror world, a slow vortex in the void, nebula among
+   the stars, dust over the wasteland.
+   drawn on a second dome with one shader, so it costs almost nothing.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var realmSky=null, realmSkyKind=null, skyT=0, realmMoons=[];
+
+/* mode: 1 aurora · 2 smoke · 3 shafts · 4 caustics · 5 kaleidoscope · 6 vortex · 7 nebula · 8 dust */
+var SKYWORK={
+  faerie:     {mode:1,a:0x35F0A0,b:0xC050FF,c:0xFFE96A,speed:1.0,lift:0.85,amt:1.7},
+  frozen:     {mode:1,a:0x30F0C0,b:0x4A7AFF,c:0xD8F4FF,speed:0.7,lift:0.9,amt:1.5},
+  heavens:    {mode:3,a:0xFFD98A,b:0xFFFFFF,c:0xFFC060,speed:0.6,lift:0.8,amt:1.2},
+  underworld: {mode:2,a:0x3A0E0E,b:0xC0402A,c:0x1A0A0A,speed:0.8,lift:0.7},
+  dead:       {mode:2,a:0x2A2E36,b:0xD8DCE4,c:0x1A1E24,speed:0.35,lift:0.6,amt:1.0},
+  depths:     {mode:4,a:0x1E6A8E,b:0xA8F4FF,c:0x2ADCC8,speed:1.0,lift:0.9,amt:1.3},
+  mirror:     {mode:5,a:0x9FC0E8,b:0xFFFFFF,c:0xE8A8FF,speed:0.5,lift:0.7,amt:1.2},
+  "void":     {mode:6,a:0x2A1050,b:0x9A6AFF,c:0x4AE8E8,speed:0.5,lift:0.5,amt:1.3},
+  fire:       {mode:6,a:0x8A1A06,b:0xFFAA2E,c:0xFF3A10,speed:1.2,lift:0.6,amt:1.4},
+  stars:      {mode:7,a:0x2A1060,b:0xC050E8,c:0x4AE0FF,speed:0.35,lift:0.4,amt:1.5},
+  wasteland:  {mode:8,a:0xC8B078,b:0x8A7A50,c:0xE8D8A8,speed:0.6,lift:0.5},
+  desert:     {mode:8,a:0xF0D8A8,b:0xBFD8EC,c:0xFFF0D0,speed:0.4,lift:0.4},
+  elsewhere:  {mode:7,a:0x1A4A4A,b:0x6AFFC4,c:0xFF6AC8,speed:0.8,lift:0.6,amt:1.5}
+};
+
+var SKY_FRAG=[
+"precision mediump float;",
+"uniform float t; uniform int mode; uniform vec3 cA; uniform vec3 cB; uniform vec3 cC;",
+"uniform float lift; uniform float amt;",
+"varying vec3 vP;",
+"float h21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }",
+"float vnoi(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);",
+"  return mix(mix(h21(i),h21(i+vec2(1.0,0.0)),f.x), mix(h21(i+vec2(0.0,1.0)),h21(i+vec2(1.0,1.0)),f.x), f.y); }",
+"float fbm(vec2 p){ float s=0.0, m=0.5; for(int i=0;i<5;i++){ s+=m*vnoi(p); p*=2.03; m*=0.5; } return s; }",
+"void main(){",
+"  vec3 d=normalize(vP);",
+"  float y=clamp(d.y*0.5+0.5,0.0,1.0);",
+"  float up=smoothstep(-0.25,0.85,d.y);",
+"  vec2 uv=vec2(atan(d.z,d.x), asin(clamp(d.y,-1.0,1.0)));",
+"  vec3 col=cA; float a=0.0;",
+"  if(mode==1){",
+"    float wob=fbm(vec2(uv.x*2.2+t*0.05, t*0.03));",
+"    float wob2=fbm(vec2(uv.x*3.7-t*0.04, 4.0+t*0.02));",
+"    float c1=0.30+0.38*wob, c2=0.55+0.30*wob2;",
+"    float band=exp(-pow((uv.y-c1)*5.0,2.0))+0.7*exp(-pow((uv.y-c2)*7.0,2.0));",
+"    float streak=0.45+0.55*abs(sin(uv.x*70.0+wob*12.0+t*0.4));",
+"    float foot=smoothstep(-0.15,0.35,d.y);",
+"    col=mix(cA,cB,clamp(uv.y*1.5+wob*0.5,0.0,1.0));",
+"    col=mix(col,cC,streak*0.25);",
+"    a=band*streak*foot*0.82;",
+"  } else if(mode==2){",
+"    float f=fbm(vec2(uv.x*2.2+t*0.03, uv.y*2.6+sin(t*0.07)*0.3));",
+"    float g=fbm(vec2(uv.x*4.0-t*0.05, uv.y*5.0));",
+"    col=mix(cA,cB,pow(f,2.0)); col=mix(col,cC,g*0.4);",
+"    a=smoothstep(0.18,0.95,f)*0.85;",
+"  } else if(mode==3){",
+"    float ang=uv.x*7.0+t*0.10;",
+"    float sh=pow(abs(sin(ang)),9.0)+pow(abs(sin(ang*0.37+1.3)),14.0);",
+"    float cl=fbm(vec2(uv.x*2.0+t*0.02,uv.y*3.0));",
+"    col=mix(cA,cB,sh); col=mix(col,cC,cl*0.4);",
+"    a=(sh*0.6+cl*0.25)*up;",
+"  } else if(mode==4){",
+"    float c=sin(uv.x*11.0+t*0.8+fbm(uv*3.0)*4.0)*sin(uv.y*13.0-t*0.5);",
+"    c=pow(abs(c),3.0);",
+"    col=mix(cA,cB,c); col=mix(col,cC,0.3*(1.0-c));",
+"    a=(c*0.85+0.10)*up;",
+"  } else if(mode==5){",
+"    vec2 k=uv; k.x=abs(mod(k.x+0.3927,0.7854)-0.3927); k.y=abs(k.y);",
+"    float f=fbm(k*7.0+vec2(t*0.04,-t*0.03));",
+"    float e=smoothstep(0.46,0.54,f);",
+"    col=mix(cA,cB,e); col=mix(col,cC,smoothstep(0.7,1.0,f));",
+"    a=(0.35+0.4*e)*up;",
+"  } else if(mode==6){",
+"    float r=1.0-y;",
+"    float sp=sin(uv.x*3.0+r*16.0-t*0.6+fbm(uv*2.0)*2.0);",
+"    col=mix(cA,cB,sp*0.5+0.5); col=mix(col,cC,r*0.5);",
+"    a=smoothstep(0.25,1.0,abs(sp))*0.7;",
+"  } else if(mode==7){",
+"    float f=fbm(vec2(uv.x*2.0,uv.y*2.2)+vec2(t*0.012,t*0.008));",
+"    float g=fbm(vec2(uv.x*5.0,uv.y*5.0)-t*0.01);",
+"    col=mix(cA,mix(cB,cC,g),f);",
+"    float spark=step(0.9985,h21(floor(uv*220.0)));",
+"    a=smoothstep(0.30,1.0,f)*0.9+spark;",
+"  } else {",
+"    float f=fbm(vec2(uv.x*3.0+t*0.06, uv.y*6.0));",
+"    col=mix(cA,cB,f); col=mix(col,cC,up*0.35);",
+"    a=((1.0-y)*0.75*f+0.06);",
+"  }",
+"  a*=amt*mix(1.0,up,lift);",
+"  gl_FragColor=vec4(col,clamp(a,0.0,1.0));",
+"}"].join("\n");
+
+function skyStrange(){ return cfg().skies!==false; }
+
+function buildRealmSky(kind){
+  clearRealmSky();
+  var W=SKYWORK[kind]; if(!W||!skyStrange()) return;
+  if(typeof THREE==="undefined"||!THREE.ShaderMaterial) return;
+  var mat=new THREE.ShaderMaterial({
+    uniforms:{t:{value:0},mode:{value:W.mode},cA:{value:new THREE.Color(W.a)},cB:{value:new THREE.Color(W.b)},
+              cC:{value:new THREE.Color(W.c)},lift:{value:W.lift},amt:{value:W.amt||1}},
+    vertexShader:"varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+    fragmentShader:SKY_FRAG,
+    side:THREE.BackSide, transparent:true, depthWrite:false, depthTest:false, fog:false,
+    /* light-like skies add their glow; smoke and dust veil instead */
+    blending:(W.mode===2||W.mode===8)?THREE.NormalBlending:THREE.AdditiveBlending
+  });
+  realmSky=new THREE.Mesh(new THREE.SphereGeometry(SKY_R*0.985,40,24),mat);
+  realmSky.renderOrder=-9.5; realmSky.userData.speed=W.speed;
+  scene.add(realmSky);
+  realmSkyKind=kind;
+  /* a couple of worlds get something hanging in them */
+  if(kind==="stars"||kind==="elsewhere"){
+    [[0.55,0.42,120,0xE8DCC8],[ -0.7,0.30,70,0xC88A6A]].forEach(function(m){
+      var disc=new THREE.Mesh(new THREE.CircleGeometry(m[2],36),
+        new THREE.MeshBasicMaterial({color:m[3],transparent:true,opacity:.95,fog:false,depthWrite:false}));
+      disc.renderOrder=-9;
+      disc.userData.at=[m[0],m[1]];
+      scene.add(disc); realmMoons.push(disc);
+    });
+    if(kind==="stars"){
+      var ring=new THREE.Mesh(new THREE.RingGeometry(150,215,48),
+        new THREE.MeshBasicMaterial({color:0xE8D8B8,transparent:true,opacity:.5,side:THREE.DoubleSide,fog:false,depthWrite:false}));
+      ring.renderOrder=-9; ring.userData.at=[0.55,0.42]; ring.userData.ring=1;
+      scene.add(ring); realmMoons.push(ring);
+    }
+  }
+}
+function clearRealmSky(){
+  if(realmSky){ scene.remove(realmSky); realmSky=null; }
+  realmMoons.forEach(function(m){ scene.remove(m); }); realmMoons=[];
+  realmSkyKind=null;
+}
+
+/* each frame: the right sky for where you are, kept centred on you, moving */
+function realmSkyTick(dt){
+  if(typeof scene==="undefined"||!scene) return;
+  var r=(typeof realmById==="function"&&store.here)?realmById(store.here):null;
+  var kind=r?r.kind:null;
+  if(store.inside) kind=null;
+  if(!skyStrange()) kind=null;
+  if(kind!==realmSkyKind){ if(kind) buildRealmSky(kind); else clearRealmSky(); }
+  if(!realmSky) return;
+  skyT+=dt*(realmSky.userData.speed||1);
+  realmSky.material.uniforms.t.value=skyT;
+  var p=camera.position;
+  realmSky.position.set(p.x,0,p.z);
+  realmMoons.forEach(function(m,i){
+    var at=m.userData.at, R=SKY_R*0.93;
+    var az=at[0]*Math.PI+skyT*0.004, el=at[1];
+    m.position.set(p.x+Math.cos(az)*Math.cos(el)*R, Math.sin(el)*R, p.z+Math.sin(az)*Math.cos(el)*R);
+    m.lookAt(p.x,camera.position.y,p.z);
+    if(m.userData.ring) m.rotation.x+=0.35;
+  });
+}
 
 </script>
 <script>/* js/looks-ui.js */
@@ -11832,6 +12288,114 @@ function applyCloud(){
 }
 
 </script>
+<script>/* js/account.js */
+/* Dream Walker's Atlas — account.js
+   signing in. an account records who you are and what you have bought, and
+   nothing else: your dreams stay on this device, and nobody at the Temple can
+   read them. signing in is optional, and the Atlas works fully without it.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var SESSKEY="dreamwalker.session", session=null;
+
+function authUrl(path){ return DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/auth/v1/"+path; }
+function authHeaders(tok){
+  var h={"Content-Type":"application/json",apikey:DW_CONFIG.supabaseKey||""};
+  if(tok) h.Authorization="Bearer "+tok;
+  return h;
+}
+function loadSession(){
+  try{ session=JSON.parse(localStorage.getItem(SESSKEY)||"null"); }catch(e){ session=null; }
+  return session;
+}
+function keepSession(s){
+  session=s;
+  try{ s?localStorage.setItem(SESSKEY,JSON.stringify(s)):localStorage.removeItem(SESSKEY); }catch(e){}
+  showAccount();
+}
+function signedIn(){ return !!(session&&session.access_token); }
+function myEmail(){ return session&&session.user?session.user.email:""; }
+
+function authPost(path,body,tok){
+  return fetch(authUrl(path),{method:"POST",headers:authHeaders(tok),body:JSON.stringify(body||{})})
+    .then(function(r){ return r.json().then(function(j){ return r.ok?j:Promise.reject(j); }); });
+}
+/* the token lasts an hour; this quietly gets another when it's old */
+function freshToken(){
+  if(!signedIn()) return Promise.resolve(null);
+  var age=Date.now()-(session.at||0);
+  if(age<45*60*1000) return Promise.resolve(session.access_token);
+  return authPost("token?grant_type=refresh_token",{refresh_token:session.refresh_token})
+    .then(function(j){ keepSession({access_token:j.access_token,refresh_token:j.refresh_token,user:j.user,at:Date.now()}); return j.access_token; })
+    .catch(function(){ keepSession(null); return null; });
+}
+
+function accountMsg(t,bad){
+  var e=document.getElementById("acc-msg"); if(!e) return;
+  e.textContent=t||""; e.style.color=bad?"#C0603A":"var(--dim)";
+}
+function createAccount(){
+  var em=(document.getElementById("acc-email").value||"").trim(), pw=document.getElementById("acc-pass").value||"";
+  if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)) return accountMsg("That doesn't look like an email address.",true);
+  if(pw.length<8) return accountMsg("Use at least eight characters for the password.",true);
+  accountMsg("Making your account\u2026");
+  authPost("signup",{email:em,password:pw}).then(function(j){
+    if(j.access_token){ keepSession({access_token:j.access_token,refresh_token:j.refresh_token,user:j.user,at:Date.now()});
+      accountMsg("You have an account, and you are signed in."); }
+    else accountMsg("Account made. Check your email to confirm it, then sign in.");
+  }).catch(function(e){ accountMsg(authWords(e),true); });
+}
+function signIn(){
+  var em=(document.getElementById("acc-email").value||"").trim(), pw=document.getElementById("acc-pass").value||"";
+  if(!em||!pw) return accountMsg("Your email and password, please.",true);
+  accountMsg("Signing in\u2026");
+  authPost("token?grant_type=password",{email:em,password:pw}).then(function(j){
+    keepSession({access_token:j.access_token,refresh_token:j.refresh_token,user:j.user,at:Date.now()});
+    accountMsg("Signed in.");
+    document.getElementById("acc-pass").value="";
+  }).catch(function(e){ accountMsg(authWords(e),true); });
+}
+function signOut(){
+  var tok=session&&session.access_token;
+  keepSession(null); accountMsg("Signed out. Everything you have dreamt stays on this device.");
+  if(tok) authPost("logout",{},tok).catch(function(){});
+}
+function resetPassword(){
+  var em=(document.getElementById("acc-email").value||"").trim();
+  if(!em) return accountMsg("Put your email in first.",true);
+  authPost("recover",{email:em}).then(function(){ accountMsg("If that address has an account, a letter is on its way."); })
+    .catch(function(e){ accountMsg(authWords(e),true); });
+}
+/* supabase's own wording, said plainly */
+function authWords(e){
+  var m=(e&&(e.msg||e.message||e.error_description||e.error))||"That didn't work.";
+  if(/already registered|already exists/i.test(m)) return "There is already an account with that email. Try signing in.";
+  if(/invalid login/i.test(m)) return "That email and password don't match.";
+  if(/email not confirmed/i.test(m)) return "Confirm your email first \u2014 check for the letter.";
+  if(/password/i.test(m)&&/short|least/i.test(m)) return "Use a longer password.";
+  return m;
+}
+
+function showAccount(){
+  var out=document.getElementById("acc-out"), inn=document.getElementById("acc-in");
+  if(!out||!inn) return;
+  var on=signedIn();
+  out.style.display=on?"none":"block";
+  inn.style.display=on?"block":"none";
+  var who=document.getElementById("acc-who");
+  if(who&&on) who.textContent=myEmail()||"signed in";
+}
+function initAccount(){
+  loadSession(); showAccount();
+  var b;
+  if((b=document.getElementById("acc-signin"))) b.onclick=signIn;
+  if((b=document.getElementById("acc-create"))) b.onclick=createAccount;
+  if((b=document.getElementById("acc-forgot"))) b.onclick=resetPassword;
+  if((b=document.getElementById("acc-signout"))) b.onclick=signOut;
+  if(signedIn()) freshToken();
+}
+
+</script>
 <script>/* js/touch.js */
 /* Dream Walker's Atlas — touch.js
    phone and tablet controls.
@@ -12032,6 +12596,15 @@ function padBuild(){
   var fold=document.createElement("button"); fold.id="pd-fold"; fold.type="button";
   fold.title="Fold the pad away so you can reach what's under it";
   fold.textContent="pad";
+  /* the way out, and the abilities — always reachable, whatever else is on screen */
+  var side=document.createElement("div"); side.id="pdside";
+  side.innerHTML=
+    '<button class="pd pd-wide" id="pd-back">back</button>'+
+    '<button class="pd pd-wide" id="pd-abil">powers</button>'+
+    '<button class="pd" id="pd-rise" aria-label="Rise">&#9650;</button>'+
+    '<button class="pd" id="pd-fall" aria-label="Fall">&#9660;</button>';
+  document.body.appendChild(side);
+
   var view=document.createElement("div"); view.id="pdview";
   view.innerHTML=
     '<button class="pd" data-v="in" aria-label="Closer">+</button>'+
@@ -12072,6 +12645,23 @@ function padBuild(){
     ["pointerup","pointerleave","pointercancel","touchend","touchcancel"].forEach(function(ev){ b.addEventListener(ev,stop); });
   });
 
+  document.getElementById("pd-back").onclick=function(){
+    if(typeof INT!=="undefined"&&INT) return exitInterior(false);
+    if(typeof talkOpen!=="undefined"&&talkOpen&&typeof closeTalk==="function") return closeTalk();
+    if(typeof picked!=="undefined"&&picked) closeInspect();
+    if(typeof plotOn!=="undefined"&&plotOn) return setPlot(false);
+    if(walkMode) return setWalk(false);
+  };
+  ["pd-rise","pd-fall"].forEach(function(id){
+    var b=document.getElementById(id), up=(id==="pd-rise"), held=false, tick=null;
+    function go(){ if(typeof flyY==="undefined") return; flyY+=(up?1:-1)*0.55; if(flyY<0) flyY=0; }
+    function start(e){ e.preventDefault(); held=true; go(); tick=setInterval(function(){ if(held) go(); },60); b.classList.add("on"); }
+    function stop(){ held=false; if(tick) clearInterval(tick); tick=null; b.classList.remove("on"); }
+    ["pointerdown","touchstart"].forEach(function(ev){ b.addEventListener(ev,start,{passive:false}); });
+    ["pointerup","pointerleave","pointercancel","touchend","touchcancel"].forEach(function(ev){ b.addEventListener(ev,stop); });
+  });
+  document.getElementById("pd-abil").onclick=openPowers;
+
   fold.onclick=function(){
     padHidden=!padHidden;
     try{ localStorage.setItem(PADKEY,padHidden?"1":""); }catch(e){}
@@ -12080,6 +12670,41 @@ function padBuild(){
   };
   try{ padHidden=!!localStorage.getItem(PADKEY); }catch(e){}
   fold.textContent=padHidden?"pad":"hide";
+}
+
+/* the powers a dreamer has in dreams — switched on by the dream, or by hand */
+function openPowers(){
+  var p=document.getElementById("pd-powers");
+  if(p&&p.style.display==="block"){ p.style.display="none"; return; }
+  if(!p){
+    p=document.createElement("div"); p.id="pd-powers";
+    p.style.cssText="position:fixed;z-index:20;left:50%;top:14%;transform:translateX(-50%);width:min(340px,92vw);"+
+      "max-height:70vh;overflow-y:auto;background:rgba(9,11,16,.96);border:1px solid var(--line,#333);border-radius:4px;padding:16px 18px";
+    document.body.appendChild(p);
+  }
+  var d=dreamer(), have={};
+  (d.abilities||[]).forEach(function(a){ have[a.name]=a; });
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+        '<b style="color:var(--bone,#ddd);font-weight:500">What you can do in dreams</b>'+
+        '<button class="btn" id="pw-close">Done</button></div>'+
+        '<p style="font-size:12px;color:var(--dim,#999);margin:0 0 12px;line-height:1.5">These come from your dreams. You can also switch one on yourself &mdash; it is your dream.</p>';
+  ABILITY.forEach(function(pair){
+    var on=!!have[pair[0]], src=on&&have[pair[0]].src==="stated"?" <span style=\"color:var(--gold,#C9A868)\">dreamt</span>":"";
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line,#333)">'+
+       '<input type="checkbox" data-ab="'+esc(pair[0])+'"'+(on?" checked":"")+' style="width:auto">'+
+       '<span style="flex:1;font-size:14px">'+esc(pair[0])+src+"</span></div>";
+  });
+  p.innerHTML=h; p.style.display="block";
+  document.getElementById("pw-close").onclick=function(){ p.style.display="none"; };
+  Array.prototype.forEach.call(p.querySelectorAll("[data-ab]"),function(c){
+    c.onchange=function(){
+      var nm=c.getAttribute("data-ab"), d2=dreamer();
+      if(c.checked){ if(!hasAbility(nm)) d2.abilities.push({name:nm,nights:[store.session],src:"chosen"}); }
+      else d2.abilities=d2.abilities.filter(function(a){ return a.name!==nm; });
+      if(typeof canFly!=="undefined") canFly=hasAbility("flying")||hasAbility("floating");
+      save();
+    };
+  });
 }
 
 /* each frame: show the right controls for what the dreamer is doing */
@@ -12097,6 +12722,14 @@ function padTick(){
   pad.style.display=(wantPad&&!padHidden)?"grid":"none";
   view.style.display=(wantView&&!padHidden)?"grid":"none";
   fold.style.display=(wantPad||wantView)?"block":"none";
+  var side=document.getElementById("pdside");
+  if(side){
+    side.style.display=(wantPad||wantView||(typeof plotOn!=="undefined"&&plotOn))?"grid":"none";
+    var fly=(typeof canFly!=="undefined"&&canFly)&&walkMode;
+    document.getElementById("pd-rise").style.display=fly?"flex":"none";
+    document.getElementById("pd-fall").style.display=fly?"flex":"none";
+    document.getElementById("pd-abil").style.display=walkMode?"flex":"none";
+  }
   if(padHidden&&(padKeys.f||padKeys.b||padKeys.l||padKeys.r)) padKeys={f:0,b:0,l:0,r:0};
 }
 
@@ -12115,7 +12748,7 @@ function boot(){
     return;
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot(); wireCompass(); initTouch();
-  loadCloudConfig(); checkin();
+  loadCloudConfig(); checkin(); initAccount();
   if(load()){
     committed=store.transcript||"";
     store.streets=[];
