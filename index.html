@@ -367,6 +367,28 @@ body{font-family:var(--sans);color:var(--bone);-webkit-font-smoothing:antialiase
   border:1px solid rgba(201,190,168,.35);color:var(--bone);font-size:15px;touch-action:none}
 #t-speak{border-color:var(--ember)!important;color:var(--ember)!important}
 #joy.gone,#tbtns.gone,#tbtns button.gone{display:none}
+
+/* ---- the direction pad, and the view controls for the overview and Plot ---- */
+#dpad{position:fixed;z-index:16;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  display:none;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,58px);gap:6px;
+  grid-template-areas:". f ." "l c r" ". b .";touch-action:none;user-select:none}
+#dpad .pd[data-d="f"]{grid-area:f} #dpad .pd[data-d="l"]{grid-area:l} #dpad .pd-run{grid-area:c}
+#dpad .pd[data-d="r"]{grid-area:r} #dpad .pd[data-d="b"]{grid-area:b}
+#pdview{position:fixed;z-index:16;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(86px + env(safe-area-inset-bottom,0px));
+  display:none;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:6px;
+  grid-template-areas:"in up out" "left turn right" ". down .";touch-action:none;user-select:none}
+#pdview [data-v="in"]{grid-area:in} #pdview [data-v="out"]{grid-area:out} #pdview [data-v="turn"]{grid-area:turn}
+#pdview [data-v="up"]{grid-area:up} #pdview [data-v="down"]{grid-area:down}
+#pdview [data-v="left"]{grid-area:left} #pdview [data-v="right"]{grid-area:right}
+.pd{background:rgba(7,8,11,.62);border:1px solid var(--line);color:var(--bone);border-radius:14px;
+  font-size:18px;font-family:var(--sans);display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;backdrop-filter:blur(3px);cursor:pointer;padding:0}
+.pd.on{background:rgba(201,168,104,.28);border-color:var(--gold);color:var(--gold)}
+.pd-run{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+#pd-fold{position:fixed;z-index:17;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(200px + env(safe-area-inset-bottom,0px));
+  display:none;background:rgba(7,8,11,.72);border:1px solid var(--line);color:var(--dim);border-radius:12px;
+  font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;cursor:pointer}
+#pd-fold:hover{color:var(--bone)}
 body.touch #walkhint{font-size:12px;bottom:auto;top:calc(12px + env(safe-area-inset-top,0px))}
 body.touch #prompt{bottom:calc(176px + env(safe-area-inset-bottom,0px))}
 body.touch .btn{min-height:40px;padding:9px 14px;font-size:14px}
@@ -675,6 +697,16 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   </details>
   <label for="density">Fog &mdash; how far you can see</label>
   <input id="density" type="range" min="4" max="60" step="1" value="26">
+  <label for="padmode" style="margin-top:14px">On-screen controls</label>
+  <select id="padmode">
+    <option value="automatic">Automatic &mdash; shown on phones and tablets</option>
+    <option value="always">Always shown</option>
+    <option value="never">Never shown</option>
+  </select>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:6px 0 0">A direction pad for walking, and arrows to move the map in the overview and in Plot. Tap <b>hide</b> beside the pad to fold it away and reach whatever is underneath it.</p>
+  <div class="row" style="margin-top:12px"><button class="btn" id="diagbtn" type="button">What this device can do</button></div>
+  <pre id="diag" style="display:none;white-space:pre-wrap;font-size:12px;color:var(--dim);background:var(--void);border:1px solid var(--line);padding:10px;margin:8px 0 0;border-radius:2px"></pre>
+
   <label for="nm-on" style="margin-top:14px">Nightmares after dark</label>
   <select id="nm-on"><option value="on">On &mdash; what hunted you in the dream comes out at night</option><option value="off">Off</option></select>
   <label for="nm-catch">When a nightmare catches you</label>
@@ -1735,12 +1767,37 @@ A("reeds","nature",[3,1.8,3],[
   {g:"cyl",s:[.03,.03,1.6,4],p:[-1,.8,-1],c:0x7A8A4A,rep:[6,.4,0,.35]},
   {g:"cyl",s:[.06,.06,.3,5],p:[-1,1.65,-1],c:0x5A3A22,rep:[6,.4,0,.35]}
 ]);
-A("dune","nature",[40,9,30],[
-  {g:"sph",s:[16],p:[0,-8,0],c:SAND}
-]);
+A("dune","nature",[54,7,36],[]);
 
 /* ---------- builders for things that must move as one ---------- */
 var DECOR={
+  /* a dune is a ridge of sand, not a buried ball: the surface falls to nothing at the
+     edges so it meets the ground without an edge to shimmer, with a steep slip face
+     on the lee side and ripples across the back */
+  dune:function(g,spec,f){
+    var W=54, D=36, SX=54, SZ=36;
+    var geo=new THREE.PlaneGeometry(W,D,SX,SZ), pos=geo.attributes&&geo.attributes.position;
+    var h=hash(spec.id), turn=(h%628)/100, A=5.2+((h>>>5)%30)/10;
+    for(var i=0;pos&&i<pos.count;i++){
+      var x=pos.getX(i), z=-pos.getY(i);
+      var u=x/(W/2), v=z/(D/2);
+      var edge=Math.max(0,1-(u*u+v*v));          // nothing left at the rim
+      var crest=Math.exp(-(u*u)/0.34);            // a ridge running across
+      var lee=v<0?Math.exp(-(v*v)/0.10):Math.exp(-(v*v)/0.62);  // steep one side, long the other
+      var ripple=(typeof vnoise==="function"?vnoise(x/7+h%50,z/7):0)*0.35*edge;
+      pos.setZ(i,Math.max(0,A*crest*lee*edge*edge+ripple));
+    }
+    if(pos){ pos.needsUpdate=true; if(geo.computeVertexNormals) geo.computeVertexNormals(); }
+    if(typeof metreUVs==="function") metreUVs(geo,"pln",[W,D]);
+    var mat=new THREE.MeshLambertMaterial({color:SAND});
+    var tx=(typeof texOf==="function"&&f>0.5)?texOf("sand"):null;
+    if(tx) mat.map=tx;
+    var m=new THREE.Mesh(geo,mat);
+    m.rotation.x=-Math.PI/2; m.position.y=0.02;
+    m.receiveShadow=true; m.castShadow=false;    // a smooth mound casting on itself is what flickers
+    g.rotation.y=turn;
+    g.add(m);
+  },
   /* five chords joining every second point of a circle make the star */
   sigil:function(g){
     var R=3.6, m=new THREE.MeshBasicMaterial({color:0xE8C27A,transparent:true,opacity:0.9,depthWrite:false});
@@ -1880,7 +1937,7 @@ var NAMED={
   lime:0x8FB83A, mint:0x9CCDB0, jade:0x3E8C73,
   teal:0x2F7A7A, turquoise:0x3AA3A0, cyan:0x4AA8C0, aqua:0x5BB8C4,
   blue:0x2F5E9E, navy:0x1F2E55, azure:0x4A86C8, cobalt:0x2A4DA0, indigo:0x3A2E6E, denim:0x3A4E72,
-  purple:0x5E3A7E, violet:0x7A55A8, lavender:0xA99BC8, plum:0x6A3B5A, lilac:0xB7A0C6, magenta:0xA83A7E,
+  purple:0x5E3A7E, violet:0x7A55A8, lavender:0xC4ADE8, plum:0x6A3B5A, lilac:0xB7A0C6, magenta:0xA83A7E,
   blonde:0xC9A96A, auburn:0x7A3A22
 };
 var TWOWORD={"sky blue":0x86AED4,"navy blue":0x1F2E55,"dark green":0x24462A,"light blue":0x9DBCDC,
@@ -1910,13 +1967,13 @@ var ROOF_DEFAULT={house:"shingle",cottage:"thatch",church:"slate",cathedral:"sla
   tower:"slate",lighthouse:"metalroof",windmill:"shingle",courthouse:"slate",shed:"metalroof",tent:"",well:"shingle"};
 
 /* ---- residents ---- */
-var SKIN=[0xF1D5C0,0xE6BD9C,0xD6A27C,0xC28862,0xA66C48,0x875335,0x683F28,0x48291B];
-var HAIR=[0x16130F,0x3A2618,0x5E3E26,0x7A3A22,0xA4472A,0xC9A96A,0xE0D6B8,0x8E8C88,0xE4E1DA];
+var SKIN=[0xF6E0D0,0xF1D5C0,0xE6BD9C,0xDCAF8E,0xD6A27C,0xC28862,0xB07A52,0xA66C48,0x93603E,0x875335,0x74492E,0x683F28,0x553324,0x48291B,0x3A2118];
+var HAIR=[0x0B0908,0x16130F,0x2A1F18,0x3A2618,0x5E3E26,0x7A5230,0x7A3A22,0xA4472A,0xC9A96A,0xE0D6B8,0xEFE6CE,0x8E8C88,0xB8B4AE,0xE4E1DA,0x6B2A5E,0x2F5E9E,0x3F7A3A];
 var TOPS=[NAMED.white,NAMED.black,NAMED.grey,NAMED.navy,NAMED.blue,NAMED.red,NAMED.maroon,NAMED.green,
           NAMED.olive,NAMED.mustard,NAMED.cream,NAMED.purple];
 var BOTTOMS=[NAMED.black,NAMED.charcoal,NAMED.denim,NAMED.khaki,NAMED.brown,NAMED.grey,NAMED.navy,NAMED.olive,NAMED.tan,NAMED.burgundy];
 var SHOES=[NAMED.black,NAMED.brown,NAMED.white,NAMED.tan,NAMED.red,NAMED.grey];
-var HAIRSTYLES=["short","long","bun","curly","ponytail","bald"];
+var HAIRSTYLES=["short","buzz","waves","curly","coily","afro","locs","braids","long","bun","ponytail","headwrap","bald"];
 var HATS=["none","cap","brimmed","hood"];
 var TOPKINDS=["shirt","coat","dress","robe"];
 var BOTTOMKINDS=["trousers","skirt"];
@@ -2341,7 +2398,34 @@ function buildFigure(spec,f){
   /* hair */
   var cap=function(r,t){ return function(){ return new THREE.SphereGeometry(r,14,8,0,Math.PI*2,0,Math.PI*t); }; };
   if(style!=="bald" && !(L.hat==="hood")){
-    if(style==="curly"){
+    if(style==="afro"){
+      var af=mesh("afro",function(){ return new THREE.SphereGeometry(0.2,14,12); },M.hair,0,1.79,-0.012); af.scale.set(1,0.94,1); body.add(af);
+    } else if(style==="coily"){
+      body.add(mesh("haircap",cap(0.124,0.58),M.hair,0,1.735,-0.005));
+      for(var ci=0;ci<10;ci++){ var ca=ci*0.628;
+        body.add(mesh("coily",function(){ return new THREE.SphereGeometry(0.05,8,6); },M.hair,Math.cos(ca)*0.105,1.80+((ci%3)-1)*0.018,Math.sin(ca)*0.105-0.01)); }
+    } else if(style==="locs"){
+      body.add(mesh("haircap",cap(0.123,0.56),M.hair,0,1.735,-0.005));
+      /* they hang behind the head and at the sides, never across the face */
+      for(var li=0;li<10;li++){ var la=Math.PI*1.06+li*(Math.PI*0.88/9);
+        var lc=mesh("locs",function(){ return new THREE.CylinderGeometry(0.019,0.016,0.5,5); },M.hair,Math.cos(la)*0.112,1.57,Math.sin(la)*0.112-0.015);
+        lc.rotation.x=0.1; body.add(lc); }
+    } else if(style==="braids"){
+      body.add(mesh("haircap",cap(0.123,0.56),M.hair,0,1.735,-0.005));
+      [-1,1].forEach(function(sd){
+        var br=mesh("braid",function(){ return new THREE.CylinderGeometry(0.032,0.022,0.52,6); },M.hair,sd*0.115,1.55,-0.04);
+        br.rotation.x=0.18; br.rotation.z=sd*0.12; body.add(br);
+        body.add(mesh("braidband",function(){ return new THREE.TorusGeometry(0.026,0.008,4,8); },M.shoes,sd*0.122,1.31,-0.055));
+      });
+    } else if(style==="buzz"){
+      var bz=mesh("buzzcap",cap(0.118,0.5),M.hair,0,1.735,-0.004); bz.scale.y=0.86; body.add(bz);
+    } else if(style==="waves"){
+      body.add(mesh("haircap",cap(0.122,0.55),M.hair,0,1.735,-0.005));
+      for(var wi=0;wi<4;wi++) body.add(mesh("waves",function(){ return new THREE.TorusGeometry(0.086,0.009,4,12,Math.PI); },M.hair,0,1.77-wi*0.022,-0.012+wi*0.004));
+    } else if(style==="headwrap"){
+      var wr=mesh("wrap",cap(0.138,0.6),M.top,0,1.74,-0.005); wr.scale.y=1.12; body.add(wr);
+      body.add(mesh("wrapknot",function(){ return new THREE.SphereGeometry(0.052,8,6); },M.top,0.06,1.86,-0.06));
+    } else if(style==="curly"){
       var cu=mesh("curly",function(){ return new THREE.IcosahedronGeometry(0.15,1); },M.hair,0,1.77,-0.015); cu.scale.y=0.85; body.add(cu);
     } else {
       var hc=mesh("haircap",cap(0.121,0.56),M.hair,0,1.735,-0.005); hc.scale.y=1.08; body.add(hc);
@@ -3847,7 +3931,7 @@ function buildDeity(spec,f){
   function hideParts(names){ body.traverse(function(m){ if(m.userData&&names.indexOf(m.userData.part)>-1) m.visible=false; }); }
   /* animal heads replace the human head */
   var hk=iconVal(d,"head");
-  if(hk&&HEADS[hk]){ hideParts(["head","haircap","hairlong","bun","tail","curly","eye","hatcap","brimcap","crown","brim","hood"]); var H=HEADS[hk](); H.position.set(0,headY,0); body.add(H); }
+  if(hk&&HEADS[hk]){ hideParts(["head","haircap","hairlong","bun","tail","curly","afro","coily","locs","braid","braidband","buzzcap","waves","wrap","wrapknot","eye","hatcap","brimcap","crown","brim","hood"]); var H=HEADS[hk](); H.position.set(0,headY,0); body.add(H); }
   if(has("skull")){ hideParts(["eye"]); var sk=new THREE.Group(); sk.add(P(sph(.118),mL(0xE6DCC2),0,0,0)); sk.add(P(sph(.03),mG(0x111111,1),-.045,.02,.09)); sk.add(P(sph(.03),mG(0x111111,1),.045,.02,.09)); sk.position.set(0,headY,0); body.add(sk); }
   /* crowns and what sits on the head */
   var gold=mL(GOLD);
@@ -4243,6 +4327,35 @@ function openingsFrom(seg){
    not a free-standing way through to somewhere else */
 var OWNED_DOOR=/\b(with|its|their|has|had|front|back|side|double|arched|round|iron|steel|glass|barn|oak|wooden|studded|a|an)\s+([a-z]+\s+){0,2}$/;
 
+
+/* ---- the face of a building: what its walls and roof are made of, and their colour ----
+   "a house with a red roof", "walls of grey stone", "the walls were white" */
+function facadeFrom(seg,inside){
+  var o={}, m;
+  function colourIn(w){ return NAMED[w]!==undefined?NAMED[w]:undefined; }
+  function matIn(w,list){ return list.indexOf(w)>-1?w:null; }
+  if((m=/\b(?:a |an |the )?([a-z]+)[- ]roof(?:ed)?\b/.exec(seg))||(m=/\broofs? (?:was|were|of) ([a-z]+)\b/.exec(seg))){
+    var rw=m[1];
+    if(colourIn(rw)!==undefined) o.rc=colourIn(rw);
+    else if(matIn(rw,ROOFMATS)) o.rm=rw;
+    else if(rw==="tin"||rw==="corrugated") o.rm="metal";
+    else if(rw==="straw") o.rm="thatch";
+  }
+  /* the words around "walls": any of them may be the colour, the material, or both */
+  var words=[];
+  var w1=/\b([a-z]+)[- ]([a-z]+ )?walls\b/.exec(seg);
+  if(w1){ words.push(w1[1]); if(w1[2]) words.push(w1[2].trim()); }
+  var w2=/\bwalls? (?:were|was|of|made of) ([a-z]+)(?: ([a-z]+))?\b/.exec(seg);
+  if(w2){ words.push(w2[1]); if(w2[2]) words.push(w2[2]); }
+  if(!inside) words.forEach(function(w){
+    if(colourIn(w)!==undefined&&o.c===undefined) o.c=colourIn(w);
+    else if(matIn(w,WALLMATS)&&o.m===undefined) o.m=w;
+  });
+  if((m=/\bpainted ([a-z]+)\b/.exec(seg))&&colourIn(m[1])!==undefined&&o.c===undefined&&!inside) o.c=colourIn(m[1]);
+  if((m=/\b(?:made )?of ([a-z]+)\b/.exec(seg))&&matIn(m[1],WALLMATS)&&o.m===undefined) o.m=m[1];
+  return o;
+}
+
 </script>
 <script>/* js/creatures.js */
 /* Dream Walker's Atlas — creatures.js
@@ -4427,11 +4540,11 @@ function buildFolk(spec,f,o){
     if(k==="hat"){ var hc=p[2]?parseInt(p[2]):0x1B1C20;
       if(p[1]==="witch"){ body.add(P(cyl(.24,.24,.02,16),mL(0x1B1C20),0,headY+.1,0)); body.add(P(cone(.12,.46,10),mL(0x1B1C20),0,headY+.34,0,-.15)); }
       else body.add(P(cone(.12,.42,10),mL(hc),0,headY+.28,0)); hide(["hatcap","brimcap","crown","brim","hood"]); }
-    if(k==="helm"){ hide(["haircap","hairlong","bun","tail","curly","hatcap","brimcap","crown","brim","hood"]); body.add(P(box(.26,.28,.28),mL(0x8A8C92),0,headY+.02,0)); body.add(P(box(.2,.03,.02),mL(0x141418),0,headY+.03,.141)); }
+    if(k==="helm"){ hide(["haircap","hairlong","bun","tail","curly","afro","coily","locs","braid","braidband","buzzcap","waves","wrap","wrapknot","hatcap","brimcap","crown","brim","hood"]); body.add(P(box(.26,.28,.28),mL(0x8A8C92),0,headY+.02,0)); body.add(P(box(.2,.03,.02),mL(0x141418),0,headY+.03,.141)); }
     if(k==="armor"){ body.add(P(sph(.09),mL(0xA7AAB0),-.25,1.5,0)); body.add(P(sph(.09),mL(0xA7AAB0),.25,1.5,0)); }
     if(k==="cape") body.add(P(box(.5,1.1,.03),mL(0x1B1C20),0,1.0,-.16,.08));
     if(k==="fangs"){ body.add(P(cone(.008,.03,4),mL(0xF2EEE6),-.02,headY-.06,.11,Math.PI)); body.add(P(cone(.008,.03,4),mL(0xF2EEE6),.02,headY-.06,.11,Math.PI)); }
-    if(k==="head"){ hide(["head","haircap","hairlong","bun","tail","curly","eye","hatcap","brimcap","crown","brim","hood"]);
+    if(k==="head"){ hide(["head","haircap","hairlong","bun","tail","curly","afro","coily","locs","braid","braidband","buzzcap","waves","wrap","wrapknot","eye","hatcap","brimcap","crown","brim","hood"]);
       var H=p[1]==="wolf"?wolfHead(L.skin||0x5A4A3A):HEADS[p[1]]?HEADS[p[1]]():null; if(H){ H.position.set(0,headY,0); body.add(H); } }
     if(k==="hunched") body.rotation.x=.22;
     if(k==="reach"){ g.userData.pose={la:-1.35,ra:-1.35}; limbs.la.rotation.x=-1.35; limbs.ra.rotation.x=-1.35; }
@@ -5108,6 +5221,266 @@ function extendRealms2(){
   REALM_SCENERY.wasteland=["collapsedtower","wreckedcar","barricade","scrapheap","shanty","firebarrel","radsign","watertower","brokenhighway","falloutshelter","wreckedcar","deadtree","shanty","dustbowl"];
   REALM_SCENERY.desert=["dune","oasis","dune","bedouintent","sandpillars","cactus","dune","rock","dune","oasis"];
 }
+
+</script>
+<script>/* js/cultural.js */
+/* Dream Walker's Atlas — cultural.js
+   buildings and decorations from around the world, so a dreamscape can look like
+   the places people actually come from. public architecture and public festival
+   decoration only: nothing sacred that belongs to a closed tradition, and nothing
+   borrowed that isn't ours to build.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var LACQ=0xB03A2E, JADE=0x3E8C73, IVORYW=0xEDE6D6, TILEBLUE=0x2E5EA8, ADOBE=0xC8865A, TEAK=0x6B4A32, GOLDLF=0xC7A043;
+
+/* ---------- gates and thresholds ---------- */
+S("torii","structure",[9,7,2],[
+  {g:"cyl",s:[.34,.4,6,10],p:[-3.4,3,0],r:[0,0,.03],c:LACQ},
+  {g:"cyl",s:[.34,.4,6,10],p:[3.4,3,0],r:[0,0,-.03],c:LACQ},
+  {g:"box",s:[9.6,.5,.7],p:[0,6.2,0],r:[0,0,.02],c:LACQ},
+  {g:"box",s:[10.6,.34,.9],p:[0,6.7,0],c:0x141210},
+  {g:"box",s:[7,.34,.5],p:[0,5.3,0],c:LACQ}
+],["torii","torii gate","shrine gate","red gate"]);
+S("paifang","structure",[12,9,2],[
+  {g:"cyl",s:[.36,.42,7,10],p:[-4.6,3.5,0],c:LACQ},{g:"cyl",s:[.36,.42,7,10],p:[4.6,3.5,0],c:LACQ},
+  {g:"box",s:[11,.7,1],p:[0,7.2,0],c:LACQ},{g:"box",s:[12.4,.3,1.6],p:[0,7.9,0],c:JADE},
+  {g:"box",s:[6,.5,1.2],p:[0,8.5,0],c:JADE},{g:"box",s:[3.4,1,.2],p:[0,6,.3],c:GOLDLF}
+],["paifang","chinese archway","memorial arch","painted archway"]);
+S("moongate","structure",[6,6,1.2],[
+  {g:"tor",s:[2.4,.55],p:[0,2.8,0],c:0xD8D2C4},
+  {g:"box",s:[6,.5,1],p:[0,.25,0],c:0xD8D2C4}
+],["moon gate","round gateway","circular gate","moon door"]);
+S("gopuram","structure",[14,26,8],[
+  {g:"box",s:[13,5,7],p:[0,2.5,0],c:0xE0D0B0},
+  {g:"box",s:[11,5,6],p:[0,7.5,0],c:0xE8C27A},{g:"box",s:[9,4.5,5],p:[0,12.2,0],c:0xD98A5A},
+  {g:"box",s:[7,4,4.2],p:[0,16.5,0],c:0xE0D0B0},{g:"box",s:[5,3,3.4],p:[0,20,0],c:0xE8C27A},
+  {g:"sph",s:[.9],p:[-1.6,22,0],c:GOLDLF},{g:"sph",s:[.9],p:[0,22.4,0],c:GOLDLF},{g:"sph",s:[.9],p:[1.6,22,0],c:GOLDLF},
+  {g:"box",s:[3,5,.3],p:[0,2.5,3.6],c:"dark"}
+],["gopuram","temple gate tower","tiered temple gate","south indian temple"]);
+
+/* ---------- houses and halls ---------- */
+S("pagoda","structure",[12,22,12],[
+  {g:"cyl",s:[3.2,3.4,4,8],p:[0,2,0],c:0xE6DCC8},
+  {g:"cyl",s:[6,6.4,.3,8],p:[0,4.2,0],c:LACQ},{g:"cyl",s:[2.8,3,3.4,8],p:[0,6,0],c:0xE6DCC8},
+  {g:"cyl",s:[5.2,5.6,.3,8],p:[0,7.9,0],c:LACQ},{g:"cyl",s:[2.4,2.6,3,8],p:[0,9.6,0],c:0xE6DCC8},
+  {g:"cyl",s:[4.4,4.8,.3,8],p:[0,11.3,0],c:LACQ},{g:"cyl",s:[2,2.2,2.6,8],p:[0,12.8,0],c:0xE6DCC8},
+  {g:"cyl",s:[3.6,4,.3,8],p:[0,14.3,0],c:LACQ},{g:"cone",s:[2.4,3,8],p:[0,16,0],c:LACQ},
+  {g:"cyl",s:[.12,.12,3,6],p:[0,18.6,0],c:GOLDLF},
+  {g:"box",s:[1.4,2.4,.2],p:[0,1.2,3.45],c:"dark"}
+],["pagoda","tiered tower","japanese pagoda","chinese pagoda"]);
+S("hanok","structure",[14,7,10],[
+  {g:"box",s:[13,3,9],p:[0,1.5,0],c:0xE8DCC4},
+  {g:"box",s:[15,.4,11],p:[0,3.4,0],r:[0,0,0],c:0x4A4E56},
+  {g:"box",s:[15.6,.5,4.6],p:[0,4.1,-3],r:[.32,0,0],c:0x4A4E56},
+  {g:"box",s:[15.6,.5,4.6],p:[0,4.1,3],r:[-.32,0,0],c:0x4A4E56},
+  {g:"cyl",s:[.2,.22,3,8],p:[-6,1.5,4.4],c:TEAK,rep:[5,3,0,0]},
+  {g:"box",s:[2.6,2,.12],p:[0,1.4,4.5],c:0xF2EEDE},{g:"box",s:[1.6,2,.14],p:[-3.6,1.4,4.5],c:0xF2EEDE}
+],["hanok","korean house","tiled-roof house","courtyard house with curved roof"]);
+S("machiya","structure",[10,8,12],[
+  {g:"box",s:[9,5,11],p:[0,2.5,0],c:0x6B5A46},
+  {g:"box",s:[10,.3,12],p:[0,5.4,0],c:0x3A3C42},{g:"box",s:[10.4,.4,4],p:[0,6.4,-3.4],r:[.5,0,0],c:0x3A3C42},
+  {g:"box",s:[10.4,.4,4],p:[0,6.4,3.4],r:[-.5,0,0],c:0x3A3C42},
+  {g:"box",s:[7,2.6,.1],p:[0,2,5.55],c:0xE8DCC0},
+  {g:"box",s:[.08,2.6,.08],p:[-3,2,5.62],c:TEAK,rep:[9,.75,0,0]},
+  {g:"box",s:[1,2.2,.2],p:[3.4,1.1,5.6],c:"dark"}
+],["machiya","japanese townhouse","wooden townhouse","tea house"]);
+S("izba","structure",[10,8,8],[
+  {g:"box",s:[9,3.6,7],p:[0,1.8,0],c:0x8A6A48},
+  {g:"box",s:[.2,3.6,7.2],p:[-4.5,1.8,0],c:0x6B4A32},{g:"box",s:[.2,3.6,7.2],p:[4.5,1.8,0],c:0x6B4A32},
+  {g:"box",s:[9.6,.4,4.6],p:[0,4.6,-1.7],r:[.6,0,0],c:0x4A4238},
+  {g:"box",s:[9.6,.4,4.6],p:[0,4.6,1.7],r:[-.6,0,0],c:0x4A4238},
+  {g:"box",s:[1.4,1.2,.14],p:[-2.2,2.6,3.55],c:"glass"},{g:"box",s:[1.4,1.2,.14],p:[2.2,2.6,3.55],c:"glass"},
+  {g:"box",s:[1.9,1.7,.1],p:[-2.2,2.6,3.62],c:0x2E5EA8},{g:"box",s:[1.9,1.7,.1],p:[2.2,2.6,3.62],c:0x2E5EA8},
+  {g:"box",s:[1.1,2.2,.2],p:[0,1.1,3.6],c:"dark"}
+],["izba","russian wooden house","carved wooden cottage","dacha"]);
+S("yurt","structure",[9,5,9],[
+  {g:"cyl",s:[4.2,4.2,2.6,20],p:[0,1.3,0],c:0xF2EEE2},
+  {g:"cone",s:[4.4,1.8,20],p:[0,3.5,0],c:0xF2EEE2},
+  {g:"cyl",s:[.7,.7,.5,12],p:[0,4.5,0],c:0xC8A04A},
+  {g:"box",s:[.12,2.6,.12],p:[0,1.3,4.2],c:LACQ,rep:[6,1.3,0,0]},
+  {g:"box",s:[1.2,2,.16],p:[0,1,4.25],c:LACQ}
+],["yurt","ger","round tent","nomad house","mongolian tent"]);
+S("pueblo","structure",[18,9,14],[
+  {g:"box",s:[16,3.4,12],p:[0,1.7,0],c:ADOBE},
+  {g:"box",s:[11,3,9],p:[-2,4.8,-1],c:0xD0946A},
+  {g:"box",s:[6,2.8,6],p:[-4,7.6,-1],c:ADOBE},
+  {g:"cyl",s:[.16,.16,2.4,6],p:[-7,3.2,5.8],r:[Math.PI/2,0,0],c:TEAK,rep:[6,2.4,0,0]},
+  {g:"box",s:[1.2,2.2,.3],p:[2,1.1,6],c:"dark"},
+  {g:"box",s:[1.1,1,.2],p:[-3,2.2,6],c:"glass"}
+],["pueblo","adobe house","adobe village","earthen house","mud-brick house"]);
+S("hacienda","structure",[22,8,16],[
+  {g:"box",s:[20,4.6,14],p:[0,2.3,0],c:0xF0E2CC},
+  {g:"box",s:[21,.5,15],p:[0,4.8,0],c:0xB0563A},
+  {g:"cyl",s:[.28,.3,3.4,8],p:[-8,1.7,7.6],c:0xE8DCC4,rep:[6,3.2,0,0]},
+  {g:"box",s:[20,.4,2.6],p:[0,3.6,7.8],c:0xB0563A},
+  {g:"box",s:[1.8,3,.3],p:[0,1.5,7.1],c:TEAK},
+  {g:"box",s:[1.4,1.6,.16],p:[-5,2.6,7.1],c:"glass"},{g:"box",s:[1.4,1.6,.16],p:[5,2.6,7.1],c:"glass"}
+],["hacienda","spanish villa","colonial house with a veranda","tiled villa"]);
+S("riad","structure",[18,9,18],[
+  {g:"box",s:[17,6,17],p:[0,3,0],c:0xE8D8B8},
+  {g:"box",s:[9,6.6,9],p:[0,3,0],c:0x2E2C2A},
+  {g:"box",s:[17.6,.5,17.6],p:[0,6.2,0],c:0xC8A882},
+  {g:"box",s:[2,3.4,.4],p:[0,1.7,8.6],c:TILEBLUE},
+  {g:"cyl",s:[1,1,.5,16],p:[0,.3,0],c:TILEBLUE},{g:"cyl",s:[.2,.2,1.6,8],p:[0,1.1,0],c:0xE8E4DA}
+],["riad","moroccan house","courtyard house","house around a courtyard"]);
+S("roundhouse","structure",[10,7,10],[
+  {g:"cyl",s:[4.4,4.6,2.6,16],p:[0,1.3,0],c:0xD8C8A8},
+  {g:"cone",s:[5.2,3.4,16],p:[0,4.3,0],c:0x8A6A3A},
+  {g:"box",s:[1.3,2,.3],p:[0,1,4.5],c:"dark"}
+],["roundhouse","thatched roundhouse","round hut","thatched hut"]);
+S("longhouse","structure",[10,8,26],[
+  {g:"box",s:[8,3.4,24],p:[0,1.7,0],c:0x7A5A3A},
+  {g:"box",s:[9.4,.5,12],p:[0,4.9,-6],r:[.6,0,0],c:0x4A6A3A},{g:"box",s:[9.4,.5,12],p:[0,4.9,6],r:[-.6,0,0],c:0x4A6A3A},
+  {g:"box",s:[9.4,.5,12],p:[0,4.9,-6],r:[.6,0,0],c:0x4A6A3A},
+  {g:"box",s:[1.4,2.2,.3],p:[0,1.1,12.2],c:"dark"},
+  {g:"cyl",s:[.22,.26,4,7],p:[-4.4,2,-10],c:TEAK,rep:[6,0,0,4]}
+],["longhouse","long hall","mead hall","viking hall","long wooden house"]);
+S("stilthouse","structure",[10,8,10],[
+  {g:"cyl",s:[.24,.28,3,7],p:[-3.4,1.5,-3.4],c:TEAK,rep:[2,6.8,0,0]},
+  {g:"cyl",s:[.24,.28,3,7],p:[-3.4,1.5,3.4],c:TEAK,rep:[2,6.8,0,0]},
+  {g:"box",s:[8,.4,8],p:[0,3.1,0],c:TEAK},
+  {g:"box",s:[7,2.6,7],p:[0,4.6,0],c:0xC8A878},
+  {g:"cone",s:[6.4,2.6,4],p:[0,7.2,0],r:[0,.785,0],c:0x8A6A3A},
+  {g:"box",s:[1.2,.16,3],p:[0,1.6,5],r:[-.5,0,0],c:TEAK}
+],["stilt house","house on stilts","water village house","raised house"]);
+S("cycladic","structure",[10,7,9],[
+  {g:"box",s:[9,4,8],p:[0,2,0],c:0xF4F2EC},
+  {g:"box",s:[5,2.6,4.6],p:[-2,5.3,-1],c:0xF4F2EC},
+  {g:"cyl",s:[2.6,2.6,.6,14],p:[2.6,4.4,1],c:TILEBLUE},
+  {g:"box",s:[1.1,2.1,.2],p:[0,1.05,4.1],c:TILEBLUE},
+  {g:"box",s:[1.1,1.1,.16],p:[-3,2.4,4.1],c:TILEBLUE},{g:"box",s:[1.1,1.1,.16],p:[3,2.4,4.1],c:TILEBLUE}
+],["white house with blue shutters","cycladic house","greek island house","whitewashed house"]);
+S("stupa","structure",[14,14,14],[
+  {g:"cyl",s:[6,6.4,1.6,20],p:[0,.8,0],c:0xF2EEE2},
+  {g:"sph",s:[5],p:[0,4.4,0],c:0xF2EEE2},
+  {g:"box",s:[2.6,2,2.6],p:[0,8.4,0],c:GOLDLF},
+  {g:"cone",s:[1.4,4,12],p:[0,11.2,0],c:GOLDLF},
+  {g:"sph",s:[.5],p:[0,13.4,0],c:GOLDLF}
+],["stupa","white dome shrine","domed monument","reliquary mound"]);
+S("mosque","structure",[24,26,20],[
+  {g:"box",s:[20,7,18],p:[0,3.5,0],c:0xE8E0CC},
+  {g:"sph",s:[6.4],p:[0,8,0],c:TILEBLUE},{g:"cyl",s:[1,1,1.4,12],p:[0,14.2,0],c:GOLDLF},{g:"cone",s:[.5,1.6,8],p:[0,15.6,0],c:GOLDLF},
+  {g:"cyl",s:[1.2,1.4,18,12],p:[-11,9,7],c:0xE8E0CC},{g:"cyl",s:[1.8,1.8,.5,12],p:[-11,17.6,7],c:0xE8E0CC},
+  {g:"cone",s:[1.5,2.6,12],p:[-11,19,7],c:TILEBLUE},
+  {g:"box",s:[3,5,.4],p:[0,2.5,9.2],c:TEAK},
+  {g:"box",s:[1.6,2.6,.2],p:[-5,3,9.1],c:"glass"},{g:"box",s:[1.6,2.6,.2],p:[5,3,9.1],c:"glass"}
+],["mosque","masjid","domed mosque","mosque with a minaret"]);
+S("minaret","structure",[5,22,5],[
+  {g:"cyl",s:[1.2,1.5,18,12],p:[0,9,0],c:0xE8E0CC},
+  {g:"cyl",s:[2,2,.5,12],p:[0,17.6,0],c:0xE8E0CC},
+  {g:"cone",s:[1.6,3,12],p:[0,19.4,0],c:TILEBLUE},
+  {g:"box",s:[.5,1.2,.2],p:[0,14,1.4],c:"dark",rep:[3,0,-3,0]}
+],["minaret","tower of a mosque","slender tower"]);
+S("mandir","structure",[16,20,16],[
+  {g:"box",s:[14,4,14],p:[0,2,0],c:0xE8D8B8},
+  {g:"box",s:[10,3,10],p:[0,5.5,0],c:0xE0CCA8},
+  {g:"cone",s:[6,9,8],p:[0,11,0],c:0xD8B888},
+  {g:"cyl",s:[.8,.8,1.2,10],p:[0,16.4,0],c:GOLDLF},{g:"sph",s:[.7],p:[0,17.4,0],c:GOLDLF},
+  {g:"cyl",s:[.5,.5,3.6,8],p:[-5,4,6.4],c:0xE8D8B8,rep:[3,5,0,0]},
+  {g:"box",s:[2.4,3.4,.3],p:[0,1.7,7.2],c:"dark"}
+],["mandir","hindu temple","temple with a tower","shikhara temple"]);
+S("ziggurat","structure",[30,18,30],[
+  {g:"box",s:[28,5,28],p:[0,2.5,0],c:0xC8A882},
+  {g:"box",s:[21,4.6,21],p:[0,7.3,0],c:0xC09A76},
+  {g:"box",s:[14,4.2,14],p:[0,11.7,0],c:0xC8A882},
+  {g:"box",s:[8,3,8],p:[0,15.3,0],c:0xB08A66},
+  {g:"box",s:[4,.5,16],p:[0,3,13],r:[-.32,0,0],c:0xA88A66}
+],["ziggurat","stepped temple","terraced tower","great stepped pyramid"]);
+
+/* ---------- decoration and small things ---------- */
+S("redlanterns","infra",[10,5,1],[
+  {g:"cyl",s:[.01,.01,10,3],p:[0,4.6,0],r:[0,0,Math.PI/2],c:0x2A2622},
+  {g:"sph",s:[.42],p:[-3.6,3.9,0],c:LACQ,glow:1,pulse:1,rep:[6,1.45,0,0]},
+  {g:"cyl",s:[.14,.14,.12,8],p:[-3.6,4.3,0],c:GOLDLF,rep:[6,1.45,0,0]}
+],["red lanterns","string of lanterns","hanging lanterns","lantern string"]);
+S("prayerflags","infra",[16,6,1],[
+  {g:"cyl",s:[.01,.01,16,3],p:[0,4.4,0],r:[0,0,.06],c:0x2A2622},
+  {g:"box",s:[.8,1,.02],p:[-6.4,3.7,0],c:TILEBLUE,rep:[3,3.2,-.1,0]},
+  {g:"box",s:[.8,1,.02],p:[-5.3,3.65,0],c:0xF2F2EC,rep:[3,3.2,-.1,0]},
+  {g:"box",s:[.8,1,.02],p:[-4.2,3.6,0],c:LACQ,rep:[3,3.2,-.1,0]},
+  {g:"box",s:[.8,1,.02],p:[-3.1,3.55,0],c:0x3F7A3A,rep:[3,3.2,-.1,0]},
+  {g:"box",s:[.8,1,.02],p:[-2,3.5,0],c:0xD4B83C,rep:[3,3.2,-.1,0]}
+],["prayer flags","strings of flags","colourful flags on a line","flag line"]);
+S("papelpicado","infra",[14,5,1],[
+  {g:"cyl",s:[.01,.01,14,3],p:[0,4.2,0],r:[0,0,-.05],c:0x2A2622},
+  {g:"box",s:[1.1,.9,.02],p:[-5.4,3.6,0],c:0xE85A9E,rep:[4,1.6,.04,0]},
+  {g:"box",s:[1.1,.9,.02],p:[-4.6,3.64,0],c:0xF0C43A,rep:[4,1.6,.04,0]},
+  {g:"box",s:[1.1,.9,.02],p:[-3.8,3.68,0],c:0x3FB0E8,rep:[4,1.6,.04,0]}
+],["papel picado","cut paper banners","fiesta banners","paper bunting"]);
+S("ofrenda","structure",[4,3,2],[
+  {g:"box",s:[3.4,.9,1.4],p:[0,.45,0],c:0x8A2A3A},
+  {g:"box",s:[2.6,.8,1.1],p:[0,1.3,-.1],c:0xC0503A},
+  {g:"box",s:[1.8,.7,.9],p:[0,2,-.2],c:0xE8A04A},
+  {g:"sph",s:[.16],p:[-1.2,1.85,.4],c:0xF0C43A,glow:1,pulse:1,rep:[3,1.2,0,0]},
+  {g:"cyl",s:[.07,.07,.4,6],p:[-.8,2.55,-.2],c:0xF2EEE6},{g:"cyl",s:[.07,.07,.4,6],p:[.8,2.55,-.2],c:0xF2EEE6},
+  {g:"sph",s:[.12],p:[-.8,2.8,-.2],c:0xFFB23A,glow:1},{g:"sph",s:[.12],p:[.8,2.8,-.2],c:0xFFB23A,glow:1}
+],["ofrenda","altar of the dead","day of the dead altar","remembrance altar"]);
+S("zengarden","nature",[16,1,12],[
+  {g:"box",s:[15,.3,11],p:[0,.15,0],c:0xE8E2D2},
+  {g:"cyl",s:[7,7,.06,32],p:[0,.32,0],c:0xF0EADC},
+  {g:"ico",s:[.9],p:[-3,.5,-1.6],c:0x6E6A64},{g:"ico",s:[.6],p:[-1.8,.4,-.4],c:0x7A766E},
+  {g:"ico",s:[1.1],p:[3.2,.55,1.4],c:0x6E6A64},{g:"ico",s:[.5],p:[4.4,.35,-.2],c:0x7A766E},
+  {g:"box",s:[15.4,.4,.3],p:[0,.3,5.6],c:TEAK},{g:"box",s:[15.4,.4,.3],p:[0,.3,-5.6],c:TEAK}
+],["zen garden","raked sand garden","rock garden","dry garden"]);
+S("koipond","nature",[12,1,10],[
+  {g:"cyl",s:[4.6,4.8,.4,24],p:[0,.1,0],c:"water"},
+  {g:"cyl",s:[5.2,5.4,.5,24],p:[0,.05,0],c:0x6E6A64},
+  {g:"cyl",s:[.5,.5,.06,10],p:[1.6,.32,.8],c:0x3F7A3A,rep:[4,-1.1,0,-.7]},
+  {g:"sph",s:[.22],p:[-1.4,.3,-1],c:0xE8763A},{g:"sph",s:[.2],p:[.6,.3,1.8],c:0xF0F0E8}
+],["koi pond","carp pond","ornamental pond","lily pond"]);
+S("pergola","structure",[8,4,6],[
+  {g:"cyl",s:[.18,.2,3.2,8],p:[-3.4,1.6,-2.4],c:TEAK,rep:[2,6.8,0,0]},
+  {g:"cyl",s:[.18,.2,3.2,8],p:[-3.4,1.6,2.4],c:TEAK,rep:[2,6.8,0,0]},
+  {g:"box",s:[7.4,.2,.2],p:[0,3.3,-2.4],c:TEAK},{g:"box",s:[7.4,.2,.2],p:[0,3.3,2.4],c:TEAK},
+  {g:"box",s:[.16,.16,5.4],p:[-3,3.5,0],c:TEAK,rep:[7,1,0,0]},
+  {g:"ico",s:[.55],p:[-2.6,3.7,-1.4],c:0x4A7A3A,rep:[5,1.3,.05,.7]}
+],["pergola","vine arbour","arbor","shaded walkway","trellis"]);
+S("incenseburner","infra",[2,2.4,2],[
+  {g:"cyl",s:[.8,.9,1,12],p:[0,.5,0],c:0x6A5A3A},
+  {g:"cyl",s:[.85,.85,.12,12],p:[0,1.06,0],c:0x8A7A4A},
+  {g:"cyl",s:[.16,.16,.7,6],p:[-.6,1.4,0],c:0x4A4238},{g:"cyl",s:[.16,.16,.7,6],p:[.6,1.4,0],c:0x4A4238}
+],["incense burner","brazier of incense","offering burner"]);
+S("windchimes","infra",[2,4,2],[
+  {g:"cyl",s:[.06,.06,2.4,6],p:[0,3,0],c:0x3A3C42},
+  {g:"cyl",s:[.5,.5,.1,10],p:[0,1.8,0],c:TEAK},
+  {g:"cyl",s:[.05,.05,.9,6],p:[-.32,1.3,0],c:0xB8B4AE,rep:[5,.16,-.06,.1]}
+],["wind chimes","chimes","hanging chimes","bells on a string"]);
+S("maypole","infra",[8,9,8],[
+  {g:"cyl",s:[.22,.26,8,10],p:[0,4,0],c:0xE8E4DA},
+  {g:"tor",s:[.9,.12],p:[0,7.6,0],c:0x3F7A3A},
+  {g:"box",s:[.14,6,.06],p:[-.7,4.6,0],r:[0,0,.22],c:LACQ,rep:[6,.28,0,.2]},
+  {g:"box",s:[.14,6,.06],p:[.7,4.6,0],r:[0,0,-.22],c:TILEBLUE,rep:[6,-.28,0,-.2]}
+],["maypole","ribbon pole","may pole"]);
+S("stringlights","infra",[14,5,1],[
+  {g:"cyl",s:[.01,.01,14,3],p:[0,4,0],r:[0,0,.08],c:0x2A2622},
+  {g:"sph",s:[.14],p:[-6,3.7,0],c:0xFFE8B0,glow:1,pulse:1,rep:[12,1.1,.02,0]}
+],["string lights","fairy lights","festoon lights","lights strung overhead"]);
+S("bonsai","nature",[2,1.6,2],[
+  {g:"cyl",s:[.55,.6,.35,12],p:[0,.18,0],c:0x6A4A3A},
+  {g:"cyl",s:[.09,.12,.6,6],p:[0,.6,0],r:[0,0,.2],c:"bark"},
+  {g:"cyl",s:[.06,.08,.5,6],p:[.18,1,.1],r:[0,0,-.7],c:"bark"},
+  {g:"ico",s:[.42],p:[.4,1.25,.1],c:0x3F7A3A},{g:"ico",s:[.3],p:[-.2,1.15,-.1],c:0x4A8A42}
+],["bonsai","bonsai tree","miniature tree","potted tree"]);
+S("tiledfountain","infra",[7,3,7],[
+  {g:"cyl",s:[3,3.2,.7,16],p:[0,.35,0],c:TILEBLUE},
+  {g:"cyl",s:[2.6,2.6,.5,16],p:[0,.5,0],c:"water"},
+  {g:"cyl",s:[.5,.6,1.4,12],p:[0,1.3,0],c:0xE8E0CC},
+  {g:"cyl",s:[1.2,1.2,.25,12],p:[0,2.1,0],c:TILEBLUE},
+  {g:"sph",s:[.28],p:[0,2.4,0],c:0xE8E0CC}
+],["tiled fountain","moorish fountain","courtyard fountain","mosaic fountain"]);
+S("marketawning","infra",[8,4,6],[
+  {g:"cyl",s:[.1,.12,3,6],p:[-3.4,1.5,-2.2],c:0x4A4238,rep:[2,6.8,0,0]},
+  {g:"cyl",s:[.1,.12,3,6],p:[-3.4,1.5,2.2],c:0x4A4238,rep:[2,6.8,0,0]},
+  {g:"box",s:[7.6,.14,5],p:[0,3.1,0],r:[.06,0,0],c:0xC0503A},
+  {g:"box",s:[7.6,.5,.12],p:[0,2.9,2.5],c:0xE8C27A}
+],["market awning","striped awning","canopy over a stall","souk awning"]);
+
+/* the lanterns and lights sway and glow a little */
+EFFECTS.redlanterns=function(g){ return function(t){ g.children.forEach(function(m,i){ if(m.geometry&&m.geometry.type==="SphereGeometry") m.rotation.z=Math.sin(t*.8+i)*.08; }); }; };
+EFFECTS.prayerflags=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i) m.rotation.y=Math.sin(t*1.6+i*.7)*.28; }); }; };
+EFFECTS.papelpicado=EFFECTS.prayerflags;
+EFFECTS.windchimes=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i>1) m.rotation.z=Math.sin(t*2+i)*.12; }); }; };
 
 </script>
 <script>/* js/names.js */
@@ -6851,7 +7224,7 @@ function animate(){
     if(keys["KeyA"]||keys["ArrowLeft"]) s-=1;
     if(keys["KeyD"]||keys["ArrowRight"]) s+=1;
     /* the phone's joystick: how far you push is how fast you go */
-    var jv=joyInput(), pace=1;
+    var jv=joyInput()||padInput(), pace=1;
     if(jv&&!f&&!s){ f=jv.f; s=jv.s; pace=jv.mag; if(jv.run) sp=20; }
     if(f||s){
       var l=Math.hypot(f,s); f/=l; s/=l; f*=pace; s*=pace;
@@ -6891,7 +7264,7 @@ function animate(){
   skyFollow();
   if(audio.on) audioTick();
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
-  navTick(); interiorTick(dt);
+  navTick(); interiorTick(dt); padTick();
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
   renderView();
@@ -8045,7 +8418,7 @@ hotel:["hotel","resort"],
 institution:["institution","asylum","facility","complex","office","offices","government"],
 hospital:["hospital","clinic","infirmary","ward","emergency room","surgery"],
 school:["school","classroom","college","university","academy","gymnasium"],
-church:["church","chapel","parish","steeple","mosque","synagogue","shrine"],
+church:["church","chapel","parish","steeple","synagogue","shrine"],
 cathedral:["cathedral","basilica","minster"],
 bank:["bank vault","bank","treasury"],
 library:["library","archive","records"],
@@ -8256,9 +8629,24 @@ function scanText(chunk){
   });
   found.sort(function(a,b){ return a.at-b.at; });
   /* a door that belongs to a building is part of it, not a way through to elsewhere */
+  var doorBefore={};
   for(var di=found.length-1;di>=0;di--){
-    var fd=found[di];
+    var fd=found[di], owned=false;
     if(!((fd.arch==="portal"&&/door/.test(fd.word))||(fd.arch==="vaultdoor"&&/round door/.test(fd.word)))) continue;
+    /* "a red door on a white house" — the building comes after the door */
+    for(var dk=di+1;dk<found.length;dk++){
+      var fn2=found[dk];
+      if(fn2.at-fd.at>80) break;
+      if(KIT[fn2.arch]&&KIT[fn2.arch].cat==="structure"){
+        if(OWNED_DOOR.test(rawLow.slice(Math.max(0,fd.at-32),fd.at+1))){
+          /* the door's own words are kept for that building, and nothing else from before it */
+          doorBefore[fn2.at]=rawLow.slice(Math.max(0,fd.at-42),fd.at+14);
+          found.splice(di,1); owned=true;
+        }
+        break;
+      }
+    }
+    if(owned) continue;
     for(var dj=di-1;dj>=0;dj--){
       var fo=found[dj];
       if(fd.at-fo.at>80) break;
@@ -8313,7 +8701,14 @@ function scanText(chunk){
     /* its doors and windows, from the words that follow it */
     if(KIT[f.arch]&&KIT[f.arch].cat==="structure"){
       var fi=found.indexOf(f), nextAt=fi>-1&&fi+1<found.length?found[fi+1].at:low.length;
-      Object.assign(attrs,openingsFrom(rawLow.slice(f.at,Math.min(nextAt,f.at+160))));
+      var faceSeg=rawLow.slice(f.at,Math.min(nextAt,f.at+160));
+      Object.assign(attrs,openingsFrom(faceSeg));
+      Object.assign(attrs,facadeFrom(faceSeg,INSIDE_CUE.test(faceSeg)));
+      if(doorBefore[f.at]){
+        var pre=openingsFrom(doorBefore[f.at]);
+        if(pre.ds!==undefined&&attrs.ds===undefined) attrs.ds=pre.ds;
+        if(pre.dc!==undefined&&attrs.dc===undefined) attrs.dc=pre.dc;
+      }
     }
     /* stairs, an altar, a throne or a mirror dreamt indoors belong to the room, not the street */
     if((INDOOR_ONLY[f.arch]||(f.arch==="portal"&&/mirror/.test(f.word)))&&
@@ -9870,6 +10265,7 @@ function openPanel(){
   $("density").value=c.density||26; $("err").textContent="";
   $("counted").checked=c.counted!==false;
   $("nm-on").value=c.nightmares===false?"off":"on"; $("nm-catch").value=c.nightmareCatch||"wake";
+  $("padmode").value=c.pad||"automatic";
   renderHeld();
   $("panel").classList.add("open");
 }
@@ -9878,7 +10274,7 @@ function savePanel(){
   var was=cfg().counted!==false;
   var c={mode:$("mode").value,key:$("key").value.trim(),proxy:$("proxy").value.trim(),
          model:$("model").value.trim()||LLM_MODEL,density:parseInt($("density").value,10),
-         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value};
+         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value};
   if(was&&!c.counted) forgetDevice();
   if(!was&&c.counted) setTimeout(checkin,50);
   if(c.mode==="direct"&&!c.key){ $("err").textContent="Direct mode needs a key."; return; }
@@ -9888,6 +10284,38 @@ function savePanel(){
   $("panel").classList.remove("open"); setStatus("Saved.");
 }
 
+
+
+/* what this device can do — for working out why something won't run on a phone */
+function deviceReport(){
+  var info="", ver="";
+  try{
+    var c=renderer&&renderer.getContext?renderer.getContext():null;
+    if(c){ ver=c.getParameter(c.VERSION);
+      var dbg=c.getExtension("WEBGL_debug_renderer_info");
+      info=dbg?c.getParameter(dbg.UNMASKED_RENDERER_WEBGL):"(hidden by the browser)"; }
+    else { var g=document.createElement("canvas").getContext("webgl"); info=g?"a context can be made, but the app has none":"no WebGL at all"; }
+  }catch(e){ info="could not be read: "+e.message; }
+  var L=[];
+  L.push("screen: "+innerWidth+" x "+innerHeight+" at "+(window.devicePixelRatio||1)+"x");
+  L.push("touch detected: "+(isTouch?"yes":"no")+"    coarse pointer: "+((typeof matchMedia==="function"&&matchMedia("(pointer:coarse)").matches)?"yes":"no"));
+  L.push("touch controls started: "+(touchRig?"yes":"no")+"    on-screen pad: "+padMode()+(padWanted()?" (showing)":" (hidden)"));
+  L.push("graphics: "+(info||"unknown"));
+  L.push("webgl version: "+(ver||"unknown"));
+  L.push("things standing: "+store.objects.length+"    figures: "+store.characters.length);
+  L.push("app version: "+(typeof APP_VERSION!=="undefined"?APP_VERSION:"?"));
+  L.push("browser: "+navigator.userAgent);
+  return L.join("\n");
+}
+(function(){
+  var b=typeof document!=="undefined"&&document.getElementById?document.getElementById("diagbtn"):null;
+  if(!b) return;
+  b.onclick=function(){
+    var d=document.getElementById("diag");
+    d.textContent=deviceReport();
+    d.style.display=d.style.display==="none"?"block":"none";
+  };
+})();
 
 </script>
 <script>/* js/plot.js */
@@ -10955,6 +11383,8 @@ var FURN={
   longtable:function(){ var g=F([P(box(4.4,.08,1.1),mL(DARKWOOD),0,.78,0)]); [-2,2].forEach(function(x){ g.add(P(box(.12,.76,.9),mL(DARKWOOD),x,.38,0)); });
     for(var i=0;i<5;i++) [-1,1].forEach(function(s){ var c=FURN.chair(); c.position.set(-1.8+i*.9,0,s*.8); c.rotation.y=s>0?Math.PI:0; g.add(c); }); return g; },
   chair:function(){ return F([P(box(.45,.05,.45),mL(WOOD),0,.46,0),P(box(.45,.5,.05),mL(WOOD),0,.72,-.2),P(box(.04,.46,.04),mL(WOOD),-.19,.23,-.19),P(box(.04,.46,.04),mL(WOOD),.19,.23,-.19),P(box(.04,.46,.04),mL(WOOD),-.19,.23,.19),P(box(.04,.46,.04),mL(WOOD),.19,.23,.19)]); },
+  runner:function(){ return F([P(box(2.4,.03,13),mL(0x4E1216),0,.02,0),P(box(2.05,.035,12.6),mL(0x6E1A20),0,.025,0),
+    P(box(.1,.04,12.4),mL(0x8A6A2A),-.85,.03,0),P(box(.1,.04,12.4),mL(0x8A6A2A),.85,.03,0)]); },
   rug:function(){ return F([P(box(2.6,.02,1.8),mL(CLOTH),0,.02,0),P(box(2.2,.025,1.4),mL(0xC7A043),0,.02,0)]); },
   fireplace:function(){ var g=F([P(box(1.9,1.3,.5),mL(0x8A7A6A),0,.65,0),P(box(1.1,.8,.3),mL(0x141210),0,.45,.12),P(box(2.1,.1,.6),mL(0x6A5A4A),0,1.35,0)]);
     var fl=P(cone(.22,.5,6),mG(0xFF9A3A,.9),0,.35,.15); fl.userData.flicker=1; g.add(fl); return g; },
@@ -11215,7 +11645,7 @@ function makeInterior(spec){
   var winMats=[];
   windows.forEach(function(w){ var wm=new THREE.MeshBasicMaterial({color:0xCFE0F0}); winMats.push(wm);
     var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,1.7,w.z); wp.rotation.y=w.ry; root.add(wp); });
-  lights.slice(0,10).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.95,16,1.6); pl.position.set(l.x,H-.3,l.z); root.add(pl);
+  lights.slice(0,10).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.78,15,1.7); pl.position.set(l.x,H-.3,l.z); root.add(pl);
     root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,H-.12,l.z)); });
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
@@ -11242,8 +11672,9 @@ function furnishRoom(kind,xc,zc,w,d,sd,put){
 function fillHall(kind,W,D,put,spots){
   var i,z;
   if(kind==="church"){ for(z=-D/2+6;z<D/2-4;z+=1.6){ put("pew",-W/4-.3,z,Math.PI); put("pew",W/4+.3,z,Math.PI); }
+    put("runner",0,D/8,0);
     put("altarinside",0,-D/2+2,Math.PI); put("pulpit",W/4,-D/2+4,Math.PI); put("candles",-W/4,-D/2+1.2,0); put("candles",W/4-1,-D/2+1.2,0);
-    put("chandelier",0,0,0); put("rug",0,D/4,0); spots.push({x:0,z:-D/2+3.4,room:"nave"},{x:2,z:D/4,room:"nave"}); }
+    put("chandelier",0,0,0); spots.push({x:0,z:-D/2+3.4,room:"nave"},{x:2,z:D/4,room:"nave"}); }
   else if(kind==="library"){ for(z=-D/2+3;z<D/2-6;z+=3) for(i=-1;i<=1;i+=2){ put("bookshelf",i*W/4-.9,z,0); put("bookshelf",i*W/4+.9,z,0); }
     put("table",0,D/2-5,0); put("lamp",1,D/2-5,0); put("desk",-W/4,D/2-3,Math.PI); spots.push({x:0,z:D/2-6,room:"stacks"},{x:-W/4,z:D/2-4,room:"desk"}); }
   else if(kind==="school"){ put("blackboard",0,-D/2+.2,0); put("desk",0,-D/2+2,Math.PI); for(z=-D/2+4;z<D/2-3;z+=2) for(i=-2;i<=2;i++) put("schooldesk",i*2,z,Math.PI);
@@ -11556,6 +11987,117 @@ function touchUI(){
   if(sp.classList.contains("gone")===near) sp.classList.toggle("gone",!near);
   var fly=!!(typeof canFly!=="undefined"&&canFly);
   if(up.classList.contains("gone")===fly){ up.classList.toggle("gone",!fly); dn.classList.toggle("gone",!fly); }
+}
+
+</script>
+<script>/* js/pad.js */
+/* Dream Walker's Atlas — pad.js
+   an on-screen direction pad for walking, view controls for the overview and Plot,
+   and a switch that turns the on-screen controls on even where a phone isn't
+   recognised. the pad can be folded away with one tap so the buttons underneath
+   can be reached.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var padOn=false, padHidden=false, padKeys={f:0,b:0,l:0,r:0}, padRun=false, PADKEY="dreamwalker.pad";
+
+/* automatic | always | never */
+function padMode(){ var m=cfg().pad; return m==="always"||m==="never"?m:"automatic"; }
+function padWanted(){
+  var m=padMode();
+  if(m==="always") return true;
+  if(m==="never") return false;
+  if(typeof isTouch!=="undefined"&&isTouch) return true;
+  return typeof matchMedia==="function"&&matchMedia("(pointer:coarse)").matches;
+}
+
+/* what the pad says, in the same shape as the joystick */
+function padInput(){
+  var f=(padKeys.f?1:0)-(padKeys.b?1:0), s=(padKeys.r?1:0)-(padKeys.l?1:0);
+  if(!f&&!s) return null;
+  var m=Math.min(1,Math.sqrt(f*f+s*s));
+  return {f:f,s:s,mag:padRun?1:0.62,run:padRun};
+}
+
+function padBuild(){
+  if(padOn||typeof document==="undefined"||!document.body) return;
+  padOn=true;
+  var wrap=document.createElement("div"); wrap.id="dpad";
+  wrap.innerHTML=
+    '<button class="pd" data-d="f" aria-label="Forward">&#9650;</button>'+
+    '<button class="pd" data-d="l" aria-label="Left">&#9664;</button>'+
+    '<button class="pd pd-run" id="pd-run" aria-label="Run">run</button>'+
+    '<button class="pd" data-d="r" aria-label="Right">&#9654;</button>'+
+    '<button class="pd" data-d="b" aria-label="Back">&#9660;</button>';
+  var fold=document.createElement("button"); fold.id="pd-fold"; fold.type="button";
+  fold.title="Fold the pad away so you can reach what's under it";
+  fold.textContent="pad";
+  var view=document.createElement("div"); view.id="pdview";
+  view.innerHTML=
+    '<button class="pd" data-v="in" aria-label="Closer">+</button>'+
+    '<button class="pd" data-v="out" aria-label="Further">&minus;</button>'+
+    '<button class="pd" data-v="turn" aria-label="Turn the view">&#x27F3;</button>'+
+    '<button class="pd" data-v="up" aria-label="Move north">&#9650;</button>'+
+    '<button class="pd" data-v="down" aria-label="Move south">&#9660;</button>'+
+    '<button class="pd" data-v="left" aria-label="Move west">&#9664;</button>'+
+    '<button class="pd" data-v="right" aria-label="Move east">&#9654;</button>';
+  document.body.appendChild(wrap); document.body.appendChild(view); document.body.appendChild(fold);
+
+  /* walking: hold a direction */
+  function hold(el,d,on){ padKeys[d]=on?1:0; el.classList.toggle("on",!!on); }
+  Array.prototype.forEach.call(wrap.querySelectorAll("[data-d]"),function(b){
+    var d=b.getAttribute("data-d");
+    ["pointerdown","touchstart"].forEach(function(ev){ b.addEventListener(ev,function(e){ e.preventDefault(); hold(b,d,true); },{passive:false}); });
+    ["pointerup","pointerleave","pointercancel","touchend","touchcancel"].forEach(function(ev){ b.addEventListener(ev,function(){ hold(b,d,false); }); });
+  });
+  document.getElementById("pd-run").onclick=function(){ padRun=!padRun; this.classList.toggle("on",padRun); };
+
+  /* the overview and Plot: move, turn and zoom without a mouse */
+  Array.prototype.forEach.call(view.querySelectorAll("[data-v]"),function(b){
+    var v=b.getAttribute("data-v"), held=false, timer=null;
+    function act(){
+      var step=Math.max(6,orb.r*0.08);
+      if(v==="in") orb.r=Math.max(20,orb.r*0.88);
+      if(v==="out") orb.r=Math.min(4000,orb.r*1.14);
+      if(v==="turn") orb.t+=0.22;
+      var c=Math.cos(orb.t), s=Math.sin(orb.t);
+      if(v==="up"){ orb.tx-=s*step; orb.tz-=c*step; }
+      if(v==="down"){ orb.tx+=s*step; orb.tz+=c*step; }
+      if(v==="left"){ orb.tx-=c*step; orb.tz+=s*step; }
+      if(v==="right"){ orb.tx+=c*step; orb.tz-=s*step; }
+    }
+    function start(e){ e.preventDefault(); held=true; act(); timer=setInterval(function(){ if(held) act(); },110); }
+    function stop(){ held=false; if(timer) clearInterval(timer); timer=null; }
+    ["pointerdown","touchstart"].forEach(function(ev){ b.addEventListener(ev,start,{passive:false}); });
+    ["pointerup","pointerleave","pointercancel","touchend","touchcancel"].forEach(function(ev){ b.addEventListener(ev,stop); });
+  });
+
+  fold.onclick=function(){
+    padHidden=!padHidden;
+    try{ localStorage.setItem(PADKEY,padHidden?"1":""); }catch(e){}
+    fold.textContent=padHidden?"pad":"hide";
+    padTick();
+  };
+  try{ padHidden=!!localStorage.getItem(PADKEY); }catch(e){}
+  fold.textContent=padHidden?"pad":"hide";
+}
+
+/* each frame: show the right controls for what the dreamer is doing */
+function padTick(){
+  if(!padWanted()){
+    if(padOn){ ["dpad","pdview","pd-fold"].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display="none"; }); }
+    return;
+  }
+  padBuild();
+  var pad=document.getElementById("dpad"), view=document.getElementById("pdview"), fold=document.getElementById("pd-fold");
+  if(!pad) return;
+  var talking=(typeof talkOpen!=="undefined"&&talkOpen)||(typeof greetOpen!=="undefined"&&greetOpen);
+  var wantPad=walkMode&&!talking;
+  var wantView=!walkMode&&!talking;
+  pad.style.display=(wantPad&&!padHidden)?"grid":"none";
+  view.style.display=(wantView&&!padHidden)?"grid":"none";
+  fold.style.display=(wantPad||wantView)?"block":"none";
+  if(padHidden&&(padKeys.f||padKeys.b||padKeys.l||padKeys.r)) padKeys={f:0,b:0,l:0,r:0};
 }
 
 </script>
