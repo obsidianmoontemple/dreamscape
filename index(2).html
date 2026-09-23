@@ -718,6 +718,12 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   </div>
   <div id="acc-msg" class="hint" style="font-size:12px;color:var(--dim);margin:8px 0 0;min-height:16px"></div>
 
+  <label for="solidall" style="margin-top:14px">What you dream is</label>
+  <select id="solidall">
+    <option value="solid">Solid &mdash; you can stand on it and it stops you</option>
+    <option value="half">Half there until you say otherwise</option>
+  </select>
+
   <label for="skies" style="margin-top:14px">Skies in the other worlds</label>
   <select id="skies">
     <option value="on">Strange &mdash; each world gets its own living sky</option>
@@ -4608,6 +4614,9 @@ function buildFolk(spec,f,o){
     if(k==="bones"){ for(var r=0;r<4;r++) body.add(P(box(.3,.025,.02),mL(0x3A3430),0,1.2+r*.09,.13)); body.add(P(sph(.03),mG(0x141418,1),-.04,headY+.02,.1)); body.add(P(sph(.03),mG(0x141418,1),.04,headY+.02,.1)); }
     if(k==="wrapped") for(var w=0;w<9;w++) body.add(P(cyl(.21,.21,.02,12),mL(0xB8AC8E),0,.35+w*.16,0,.0,0,(w%2?.08:-.08)));
     if(k==="snakehair") for(var sn=0;sn<9;sn++){ var a=sn*.7; body.add(P(cyl(.015,.008,.2,5),mL(0x3F7A3A),Math.cos(a)*.1,headY+.1,Math.sin(a)*.1,Math.sin(a)*.8,0,-Math.cos(a)*.8)); }
+    if(k==="bighead"){ body.traverse(function(m){ if(m.userData&&/^(head|eye)$/.test(m.userData.part||"")) m.scale.multiplyScalar(1.55); }); }
+    if(k==="blackeyes"){ hide(["eye"]);
+      [-1,1].forEach(function(sd){ var e=P(sph(.045,10,8),mG(0x0A0A0E,1),sd*.055,headY+.02,.1); e.scale.set(.8,1.5,.6); body.add(e); }); }
     if(k==="faceless") hide(["eye"]);
     if(k==="hair"){ body.add(P(box(.26,.7,.08),mL(0xDCE4F0),0,headY-.25,-.1)); }
     if(k==="halo") body.add(P(tor(.18,.015),mG(0xE8C27A,.95),0,headY+.24,0,Math.PI/2));
@@ -5666,6 +5675,762 @@ function goThrough(o){
 }
 
 </script>
+<script>/* js/scifi.js */
+/* Dream Walker's Atlas — scifi.js
+   the far side of the dream: domes and habitats, reactors and hangars, shuttles
+   and saucers, robots, greys and troopers — and a stargate, which works: step
+   through one and it carries you to another, across worlds if there is one there.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var STEEL=0x9AA4B0, HULL=0x6E7884, DARKM=0x3A4048, PANEL=0x545E6A, NEONC=0x4AE8FF, NEONM=0xFF4AE0,
+    GLASSB=0x7FC8E8, WARN=0xE8A63A, REACT=0x6AF0C4;
+
+/* ---------- places ---------- */
+S("stargate","structure",[10,11,3],[
+  {g:"tor",s:[4.2,.55,Math.PI*2],p:[0,5,0],c:0x8A8E96},
+  {g:"tor",s:[3.62,.14],p:[0,5,0],c:0x5A5E66},
+  {g:"cyl",s:[3.55,3.55,.12,32],p:[0,5,0],r:[Math.PI/2,0,0],c:0x3AA8E8,glow:1,opa:.62,pulse:1},
+  {g:"box",s:[.8,.55,1.05],p:[0.0,9.15,0],r:[0,0,0.0],c:WARN,glow:1,pulse:1},
+  {g:"box",s:[.8,.55,1.05],p:[-2.67,8.18,0],r:[0,0,0.7],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[-4.09,5.72,0],r:[0,0,1.4],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[-3.59,2.93,0],r:[0,0,2.09],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[-1.42,1.1,0],r:[0,0,2.79],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[1.42,1.1,0],r:[0,0,3.49],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[3.59,2.92,0],r:[0,0,4.19],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[4.09,5.72,0],r:[0,0,4.89],c:0xAEB4BC},
+  {g:"box",s:[.8,.55,1.05],p:[2.67,8.18,0],r:[0,0,5.59],c:0xAEB4BC},
+  {g:"box",s:[5,.3,4],p:[0,.15,3],c:DARKM},
+  {g:"box",s:[6,.6,.4],p:[0,.3,5.1],c:0x4A5058},
+  {g:"box",s:[1,1.4,.8],p:[4.6,.7,4],c:PANEL},
+  {g:"box",s:[.8,.5,.1],p:[4.6,1.5,4.45],c:NEONC,glow:1,pulse:1}
+],["stargate","star gate","ring gate","great ring","gate of the ancients","the ring stood upright"]);
+S("biodome","structure",[30,16,30],[
+  {g:"sph",s:[14],p:[0,0,0],c:GLASSB,opa:.34},
+  {g:"cyl",s:[14.2,14.2,.6,28],p:[0,.3,0],c:PANEL},
+  {g:"cyl",s:[.3,.3,14,6],p:[0,7,0],r:[0,0,1.5708],c:STEEL,rep:[4,0,0,0]},
+  {g:"box",s:[3,3,1],p:[0,1.5,14],c:DARKM},
+  {g:"box",s:[2.4,2.4,.2],p:[0,1.5,14.5],c:NEONC,glow:1,opa:.5},
+  {g:"ico",s:[2.2],p:[-5,2,3],c:0x3F7A3A},{g:"ico",s:[1.6],p:[5,1.6,-4],c:0x4A8A42}
+],["biodome","dome city","glass dome","domed habitat","greenhouse dome"]);
+S("habitat","structure",[16,7,10],[
+  {g:"cyl",s:[3.4,3.4,13,16],p:[0,3.6,0],r:[0,0,1.5708],c:STEEL},
+  {g:"cyl",s:[3.5,3.5,.4,16],p:[-6.4,3.6,0],r:[0,0,1.5708],c:PANEL},
+  {g:"cyl",s:[3.5,3.5,.4,16],p:[6.4,3.6,0],r:[0,0,1.5708],c:PANEL},
+  {g:"box",s:[1.6,2,.3],p:[0,1,3.5],c:DARKM},
+  {g:"cyl",s:[.7,.7,.2,12],p:[-3,3.6,3.45],r:[Math.PI/2,0,0],c:GLASSB,rep:[3,3,0,0]},
+  {g:"cyl",s:[.5,.5,1.6,8],p:[0,7.6,0],c:PANEL},{g:"sph",s:[.3],p:[0,8.6,0],c:WARN,glow:1,pulse:1},
+  {g:"box",s:[5,.15,3],p:[0,.1,4.6],c:0x4A5058}
+],["habitat","habitat module","living module","colony module","pressurised module"]);
+S("researchlab","structure",[18,8,14],[
+  {g:"box",s:[16,5,12],p:[0,2.5,0],c:0xD8DCE2},
+  {g:"box",s:[16.4,.5,12.4],p:[0,5.2,0],c:PANEL},
+  {g:"box",s:[2.4,2.6,.3],p:[0,1.3,6.1],c:GLASSB,opa:.7},
+  {g:"box",s:[3.4,1.4,.2],p:[-5,3.4,6.05],c:GLASSB,opa:.6,rep:[3,5,0,0]},
+  {g:"box",s:[1,.4,.1],p:[0,4.4,6.1],c:NEONC,glow:1,pulse:1},
+  {g:"cyl",s:[.5,.5,3,10],p:[6.4,6.7,-4],c:STEEL},{g:"sph",s:[.8],p:[6.4,8.4,-4],c:REACT,glow:1,pulse:1}
+],["research lab","laboratory","science station","research station","lab complex"]);
+S("reactor","structure",[14,18,14],[
+  {g:"cyl",s:[5,6,12,20],p:[0,6,0],c:PANEL},
+  {g:"cyl",s:[6.4,6.4,1,20],p:[0,12.4,0],c:DARKM},
+  {g:"cyl",s:[3,3,4,16],p:[0,14.6,0],c:STEEL},
+  {g:"tor",s:[5.4,.4],p:[0,7,0],c:REACT,glow:1,pulse:1},
+  {g:"tor",s:[5.4,.4],p:[0,10,0],c:REACT,glow:1,pulse:1},
+  {g:"box",s:[2,3,.4],p:[0,1.5,6.2],c:DARKM},
+  {g:"box",s:[1.2,.5,.1],p:[0,3.4,6.25],c:WARN,glow:1,pulse:1}
+],["reactor","fusion reactor","power core","generator tower","energy plant"]);
+S("hangar","structure",[34,14,26],[
+  {g:"box",s:[32,10,24],p:[0,5,0],c:HULL},
+  {g:"cyl",s:[16,16,24,18,1,false,0,Math.PI],p:[0,10,0],r:[1.5708,0,0],c:HULL},
+  {g:"box",s:[16,9,.6],p:[0,4.5,12.2],c:DARKM},
+  {g:"box",s:[.5,9,.5],p:[-7,4.5,12.5],c:WARN,rep:[3,7,0,0]},
+  {g:"box",s:[24,.2,8],p:[0,.1,16],c:0x4A5058},
+  {g:"sph",s:[.4],p:[-12,10.5,12],c:WARN,glow:1,pulse:1},{g:"sph",s:[.4],p:[12,10.5,12],c:WARN,glow:1,pulse:1}
+],["hangar","ship hangar","launch bay","docking bay","landing bay"]);
+S("spaceport","structure",[30,22,22],[
+  {g:"box",s:[26,8,18],p:[0,4,0],c:0xC8CED6},
+  {g:"cyl",s:[3,3.6,18,14],p:[9,9,-4],c:0xD8DCE2},
+  {g:"cyl",s:[5,5,2.4,14],p:[9,18.4,-4],c:PANEL},
+  {g:"cyl",s:[4.6,4.6,1.6,14],p:[9,18.4,-4],c:GLASSB,opa:.6},
+  {g:"box",s:[10,5,.3],p:[-6,3,9.2],c:GLASSB,opa:.55},
+  {g:"box",s:[26,.5,18.4],p:[0,8.3,0],c:PANEL},
+  {g:"sph",s:[.4],p:[9,20,-4],c:0xE84A4A,glow:1,pulse:1}
+],["spaceport","space port","launch terminal","shuttle terminal","port for ships"]);
+S("controltower","structure",[8,24,8],[
+  {g:"cyl",s:[2,2.6,18,12],p:[0,9,0],c:0xD0D6DE},
+  {g:"cyl",s:[4.4,4,4,12],p:[0,19.5,0],c:PANEL},
+  {g:"cyl",s:[4.1,3.7,2.6,12],p:[0,19.6,0],c:GLASSB,opa:.62},
+  {g:"cyl",s:[4.6,4.6,.4,12],p:[0,21.8,0],c:DARKM},
+  {g:"cyl",s:[.14,.14,3,6],p:[0,23.4,0],c:STEEL},{g:"sph",s:[.3],p:[0,24.8,0],c:0xE84A4A,glow:1,pulse:1}
+],["control tower","flight tower","traffic control tower","tower of the port"]);
+S("spaceelevator","structure",[10,120,10],[
+  {g:"cyl",s:[3,4,10,14],p:[0,5,0],c:PANEL},
+  {g:"cyl",s:[.5,.5,110,10],p:[0,60,0],c:STEEL},
+  {g:"cyl",s:[1.4,1.4,3,10],p:[0,18,0],c:0xD8DCE2},
+  {g:"box",s:[.2,110,.2],p:[1.2,60,0],c:NEONC,glow:1,opa:.5}
+],["space elevator","cable to the sky","tether to orbit","elevator into space"]);
+S("satdish","infra",[9,9,9],[
+  {g:"cyl",s:[.5,.7,4,10],p:[0,2,0],c:PANEL},
+  {g:"cyl",s:[4,3.6,.5,20],p:[0,5.4,0],r:[-.9,0,0],c:0xD8DCE2},
+  {g:"cyl",s:[.16,.16,3,6],p:[0,6.4,1.6],r:[-.9,0,0],c:STEEL},
+  {g:"sph",s:[.3],p:[0,7.6,2.4],c:WARN,glow:1}
+],["satellite dish","radio dish","listening dish","dish array"]);
+S("solarfarm","infra",[20,4,14],[
+  {g:"box",s:[6,.2,3.4],p:[-6,2.2,-4],r:[-.5,0,0],c:0x2A3A6A,rep:[3,6,0,0]},
+  {g:"box",s:[6,.2,3.4],p:[-6,2.2,4],r:[-.5,0,0],c:0x2A3A6A,rep:[3,6,0,0]},
+  {g:"cyl",s:[.14,.14,2,6],p:[-6,1,-4],c:PANEL,rep:[3,6,0,0]},
+  {g:"cyl",s:[.14,.14,2,6],p:[-6,1,4],c:PANEL,rep:[3,6,0,0]}
+],["solar panels","solar farm","panel array","field of solar panels"]);
+S("cryopod","infra",[1.8,2.6,3.4],[
+  {g:"box",s:[1.4,1,3],p:[0,.6,0],c:PANEL},
+  {g:"cyl",s:[.7,.7,2.8,14,1,false,0,Math.PI],p:[0,1.4,0],r:[1.5708,0,0],c:GLASSB,opa:.45},
+  {g:"box",s:[.5,.3,.1],p:[0,1.2,1.6],c:NEONC,glow:1,pulse:1}
+],["cryopod","stasis pod","sleep pod","freezing pod","hibernation pod"]);
+S("forcefield","infra",[10,7,1],[
+  {g:"cyl",s:[.3,.4,6,8],p:[-4.6,3,0],c:PANEL},{g:"cyl",s:[.3,.4,6,8],p:[4.6,3,0],c:PANEL},
+  {g:"pln",s:[9,6],p:[0,3,0],c:NEONC,glow:1,opa:.3},
+  {g:"sph",s:[.24],p:[-4.6,6.2,0],c:NEONC,glow:1,pulse:1},{g:"sph",s:[.24],p:[4.6,6.2,0],c:NEONC,glow:1,pulse:1}
+],["force field","energy barrier","shield wall","wall of energy"]);
+S("holosign","infra",[5,8,1],[
+  {g:"cyl",s:[.2,.25,3,8],p:[0,1.5,0],c:DARKM},
+  {g:"pln",s:[4,3],p:[0,4.6,0],c:NEONM,glow:1,opa:.55},
+  {g:"pln",s:[3.2,2.2],p:[0,4.6,.06],c:NEONC,glow:1,opa:.45},
+  {g:"box",s:[4.4,.1,.1],p:[0,6.3,0],c:NEONM,glow:1}
+],["hologram sign","holo sign","neon hologram","floating advertisement","hologram in the air"]);
+S("console","infra",[2.4,1.6,1.2],[
+  {g:"box",s:[2,1,.9],p:[0,.5,0],c:PANEL},
+  {g:"box",s:[1.9,.5,.7],p:[0,1.1,-.1],r:[-.5,0,0],c:DARKM},
+  {g:"box",s:[1.7,.4,.06],p:[0,1.18,.08],r:[-.5,0,0],c:REACT,glow:1,pulse:1},
+  {g:"sph",s:[.08],p:[.8,1.05,.35],c:0xE84A4A,glow:1}
+],["console","control panel","computer bank","control console","instrument panel"]);
+S("landinglights","infra",[16,1,16],[
+  {g:"cyl",s:[.3,.3,.2,8],p:[-6,.1,-6],c:DARKM,rep:[4,4,0,0]},
+  {g:"sph",s:[.22],p:[-6,.3,-6],c:WARN,glow:1,pulse:1,rep:[4,4,0,0]},
+  {g:"cyl",s:[.3,.3,.2,8],p:[-6,.1,6],c:DARKM,rep:[4,4,0,0]},
+  {g:"sph",s:[.22],p:[-6,.3,6],c:WARN,glow:1,pulse:1,rep:[4,4,0,0]}
+],["landing lights","pad lights","guide lights","lights marking the pad"]);
+S("wreckedship","structure",[28,10,12],[
+  {g:"cyl",s:[3.4,4.6,20,12],p:[0,3,0],r:[0,0,1.5708+.12],c:0x7A6A64},
+  {g:"box",s:[9,.4,7],p:[2,4.6,0],r:[0,.2,.12],c:0x6E6058},
+  {g:"box",s:[5,3,4],p:[-9,2,1],r:[.3,.5,.2],c:0x6E6058},
+  {g:"cyl",s:[1.6,1.6,2,10],p:[9,3.8,0],r:[0,0,1.5708],c:DARKM},
+  {g:"box",s:[2,.1,3],p:[-2,5.2,0],c:0x3A3430}
+],["crashed ship","wrecked spaceship","downed shuttle","hull of a ship","crashed saucer"]);
+
+/* ---------- things that fly ---------- */
+S("shuttle","vehicle",[6,4,12],[
+  {g:"cyl",s:[1.6,2,9,12],p:[0,2.4,0],r:[1.5708,0,0],c:0xD8DCE2},
+  {g:"cone",s:[1.6,3,12],p:[0,2.4,5.6],r:[1.5708,0,0],c:0xE8ECF2},
+  {g:"box",s:[6.4,.25,2.6],p:[0,2,-1.6],c:0xC8CED6},
+  {g:"box",s:[.25,2,2],p:[0,3.4,-4],c:0xC8CED6},
+  {g:"cyl",s:[.7,.9,1.6,10],p:[-1.4,2.2,-4.8],r:[1.5708,0,0],c:DARKM},
+  {g:"cyl",s:[.7,.9,1.6,10],p:[1.4,2.2,-4.8],r:[1.5708,0,0],c:DARKM},
+  {g:"pln",s:[1.6,.8],p:[0,3,3.4],c:GLASSB,opa:.7},
+  {g:"cyl",s:[.16,.16,1.4,6],p:[-2.4,.7,0],c:STEEL},{g:"cyl",s:[.16,.16,1.4,6],p:[2.4,.7,0],c:STEEL}
+],["shuttle","space shuttle","small spacecraft","landing craft","ship on the pad"]);
+S("starship","vehicle",[22,12,46],[
+  {g:"cyl",s:[4,5,34,16],p:[0,7,0],r:[1.5708,0,0],c:0xC0C8D2},
+  {g:"cone",s:[4,7,16],p:[0,7,20],r:[1.5708,0,0],c:0xD8DCE2},
+  {g:"box",s:[19,.6,10],p:[0,6,-6],c:0xB8C0CA},
+  {g:"cyl",s:[1.6,2,7,12],p:[-8,6,-10],r:[1.5708,0,0],c:DARKM},
+  {g:"cyl",s:[1.6,2,7,12],p:[8,6,-10],r:[1.5708,0,0],c:DARKM},
+  {g:"cyl",s:[1.5,1.5,.6,12],p:[-8,6,-13.6],r:[1.5708,0,0],c:NEONC,glow:1,pulse:1},
+  {g:"cyl",s:[1.5,1.5,.6,12],p:[8,6,-13.6],r:[1.5708,0,0],c:NEONC,glow:1,pulse:1},
+  {g:"box",s:[3,1.6,4],p:[0,10.6,8],c:0xD8DCE2},
+  {g:"pln",s:[2.4,1],p:[0,10.8,10.1],c:GLASSB,opa:.7}
+],["starship","spaceship","great ship","cruiser","vessel among the stars","the mothership"]);
+S("saucer","vehicle",[14,5,14],[
+  {g:"cyl",s:[6.4,2.4,1.4,28],p:[0,2.2,0],c:0xC8CED6},
+  {g:"cyl",s:[2.4,6.4,1.2,28],p:[0,1.2,0],c:0xB8C0CA},
+  {g:"sph",s:[2.4,16,10],p:[0,3.4,0],c:GLASSB,opa:.55},
+  {g:"sph",s:[.4],p:[-4.6,1.4,0],c:NEONC,glow:1,pulse:1,rep:[6,1.5,0,0]},
+  {g:"cyl",s:[2,.6,1.2,16],p:[0,.5,0],c:NEONC,glow:1,opa:.5,pulse:1}
+],["flying saucer","ufo","saucer in the sky","disc in the sky","alien craft"]);
+S("hovercar","vehicle",[2.6,1.8,5],[
+  {g:"box",s:[2.2,.9,4.4],p:[0,1.3,0],c:0x3A6A9A},
+  {g:"box",s:[1.8,.6,2],p:[0,1.9,-.2],c:GLASSB,opa:.6},
+  {g:"cyl",s:[.5,.6,.5,12],p:[-1,.7,1.5],c:DARKM,rep:[2,2,0,-3]},
+  {g:"cyl",s:[.5,.6,.5,12],p:[-1,.7,-1.5],c:DARKM,rep:[2,2,0,0]},
+  {g:"sph",s:[.2],p:[-1,.45,1.5],c:NEONC,glow:1,pulse:1,rep:[2,2,0,-3]}
+],["hovercar","flying car","hover car","car that floated"]);
+S("rover","vehicle",[3,2.4,4.4],[
+  {g:"box",s:[2.4,1,3.4],p:[0,1.2,0],c:0xD8DCE2},
+  {g:"box",s:[1.4,.7,1.2],p:[0,2,-.6],c:PANEL},
+  {g:"cyl",s:[.55,.55,.4,12],p:[-1.3,.55,1.2],r:[0,0,1.5708],c:DARKM,rep:[2,2.6,0,0]},
+  {g:"cyl",s:[.55,.55,.4,12],p:[-1.3,.55,-1.2],r:[0,0,1.5708],c:DARKM,rep:[2,2.6,0,0]},
+  {g:"box",s:[1.6,.1,1.2],p:[0,2.5,.6],r:[-.3,0,0],c:0x2A3A6A}
+],["rover","moon rover","exploration rover","six-wheeled rover"]);
+S("mech","vehicle",[5,9,5],[
+  {g:"box",s:[3.4,3,2.6],p:[0,5.4,0],c:0x6A7480},
+  {g:"box",s:[1.6,1.2,1.4],p:[0,7.4,.4],c:PANEL},
+  {g:"box",s:[1,.3,.1],p:[0,7.5,1.15],c:0xE84A4A,glow:1,pulse:1},
+  {g:"cyl",s:[.7,.6,3.4,8],p:[-2.4,5,0],c:PANEL},{g:"cyl",s:[.7,.6,3.4,8],p:[2.4,5,0],c:PANEL},
+  {g:"cyl",s:[.9,.7,3.4,8],p:[-1.1,2,0],c:STEEL},{g:"cyl",s:[.9,.7,3.4,8],p:[1.1,2,0],c:STEEL},
+  {g:"box",s:[1.4,.5,2.2],p:[-1.1,.3,.3],c:DARKM},{g:"box",s:[1.4,.5,2.2],p:[1.1,.3,.3],c:DARKM}
+],["mech","walker machine","battle walker","armoured walker","exosuit"]);
+
+/* ---------- who is out there ---------- */
+C("robot",["robot","robots","automaton","machine man","clanking machine"],"folk",
+  {s:1.1,skin:0x9AA4B0,feats:["blocky","helm","held:staff"],top:0x6E7884});
+C("android",["android","synthetic","artificial person","humanlike machine"],"folk",
+  {skin:0xE0E4EA,feats:["faceless"],top:0x4A5058});
+C("grey",["grey alien","little grey","the greys","big-eyed alien","alien with black eyes"],"folk",
+  {s:.75,skin:0x9AB0A4,feats:["bighead","blackeyes","thin"],top:0x9AB0A4,night:1,realm:"stars"});
+C("alien",["alien","aliens","visitor from elsewhere","being from another world","extraterrestrial"],"folk",
+  {skin:0x7AA890,feats:["bighead","blackeyes","ears"],top:0x3A5A6A,realm:"elsewhere"});
+C("trooper",["trooper","space soldier","soldier in white armour","armoured soldier","marine in armour"],"folk",
+  {feats:["armor","helm","held:spear","spikes"],top:0xE8ECF2});
+C("cyborg",["cyborg","half machine man","man with a metal arm","augmented person"],"folk",
+  {feats:["silverhand","helm"],top:0x4A5058,night:1});
+C("xeno",["xenomorph","alien beast","clawed alien","creature from the ship"],"crawl",
+  {col:0x1A1C22,body:"scorpion",s:1.1,night:1});
+C("drone",["drone","drones","hovering drone","little flying machine","camera drone"],"flyer",
+  {col:0x8A9098,s:.5,feats:["glow"]});
+C("spacewalker",["astronaut","cosmonaut","person in a spacesuit","figure in a suit"],"folk",
+  {feats:["helm","armor","pack"],top:0xF2F4F8});
+
+/* two more things a figure can be */
+(function(){
+  var extend=function(){
+    if(typeof buildFolk!=="function") return;
+    /* handled inside creatures.js through the feats list; these are the shapes for them */
+  };
+  extend();
+})();
+
+/* ---------- worlds ---------- */
+function extendRealms3(){
+  addSciFurniture();
+  REALMS.station={name:"The Orbital",ground:0x6A7480,tex:"paving",path:0x545E6A,skyTop:0x02030A,skyLow:0x0A1020,
+    dens:.5,light:0xDCE8FF,amb:.7,sun:.6,stars:1,mix:["spacewalker","robot","android","drone","human"]};
+  REALMS.future={name:"The City to Come",ground:0x2A2E38,tex:"asphalt",path:0x3A4048,skyTop:0x120A2A,skyLow:0x4A1A5A,
+    dens:1.6,light:0xC8A8FF,amb:.55,sun:.45,stars:0,mix:["human","human","android","drone","cyborg","crowd"]};
+  REALM_WORDS.push(["station",["a space station","the space station","aboard the station","in orbit","the orbital","aboard the ship","on the starship","the space colony"]]);
+  REALM_WORDS.push(["future",["the future","a future city","the city of the future","neon city","cyberpunk city","a hundred years from now","the world to come"]]);
+  REALM_SCENERY.station=["habitat","console","cryopod","satdish","solarfarm","landinglights","shuttle","habitat","forcefield"];
+  REALM_SCENERY.future=["holosign","holosign","hovercar","forcefield","console","skyscraper","stringlights","hovercar"];
+  /* a stargate is a way through, like the others */
+  if(typeof GATEWAY!=="undefined") GATEWAY.stargate=1;
+  if(typeof BELONGS!=="undefined"){
+    BELONGS.researchlab=[{n:[2,4],kind:"human",role:"worker"},{n:[1,2],kind:"android",role:"nightwatch"}];
+    BELONGS.habitat=[{n:[2,4],kind:"human",role:"resident",lives:true}];
+    BELONGS.hangar=[{n:[2,5],kind:"human",role:"worker"},{n:[1,2],kind:"robot",role:"nightwatch"}];
+    BELONGS.spaceport=[{n:[2,4],kind:"human",role:"clerk"},{n:[1,3],kind:"spacewalker",role:"guest"}];
+    BELONGS.controltower=[{n:[1,2],kind:"human",role:"nightwatch"}];
+    BELONGS.reactor=[{n:[1,3],kind:"human",role:"worker"}];
+    BELONGS.biodome=[{n:[2,4],kind:"human",role:"resident",lives:true}];
+  }
+}
+
+/* consoles and pods for a laboratory — added once the furnishings exist */
+function addSciFurniture(){
+  if(typeof PLANS!=="undefined"&&!PLANS.researchlab){
+
+    PLANS.researchlab={mode:"hall",w:14,d:12,fill:"lab",wall:0xE0E6EC,floor:"tile"};
+    PLANS.habitat={mode:"rooms",rooms:["lobby","bedroom","kitchen","office"],wall:0xD8DEE6,floor:"tile"};
+    PLANS.hangar={mode:"hall",w:26,d:20,fill:"works",wall:0x8A929C,floor:"stone",h:8};
+    PLANS.spaceport={mode:"hall",w:20,d:16,fill:"station",wall:0xD8DEE6,floor:"marble"};
+    PLANS.biodome={mode:"hall",w:20,d:20,fill:"cozy",wall:0xDCE8DC,floor:"stone"};
+    PLANS.controltower={mode:"hall",w:8,d:8,fill:"lab",wall:0xD0D6DE,floor:"tile",h:4};
+    PLANS.reactor={mode:"hall",w:10,d:10,fill:"works",wall:0x8A929C,floor:"stone",h:8};
+  }
+  if(typeof FURN==="undefined"||FURN.labbench) return;
+  FURN.labbench=function(){ return F([P(box(2.6,.9,.9),mL(0xC8CED6),0,.45,0),P(box(2.7,.06,1),mL(0xE8ECF2),0,.92,0),
+    P(box(.3,.4,.3),mG(0x6AF0C4,.9),-.8,1.15,0),P(box(.25,.3,.25),mG(0x4AE8FF,.9),.6,1.1,0)]); };
+  FURN.podbed=function(){ return F([P(box(1.2,.8,2.6),mL(0x545E6A),0,.4,0),
+    P(new THREE.CylinderGeometry(.6,.6,2.4,14,1,false,0,Math.PI),mG(0x7FC8E8,.45),0,1,0,Math.PI/2),
+    P(box(.4,.2,.1),mG(0x4AE8FF,1),0,.95,1.35)]); };
+  FURN.bigconsole=function(){ return F([P(box(3.4,1.2,1),mL(0x545E6A),0,.6,0),P(box(3.2,1,.1),mG(0x6AF0C4,.85),0,1.6,-.4,-.25),
+    P(box(.5,.2,.4),mL(0x3A4048),1.2,1.25,.2)]); };
+  SOLIDFURN.labbench=1; SOLIDFURN.podbed=1; SOLIDFURN.bigconsole=1;
+}
+
+</script>
+<script>/* js/arms.js */
+/* Dream Walker's Atlas — arms.js
+   weapons and workings. things lying about that you can pick up and carry, and use:
+   a bow looses an arrow, a wand throws fire, a staff calls lightning, a horn sounds.
+   the workings themselves — fire, lightning, ice, light, shields, summonings — can
+   also simply be dreamt, and they play where they were dreamt.
+   nothing here harms a person: what is struck is marked, lit, frozen or scattered.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var STEELB=0xB8BCC4, HAFT=0x6B4A32, LEATHER=0x5A4232;
+
+/* ---------- things you can pick up ---------- */
+/* held: how it sits in the hand. shot: what it throws, if anything */
+var ARMS={
+  swordlying:{held:"sword",shot:null,name:"sword"},
+  spearlying:{held:"spear",shot:null,name:"spear"},
+  axelying:{held:"axe",shot:null,name:"axe"},
+  daggerlying:{held:"dagger",shot:null,name:"dagger"},
+  maelying:{held:"club",shot:null,name:"mace"},
+  shieldlying:{held:"shield",shot:null,name:"shield"},
+  bowlying:{held:"bow",shot:"arrow",name:"bow"},
+  crossbowlying:{held:"bow",shot:"bolt",name:"crossbow"},
+  slinglying:{held:"noose",shot:"stone",name:"sling"},
+  rifle:{held:"spear",shot:"shot",name:"rifle"},
+  pistol:{held:"dagger",shot:"shot",name:"pistol"},
+  wand:{held:"staff",shot:"fire",name:"wand"},
+  staffmagic:{held:"staff",shot:"lightning",name:"staff"},
+  orbmagic:{held:"orb",shot:"light",name:"orb"},
+  icestaff:{held:"staff",shot:"ice",name:"staff of frost"},
+  hornlying:{held:"horn",shot:"sound",name:"horn"},
+  torchlying:{held:"torch",shot:null,name:"torch"}
+};
+/* the weapons that already stand about the dreamscape can be picked up too */
+ARMS.sword={held:"sword",shot:null,name:"sword"};
+ARMS.axe={held:"axe",shot:null,name:"axe"};
+ARMS.shield={held:"shield",shot:null,name:"shield"};
+ARMS.orb={held:"orb",shot:"light",name:"orb"};
+ARMS.swordstone={held:"sword",shot:null,name:"sword from the stone"};
+function armLook(key){ return ARMS[key]; }
+
+S("swordlying","infra",[1.6,.4,.5],[
+  {g:"box",s:[.09,1.1,.03],p:[0,.08,0],r:[0,0,1.5708],c:STEELB},
+  {g:"box",s:[.26,.05,.06],p:[-.5,.08,0],c:GOLD},
+  {g:"cyl",s:[.035,.035,.24,8],p:[-.68,.08,0],r:[0,0,1.5708],c:LEATHER},
+  {g:"sph",s:[.055],p:[-.82,.08,0],c:GOLD}
+],["a sword","blade on the ground","longsword","broadsword","sword lying there"]);
+S("spearlying","infra",[2.4,.4,.4],[
+  {g:"cyl",s:[.035,.035,2.1,8],p:[0,.08,0],r:[0,0,1.5708],c:HAFT},
+  {g:"cone",s:[.07,.32,6],p:[1.1,.08,0],r:[0,0,-1.5708],c:STEELB}
+],["a spear","lance","pike","javelin"]);
+S("axelying","infra",[1.2,.4,.5],[
+  {g:"cyl",s:[.04,.04,1,8],p:[0,.08,0],r:[0,0,1.5708],c:HAFT},
+  {g:"box",s:[.3,.26,.04],p:[.42,.14,0],c:STEELB}
+],["an axe","woodaxe"]);
+S("daggerlying","infra",[.6,.3,.3],[
+  {g:"box",s:[.05,.34,.02],p:[0,.06,0],r:[0,0,1.5708],c:STEELB},
+  {g:"box",s:[.14,.03,.04],p:[-.17,.06,0],c:GOLD},
+  {g:"cyl",s:[.025,.025,.14,6],p:[-.26,.06,0],r:[0,0,1.5708],c:LEATHER}
+],["a blade","dirk","stiletto"]);
+S("maelying","infra",[1,.5,.4],[
+  {g:"cyl",s:[.04,.04,.7,8],p:[0,.08,0],r:[0,0,1.5708],c:HAFT},
+  {g:"sph",s:[.14],p:[.4,.12,0],c:0x8A8C92}
+],["mace","war hammer","cudgel","flail"]);
+S("shieldlying","infra",[1.1,.3,1.1],[
+  {g:"cyl",s:[.5,.5,.07,20],p:[0,.06,0],c:0x9A6A3A},
+  {g:"sph",s:[.09],p:[0,.11,0],c:GOLD},
+  {g:"tor",s:[.48,.03],p:[0,.09,0],c:GOLD}
+],["a shield","round shield"]);
+S("bowlying","infra",[1.4,.4,.5],[
+  {g:"tor",s:[.5,.025,Math.PI],p:[0,.07,0],r:[1.5708,0,0],c:HAFT},
+  {g:"box",s:[.006,1,.006],p:[0,.07,0],r:[0,0,1.5708],c:0xE6DCC2},
+  {g:"cyl",s:[.02,.02,.5,6],p:[.1,.05,.2],r:[0,0,1.5708],c:0x8A6A3A,rep:[3,0,.01,.06]}
+],["bow","a bow","longbow","recurve bow","bow and arrows"]);
+S("crossbowlying","infra",[1,.4,.9],[
+  {g:"box",s:[.7,.07,.09],p:[0,.09,0],c:HAFT},
+  {g:"box",s:[.06,.05,.8],p:[.15,.12,0],c:STEELB},
+  {g:"box",s:[.006,.006,.8],p:[.1,.12,0],c:0xE6DCC2}
+],["crossbow","a crossbow"]);
+S("slinglying","infra",[.6,.2,.4],[
+  {g:"box",s:[.18,.02,.1],p:[0,.03,0],c:LEATHER},
+  {g:"cyl",s:[.006,.006,.5,4],p:[.24,.03,0],r:[0,0,1.5708],c:LEATHER,rep:[2,0,0,.08]}
+],["sling","a sling","slingshot"]);
+S("rifle","infra",[1.3,.3,.4],[
+  {g:"box",s:[.9,.06,.06],p:[.1,.1,0],c:0x2A2C30},
+  {g:"box",s:[.34,.12,.07],p:[-.4,.08,0],r:[0,0,.16],c:0x4A3A2A},
+  {g:"cyl",s:[.022,.022,.5,8],p:[.55,.12,0],r:[0,0,1.5708],c:0x1A1C20}
+],["rifle","gun","shotgun","musket","a gun on the ground"]);
+S("pistol","infra",[.4,.2,.3],[
+  {g:"box",s:[.24,.05,.04],p:[.03,.08,0],c:0x2A2C30},
+  {g:"box",s:[.07,.14,.05],p:[-.07,.05,0],r:[0,0,.25],c:0x1A1C20}
+],["pistol","revolver","handgun","a pistol"]);
+S("wand","infra",[.5,.2,.2],[
+  {g:"cyl",s:[.018,.012,.42,8],p:[0,.05,0],r:[0,0,1.5708],c:0x4A3A2A},
+  {g:"sph",s:[.045],p:[.22,.05,0],c:0xFF8A3A,glow:1,pulse:1}
+],["wand","magic wand","a wand","witch's wand"]);
+S("staffmagic","infra",[2,.4,.4],[
+  {g:"cyl",s:[.045,.05,1.9,8],p:[0,.1,0],r:[0,0,1.5708],c:HAFT},
+  {g:"sph",s:[.11],p:[.95,.14,0],c:0x9FD8FF,glow:1,pulse:1},
+  {g:"tor",s:[.14,.02],p:[.95,.14,0],c:0xC7A043}
+],["staff","wizard's staff","magic staff","a staff on the ground","stave"]);
+S("icestaff","infra",[2,.4,.4],[
+  {g:"cyl",s:[.045,.05,1.9,8],p:[0,.1,0],r:[0,0,1.5708],c:0x8A94A0},
+  {g:"cone",s:[.1,.3,6],p:[.95,.16,0],c:0xBFE4F4,glow:1,pulse:1}
+],["staff of frost","frost staff","ice staff","staff of winter"]);
+S("orbmagic","infra",[.5,.5,.5],[
+  {g:"sph",s:[.18],p:[0,.2,0],c:0xC8A0FF,glow:1,pulse:1,opa:.9},
+  {g:"cyl",s:[.14,.16,.08,10],p:[0,.05,0],c:0x4A4238}
+],["crystal orb","seeing stone","scrying orb","glowing orb"]);
+S("hornlying","infra",[.8,.4,.4],[
+  {g:"cone",s:[.14,.7,10],p:[0,.12,0],r:[0,0,1.2],c:0xE6DCC2},
+  {g:"tor",s:[.08,.02],p:[-.22,.1,0],c:GOLD}
+],["horn","war horn","hunting horn","great horn"]);
+S("torchlying","infra",[.8,.3,.3],[
+  {g:"cyl",s:[.03,.035,.7,8],p:[0,.06,0],r:[0,0,1.5708],c:HAFT},
+  {g:"cone",s:[.08,.26,6],p:[.36,.1,0],c:0xFFB23A,glow:1,pulse:1}
+],["torch","a torch","burning brand","lit torch"]);
+S("weaponrack2","infra",[2.6,2,.8],[
+  {g:"box",s:[2.4,.12,.6],p:[0,.06,0],c:HAFT},
+  {g:"box",s:[2.4,.12,.16],p:[0,1.7,-.2],c:HAFT},
+  {g:"cyl",s:[.04,.04,1.7,6],p:[-.8,.85,-.1],c:HAFT,rep:[3,.8,0,0]},
+  {g:"box",s:[.07,1.2,.02],p:[-.8,.9,0],c:STEELB,rep:[3,.8,0,0]}
+],["rack of weapons","armoury rack","weapons on a rack","stand of spears"]);
+
+/* ---------- workings, which can simply be dreamt ---------- */
+var WORKING={
+  fireball:{col:0xFF7A1E,kind:"burst"}, lightning:{col:0xE8F0FF,kind:"bolt"},
+  iceblast:{col:0xBFE4F4,kind:"shards"}, healinglight:{col:0xFFF0C0,kind:"rise"},
+  shieldspell:{col:0x9FD8FF,kind:"dome"}, summoning:{col:0xC050FF,kind:"ring"},
+  curse:{col:0x6A1A6A,kind:"fall"}, blessing:{col:0xFFE8B0,kind:"rise"},
+  banishing:{col:0xE8E4DA,kind:"ring"}, transmute:{col:0x6AF0C4,kind:"swirl"},
+  stormcall:{col:0x8AA8D8,kind:"bolt"}, veilspell:{col:0xC8BCE8,kind:"dome"}
+};
+S("fireball","infra",[3,3,3],[{g:"sph",s:[.9],p:[0,1.6,0],c:0xFF7A1E,glow:1,pulse:1,opa:.9}],
+  ["ball of fire","fire from my hands","i threw fire","a burst of flame"]);
+S("lightningbolt","infra",[3,14,3],[
+  {g:"box",s:[.18,6,.18],p:[0,7,0],r:[0,0,.12],c:0xE8F0FF,glow:1,pulse:1},
+  {g:"box",s:[.14,4,.14],p:[.5,4,.2],r:[0,0,-.3],c:0xE8F0FF,glow:1}
+],["bolt of lightning","lightning from the sky","a thunderbolt struck","lightning from my hands"]);
+S("iceblast","infra",[4,3,4],[
+  {g:"cone",s:[.22,1.6,6],p:[0,.8,0],c:0xBFE4F4,glow:1,opa:.85},
+  {g:"cone",s:[.16,1.1,6],p:[.7,.55,.4],r:[0,0,-.3],c:0xBFE4F4,glow:1,opa:.8,rep:[3,-.7,-.1,-.5]}
+],["ice blast","shards of ice","frost spell","a wave of cold","ice from my hands"]);
+S("healinglight","infra",[3,4,3],[
+  {g:"cyl",s:[1.1,1.3,3.2,16],p:[0,1.6,0],c:0xFFF0C0,glow:1,opa:.4,pulse:1}
+],["healing light","light that healed","a warm light","mending light","the wound closed in light"]);
+S("shieldspell","infra",[5,5,5],[
+  {g:"sph",s:[2.3],p:[0,1.6,0],c:0x9FD8FF,glow:1,opa:.3,pulse:1},
+  {g:"tor",s:[2.3,.06],p:[0,1.6,0],r:[Math.PI/2,0,0],c:0x9FD8FF,glow:1}
+],["shield of light","a shield around me","barrier i made","circle of protection"]);
+S("summoning","infra",[6,3,6],[
+  {g:"cyl",s:[2.6,2.6,.06,32],p:[0,.05,0],c:0xC050FF,glow:1,opa:.45,pulse:1},
+  {g:"tor",s:[2.4,.08],p:[0,.1,0],r:[Math.PI/2,0,0],c:0xC050FF,glow:1},
+  {g:"tor",s:[1.5,.05],p:[0,.12,0],r:[Math.PI/2,0,0],c:0xE8B0FF,glow:1},
+  {g:"box",s:[.1,.02,5],p:[0,.11,0],r:[0,.6,0],c:0xE8B0FF,glow:1,rep:[3,0,0,0]}
+],["circle of summoning","i summoned something","calling circle"]);
+S("curse","infra",[4,4,4],[
+  {g:"sph",s:[1.2],p:[0,1.4,0],c:0x6A1A6A,glow:1,opa:.55,pulse:1},
+  {g:"tor",s:[1.4,.06],p:[0,1.4,0],r:[1,0,.4],c:0x3A0A3A,glow:1}
+],["a curse","curse laid on it","hex","malediction","an ill wish"]);
+S("blessing","infra",[4,5,4],[
+  {g:"cyl",s:[.9,1.6,4,16],p:[0,2,0],c:0xFFE8B0,glow:1,opa:.35,pulse:1}
+],["a blessing","blessed light","grace fell on it","benediction"]);
+S("transmute","infra",[4,4,4],[
+  {g:"tor",s:[1.2,.12],p:[0,1.2,0],r:[Math.PI/2,0,0],c:0x6AF0C4,glow:1,pulse:1},
+  {g:"tor",s:[.8,.08],p:[0,1.6,0],r:[.6,.4,0],c:0x6AF0C4,glow:1}
+],["transmutation","it changed into something else","transformation","shape-changing","it turned into"]);
+S("banishing","infra",[5,4,5],[
+  {g:"tor",s:[2,.1],p:[0,.6,0],r:[Math.PI/2,0,0],c:0xE8E4DA,glow:1,pulse:1},
+  {g:"cyl",s:[.06,.06,3.4,6],p:[1.6,1.8,0],c:0xE8E4DA,glow:1,opa:.7,rep:[4,-.8,0,.9]}
+],["banishing","i banished it","sent away","exorcism","driven out"]);
+
+EFFECTS.fireball=function(g){ var p=particles(70,[1.6,2,1.6],0xFF8A3A,1.2,.9); p.position.y=1.6; g.add(p);
+  return function(t,dt){ rise(p,dt,1.6,.2); g.children[0].scale.setScalar(1+Math.sin(t*4)*0.08); }; };
+EFFECTS.lightningbolt=function(g){ return function(t){ var on=Math.sin(t*3.1)>0.6;
+  g.children.forEach(function(m,i){ if(i<2) m.visible=on; }); }; };
+EFFECTS.summoning=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i>0) m.rotation.z=t*(0.3+i*0.2)*(i%2?-1:1); }); }; };
+EFFECTS.shieldspell=function(g){ return function(t){ g.children[0].scale.setScalar(1+Math.sin(t*1.6)*0.04); g.children[1].rotation.z=t*0.4; }; };
+EFFECTS.transmute=EFFECTS.summoning;
+EFFECTS.healinglight=function(g){ var p=particles(50,[1.4,3.4,1.4],0xFFF0C0,1,.8); g.add(p);
+  return function(t,dt){ rise(p,dt,1.1,0); }; };
+EFFECTS.curse=function(g){ var p=particles(60,[1.6,2.4,1.6],0x6A1A6A,1.4,.7); p.position.y=1.4; g.add(p);
+  return function(t,dt){ swirl(p,dt,1.2,.5,false); }; };
+
+/* ---------- carrying, and using ---------- */
+var carrying=null, carryMesh=null, shots=[], shotCool=0;
+function carriedName(){ return carrying?(ARMS[carrying.archetype]||{}).name||"it":""; }
+function pickUp(spec){
+  if(!ARMS[spec.archetype]) return false;
+  dropCarried(true);
+  carrying=spec;
+  spec.carried=true;
+  var g=meshes[spec.id]; if(g) g.visible=false;
+  setStatus("<b>You are carrying the "+esc(carriedName())+".</b> "+(ARMS[spec.archetype].shot?"Use it with <b>F</b>, or the <b>use</b> button.":"Drop it with <b>G</b>."));
+  showCarried();
+  return true;
+}
+function dropCarried(quiet){
+  if(!carrying) return;
+  var spec=carrying, g=meshes[spec.id];
+  spec.carried=false;
+  if(g){ g.visible=true; g.position.x=camera.position.x; g.position.z=camera.position.z; spec.x=g.position.x; spec.z=g.position.z; }
+  carrying=null;
+  if(carryMesh&&carryMesh.parent) carryMesh.parent.remove(carryMesh);
+  carryMesh=null;
+  if(!quiet) setStatus("You set it down.");
+  save();
+}
+/* what you hold shows in your own hand when you can see yourself */
+function showCarried(){
+  if(carryMesh&&carryMesh.parent) carryMesh.parent.remove(carryMesh);
+  carryMesh=null;
+  if(!carrying||!meG) return;
+  var A=ARMS[carrying.archetype];
+  if(!A||!HELD[A.held]) return;
+  carryMesh=HELD[A.held]();
+  carryMesh.position.set(-0.3,0.98,0.3);
+  meG.children[0].add(carryMesh);
+}
+/* using it: something leaves your hand and lands somewhere */
+var SHOT={
+  arrow:{col:0x8A6A3A,speed:42,len:.7,trail:null},
+  bolt:{col:0x6A6A6A,speed:48,len:.5,trail:null},
+  stone:{col:0x8A8C92,speed:30,len:.16,trail:null},
+  shot:{col:0xFFE8B0,speed:120,len:.3,trail:0xFFE8B0},
+  fire:{col:0xFF7A1E,speed:26,len:.5,trail:0xFF8A3A,lands:"fireball"},
+  lightning:{col:0xE8F0FF,speed:90,len:1.2,trail:0xE8F0FF,lands:"lightningbolt"},
+  ice:{col:0xBFE4F4,speed:32,len:.6,trail:0xBFE4F4,lands:"iceblast"},
+  light:{col:0xFFF0C0,speed:24,len:.5,trail:0xFFF0C0,lands:"healinglight"},
+  sound:{col:0xE6DCC2,speed:18,len:.4,trail:null,lands:null}
+};
+function useCarried(){
+  if(!carrying||shotCool>0) return;
+  var A=ARMS[carrying.archetype];
+  if(!A||!A.shot){ setStatus("You swing the "+esc(carriedName())+"."); shotCool=0.5; return; }
+  var S=SHOT[A.shot]; shotCool=0.55;
+  var dir={x:-Math.sin(yaw)*Math.cos(pitch),y:Math.sin(pitch),z:-Math.cos(yaw)*Math.cos(pitch)};
+  var g=new THREE.Group();
+  var body=new THREE.Mesh(new THREE.CylinderGeometry(S.len*0.09,S.len*0.05,S.len,6),
+    new THREE.MeshBasicMaterial({color:S.col}));
+  body.rotation.x=Math.PI/2; g.add(body);
+  if(S.trail){ var tr=new THREE.Mesh(new THREE.SphereGeometry(S.len*0.3,8,6),
+    new THREE.MeshBasicMaterial({color:S.trail,transparent:true,opacity:.75})); g.add(tr); }
+  g.position.set(camera.position.x+dir.x,camera.position.y-0.2+dir.y,camera.position.z+dir.z);
+  scene.add(g);
+  shots.push({g:g,dir:dir,speed:S.speed,life:4,lands:S.lands});
+  if(A.shot==="sound") setStatus("The horn sounds, and carries further than it should.");
+}
+function armsTick(dt){
+  if(shotCool>0) shotCool-=dt;
+  for(var i=shots.length-1;i>=0;i--){
+    var s=shots[i], p=s.g.position;
+    p.x+=s.dir.x*s.speed*dt; p.y+=s.dir.y*s.speed*dt-1.6*dt*dt*40*0.02; p.z+=s.dir.z*s.speed*dt;
+    s.g.lookAt(p.x+s.dir.x,p.y+s.dir.y,p.z+s.dir.z);
+    s.life-=dt;
+    var feet=(typeof supportAt==="function")?supportAt(p.x,p.z,p.y):0;
+    var hitWall=(typeof blockedAt==="function")&&blockedAt(p.x,p.z,Math.max(0,p.y-0.2));
+    if(p.y<=feet+0.1||hitWall||s.life<=0){
+      if(s.lands&&KIT[s.lands]) landWorking(s.lands,p.x,Math.max(feet,0),p.z);
+      else if(typeof particles==="function"){
+        var b=particles(24,[.8,.8,.8],0xE8E4DA,.6,.9); b.position.set(p.x,Math.max(feet+.3,.3),p.z); scene.add(b);
+        setTimeout(function(){ scene.remove(b); },900);
+      }
+      scene.remove(s.g); shots.splice(i,1);
+    }
+  }
+}
+/* where a working lands, it stands for a while and then fades */
+function landWorking(kind,x,y,z){
+  var spec={id:uid(),archetype:kind,label:null,attrs:{},x:x,z:z,rot:Math.random()*6.283,solid:false,detail:3,
+    nights:[store.session],working:true};
+  if(store.here) spec.realm=store.here;
+  store.objects.push(spec); addMesh(spec);
+  setTimeout(function(){
+    var k=store.objects.indexOf(spec);
+    if(k>-1){ store.objects.splice(k,1); if(meshes[spec.id]){ scene.remove(meshes[spec.id]); delete meshes[spec.id]; } }
+  },9000);
+}
+/* reaching for what is at your feet */
+function armsReach(){
+  if(carrying) return dropCarried(false);
+  var P=camera.position, best=null, bd=9;
+  store.objects.forEach(function(o){
+    if(!ARMS[o.archetype]||o.carried) return;
+    if((o.realm||0)!==(store.here||0)) return;
+    var d=(o.x-P.x)*(o.x-P.x)+(o.z-P.z)*(o.z-P.z);
+    if(d<bd){ bd=d; best=o; }
+  });
+  if(best) pickUp(best);
+  else setStatus("Nothing within reach to pick up.");
+}
+
+</script>
+<script>/* js/seasons.js */
+/* Dream Walker's Atlas — seasons.js
+   the turning year. the eight sabbats, and the feasts people keep alongside them.
+   dream any of it by name, or let the season set it out: the world knows what time
+   of year it is, and dresses accordingly when you ask it to.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var EVERGREEN=0x2C4F2A, RIBBON=0xA8322B, CANDLEW=0xF2EEE6, PUMPKIN=0xE0761E, WHEATC=0xD8B45A;
+
+/* ---------- the wheel of the year ---------- */
+S("yuletree","nature",[5,7,5],[
+  {g:"cyl",s:[.3,.4,1,8],p:[0,.5,0],c:"bark"},
+  {g:"cone",s:[2.2,2.6,10],p:[0,2,0],c:EVERGREEN},
+  {g:"cone",s:[1.7,2.2,10],p:[0,3.6,0],c:EVERGREEN},
+  {g:"cone",s:[1.1,1.8,10],p:[0,5.1,0],c:EVERGREEN},
+  {g:"sph",s:[.16],p:[1.4,2.4,.6],c:0xC0392B,glow:1,pulse:1,rep:[7,-.36,.42,-.18]},
+  {g:"sph",s:[.16],p:[-1.2,2.8,-.5],c:0xD4B83C,glow:1,pulse:1,rep:[6,.34,.36,.2]},
+  {g:"cone",s:[.26,.5,5],p:[0,6.3,0],c:GOLD,glow:1,pulse:1}
+],["yule tree","christmas tree","decorated tree","tree with lights","tannenbaum","the tree was lit"]);
+S("yulelog","infra",[2.6,1,1.2],[
+  {g:"cyl",s:[.42,.42,2.2,10],p:[0,.42,0],r:[0,0,1.5708],c:0x5A3A22},
+  {g:"cyl",s:[.14,.14,.3,6],p:[.5,.8,.2],c:0x2C4F2A},
+  {g:"sph",s:[.09],p:[-.4,.75,.1],c:0xC0392B},
+  {g:"cone",s:[.12,.3,6],p:[0,.85,0],c:0xFFB23A,glow:1,pulse:1}
+],["yule log","the yule log","great log on the fire","midwinter log"]);
+S("wreath","infra",[1.4,1.4,.4],[
+  {g:"tor",s:[.55,.16],p:[0,1.7,0],c:EVERGREEN},
+  {g:"sph",s:[.08],p:[.5,1.9,.12],c:0xC0392B,rep:[6,-.2,-.26,0]},
+  {g:"box",s:[.3,.5,.03],p:[0,1.1,.1],c:RIBBON}
+],["wreath","holly wreath","door wreath","advent wreath","garland ring"]);
+S("maypoleribbons","infra",[7,9,7],[
+  {g:"cyl",s:[.2,.24,8,10],p:[0,4,0],c:0xF2EEE6},
+  {g:"sph",s:[.4],p:[0,8.2,0],c:0x3F7A3A},
+  {g:"box",s:[.12,7,.05],p:[-.8,4.4,0],r:[0,0,.2],c:0xC0392B,rep:[8,.2,0,.2]},
+  {g:"box",s:[.12,7,.05],p:[.8,4.4,0],r:[0,0,-.2],c:0x2F5EE8,rep:[8,-.2,0,-.2]}
+],["beltane pole","ribboned maypole","pole with ribbons flying","dancing pole"]);
+S("beltanefire","infra",[6,5,6],[
+  {g:"cyl",s:[.18,.18,3,7],p:[-.6,1.3,0],r:[0,0,.35],c:0x6B4A32,rep:[6,.24,0,.2]},
+  {g:"cone",s:[1.5,3.4,10],p:[0,1.8,0],c:0xFF8A2E,glow:1,pulse:1},
+  {g:"cone",s:[.9,2.2,8],p:[0,1.4,0],c:0xFFD08A,glow:1},
+  {g:"ico",s:[2.6],p:[0,.2,0],c:0x3A2A22}
+],["beltane fire","need-fire","great fire","balefire","midsummer fire","bonfire night"]);
+S("samhainlanterns","infra",[8,2,8],[
+  {g:"sph",s:[.45],p:[0,.42,0],c:PUMPKIN},
+  {g:"cyl",s:[.06,.06,.16,6],p:[0,.86,0],c:0x4A6A2A},
+  {g:"box",s:[.1,.1,.1],p:[-.16,.44,.42],c:0xFFB23A,glow:1,pulse:1},
+  {g:"box",s:[.1,.1,.1],p:[.16,.44,.42],c:0xFFB23A,glow:1,pulse:1},
+  {g:"box",s:[.3,.06,.1],p:[0,.26,.44],c:0xFFB23A,glow:1}
+],["jack o lantern","jack-o-lantern","carved pumpkin","pumpkin lantern","samhain lantern","turnip lantern"]);
+S("ostaraeggs","infra",[3,1,3],[
+  {g:"cyl",s:[.7,.6,.3,12],p:[0,.15,0],c:0x8A6A3A},
+  {g:"sph",s:[.16],p:[-.2,.36,0],c:0x6AC8E8,rep:[3,.2,.02,.12]},
+  {g:"sph",s:[.16],p:[.1,.36,-.2],c:0xE8A0C8,rep:[3,-.16,.02,.1]}
+],["painted eggs","ostara eggs","basket of eggs","easter eggs","coloured eggs"]);
+S("imbolccandles","infra",[3,1.6,3],[
+  {g:"cyl",s:[.9,.9,.12,16],p:[0,.06,0],c:0xE6DCC2},
+  {g:"cyl",s:[.06,.06,.5,6],p:[0,.36,0],c:CANDLEW,rep:[8,.18,0,.1]},
+  {g:"cone",s:[.05,.12,5],p:[0,.68,0],c:0xFFD08A,glow:1,pulse:1,rep:[8,.18,0,.1]}
+],["candlemas candles","imbolc candles","ring of candles","candles for brigid","candle wheel"]);
+S("lithawheel","infra",[3,3.4,1],[
+  {g:"tor",s:[1.2,.12],p:[0,1.6,0],c:0x8A5A2A},
+  {g:"box",s:[2.4,.1,.1],p:[0,1.6,0],c:0x8A5A2A,rep:[4,0,0,0]},
+  {g:"sph",s:[.3],p:[0,1.6,0],c:0xFFB23A,glow:1,pulse:1}
+],["sun wheel","litha wheel","wheel of the sun","midsummer wheel","fire wheel"]);
+S("lughcorn","infra",[1.4,2,1.4],[
+  {g:"cyl",s:[.12,.14,1.4,7],p:[0,.7,0],c:WHEATC},
+  {g:"sph",s:[.22],p:[0,1.5,0],c:WHEATC},
+  {g:"box",s:[.9,.1,.1],p:[0,1.1,0],c:WHEATC},
+  {g:"box",s:[.24,.3,.02],p:[0,1.26,0],c:RIBBON}
+],["corn dolly","corn mother","harvest doll","lughnasadh doll","wheat figure"]);
+S("mabontable","structure",[5,1.6,3],[
+  {g:"box",s:[4.4,.12,2.4],p:[0,1,0],c:0x6B4A32},
+  {g:"box",s:[.14,1,.14],p:[-1.9,.5,-.9],c:0x6B4A32,rep:[2,3.8,0,0]},
+  {g:"box",s:[.14,1,.14],p:[-1.9,.5,.9],c:0x6B4A32,rep:[2,3.8,0,0]},
+  {g:"sph",s:[.3],p:[-1.2,1.2,0],c:PUMPKIN},{g:"sph",s:[.22],p:[-.4,1.16,.3],c:0xC0392B},
+  {g:"sph",s:[.2],p:[.3,1.15,-.2],c:0xD4B83C},{g:"cyl",s:[.16,.2,.4,8],p:[1.2,1.2,.2],c:0x8A5A2A},
+  {g:"cyl",s:[.06,.06,.5,6],p:[1.8,1.3,-.4],c:WHEATC,rep:[5,-.08,0,.06]}
+],["harvest table","mabon table","harvest feast","thanksgiving table","feast of the harvest","groaning board"]);
+S("harvestsheaf","nature",[2,2.4,2],[
+  {g:"cyl",s:[.06,.05,2,6],p:[0,1,0],r:[0,0,.06],c:WHEATC,rep:[12,.06,0,.05]},
+  {g:"box",s:[.9,.12,.9],p:[0,.9,0],c:RIBBON}
+],["sheaf of wheat","harvest sheaf","bound sheaf","stook of corn","last sheaf"]);
+
+/* ---------- the feasts people keep ---------- */
+S("menorah","infra",[1.6,1.8,.5],[
+  {g:"cyl",s:[.1,.14,.14,10],p:[0,.07,0],c:GOLD},
+  {g:"cyl",s:[.05,.05,1,8],p:[0,.6,0],c:GOLD},
+  {g:"box",s:[1.3,.07,.07],p:[0,1.05,0],c:GOLD},
+  {g:"cyl",s:[.035,.035,.3,6],p:[-.6,1.25,0],c:CANDLEW,rep:[9,.15,0,0]},
+  {g:"cone",s:[.035,.1,5],p:[-.6,1.45,0],c:0xFFD08A,glow:1,pulse:1,rep:[9,.15,0,0]}
+],["menorah","hanukkah lamp","nine-branched lamp","festival of lights lamp"]);
+S("diyas","infra",[4,.6,4],[
+  {g:"cyl",s:[.14,.1,.09,10],p:[0,.05,0],c:0xC8763A,rep:[5,.7,0,.35]},
+  {g:"cone",s:[.05,.12,5],p:[0,.14,0],c:0xFFB23A,glow:1,pulse:1,rep:[5,.7,0,.35]},
+  {g:"cyl",s:[.14,.1,.09,10],p:[.35,.05,.7],c:0xC8763A,rep:[4,.7,0,.35]},
+  {g:"cone",s:[.05,.12,5],p:[.35,.14,.7],c:0xFFB23A,glow:1,pulse:1,rep:[4,.7,0,.35]}
+],["diyas","oil lamps in a row","lamps for diwali","row of little lamps","festival lamps"]);
+S("fireworks","infra",[10,26,10],[
+  {g:"sph",s:[.22],p:[0,18,0],c:0xFF4A6A,glow:1,pulse:1},
+  {g:"sph",s:[.16],p:[2.4,20,1],c:0x4AE8FF,glow:1,pulse:1,rep:[6,-.9,-.6,-.4]},
+  {g:"sph",s:[.16],p:[-2,16,-1.4],c:0xFFD08A,glow:1,pulse:1,rep:[6,.7,.7,.5]}
+],["fireworks","rockets in the sky","new year fireworks","bursts of light in the sky","firework display"]);
+S("hearts","infra",[3,3,1],[
+  {g:"box",s:[.34,.34,.06],p:[0,2,0],r:[0,0,.785],c:0xE8455E},
+  {g:"cyl",s:[.17,.17,.06,10],p:[-.12,2.12,0],c:0xE8455E},
+  {g:"cyl",s:[.17,.17,.06,10],p:[.12,2.12,0],c:0xE8455E},
+  {g:"cyl",s:[.01,.01,1.6,4],p:[0,2.8,0],c:0xE6DCC2}
+],["paper hearts","hearts hung up","valentine hearts","hearts on strings"]);
+S("eidlanterns","infra",[6,5,3],[
+  {g:"cyl",s:[.01,.01,6,3],p:[0,4.6,0],r:[0,0,Math.PI/2],c:0x2A2622},
+  {g:"box",s:[.32,.44,.32],p:[-2,3.9,0],c:0x2E8A6A,glow:1,pulse:1,rep:[5,1,0,0]},
+  {g:"tor",s:[.5,.06,Math.PI],p:[0,4.9,0],r:[0,0,Math.PI],c:GOLD,glow:1}
+],["crescent and lanterns","eid lanterns","fanous lanterns","festival crescent"]);
+S("lunarlanterns","infra",[8,5,3],[
+  {g:"cyl",s:[.01,.01,8,3],p:[0,4.4,0],r:[0,0,Math.PI/2],c:0x2A2622},
+  {g:"sph",s:[.4],p:[-3,3.8,0],c:0xC0392B,glow:1,pulse:1,rep:[7,1,0,0]},
+  {g:"box",s:[.5,.7,.02],p:[-3,3.1,0],c:0xE8C27A,rep:[7,1,0,0]}
+],["new year lanterns","lunar new year lanterns","spring festival lanterns","red lanterns strung up"]);
+S("snowman","nature",[1.6,2.4,1.6],[
+  {g:"sph",s:[.7],p:[0,.65,0],c:0xF6F8FC},
+  {g:"sph",s:[.5],p:[0,1.5,0],c:0xF6F8FC},
+  {g:"sph",s:[.34],p:[0,2.1,0],c:0xF6F8FC},
+  {g:"cone",s:[.06,.28,5],p:[0,2.12,.34],r:[1.5708,0,0],c:0xE0761E},
+  {g:"sph",s:[.05],p:[-.12,2.2,.3],c:0x141414},{g:"sph",s:[.05],p:[.12,2.2,.3],c:0x141414},
+  {g:"cyl",s:[.36,.36,.06,12],p:[0,2.4,0],c:0x1A1A1E},{g:"cyl",s:[.22,.22,.3,12],p:[0,2.55,0],c:0x1A1A1E},
+  {g:"cyl",s:[.03,.03,.7,5],p:[-.55,1.55,0],r:[0,0,-.7],c:0x6B4A32},
+  {g:"cyl",s:[.03,.03,.7,5],p:[.55,1.55,0],r:[0,0,.7],c:0x6B4A32}
+],["snowman","a snowman","man of snow","snow figure"]);
+S("giftpile","infra",[2.4,1,2.4],[
+  {g:"box",s:[.7,.6,.7],p:[0,.3,0],c:0xC0392B},{g:"box",s:[.74,.08,.12],p:[0,.34,0],c:GOLD},
+  {g:"box",s:[.5,.45,.5],p:[.7,.22,.3],c:0x2F5E9E},{g:"box",s:[.54,.06,.1],p:[.7,.25,.3],c:0xE8E4DA},
+  {g:"box",s:[.6,.4,.6],p:[-.6,.2,-.3],c:0x3F7A3A},{g:"box",s:[.1,.44,.64],p:[-.6,.22,-.3],c:GOLD}
+],["presents","wrapped gifts","pile of presents","gifts under the tree"]);
+S("altarseasonal","structure",[3,1.6,2],[
+  {g:"box",s:[2.4,1,1.4],p:[0,.5,0],c:0x5A4A3A},
+  {g:"box",s:[2.5,.06,1.5],p:[0,1.03,0],c:0x3A2E26},
+  {g:"cyl",s:[.05,.05,.32,6],p:[-.7,1.22,0],c:CANDLEW},{g:"cone",s:[.05,.1,5],p:[-.7,1.42,0],c:0xFFD08A,glow:1,pulse:1},
+  {g:"cyl",s:[.05,.05,.32,6],p:[.7,1.22,0],c:CANDLEW},{g:"cone",s:[.05,.1,5],p:[.7,1.42,0],c:0xFFD08A,glow:1,pulse:1},
+  {g:"sph",s:[.16],p:[0,1.2,.2],c:0xC0392B},{g:"cyl",s:[.05,.05,.5,6],p:[.25,1.28,-.2],r:[0,0,.3],c:WHEATC,rep:[4,-.07,0,.05]}
+],["seasonal altar","sabbat altar","altar dressed for the season","festival altar"]);
+
+EFFECTS.fireworks=function(g){
+  var p=particles(90,[8,10,8],0xFFD08A,1.4,.95); p.position.y=18; g.add(p);
+  return function(t,dt){ rise(p,dt,3,.4);
+    g.children.forEach(function(m,i){ if(i<3) m.visible=Math.sin(t*1.6+i)>-.2; }); };
+};
+EFFECTS.beltanefire=function(g){
+  var p=particles(70,[2,5,2],0xFFB23A,1.2,.9); p.position.y=2; g.add(p);
+  return function(t,dt){ rise(p,dt,3.4,.2);
+    g.children.forEach(function(m){ if(m.geometry&&m.geometry.type==="ConeGeometry"){ var s=.85+.3*Math.abs(Math.sin(t*5+m.id)); m.scale.set(1,s,1); } }); };
+};
+EFFECTS.samhainlanterns=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i>1) m.visible=Math.sin(t*3+i)>-0.7; }); }; };
+
+/* ---------- what the season wants ---------- */
+var SEASON_SETS={
+  winter:["yuletree","wreath","yulelog","snowman","giftpile","imbolccandles","fireworks","lunarlanterns","menorah"],
+  spring:["ostaraeggs","maypoleribbons","beltanefire","hearts","altarseasonal","flowers"],
+  summer:["lithawheel","beltanefire","harvestsheaf","stringlights","altarseasonal"],
+  autumn:["samhainlanterns","mabontable","lughcorn","harvestsheaf","diyas","altarseasonal","ofrenda"]
+};
+/* set the season's things about the place, near where the dreamer is */
+function dressSeason(which){
+  var s=which||landOpt("season")||"summer";
+  var list=SEASON_SETS[s]||SEASON_SETS.summer, made=0;
+  var h=(typeof heartOf==="function")?heartOf(store.here||0):{x:0,z:0};
+  list.forEach(function(arch,i){
+    if(!KIT[arch]) return;
+    var a=i*2.39996+1.2, r=14+(i%5)*9;
+    var spec={id:uid(),archetype:arch,label:null,attrs:{},x:h.x+Math.cos(a)*r,z:h.z+Math.sin(a)*r,
+      rot:(i*1.7)%6.283,solid:false,detail:2,nights:[store.session],seasonal:s,addr:null,name:null};
+    if(store.here) spec.realm=store.here;
+    store.objects.push(spec); if(typeof addMesh==="function") addMesh(spec);
+    made++;
+  });
+  if(typeof save==="function") save();
+  return made;
+}
+/* clear away last season's things */
+function undressSeason(){
+  var gone=0;
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if(!o.seasonal) continue;
+    if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+    store.objects.splice(i,1); gone++;
+  }
+  if(typeof save==="function") save();
+  return gone;
+}
+
+</script>
 <script>/* js/vocab-extra.js */
 /* Dream Walker's Atlas — vocab-extra.js
    many more ways of saying the same thing. people don't dream in the app's
@@ -6210,6 +6975,8 @@ function applyLook(spec,look,sex){
 function place(arch,label,attrs,opts){
   if(!KIT[arch]) arch="house";
   opts=opts||{};
+  /* "two blocks away", "across town", "in the next neighbourhood" */
+  var awayFrom=(opts.away&&typeof stepAway==="function")?stepAway(opts.away):null;
   if(KIT[arch].cat==="being" && !opts.forceNew){
     /* fall through to a new body when the dreamer said "another" */
     var ch=resolveCharacter(arch,label,attrs);
@@ -6225,6 +6992,23 @@ function place(arch,label,attrs,opts){
     }
   }
   var s=spotFor(arch,opts.dir,attrs);
+  /* if the fitting pulled it back toward where you stand, keep the promise the dream made:
+     two blocks away means two blocks away */
+  if(awayFrom&&opts.away&&(opts.away.blocks||0)>=1&&KIT[arch].cat==="structure"){
+    /* away from the last thing dreamt, which is what "two blocks away" means to a dreamer */
+    var ref=store.lastId?specById(store.lastId):null;
+    var from=(ref&&(ref.realm||0)===(store.here||0))?{x:ref.x,z:ref.z}:blockOrigin(awayFrom.bx,awayFrom.bz);
+    var want=(opts.away.blocks)*PITCH*0.85;
+    var dx=s.x-from.x, dz=s.z-from.z, got=Math.hypot(dx,dz);
+    if(got<want){
+      var k=want/(got||1);
+      if(!got){ dx=0; dz=-want; k=1; }
+      s.x=from.x+dx*k; s.z=from.z+dz*k;
+      s.bx=Math.round(s.x/PITCH); s.bz=Math.round(s.z/PITCH);
+      s.lot=undefined; s.addr=addressOf(s.bx,s.bz,0);
+      ensureStreets(s.bx,s.bz);
+    }
+  }
   var spec={id:uid(),archetype:arch,label:label||arch,attrs:attrs||{},
             x:s.x,z:s.z,rot:s.rot,sign:opts.sign||null,note:opts.note||null,
             solid:!!opts.solid,detail:1,addr:s.addr||null,name:null,nights:[store.session],
@@ -6239,6 +7023,9 @@ function place(arch,label,attrs,opts){
   if(PEOPLE[arch]) applyLook(spec,opts.look,opts.sex);
   if(store.here) spec.realm=store.here;
   viewAt=null;
+  if(typeof cfg==="function"&&cfg().solidAll!==false&&KIT[arch].cat!=="being") spec.solid=true;
+  if(awayFrom&&typeof stepBack==="function") stepBack(awayFrom);
+  if(opts.away&&opts.away.why) spec.awayNote=opts.away.why;
   store.objects.push(spec);
   if(s.home){ var hm=specById(s.home); if(hm) hm.parked=spec.id; }
   addMesh(spec);
@@ -6396,6 +7183,144 @@ function releaseLots(spec){
   }
   spec.lots=[]; spec.lot=null;
 }
+
+</script>
+<script>/* js/distance.js */
+/* Dream Walker's Atlas — distance.js
+   what "two blocks away" means. a block is a block, a street away is the next one
+   over, a neighbourhood is a cluster of blocks that keeps its own name, and across
+   town is the far side of everything standing.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var WORDNUM={a:1,an:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,
+  "a couple of":2,"a few":3,"several":4,"a dozen":12};
+
+/* read a distance out of the words around a thing */
+function distanceIn(seg){
+  var m;
+  if((m=/\b(a|an|one|two|three|four|five|six|seven|eight|nine|ten|a couple of|a few|several)\s+(blocks?|streets?|roads?)\s*(away|over|down|up|along|from here|further on|further)?\b/.exec(seg)))
+    return {blocks:WORDNUM[m[1]]||1,why:m[0].trim()};
+  if(/\bnext door\b|\bnext to it\b|\bbeside it\b/.test(seg)) return {blocks:0,near:true,why:"next door"};
+  if(/\b(down|up) the (street|road|lane)\b|\bfurther along\b|\bat the end of the (street|road)\b/.test(seg))
+    return {blocks:0,along:true,why:"down the street"};
+  if(/\baround the corner\b|\bround the corner\b|\bon the corner of the next\b/.test(seg))
+    return {blocks:1,corner:true,why:"around the corner"};
+  if(/\bacross town\b|\bother side of town\b|\bfar side of town\b|\bright across the city\b/.test(seg))
+    return {blocks:5,far:true,why:"across town"};
+  if(/\b(the )?next neighbou?rhood\b|\bthe next part of town\b|\banother neighbou?rhood\b/.test(seg))
+    return {blocks:3,hood:true,why:"the next neighbourhood"};
+  if(/\bin (my|our|the) (old )?neighbou?rhood\b|\bmy street\b|\bour street\b|\bmy road\b/.test(seg))
+    return {blocks:0,home:true,why:"the home neighbourhood"};
+  if(/\bout of town\b|\boutside the town\b|\bon the edge of town\b|\bout past the houses\b/.test(seg))
+    return {blocks:6,edge:true,why:"out of town"};
+  if(/\bmiles (away|off)\b|\ba long way (away|off)\b|\bfar away\b/.test(seg))
+    return {blocks:9,far:true,why:"miles away"};
+  return null;
+}
+
+/* every distance phrase in a stretch of dream, with where it was said */
+var DIST_ALL=new RegExp("(\\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|a couple of|a few|several)\\s+(?:blocks?|streets?|roads?)\\s*(?:away|over|down|up|along|from here|further on|further)?)"+
+  "|(\\bnext door\\b|\\bnext to it\\b|\\bbeside it\\b)"+
+  "|(\\b(?:down|up) the (?:street|road|lane)\\b|\\bfurther along\\b|\\bat the end of the (?:street|road)\\b)"+
+  "|(\\baround the corner\\b|\\bround the corner\\b)"+
+  "|(\\bacross town\\b|\\bother side of town\\b|\\bfar side of town\\b)"+
+  "|(\\b(?:the )?next neighbou?rhood\\b|\\bthe next part of town\\b|\\banother neighbou?rhood\\b)"+
+  "|(\\bin (?:my|our|the) (?:old )?neighbou?rhood\\b|\\bmy street\\b|\\bour street\\b)"+
+  "|(\\bout of town\\b|\\boutside the town\\b|\\bon the edge of town\\b)"+
+  "|(\\bmiles (?:away|off)\\b|\\ba long way (?:away|off)\\b|\\bfar away\\b)","g");
+function distancesIn(low){
+  var out=[], m; DIST_ALL.lastIndex=0;
+  while((m=DIST_ALL.exec(low))){
+    var d=distanceIn(m[0]);
+    if(d) out.push({at:m.index,end:m.index+m[0].length,d:d});
+    if(DIST_ALL.lastIndex===m.index) DIST_ALL.lastIndex++;
+  }
+  return out;
+}
+/* a distance belongs to the thing it describes: the one just after it, else the one just before */
+function shareDistances(spans,nouns,low){
+  var map={};
+  spans.forEach(function(sp){
+    /* "two blocks away stood a church" — what stands there comes next.
+       "a church two blocks away" — it belongs to what was just named. */
+    var after=(low||"").slice(sp.end,sp.end+14);
+    var pointsForward=/^\s*(stood|stands|sat|sits|was|were|there|lay|lies|rose|is|are|i (saw|found))/.test(after);
+    var best=null, bd=1e9;
+    nouns.forEach(function(n){
+      var forward=n.at>=sp.end;
+      var gap=forward?(n.at-sp.end):(sp.at-n.at);
+      if(gap<0) return;
+      if(pointsForward&&!forward) return;
+      var limit=forward?70:40;
+      var score=gap+(forward===pointsForward?0:25);
+      if(gap<limit&&score<bd){ bd=score; best=n; }
+    });
+    if(best&&map[best.at]===undefined) map[best.at]=sp.d;
+  });
+  return map;
+}
+
+/* a neighbourhood: a patch of blocks that keeps its own name */
+function hoods(){ if(!store.hoods) store.hoods=[]; return store.hoods; }
+var HOOD_NAME=["the Old Quarter","Northgate","the Hollows","Kiln End","Saltmarket","the Rookery","Greenside","Underhill",
+  "Bellwater","the Shambles","Fairmount","the Warrens","Mill Row","Candlewick","the Terraces"];
+function hoodAt(bx,bz){
+  var H=hoods();
+  for(var i=0;i<H.length;i++) if(Math.abs(H[i].bx-bx)<=1&&Math.abs(H[i].bz-bz)<=1) return H[i];
+  var h={bx:bx,bz:bz,name:HOOD_NAME[H.length%HOOD_NAME.length],realm:store.here||0};
+  H.push(h); if(typeof save==="function") save();
+  return h;
+}
+function hoodName(x,z){
+  var bx=Math.round(x/PITCH), bz=Math.round(z/PITCH);
+  var H=hoods();
+  for(var i=0;i<H.length;i++) if((H[i].realm||0)===(store.here||0)&&Math.abs(H[i].bx-bx)<=1&&Math.abs(H[i].bz-bz)<=1) return H[i].name;
+  return null;
+}
+
+/* move the grid the right number of blocks before something is built there */
+function stepAway(d){
+  if(!d) return null;
+  var g=store.grid, from={bx:g.bx,bz:g.bz,lot:g.lot};
+  if(d.near||d.along||d.home){
+    /* beside the last thing dreamt, not beside wherever the grid happens to sit */
+    var last=store.lastId?specById(store.lastId):null;
+    if(last&&(last.realm||0)===(store.here||0)&&last.bx!==undefined&&last.bx!==null){
+      g.bx=last.bx; g.bz=last.bz;
+      g.lot=(last.lot===undefined||last.lot===null)?0:((last.lot+1)%LOTS);
+    }
+    return from;
+  }
+  var n=d.blocks||1;
+  if(d.far||d.edge){
+    /* the far side of everything standing */
+    var minx=1e9,maxx=-1e9,minz=1e9,maxz=-1e9,any=false;
+    store.objects.forEach(function(o){
+      if(o.filler||(o.realm||0)!==(store.here||0)) return;
+      var d2=KIT[o.archetype]; if(!d2||d2.cat!=="structure") return;
+      any=true; minx=Math.min(minx,o.x); maxx=Math.max(maxx,o.x); minz=Math.min(minz,o.z); maxz=Math.max(maxz,o.z);
+    });
+    if(any){
+      var cx=Math.round(((minx+maxx)/2)/PITCH), cz=Math.round(((minz+maxz)/2)/PITCH);
+      var away=Math.max(n,Math.ceil(Math.max(maxx-minx,maxz-minz)/PITCH));
+      var a=(hash(String(store.objects.length))%4);
+      g.bx=cx+(a===0?away:a===1?-away:0); g.bz=cz+(a===2?away:a===3?-away:0);
+    } else { g.bx+=n; }
+  } else if(d.corner){
+    g.bx+=(Math.random()<0.5?1:-1);
+  } else {
+    /* straight out: the way you are already facing, if you are walking */
+    var dir=(typeof walkMode!=="undefined"&&walkMode)?yaw:(hash(String(g.bx+g.bz))%4)*Math.PI/2;
+    var dx=Math.round(-Math.sin(dir)), dz=Math.round(-Math.cos(dir));
+    if(!dx&&!dz) dz=-1;
+    g.bx+=dx*n; g.bz+=dz*n;
+  }
+  g.lot=0;
+  if(d.hood||d.far||d.edge||(d.blocks||0)>=2) hoodAt(g.bx,g.bz);
+  return from;
+}
+function stepBack(from){ if(from){ store.grid.bx=from.bx; store.grid.bz=from.bz; } }
 
 </script>
 <script>/* js/vehicles.js */
@@ -7691,6 +8616,122 @@ function awakeNear(pos,range){
 
 
 </script>
+<script>/* js/ground.js */
+/* Dream Walker's Atlas — ground.js
+   something to stand on. a ship's deck holds you, a stair carries you up a step at
+   a time, a bridge and a roof and a cloud bank hold you, and when you walk off the
+   edge you fall rather than drift. you can step up about knee height; anything
+   taller you have to climb, or fly.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var standFall=0, SURF=[], surfAt=-1, STEP_UP=0.62;
+
+/* what you can stand on, and how high its walking surface is.
+   top: flat, over the whole footprint. ramp: rises along the thing's own length. */
+var SURFACE={
+  stairs:{ramp:[0,2.6]}, celestialstair:{ramp:[0,22]}, impossiblestair:{ramp:[0,6]},
+  bridge:{top:1.1}, brokenhighway:{top:8.5}, rainbowbridge:{top:9.4}, pier:{top:1.2},
+  ship:{top:3.4,board:true}, boat:{top:0.55}, soulferry:{top:1.3}, shipwreck:{top:2.6},
+  sleigh:{top:1.25}, firechariot:{top:1.6}, flyingcarpet:{top:0.62}, cloudbank:{top:2.6},
+  floatingisland:{top:0}, moonrock:{top:2.2}, dune:{mound:[26,5.6]}, hill:{mound:[16,6]},
+  barrow:{mound:[9,3.4]}, rock:{mound:[3,2.2]}, stage:{top:1.2}, platform:{top:1.2},
+  watertower:{top:15.2}, skyscraper:{roof:true}, warehouse:{roof:true}, factory:{roof:true},
+  hangar:{roof:true}, bunker:{roof:true}, habitat:{roof:true}, reactor:{roof:true},
+  falloutshelter:{roof:true}, ziggurat:{top:17}, pueblo:{roof:true}, marketawning:{top:3.2},
+  wall:{top:2.4}, stonewall:{top:2}, barricade:{top:1.4}, crates:{top:2}, scrapheap:{top:2.6},
+  monolith:{roof:true}, sunkenruins:{top:0.6}, treasurechest:{top:1.1}
+};
+
+function surfaceList(){
+  if(surfAt>0&&performance.now()-surfAt<500) return SURF;
+  surfAt=performance.now(); SURF=[];
+  var here=store.here||0;
+  store.objects.forEach(function(o){
+    var S=SURFACE[o.archetype]; if(!S) return;
+    if((o.realm||0)!==here) return;
+    if(typeof isHidden==="function"&&isHidden(o)) return;
+    var d=KIT[o.archetype]; if(!d) return;
+    var a=o.attrs||{}, s=a.s||1, g=meshes[o.id];
+    var live=g&&typeof g.position.x==="number";
+    var top=S.top;
+    if(S.roof) top=d.size[1]*s*(a.h||1)*(a.lv?Math.max(1,a.lv*3.2/d.size[1]):1);
+    SURF.push({x:live?g.position.x:o.x, z:live?g.position.z:o.z,
+      rot:(live&&typeof g.rotation.y==="number")?g.rotation.y:(o.rot||0),
+      hw:d.size[0]*s*(a.w||1)/2, hd:d.size[2]*s*(a.d||1)/2,
+      top:(top||0)*(S.roof?1:s), ramp:S.ramp, mound:S.mound, board:S.board, s:s, kind:o.archetype});
+  });
+  return SURF;
+}
+
+/* the height of whatever you are standing on at this spot */
+function supportAt(x,z,feet){
+  var best=0, list=surfaceList(), reach=feet+STEP_UP+0.02;
+  for(var i=0;i<list.length;i++){
+    var w=list[i], dx=x-w.x, dz=z-w.z;
+    if(Math.abs(dx)>w.hw+w.hd+2||Math.abs(dz)>w.hw+w.hd+2) continue;
+    var c=Math.cos(-w.rot), sn=Math.sin(-w.rot), lx=dx*c+dz*sn, lz=-dx*sn+dz*c;
+    var h=null;
+    if(w.mound){
+      /* a mound: highest in the middle, falling away to nothing at the rim */
+      var r=Math.hypot(lx,lz)/(w.mound[0]/2*w.s);
+      if(r<1) h=w.mound[1]*w.s*(1-r*r);
+    } else if(Math.abs(lx)<w.hw-0.1&&Math.abs(lz)<w.hd-0.1){
+      if(w.ramp){
+        var t=(lz+w.hd)/(2*w.hd);              // along its length: the bottom step to the top
+        h=w.ramp[0]+(w.ramp[1]-w.ramp[0])*Math.max(0,Math.min(1,t))*w.s;
+      } else {
+        h=w.top;
+        /* a ship is boarded at the stern, up a plank */
+        if(w.board&&lz<-w.hd+3.5) h=Math.max(0,w.top*(lz+w.hd)/3.5);
+      }
+    }
+    if(h===null) continue;
+    if(h>best&&h<=reach) best=h;
+  }
+  return best;
+}
+
+/* inside a building, the floor you are on is the floor that holds you */
+function insideSupport(P,feet){
+  if(!INT) return 0;
+  var base=(INT.level||0)*INT.floor;
+  /* the stairs: a slope you walk up, not a step you fall through */
+  for(var i=0;i<(INT.stairs||[]).length;i++){
+    var st=INT.stairs[i];
+    if(st.from!==(INT.level||0)&&st.from!==(INT.level||0)-1) continue;
+    var dx=P.x-st.x, dz=P.z-st.z, d=Math.hypot(dx,dz);
+    if(d>3.4) continue;
+    var t=Math.max(0,Math.min(1,(3.4-d)/3.4));
+    var bottom=st.from*INT.floor;
+    var h=bottom+t*INT.floor;
+    if(h>base-0.05&&h<=feet+STEP_UP+0.3) base=Math.max(base,h);
+  }
+  return base;
+}
+
+/* each frame: stand, step up, or fall */
+function groundTick(dt){
+  if(!walkMode) return;
+  var P=camera.position, feet=P.y-1.72;
+  var sup=store.inside?insideSupport(P,feet):supportAt(P.x,P.z,feet);
+  if(canFly&&flyY>sup+0.05){ standFall=0; P.y=1.72+flyY; return; }
+  if(feet>sup+0.02){
+    standFall=Math.min(26,standFall+24*dt);
+    feet=Math.max(sup,feet-standFall*dt);
+  } else { standFall=0; feet=sup; }
+  flyY=feet>0.04?feet:0;
+  P.y=1.72+feet;
+  /* going up or down a floor inside: the walls change with you */
+  if(store.inside&&INT){
+    var lvl=Math.round(feet/INT.floor);
+    lvl=Math.max(0,Math.min(INT.levels-1,lvl));
+    if(lvl!==INT.level){ INT.level=lvl; wallsAt=-1;
+      setStatus(lvl?"Floor "+(lvl+1)+" of "+INT.levels+".":"The ground floor."); }
+  }
+}
+
+</script>
 <script>/* js/controls.js */
 /* Dream Walker's Atlas — controls.js
    camera, walking, proximity and inspecting forms
@@ -7800,6 +8841,10 @@ function animate(){
       var l=Math.hypot(f,s); f/=l; s/=l; f*=pace; s*=pace;
       walkBy((Math.sin(yaw)*-f+Math.cos(yaw)*s)*sp*dt,(Math.cos(yaw)*-f-Math.sin(yaw)*s)*sp*dt);
     }
+    if(store.inside&&typeof inLift==="function"&&inLift()){
+      if(keys["Space"]) liftMove(1);
+      if(keys["KeyC"]||keys["ControlLeft"]) liftMove(-1);
+    }
     if(canFly){
       if(keys["Space"]) flyY+=sp*dt;
       if(keys["KeyC"]||keys["ControlLeft"]) flyY-=sp*dt;
@@ -7835,7 +8880,7 @@ function animate(){
   if(audio.on) audioTick();
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
   if(store.peopleLater){ store.peopleLater=false; peopleEverything(); }
-  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt);
+  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt); armsTick(dt);
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
   renderView();
@@ -8016,7 +9061,11 @@ function solidWalls(){
     var x=live?g.position.x:o.x, z=live?g.position.z:o.z, rot=live&&typeof g.rotation.y==="number"?g.rotation.y:(o.rot||0);
     if(o.archetype==="volcanolair"){ WALLS.push({x:x,z:z,rot:rot,lair:1,s:s,h:36*s}); return; }
     if(TRUNK[o.archetype]!==undefined) WALLS.push({x:x,z:z,r:TRUNK[o.archetype]*s,h:h});
-    else WALLS.push({x:x,z:z,rot:rot,hw:d.size[0]*s*(a.w||1)/2,hd:d.size[2]*s*(a.d||1)/2,h:h});
+    else {
+      var S=(typeof SURFACE!=="undefined")?SURFACE[o.archetype]:null;
+      var wt=S?(S.top!==undefined?S.top*s:(S.ramp?S.ramp[1]*s:(S.mound?S.mound[1]*s:(S.roof?h:undefined)))):undefined;
+      WALLS.push({x:x,z:z,rot:rot,hw:d.size[0]*s*(a.w||1)/2,hd:d.size[2]*s*(a.d||1)/2,h:h,walkTop:wt});
+    }
   });
   return WALLS;
 }
@@ -8043,7 +9092,11 @@ function blockedAt(x,z,feet){
     if(Math.abs(dx)>w.hw+w.hd+1||Math.abs(dz)>w.hw+w.hd+1) continue;
     var c=Math.cos(-w.rot), sn=Math.sin(-w.rot);
     var lx=dx*c+dz*sn, lz=-dx*sn+dz*c;
-    if(Math.abs(lx)<w.hw+R&&Math.abs(lz)<w.hd+R) return true;
+    if(Math.abs(lx)<w.hw+R&&Math.abs(lz)<w.hd+R){
+      /* something you can stand on stops blocking once you are level with its top */
+      if(w.walkTop!==undefined&&feet>=w.walkTop-0.35) continue;
+      return true;
+    }
   }
   return false;
 }
@@ -8054,6 +9107,14 @@ function walkBy(mx,mz){
   if(!blockedAt(p.x+mx,p.z,feet)){ p.x+=mx; return; }
   if(!blockedAt(p.x,p.z+mz,feet)){ p.z+=mz; return; }
 }
+
+
+/* picking things up and using them */
+addEventListener("keydown",function(e){
+  if(!walkMode||/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(e.code==="KeyG"&&typeof armsReach==="function"){ armsReach(); }
+  if(e.code==="KeyF"&&typeof useCarried==="function"){ useCarried(); }
+});
 
 </script>
 <script>/* js/talk.js */
@@ -8999,7 +10060,7 @@ library:["library","archive","records"],
 station:["train depot","bus depot","railway station","train station","bus station","station","terminal","platform","airport","depot"],
 courthouse:["courthouse","court","tribunal","city hall","town hall"],
 shop:["shop","store","market","cafe","diner","bar","pub","restaurant","bakery","boutique","pharmacy"],
-warehouse:["storage depot","supply depot","goods depot","warehouse","hangar","storage"],
+warehouse:["storage depot","supply depot","goods depot","warehouse","storage"],
 factory:["steel mill","cotton mill","paper mill","factory","plant","refinery","foundry","mill"],
 barn:["barn","stable","silo"],
 shed:["garden shed","tool shed","shed","outhouse"],
@@ -9224,6 +10285,10 @@ function scanText(chunk){
   found.sort(function(a,b){ return a.at-b.at; });
   /* a door that belongs to a building is part of it, not a way through to elsewhere */
   var doorBefore={};
+  /* how far off things were said to be, shared out among the things named */
+  var farMap=(typeof distancesIn==="function")
+    ? shareDistances(distancesIn(rawLow),found.filter(function(q){ return KIT[q.arch]&&KIT[q.arch].cat==="structure"; }),rawLow)
+    : null;
   for(var di=found.length-1;di>=0;di--){
     var fd=found[di], owned=false;
     if(!((fd.arch==="portal"&&/door/.test(fd.word))||(fd.arch==="vaultdoor"&&/round door/.test(fd.word)))) continue;
@@ -9296,8 +10361,10 @@ function scanText(chunk){
     if(KIT[f.arch]&&KIT[f.arch].cat==="structure"){
       var fi=found.indexOf(f), nextAt=fi>-1&&fi+1<found.length?found[fi+1].at:low.length;
       var faceSeg=rawLow.slice(f.at,Math.min(nextAt,f.at+160));
+      var howFar=farMap?farMap[f.at]:null;
       Object.assign(attrs,openingsFrom(faceSeg));
       Object.assign(attrs,facadeFrom(faceSeg,INSIDE_CUE.test(faceSeg)));
+      /* held until the thing is placed, just below */
       if(doorBefore[f.at]){
         var pre=openingsFrom(doorBefore[f.at]);
         if(pre.ds!==undefined&&attrs.ds===undefined) attrs.ds=pre.ds;
@@ -9333,12 +10400,18 @@ function scanText(chunk){
       if(grew||again.detail===2) refresh(again);
     } else {
       if(/\b(hidden|secret|concealed|veiled)\s*$/.test(low.slice(Math.max(0,f.at-14),f.at))) attrs.hidden=1;
-      place(f.arch,f.word,attrs,{dir:dirs.length?dirs:null,forceNew:fresh,look:f.look||null,sex:sexOfWord(f.word)});
+      place(f.arch,f.word,attrs,{dir:dirs.length?dirs:null,forceNew:fresh,look:f.look||null,sex:sexOfWord(f.word),
+        away:(typeof howFar!=="undefined")?howFar:null});
       fired++;
     }
     prev=f.at;
   });
   crossUpTo(Infinity);
+  /* came close to a crossing without making one: say so, rather than leave them guessing */
+  if(!crossings.length&&typeof crossingHint==="function"){
+    var hint=crossingHint(low);
+    if(hint&&typeof setStatus==="function") setStatus(hint);
+  }
 
   var raw=chunk.toLowerCase();
   EMOTIONS.forEach(function(e){ if(raw.indexOf(e)>-1 && store.emotions.indexOf(e)===-1) store.emotions.push(e); });
@@ -10873,6 +11946,7 @@ function openPanel(){
   $("counted").checked=c.counted!==false;
   $("nm-on").value=c.nightmares===false?"off":"on"; $("nm-catch").value=c.nightmareCatch||"wake";
   $("padmode").value=c.pad||"automatic"; $("skies").value=c.skies===false?"off":"on";
+  $("solidall").value=c.solidAll===false?"half":"solid";
   renderHeld();
   $("panel").classList.add("open");
 }
@@ -10881,7 +11955,7 @@ function savePanel(){
   var was=cfg().counted!==false;
   var c={mode:$("mode").value,key:$("key").value.trim(),proxy:$("proxy").value.trim(),
          model:$("model").value.trim()||LLM_MODEL,density:parseInt($("density").value,10),
-         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value,skies:$("skies").value!=="off"};
+         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value,skies:$("skies").value!=="off",solidAll:$("solidall").value!=="half"};
   if(was&&!c.counted) forgetDevice();
   if(!was&&c.counted) setTimeout(checkin,50);
   if(c.mode==="direct"&&!c.key){ $("err").textContent="Direct mode needs a key."; return; }
@@ -11057,6 +12131,7 @@ function plotPlace(arch,x,z){
             addr:addressOf(near.bx,near.bz,near.k),name:null,named:"provisional",
             bx:bx,bz:bz,lot:L?L.k:null,nights:[store.session]};
   var inRealm=realmAtX(spec.x); if(inRealm) spec.realm=inRealm.id;
+  if(KIT[arch].cat!=="being") spec.solid=true;   // anything you place by hand is really there
   if(ROADGOING[arch]) snapVehicle(spec);
   spec.name=nameFor(spec,spec.addr);
   store.objects.push(spec);
@@ -11382,6 +12457,7 @@ function realmSwitchesIn(low){
       var needle=" "+w+" ", i=0;
       while((i=low.indexOf(needle,i))>-1){
         var before=low.slice(Math.max(0,i-16),i);
+        if(typeof crossingMeant==="function"&&!crossingMeant(low,i,w)){ i+=needle.length-1; continue; }
         out.push({at:i,end:i+needle.length-1,kind:pair[0],secret:/\b(hidden|secret)\b/.test(before)||/\b(hidden|secret) (door|way|passage|path|stair)/.test(low.slice(Math.max(0,i-60),i))});
         i+=needle.length-1;
       }
@@ -11391,6 +12467,10 @@ function realmSwitchesIn(low){
     var needle=" "+w+" ", i=0;
     while((i=low.indexOf(needle,i))>-1){ out.push({at:i,end:i+needle.length-1,kind:null}); i+=needle.length-1; }
   });
+  if(typeof CROSS_FALLBACK!=="undefined"){
+    var m=CROSS_FALLBACK.exec(low);
+    if(m&&!out.length) out.push({at:m.index,end:m.index+m[0].length,kind:"elsewhere"});
+  }
   out.sort(function(a,b){ return a.at-b.at||(b.end-b.at)-(a.end-a.at); });
   var kept=[], last=-1;
   out.forEach(function(s){ if(s.at>last){ kept.push(s); last=s.end; } });
@@ -11474,10 +12554,35 @@ function realmWatch(){
 function renderRealmList(){
   var el=document.getElementById("l-realms"); if(!el) return;
   var R=realms();
-  if(!R.length){ el.innerHTML='<p class="small-note">No other realms yet. Dream your way into one &mdash; the underworld, the depths, faerie, another world &mdash; and it will be built here, with a way back.</p>'; return; }
-  el.innerHTML=R.map(function(r){
+  if(!R.length){
+    el.innerHTML='<p class="small-note">No other worlds yet. Dream your way into one &mdash; <i>"I went down into the underworld", "I found myself somewhere else"</i> &mdash; or cross straight into one here.</p>'+
+      '<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross"><option value="">choose a world</option>'+
+      Object.keys(REALMS).map(function(k){ return '<option value="'+k+'">'+esc(REALMS[k].name)+"</option>"; }).join("")+'</select></div>';
+    var c0=document.getElementById("l-cross");
+    if(c0) c0.onchange=function(){
+      var k=c0.value; if(!k) return;
+      enterRealm(k,false,null,null);
+      var r=realms()[realms().length-1];
+      setStatus("<b>"+esc(REALMS[k].name)+".</b> A way back stands where you came in.");
+      visitRealm(r?r.id:0); closeLand(); save();
+    };
+    return;
+  }
+  var chooser='<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross">'+
+    '<option value="">choose a world</option>'+
+    Object.keys(REALMS).map(function(k){ return '<option value="'+k+'">'+esc(REALMS[k].name)+"</option>"; }).join("")+
+    '</select></div>';
+  el.innerHTML=chooser+R.map(function(r){
     return '<div class="l-realm"><span>'+esc(r.name)+'</span><button class="btn" data-visit="'+r.id+'">Go there</button></div>';
   }).join("")+'<div class="l-realm"><span>The town</span><button class="btn" data-visit="0">Go there</button></div>';
+  var cross=document.getElementById("l-cross");
+  if(cross) cross.onchange=function(){
+    var k=cross.value; if(!k) return;
+    enterRealm(k,false,null,null);
+    var r=realms()[realms().length-1];
+    setStatus("<b>"+esc(REALMS[k].name)+".</b> A way back stands where you came in.");
+    visitRealm(r?r.id:0); closeLand(); save();
+  };
   Array.prototype.forEach.call(el.querySelectorAll("[data-visit]"),function(b){
     b.onclick=function(){ visitRealm(+b.getAttribute("data-visit")); closeLand(); };
   });
@@ -11494,6 +12599,105 @@ function visitRealm(id){
 /* the other worlds' scenery, new worlds and mythic names (realm-kit.js) */
 if(typeof extendRealms==="function") extendRealms();
 if(typeof extendRealms2==="function") extendRealms2();
+if(typeof extendRealms3==="function") extendRealms3();
+if(typeof widenRealmWords==="function") widenRealmWords();
+
+</script>
+<script>/* js/realm-words.js */
+/* Dream Walker's Atlas — realm-words.js
+   people don't cross over in the app's words. they write "I ended up in a forest
+   that wasn't a forest", "the lift went down too far", "we came out under the sea".
+   this widens what counts as a crossing, adds a plain fallback for "somewhere
+   else", and — when a dream comes close without crossing — says so, instead of
+   leaving the dreamer to guess.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var MORE_REALM_WORDS={
+  underworld:["underworld","the underworld","the land of the dead","land of the dead","the lower world","the world below",
+    "the world beneath","down among the dead","the kingdom of the dead","into hell","the inferno","the abyss below",
+    "the dark below","beneath the earth","under the earth","the deep places","the halls below","the dead lands","perdition",
+    "the shades","the caverns of the dead","the place of the dead","the realm below"],
+  heavens:["the heavens","into heaven","the upper world","the world above","the sky country","the country above",
+    "above the clouds","beyond the clouds","the shining place","the halls of light","the high places","paradise",
+    "the golden country","the realm above","up among the clouds","the courts of heaven"],
+  faerie:["faerie","fairyland","fairy land","the fairy world","the otherworld","the other world","the hidden country",
+    "the green world","the land of the fae","the fae lands","elfland","the enchanted wood","the wild wood",
+    "a forest that was not a forest","the greenwood","under the hill","the hollow hills","the perilous realm"],
+  depths:["the deep","under the sea","beneath the sea","under the water","beneath the water","under the ocean",
+    "the ocean floor","the sea floor","the drowned world","the water world","below the waves","the sunken world",
+    "down in the water","the deep places of the sea","the kingdom of the sea"],
+  dead:["the realm of the dead","the grey country","the quiet lands","the still lands","the country of ghosts",
+    "the land of ghosts","where the dead go","the resting lands","the long grey fields"],
+  frozen:["the frozen lands","the frozen world","the land of ice","a world of ice","the white lands","the ice country",
+    "the winter lands","the frozen waste","the endless winter","a place of snow and ice"],
+  void:["the void","the nothing","the empty place","the emptiness","the dark between","the space between",
+    "the place with nothing in it","the black nowhere","the gap between worlds","nowhere at all"],
+  mirror:["the mirror world","the other side of the mirror","behind the mirror","through the looking glass",
+    "the looking-glass world","the reflected world","the world in the mirror","the reversed world"],
+  fire:["the world of fire","a world of fire","the land of fire","the burning world","the fire lands","the world on fire",
+    "the place of flames","the furnace world"],
+  stars:["among the stars","out among the stars","into the sky and beyond","beyond the sky","out in space","in space",
+    "the black between stars","the star fields","up among the planets","off the world"],
+  wasteland:["the ruined world","the dead world","the world after","after everything ended","the world that ended",
+    "the burnt world","the poisoned lands","the broken world"],
+  desert:["a world of sand","the sand sea","endless sand","the great desert","a land of dunes","nothing but sand"],
+  station:["up on the station","the ring station","the orbital station","above the world","out in orbit"],
+  future:["a city that hadn't been built yet","a city of the future","years from now","the coming world",
+    "a world of neon","the city of lights and rain"],
+  elsewhere:["another world","a different world","some other world","a world that wasn't ours","a place that wasn't here",
+    "somewhere else entirely","a strange country","an unfamiliar world","a world i had never seen","the other place",
+    "a place unlike anywhere","another place entirely","a world not my own"]
+};
+
+/* the plainest way anybody says it: a verb of going, then somewhere that isn't here */
+var CROSS_VERB="(stepped|walked|went|came|fell|crossed|passed|slipped|drifted|climbed|swam|flew|sank|rose|was pulled|was taken|was carried|found myself|ended up|arrived|emerged|woke up|opened onto|led me|took me|brought me)";
+var CROSS_FALLBACK=new RegExp("\\b"+CROSS_VERB+"\\b[^.]{0,40}\\b(into|through|in|to|out into|down into|up into|onto)\\b[^.]{0,40}\\b(another world|a different world|somewhere else|another place|the other side|elsewhere|a new world|a strange place|a place i did not know|a place i didn't know)\\b");
+/* a word that means a world, even when the sentence isn't shaped as a crossing */
+var REALM_NEAR=[["underworld",/\b(underworld|land of the dead|hell)\b/],["heavens",/\b(heaven|the heavens|paradise)\b/],
+  ["faerie",/\b(faerie|fairyland|the otherworld|elfland)\b/],["depths",/\b(under the sea|the deep|ocean floor)\b/],
+  ["frozen",/\b(frozen world|land of ice|winter lands)\b/],["void",/\b(the void|the emptiness)\b/],
+  ["mirror",/\b(mirror world|looking glass)\b/],["fire",/\b(world of fire|burning world)\b/],
+  ["stars",/\b(outer space|among the stars|in orbit)\b/],["wasteland",/\b(wasteland|ruined world)\b/],
+  ["desert",/\b(endless desert|sea of sand)\b/],["station",/\b(space station|the orbital)\b/],
+  ["future",/\b(the future|neon city)\b/],["elsewhere",/\b(another world|somewhere else)\b/]];
+
+function widenRealmWords(){
+  if(typeof REALM_WORDS==="undefined") return;
+  var have={};
+  REALM_WORDS.forEach(function(p){ p[1].forEach(function(w){ have[w]=1; }); });
+  REALM_WORDS.forEach(function(p){
+    var add=MORE_REALM_WORDS[p[0]]; if(!add) return;
+    add.forEach(function(w){ if(!have[w]){ have[w]=1; p[1].push(w); } });
+  });
+  Object.keys(MORE_REALM_WORDS).forEach(function(k){
+    if(REALM_WORDS.some(function(p){ return p[0]===k; })) return;
+    REALM_WORDS.push([k,MORE_REALM_WORDS[k].slice()]);
+  });
+}
+
+/* said plainly, when a dream came close but didn't cross */
+function crossingHint(low){
+  for(var i=0;i<REALM_NEAR.length;i++){
+    if(REALM_NEAR[i][1].test(low)){
+      var name=(REALMS[REALM_NEAR[i][0]]||{}).name||"another world";
+      return "You spoke of "+name+" but not of going there. Say how you got in \u2014 <i>\u201cI went down into it\u201d, \u201cI stepped through\u201d, \u201cI found myself there\u201d</i> \u2014 or use <b>Cross into\u2026</b> in The land.";
+    }
+  }
+  return null;
+}
+
+/* widen them as soon as this file is read: the realms are already known by now */
+if(typeof REALM_WORDS!=="undefined") widenRealmWords();
+
+/* a bare name of a world only counts with a verb of going near it: "faerie" on its
+   own is a thought, "I stepped into faerie" is a crossing */
+var BARE_REALM=/^(faerie|fairyland|fairy land|the underworld|underworld|the heavens|the void|the deep|the future|elfland|paradise|in space|the otherworld|the other world|the abyss below|the nothing|the emptiness)$/;
+var CROSS_NEAR=new RegExp("\\b"+CROSS_VERB+"\\b[^.]{0,30}$|\\b(into|through|down into|up into|out into|inside|beyond|across into)\\s*$");
+function crossingMeant(low,at,word){
+  if(!BARE_REALM.test(word)) return true;
+  return CROSS_NEAR.test(low.slice(Math.max(0,at-46),at+1));
+}
 
 </script>
 <script>/* js/skies.js */
@@ -11523,6 +12727,8 @@ var SKYWORK={
   stars:      {mode:7,a:0x2A1060,b:0xC050E8,c:0x4AE0FF,speed:0.35,lift:0.4,amt:1.5},
   wasteland:  {mode:8,a:0xC8B078,b:0x8A7A50,c:0xE8D8A8,speed:0.6,lift:0.5},
   desert:     {mode:8,a:0xF0D8A8,b:0xBFD8EC,c:0xFFF0D0,speed:0.4,lift:0.4},
+  station:    {mode:7,a:0x0A0A18,b:0x4A6AE8,c:0x6AE8FF,speed:0.3,lift:0.4,amt:1.4},
+  future:     {mode:6,a:0x2A0A3A,b:0xFF4AE0,c:0x4AE8FF,speed:0.7,lift:0.55,amt:1.3},
   elsewhere:  {mode:7,a:0x1A4A4A,b:0x6AFFC4,c:0xFF6AC8,speed:0.8,lift:0.6,amt:1.5}
 };
 
@@ -11826,6 +13032,7 @@ function meSpec(){ return {id:"__me",archetype:"human",attrs:{},look:meLook(),so
 function rebuildMe(){
   if(meG&&scene) scene.remove(meG);
   meG=buildFigure(meSpec(),1); meG.userData.me=1; shadowsFor(meG,true);
+  if(typeof showCarried==="function") setTimeout(showCarried,0);
   if(scene) scene.add(meG);
   meG.visible=false;
 }
@@ -12254,12 +13461,14 @@ var SOLIDFURN={bed:1,sofa:1,table:1,longtable:1,counter:1,piano:1,wardrobe:1,boo
 var ROOMFURN={
   hallway:["rug","painting","plant"], living:["sofa","armchair","rug","fireplace","lamp","bookshelf","painting","table"],
   kitchen:["counter","stove","fridge","sink","table","chair","chair"], bedroom:["bed","wardrobe","lamp","rug","wallmirror"],
-  bathroom:["bathtub","sink","wallmirror"], study:["desk","chair","bookshelf","bookshelf","lamp"], dining:["longtable","chandelier","painting"],
+  bathroom:["bathtub","sink","wallmirror"],
+  lobbybig:["till","plant","armchair","armchair","painting","chandelier"], study:["desk","chair","bookshelf","bookshelf","lamp"], dining:["longtable","chandelier","painting"],
   nursery:["crib","toys","rug","lamp"], attic:["crates","barrel","wardrobe"], basement:["crates","barrel","machine"], ballroom:["chandelier","chandelier","piano"],
   office:["desk","chair","desk","chair","plant","bookshelf"], cell:["bed","sink"], lobby:["till","plant","armchair","painting"],
   throneroom:["throneseat","banner","banner","chandelier","rug"], classroom:["blackboard","schooldesk","schooldesk","schooldesk","schooldesk"]
 };
-var ROOMNAME={hallway:"the hallway",living:"the living room",kitchen:"the kitchen",bedroom:"the bedroom",bathroom:"the bathroom",study:"the study",
+var ROOMNAME={chapel:"a side chapel",vestry:"the vestry",meeting:"the meeting room",ward:"a ward",
+  chamber:"a chamber",kitchenette:"the kitchen",suite:"a suite",archive:"the archive",hallway:"the hallway",living:"the living room",kitchen:"the kitchen",bedroom:"the bedroom",bathroom:"the bathroom",study:"the study",
   dining:"the dining room",nursery:"the nursery",attic:"the attic",basement:"the basement",ballroom:"the ballroom",office:"the office",cell:"a cell",
   lobby:"the lobby",throneroom:"the throne room",classroom:"the classroom"};
 /* mode rooms: rooms either side of a hallway. mode hall: one great space, laid out by fill() */
@@ -12268,17 +13477,23 @@ var PLANS={
   cottage:{mode:"rooms",rooms:["living","kitchen","bedroom"],wall:0xE8E0CC,floor:"wood"},
   apartment:{mode:"rooms",rooms:["living","kitchen","bedroom","bathroom"],wall:0xDCD8D0,floor:"wood"},
   motel:{mode:"rooms",rooms:["lobby","bedroom","bedroom","bedroom","bathroom"],wall:0xD8C8A8,floor:"carpet"},
-  hotel:{mode:"rooms",rooms:["lobby","bedroom","bedroom","bedroom","bedroom","dining"],wall:0xE0D4BC,floor:"carpet"},
-  institution:{mode:"rooms",rooms:["lobby","office","cell","cell","cell","office"],wall:0xC8CCC8,floor:"tile"},
-  skyscraper:{mode:"rooms",rooms:["lobby","office","office","office","office"],wall:0xDCDCD8,floor:"carpet"},
+  hotel:{mode:"mixed",ground:"lobby",w:20,d:18,upper:["bedroom","bedroom","suite","bathroom","bedroom","bedroom"],
+    wall:0xE0D4BC,floor:"carpet",lift:true},
+  institution:{mode:"mixed",ground:"lobby",w:18,d:18,upper:["cell","cell","cell","office","bathroom"],
+    wall:0xC8CCC8,floor:"tile",lift:true},
+  skyscraper:{mode:"mixed",ground:"lobby",w:22,d:18,upper:["office","office","meeting","kitchenette","bathroom","archive"],
+    wall:0xDCDCD8,floor:"carpet",lift:true},
   toadstoolhouse:{mode:"rooms",rooms:["living","bedroom"],wall:0xE8D8C0,floor:"wood"},
-  church:{mode:"hall",w:14,d:26,fill:"church",wall:0xD8D0C0,floor:"stone"},
-  cathedral:{mode:"hall",w:22,d:40,fill:"church",wall:0xCCC4B4,floor:"marble",h:9},
-  library:{mode:"hall",w:18,d:22,fill:"library",wall:0xD8CCB0,floor:"wood"},
-  school:{mode:"hall",w:14,d:14,fill:"school",wall:0xE0DCC8,floor:"tile"},
+  church:{mode:"hall",w:14,d:26,fill:"church",wall:0xD8D0C0,floor:"stone",side:["chapel","vestry"]},
+  cathedral:{mode:"hall",w:22,d:40,fill:"church",wall:0xCCC4B4,floor:"marble",h:9,
+    side:["chapel","chapel","vestry","chapel","archive"]},
+  library:{mode:"hall",w:18,d:22,fill:"library",wall:0xD8CCB0,floor:"wood",side:["archive","office"]},
+  school:{mode:"mixed",ground:"school",w:18,d:16,upper:["classroom","classroom","office","bathroom"],
+    wall:0xE0DCC8,floor:"tile"},
   shop:{mode:"hall",w:10,d:12,fill:"shop",wall:0xE8E4D8,floor:"tile"},
   gasstation:{mode:"hall",w:8,d:8,fill:"shop",wall:0xE8E4D8,floor:"tile"},
-  hospital:{mode:"hall",w:14,d:24,fill:"hospital",wall:0xE8EEF0,floor:"tile"},
+  hospital:{mode:"mixed",ground:"hospital",w:18,d:22,upper:["ward","ward","office","bathroom"],
+    wall:0xE8EEF0,floor:"tile",lift:true},
   bank:{mode:"hall",w:16,d:16,fill:"bank",wall:0xE6DCC8,floor:"marble"},
   station:{mode:"hall",w:18,d:14,fill:"station",wall:0xD8D4C8,floor:"tile"},
   courthouse:{mode:"hall",w:16,d:20,fill:"court",wall:0xDCD4C0,floor:"wood"},
@@ -12287,7 +13502,8 @@ var PLANS={
   barn:{mode:"hall",w:12,d:16,fill:"barn",wall:0x8A5A3A,floor:"wood",h:5},
   garage:{mode:"hall",w:8,d:8,fill:"works",wall:0xA8A49A,floor:"stone"},
   shed:{mode:"hall",w:5,d:5,fill:"barn",wall:0x8A6A4A,floor:"wood"},
-  castle:{mode:"hall",w:18,d:28,fill:"castle",wall:0x8A847A,floor:"stone",h:7},
+  castle:{mode:"hall",w:18,d:28,fill:"castle",wall:0x8A847A,floor:"stone",h:7,
+    side:["chamber","kitchen","study","chamber"]},
   cloudpalace:{mode:"hall",w:22,d:30,fill:"castle",wall:0xF2F2F6,floor:"marble",h:8},
   merpalace:{mode:"hall",w:22,d:30,fill:"castle",wall:0xE8C8B8,floor:"marble",h:8},
   icepalace:{mode:"hall",w:22,d:30,fill:"castle",wall:0xBFE4F4,floor:"marble",h:8},
@@ -12306,7 +13522,7 @@ var PLANS={
   bunker:{mode:"rooms",rooms:["lobby","office","basement"],wall:0x9A9A92,floor:"tile"}
 };
 var DEFAULT_PLAN={mode:"hall",w:8,d:8,fill:"cozy",wall:0xDCD4C4,floor:"wood"};
-function planOf(spec){ return PLANS[spec.archetype]||DEFAULT_PLAN; }
+function planOf(spec){ if(typeof addSciFurniture==="function") addSciFurniture(); return PLANS[spec.archetype]||DEFAULT_PLAN; }
 /* how many floors inside: what the dream said, else what the kind of building suggests */
 var STOREYS={house:2,cottage:1,apartment:3,hotel:3,motel:2,institution:2,skyscraper:6,castle:2,tower:3,
   lighthouse:3,windmill:2,hanok:1,machiya:2,izba:1,hacienda:2,riad:2,longhouse:1,stilthouse:1,cycladic:2,
@@ -12398,6 +13614,7 @@ var FLOORCOL={wood:0x7A5634,tile:0xD8D4CC,stone:0x6E6A64,carpet:0x7A2A2A,marble:
 function intSlot(spec){ if(!store.insideSlots) store.insideSlots={}; if(store.insideSlots[spec.id]===undefined) store.insideSlots[spec.id]=Object.keys(store.insideSlots).length; return store.insideSlots[spec.id]; }
 
 function makeInterior(spec){
+  if(typeof addSciFurniture==="function") addSciFurniture();
   var plan=planOf(spec), I=spec.inside||{rooms:[],items:[]};
   var H=plan.h||INT_H, big=I.big?1.6:1;
   var ox=INT_X0-intSlot(spec)*500, oz=0;
@@ -12425,55 +13642,107 @@ function makeInterior(spec){
     items.push(it);
   }
   var W,D, exitZ, levels=levelsOf(spec), FLOOR=H+0.5, stairsAt=[];
-  if(plan.mode==="rooms"){
-    var rooms=plan.rooms.slice();
+  var lifts=[];
+  /* one floor of rooms either side of a corridor — used by houses, and by the
+     upper floors of anything with a lobby underneath */
+  function roomFloor(L,here,Wf,Df,rw,rd,hall,wayOut){
+    lvl=L; yOff=L*FLOOR;
+    var zTop=-Df/2, zFront=Df/2, left=[], right=[];
+    here.forEach(function(r,i){ (i%2?right:left).push(r); });
+    if(wayOut) wallLine(-Wf/2,zFront,Wf/2,zFront,[0],1.8); else wallLine(-Wf/2,zFront,Wf/2,zFront);
+    wallLine(-Wf/2,zTop,Wf/2,zTop); wallLine(-Wf/2,zTop,-Wf/2,zFront); wallLine(Wf/2,zTop,Wf/2,zFront);
+    [[left,-1],[right,1]].forEach(function(side){
+      var list=side[0], sd=side[1], gaps=[];
+      list.forEach(function(r,i){
+        var z0=zTop+i*rd, zc=z0+rd/2, xc=sd*(hall/2+rw/2);
+        gaps.push(zc);
+        if(i>0) wallLine(sd*hall/2,z0,sd*Wf/2,z0);
+        furnishRoom(r,xc,zc,rw,rd,sd,put);
+        spots.push({x:xc,z:zc+rd*.2,room:r,level:L});
+        spots.push({x:xc+sd*1.2,z:zc-rd*.25,room:r,level:L});
+        lights.push({x:xc,z:zc,y:yOff});
+        windows.push({x:sd*(Wf/2-.12),z:zc,ry:sd>0?-Math.PI/2:Math.PI/2,y:yOff});
+      });
+      if(list.length) wallLine(sd*hall/2,zTop+list.length*rd,sd*Wf/2,zTop+list.length*rd);
+      wallLine(sd*hall/2,zTop,sd*hall/2,zTop+list.length*rd,gaps);
+    });
+    for(var hz=zTop+3;hz<zFront-3;hz+=6) lights.push({x:0,z:hz,y:yOff});
+    spots.push({x:0,z:zFront-4,room:"hallway",level:L});
+    if(L>0) root.add(P(box(Wf,.12,Df),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+    return {zTop:zTop,zFront:zFront};
+  }
+  /* small rooms opening off a great hall: side chapels, a vestry, a kitchen */
+  function sideRooms(list,Wf,Df,L){
+    if(!list||!list.length) return;
+    lvl=L; yOff=L*FLOOR;
+    var depth=4.6, n=list.length, along=(Df-4)/n;
+    list.forEach(function(r,i){
+      var sd=i%2?1:-1, k=Math.floor(i/2);
+      var zc=-Df/2+2+along*(k+0.5)*2;
+      if(zc>Df/2-2) zc=Df/2-2-along*0.5;
+      var xc=sd*(Wf/2+depth/2);
+      wallLine(sd*Wf/2,zc-along*0.9,sd*(Wf/2+depth),zc-along*0.9);
+      wallLine(sd*Wf/2,zc+along*0.9,sd*(Wf/2+depth),zc+along*0.9);
+      wallLine(sd*(Wf/2+depth),zc-along*0.9,sd*(Wf/2+depth),zc+along*0.9);
+      wallLine(sd*Wf/2,zc-along*0.9,sd*Wf/2,zc+along*0.9,[zc],1.6);
+      furnishRoom(r,xc,zc,depth,along*1.6,sd,put);
+      spots.push({x:xc,z:zc,room:r,level:L});
+      lights.push({x:xc,z:zc,y:yOff});
+    });
+  }
+  /* a lift: step in, and it takes you up or down */
+  function liftShaft(Wf,Df,levels){
+    var lx=Wf/2-2.2, lz=-Df/2+2.4;
+    for(var L=0;L<levels;L++){
+      lvl=L; yOff=L*FLOOR;
+      root.add(P(box(2.6,.12,2.6),new THREE.MeshLambertMaterial({color:0x4A4E56}),lx,yOff+.04,lz));
+      [-1,1].forEach(function(sd){ root.add(P(box(.14,H-.4,2.6),new THREE.MeshLambertMaterial({color:0x6A6E76}),lx+sd*1.3,yOff+(H-.4)/2,lz)); });
+      root.add(P(box(2.6,H-.4,.14),new THREE.MeshLambertMaterial({color:0x6A6E76}),lx,yOff+(H-.4)/2,lz-1.3));
+      root.add(P(box(.5,.22,.1),mG(0xFFD08A,1),lx+1.0,yOff+1.5,lz+1.3));
+      walls.push({x:ox+lx,z:oz+lz-1.3,rot:0,hw:1.3,hd:.1,h:H,level:L});
+    }
+    lifts.push({x:ox+lx,z:oz+lz});
+    lvl=0; yOff=0;
+  }
+
+  if(plan.mode==="rooms"||plan.mode==="mixed"){
+    var isMixed=plan.mode==="mixed";
+    var rooms=(isMixed?(plan.upper||["office"]):plan.rooms).slice();
     (I.rooms||[]).forEach(function(r){ if(rooms.indexOf(r)===-1) rooms.push(r); });
     (I.items||[]).forEach(function(it){ if(it.room&&rooms.indexOf(it.room)===-1) rooms.push(it.room); });
     if(I.endless) for(var e=0;e<8;e++) rooms.push(["bedroom","study","hallway","living"][e%4]);
-    var byLevel=roomsByLevel(rooms,levels);
     var rw=7*big, rd=6*big, hall=3;
-    /* every floor is the same footprint, so the walls line up above one another */
-    var widest=0;
-    byLevel.forEach(function(list){ widest=Math.max(widest,Math.ceil(list.length/2)); });
-    W=hall+rw*2; D=Math.max(2,widest)*rd+4;
-    var zTop=-D/2, zFront=D/2;
-    for(var L=0;L<levels;L++){
-      lvl=L; yOff=L*FLOOR;
-      var here=byLevel[L], left=[], right=[];
-      here.forEach(function(r,i){ (i%2?right:left).push(r); });
-      /* the outer walls; the way out of the building is on the ground floor only */
-      if(L===0) wallLine(-W/2,zFront,W/2,zFront,[0],1.8);
-      else wallLine(-W/2,zFront,W/2,zFront);
-      wallLine(-W/2,zTop,W/2,zTop); wallLine(-W/2,zTop,-W/2,zFront); wallLine(W/2,zTop,W/2,zFront);
-      [[left,-1],[right,1]].forEach(function(side){
-        var list=side[0], sd=side[1], gaps=[];
-        list.forEach(function(r,i){
-          var z0=zTop+i*rd, zc=z0+rd/2, xc=sd*(hall/2+rw/2);
-          gaps.push(zc);
-          if(i>0) wallLine(sd*hall/2,z0,sd*W/2,z0);
-          furnishRoom(r,xc,zc,rw,rd,sd,put);
-          spots.push({x:xc,z:zc+rd*.2,room:r,level:L});
-          lights.push({x:xc,z:zc,y:yOff});
-          windows.push({x:sd*(W/2-.12),z:zc,ry:sd>0?-Math.PI/2:Math.PI/2,y:yOff});
-        });
-        if(list.length) wallLine(sd*hall/2,zTop+list.length*rd,sd*W/2,zTop+list.length*rd);
-        wallLine(sd*hall/2,zTop,sd*hall/2,zTop+list.length*rd,gaps);
-      });
-      if(L===0) furnishRoom("hallway",0,zFront-2.5,hall,4,1,put);
-      for(var hz=zTop+3;hz<zFront-3;hz+=6) lights.push({x:0,z:hz,y:yOff});
-      /* the stair up, at the far end of the hall */
-      if(L<levels-1){
-        put("stairs",0,zTop+2.2,Math.PI);
-        stairsAt.push({x:ox+0,z:oz+zTop+2.6,from:L});
-        /* the hole it comes up through */
-        root.add(P(box(1.6,.06,2.6),new THREE.MeshLambertMaterial({color:shade(wallCol,-.25)}),0,yOff+FLOOR-0.03,zTop+2.4));
-      }
-      if(L===0) spots.push({x:0,z:zFront-4,room:"hallway",level:0});
-      /* the floor of every storey above the ground */
-      if(L>0) root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+    if(isMixed){
+      /* the same rooms repeat on every floor above the ground, the way they do */
+      W=Math.max(plan.w*big,hall+rw*2); D=Math.max(plan.d*big,Math.ceil(rooms.length/2)*rd+4);
+      var zTop0=-D/2, zFront0=D/2;
+      lvl=0; yOff=0;
+      wallLine(-W/2,zFront0,W/2,zFront0,[0],2.2);
+      wallLine(-W/2,zTop0,W/2,zTop0); wallLine(-W/2,zTop0,-W/2,zFront0); wallLine(W/2,zTop0,W/2,zFront0);
+      fillHall(plan.ground||"lobby",W,D,put,spots);
+      spots.forEach(function(q){ if(q.level===undefined) q.level=0; });
+      for(var glz=-D/2+4;glz<D/2-2;glz+=7) for(var glx=-W/2+4;glx<W/2-2;glx+=8) lights.push({x:glx,z:glz,y:0});
+      for(var gwz=-D/2+3;gwz<D/2-2;gwz+=5){ windows.push({x:-W/2+.12,z:gwz,ry:Math.PI/2,y:0}); windows.push({x:W/2-.12,z:gwz,ry:-Math.PI/2,y:0}); }
+      for(var L2=1;L2<levels;L2++) roomFloor(L2,rooms,W,D,rw,rd,hall,false);
+      exitZ=zFront0;
+    } else {
+      var byLevel=roomsByLevel(rooms,levels);
+      var widest=0;
+      byLevel.forEach(function(list){ widest=Math.max(widest,Math.ceil(list.length/2)); });
+      W=hall+rw*2; D=Math.max(2,widest)*rd+4;
+      for(var L=0;L<levels;L++) roomFloor(L,byLevel[L],W,D,rw,rd,hall,L===0);
+      if(levels) furnishRoom("hallway",0,D/2-2.5,hall,4,1,put);
+      exitZ=D/2;
     }
+    /* the way between floors */
+    for(var SL=0;SL<levels-1;SL++){
+      lvl=SL; yOff=SL*FLOOR;
+      put("stairs",0,-D/2+2.2,Math.PI);
+      stairsAt.push({x:ox+0,z:oz-D/2+2.6,from:SL});
+      root.add(P(box(1.6,.06,2.6),new THREE.MeshLambertMaterial({color:shade(wallCol,-.25)}),0,yOff+FLOOR-0.03,-D/2+2.4));
+    }
+    if(plan.lift&&levels>2) liftShaft(W,D,levels);
     lvl=0; yOff=0;
-    exitZ=zFront;
   } else {
     W=plan.w*big; D=plan.d*big;
     if(I.endless) D*=3;
@@ -12481,7 +13750,8 @@ function makeInterior(spec){
       lvl=HL; yOff=HL*FLOOR;
       if(HL===0) wallLine(-W/2,D/2,W/2,D/2,[0],2.2); else wallLine(-W/2,D/2,W/2,D/2);
       wallLine(-W/2,-D/2,W/2,-D/2); wallLine(-W/2,-D/2,-W/2,D/2); wallLine(W/2,-D/2,W/2,D/2);
-      fillHall(HL===0?plan.fill:(plan.fill==="church"||plan.fill==="castle"?plan.fill:"office"),W,D,put,HL===0?spots:[]);
+      fillHall(HL===0?plan.fill:(plan.fill==="church"||plan.fill==="castle"?plan.fill:"office"),W,D,put,spots);
+      spots.forEach(function(q){ if(q.level===undefined) q.level=HL; });
       for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz,y:yOff});
       for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff}); }
       if(HL<levels-1){
@@ -12491,6 +13761,8 @@ function makeInterior(spec){
       }
       if(HL>0) root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
     }
+    sideRooms(plan.side,W,D,0);
+    if(plan.lift&&levels>2) liftShaft(W,D,levels);
     lvl=0; yOff=0;
     exitZ=D/2;
   }
@@ -12515,7 +13787,7 @@ function makeInterior(spec){
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
-    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,level:0};
+    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0};
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
   fireplace:[2,.6],stove:[.8,.7],fridge:[.75,.7],bathtub:[1.7,.8],desk:[1.4,.7],pew:[3.4,.6],altarinside:[2.3,1],throneseat:[1.4,1.4],shelfgoods:[2.4,.5],till:[2,.7],
@@ -12551,12 +13823,25 @@ function fillHall(kind,W,D,put,spots){
     put("till",0,D/2-4,0); spots.push({x:0,z:D/2-5,room:"reception"},{x:0,z:0,room:"ward"}); }
   else if(kind==="bank"){ put("counterbank",0,-D/6,0); put("vaultround",0,-D/2+.2,0); put("plant",-W/2+1,D/2-2,0); put("plant",W/2-1,D/2-2,0); put("chandelier",0,D/6,0);
     spots.push({x:0,z:-D/6-1.4,room:"counter"}); }
+  else if(kind==="lobby"){
+    put("till",0,-D/2+2.2,Math.PI);
+    put("armchair",-W/4,D/6,0.6); put("armchair",-W/4+2,D/6-1.4,-0.8); put("table",-W/4+1,D/6-0.7,0);
+    put("plant",-W/2+1.2,-D/2+1.4,0); put("plant",W/2-1.2,-D/2+1.4,0);
+    put("rug",0,D/6,0); put("chandelier",0,0,0); put("painting",0,-D/2+.2,0);
+    spots.push({x:0,z:-D/2+3.4,room:"lobby",level:0},{x:-W/4,z:D/6,room:"lobby",level:0},
+      {x:W/4,z:-D/6,room:"lobby",level:0});
+  }
   else if(kind==="station"){ put("till",-W/2+3,-D/2+2,0); for(i=-1;i<=1;i++) put("benchin",i*5,0,0); put("clock",W/2-.5,-D/2+.4,0);
     spots.push({x:0,z:1.5,room:"waiting room"}); }
   else if(kind==="court"){ put("judgebench",0,-D/2+2,Math.PI); for(z=0;z<D/2-3;z+=1.8){ put("pew",-W/4,z,Math.PI); put("pew",W/4,z,Math.PI); }
     spots.push({x:0,z:-D/2+3.5,room:"court"}); }
   else if(kind==="works"){ for(i=0;i<6;i++) put(i%2?"machine":"crates",-W/2+3+(i%3)*(W/3),-D/2+3+Math.floor(i/3)*(D/2.5),0); put("barrel",W/2-2,D/2-3,0);
     spots.push({x:0,z:D/4,room:"floor"}); }
+  else if(kind==="lab"){
+    for(z=-D/2+3;z<D/2-4;z+=4){ put("labbench",-W/4,z,0); put("labbench",W/4,z,0); }
+    put("bigconsole",0,-D/2+1.2,Math.PI); put("podbed",W/2-1.6,D/2-3,Math.PI/2); put("podbed",-W/2+1.6,D/2-3,-Math.PI/2);
+    spots.push({x:0,z:-D/2+2.6,room:"the laboratory",level:0});
+  }
   else if(kind==="barn"){ put("crates",-W/2+2,-D/2+2,0); put("barrel",W/2-1.5,-D/2+1.5,0); put("barrel",W/2-2.5,-D/2+1.5,0); spots.push({x:0,z:0,room:"barn"}); }
   else if(kind==="castle"){ put("throneseat",0,-D/2+2,Math.PI); put("longtable",0,0,Math.PI/2); put("fireplace",-W/2+.4,-D/4,Math.PI/2);
     for(z=-D/2+3;z<D/2-3;z+=6){ put("banner",-W/2+.2,z,Math.PI/2); put("banner",W/2-.2,z,-Math.PI/2); } put("chandelier",0,-D/4,0); put("chandelier",0,D/4,0);
@@ -12589,23 +13874,57 @@ function exitInterior(quiet){
 function rebuildInterior(){ if(!INT) return; var spec=INT.spec, p={x:camera.position.x,z:camera.position.z};
   scene.remove(INT.root); INT=makeInterior(spec); scene.add(INT.root); wallsAt=-1; camera.position.x=p.x; camera.position.z=p.z; bringOccupants(); }
 
+/* the lift: stand in it and rise or fall a floor at a time */
+var liftCool=0;
+function inLift(){
+  if(!INT||!INT.lifts||!INT.lifts.length) return null;
+  var P=camera.position;
+  for(var i=0;i<INT.lifts.length;i++){
+    var L=INT.lifts[i];
+    if(Math.hypot(P.x-L.x,P.z-L.z)<1.7) return L;
+  }
+  return null;
+}
+function liftMove(dir){
+  if(!INT||liftCool>0||!inLift()) return false;
+  var to=(INT.level||0)+dir;
+  if(to<0||to>INT.levels-1) return false;
+  INT.level=to; camera.position.y=1.72+to*INT.floor; liftCool=0.7; wallsAt=-1;
+  setStatus("<b>Floor "+(to+1)+" of "+INT.levels+".</b>");
+  return true;
+}
+
 /* the people whose hour has them in this building are in here with you */
+var ROLE_ROOM={nurse_day:"ward",nurse_night:"ward",patient:"ward",clerk:"office",guest:"bedroom",
+  resident:"living",teacher:"classroom",child:"classroom",priest:"nave",shopkeeper:"counter",
+  keeper:"lobby",worker:"floor",prisoner:"cell",farmer:"barn",innkeeper:"lobby",nightwatch:"lobby"};
 function bringOccupants(){
   if(!INT) return;
-  var n=0;
-  store.characters.forEach(function(c){
-    if(!c.objId||c.atId!==INT.spec.id) return;
+  var used={}, n=0;
+  var mine=store.characters.filter(function(c){ return c.objId&&c.atId===INT.spec.id; });
+  mine.forEach(function(c){
     var g=meshes[c.objId]; if(!g) return;
-    var ground=INT.spots.filter(function(q){ return !q.level; });
-    var sp=(ground.length?ground:INT.spots)[n%Math.max(1,(ground.length||INT.spots.length))]||{x:0,z:0}; n++;
-    var x=INT.ox+sp.x+(n%3-1)*.8, z=INT.oz+sp.z+((n>>2)%2)*.8;
-    g.position.x=x; g.position.z=z; g.userData.target={x:x,z:z}; g.userData.path=null; g.visible=true;
-    c.x=x; c.z=z; c.insideAt=INT.spec.id;
+    /* the room that suits what they do, else any room nobody is standing in yet */
+    var want=ROLE_ROOM[c.role]||null;
+    var free=INT.spots.filter(function(q,i){ return !used[i]; });
+    var pick=-1;
+    INT.spots.forEach(function(q,i){ if(pick<0&&!used[i]&&want&&q.room===want) pick=i; });
+    if(pick<0) INT.spots.forEach(function(q,i){ if(pick<0&&!used[i]) pick=i; });
+    if(pick<0) pick=n%Math.max(1,INT.spots.length);
+    used[pick]=1;
+    var sp=INT.spots[pick]||{x:0,z:0,level:0};
+    var lift=(sp.level||0)*INT.floor;
+    var x=INT.ox+sp.x+((n%3)-1)*.5, z=INT.oz+sp.z+(((n>>1)%3)-1)*.5; n++;
+    g.position.x=x; g.position.z=z;
+    if(g.position.y!==undefined) g.position.y=lift;
+    g.userData.target={x:x,z:z}; g.userData.path=null; g.visible=true;
+    c.x=x; c.z=z; c.insideAt=INT.spec.id; c.onLevel=sp.level||0;
   });
 }
 /* each frame while walking: step into a doorway to go in; step into the way out to leave */
 function interiorTick(dt){
   if(intCool>0) intCool-=dt;
+  if(liftCool>0) liftCool-=dt;
   if(!walkMode){ if(INT) exitInterior(true); return; }
   var P=camera.position;
   if(INT){
@@ -13023,6 +14342,8 @@ function padBuild(){
   side.innerHTML=
     '<button class="pd pd-wide" id="pd-back">back</button>'+
     '<button class="pd pd-wide" id="pd-abil">powers</button>'+
+    '<button class="pd pd-wide" id="pd-take">take</button>'+
+    '<button class="pd pd-wide" id="pd-use">use</button>'+
     '<button class="pd" id="pd-rise" aria-label="Rise">&#9650;</button>'+
     '<button class="pd" id="pd-fall" aria-label="Fall">&#9660;</button>';
   document.body.appendChild(side);
@@ -13076,13 +14397,18 @@ function padBuild(){
   };
   ["pd-rise","pd-fall"].forEach(function(id){
     var b=document.getElementById(id), up=(id==="pd-rise"), held=false, tick=null;
-    function go(){ if(typeof flyY==="undefined") return; flyY+=(up?1:-1)*0.55; if(flyY<0) flyY=0; }
+    function go(){
+      if(store.inside&&typeof liftMove==="function"&&liftMove(up?1:-1)) return;
+      if(typeof flyY==="undefined") return; flyY+=(up?1:-1)*0.55; if(flyY<0) flyY=0;
+    }
     function start(e){ e.preventDefault(); held=true; go(); tick=setInterval(function(){ if(held) go(); },60); b.classList.add("on"); }
     function stop(){ held=false; if(tick) clearInterval(tick); tick=null; b.classList.remove("on"); }
     ["pointerdown","touchstart"].forEach(function(ev){ b.addEventListener(ev,start,{passive:false}); });
     ["pointerup","pointerleave","pointercancel","touchend","touchcancel"].forEach(function(ev){ b.addEventListener(ev,stop); });
   });
   document.getElementById("pd-abil").onclick=openPowers;
+  document.getElementById("pd-take").onclick=function(){ if(typeof armsReach==="function") armsReach(); };
+  document.getElementById("pd-use").onclick=function(){ if(typeof useCarried==="function") useCarried(); };
 
   fold.onclick=function(){
     padHidden=!padHidden;
@@ -13151,6 +14477,8 @@ function padTick(){
     document.getElementById("pd-rise").style.display=fly?"flex":"none";
     document.getElementById("pd-fall").style.display=fly?"flex":"none";
     document.getElementById("pd-abil").style.display=walkMode?"flex":"none";
+    document.getElementById("pd-take").style.display=walkMode?"flex":"none";
+    document.getElementById("pd-use").style.display=(walkMode&&typeof carrying!=="undefined"&&carrying)?"flex":"none";
   }
   if(padHidden&&(padKeys.f||padKeys.b||padKeys.l||padKeys.r)) padKeys={f:0,b:0,l:0,r:0};
 }
