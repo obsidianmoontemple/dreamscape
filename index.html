@@ -5087,7 +5087,8 @@ var REALM_SCENERY={
 function realmScenery(r){
   var list=REALM_SCENERY[r.kind]; if(!list||r.dressed) return;
   r.dressed=true;
-  var h=heartOf(r.id);
+  /* set out around the world's own ground, not around the town */
+  var h=(r.grid&&typeof blockOrigin==="function")?blockOrigin(r.grid.bx,r.grid.bz):heartOf(r.id);
   list.forEach(function(arch,i){
     if(!KIT[arch]) return;
     var a=i*2.39996+.7, rad=70+(i%4)*38+((i*37)%23);
@@ -10893,7 +10894,14 @@ function heartOf(realm){
     var d=KIT[o.archetype]; if(!d||d.cat!=="structure") return;
     x+=o.x; z+=o.z; n++;
   });
-  return n?{x:x/n,z:z/n}:{x:0,z:0};
+  if(n) return {x:x/n,z:z/n};
+  /* a world with nothing built in it yet still has a place of its own */
+  if(realm){
+    var r=(typeof realmById==="function")?realmById(realm):null;
+    if(r&&r.grid&&typeof blockOrigin==="function"){ var o=blockOrigin(r.grid.bx,r.grid.bz); return {x:o.x,z:o.z}; }
+    return {x:(typeof REALM_GAP!=="undefined"?REALM_GAP:30000)*realm,z:0};
+  }
+  return {x:0,z:0};
 }
 function whereFromHeart(o){
   var h=heartOf(o.realm||0), dx=o.x-h.x, dz=o.z-h.z, d=Math.round(Math.sqrt(dx*dx+dz*dz));
@@ -11104,9 +11112,27 @@ function applyRealmLight(dl){
   if(stars) stars.material.opacity=Math.max(stars.material.opacity,t.stars);
 }
 /* stepping through a portal changes the world at once, not at the next tick */
+/* move the books to a world without crossing into it: you are simply there */
+function beHere(id){
+  if((store.here||0)===(id||0)) return;
+  if(!store.here) store.townGrid=store.grid;
+  else { var cur=realmById(store.here); if(cur) cur.grid=store.grid; }
+  if(id){ var r=realmById(id); if(!r) return; store.here=r.id; store.grid=r.grid; }
+  else { store.here=0; store.grid=store.townGrid||store.grid; }
+  store.lastLot=null;
+  /* whatever was last dreamt stands in the world you just left; it is no longer "here" */
+  var l=store.lastId?specById(store.lastId):null;
+  if(!l||(l.realm||0)!==(store.here||0)) store.lastId=null;
+  var a=store.lastAny?specById(store.lastAny):null;
+  if(!a||(a.realm||0)!==(store.here||0)) store.lastAny=null;
+  save();
+}
+
 function realmWatch(){
   if(store.inside) return;   // an interior stands apart; you are still in the world you walked in from
   var r=realmAtX(focusX()), id=r?r.id:0;
+  /* where you are is where you build: this runs every look, and does nothing when nothing moved */
+  beHere(id);
   if(id!==lastRealmSeen){
     lastRealmSeen=id;
     tickClock(true);
