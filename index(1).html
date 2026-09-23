@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Somnarch — Closed Alpha</title>
+<style>
+  :root{
+    --void:#07080B; --bone:#C9BEA8; --dim:#6C6757; --gold:#C9A868;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--void);color:var(--bone);font-family:var(--serif);
+       display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;}
+  .box{max-width:540px;background:rgba(14,17,24,.92);border:1px solid rgba(201,190,168,.18);
+       padding:40px 32px;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  .brand-logo{max-width:480px;width:100%;height:auto;margin:0 auto 32px auto;display:block;}
+  .kicker{font-family:var(--sans);letter-spacing:.2em;text-transform:uppercase;font-size:11px;color:var(--gold);margin-bottom:14px;}
+  h1{font-weight:400;font-size:28px;margin:0 0 16px;letter-spacing:-.01em;}
+  p{font-size:16px;line-height:1.7;color:#CDC8BD;margin:0 0 24px;}
+  a.btn{display:inline-block;background:var(--gold);color:#17120A;padding:12px 24px;font-family:var(--sans);
+        font-weight:600;font-size:14px;text-decoration:none;border-radius:3px;transition:filter .15s;}
+  a.btn:hover{filter:brightness(1.08);}
+</style>
+</head>
+<body>
+  <div class="box">
+    <!-- Paste your logo image URL inside the quotes below -->
+    <img id="brandLogo" class="brand-logo" alt="Somnarch Logo" src="" style="display:none;" />
+    <div class="kicker">Temple of the Obsidian Moon</div>
+    <h1>Access Restricted — Closed Alpha</h1>
+    <p>Due to the level of technical innovation and proprietary mechanics built into Somnarch, public sandbox access is currently offline while we conduct secure closed testing rounds.</p>
+    <p style="font-size:14px;color:var(--dim);">Join the priority list to secure access when new testing waves open.</p>
+    <a href="https://obsidianmoontemple.github.io/dreamlaunch/" class="btn">Return to Launch Page</a>
+  </div>
+
+<script>
+  /* ------------------------------------------------------------------
+     SETTINGS: Put your logo URL here and it will display big at the top.
+     ------------------------------------------------------------------ */
+  var LOGO_URL = "https://static.wixstatic.com/media/d6c75e_1e7ef369094345009e4b826da14f6b90~mv2.jpg"; /* <-- e.g., "https://yourdomain.com/logo.png" */
+
+  (function(){
+    if(LOGO_URL){
+      var logoEl = document.getElementById("brandLogo");
+      if(logoEl){ logoEl.src = LOGO_URL; logoEl.style.display = "block"; }
+    }
+  })();
+</script>
+</body>
+</html>
