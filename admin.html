@@ -155,7 +155,11 @@ td select,td input{padding:5px 7px;font-size:12.5px}
     </section>
 
     <section id="tab-dreamers" class="hidden">
-      <h2>Devices using the Atlas</h2>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Devices using the Atlas</h2>
+        <button class="btn" id="d-why" type="button">Why is a name missing?</button>
+      </div>
+      <pre id="d-diag" class="note" style="display:none;white-space:pre-wrap;background:var(--void);border:1px solid var(--line);padding:12px;border-radius:2px;margin:12px 0 0"></pre>
       <p class="note">Every device that has opened the Atlas, each known only by a random code it made up for itself &mdash; no name, no email, nothing it has been told. A dreamer can switch counting off in Settings, which erases their device from this list.</p>
       <div class="stats" id="v-stats"></div>
       <div class="filters" id="v-f">
@@ -211,7 +215,18 @@ td select,td input{padding:5px 7px;font-size:12.5px}
 
     <section id="tab-settings" class="hidden">
       <div class="narrow">
-        <h2>Settings for every dreamer</h2>
+        <h2>Keepers of the desk</h2>
+        <p class="note">A <b>keeper</b> sees and does everything here. A <b>watcher</b> sees only the Dreamers page &mdash; the accounts and the devices &mdash; and nothing else: no messages, no orders, no list, no settings. Neither can read anybody's dreamscape; nothing can.</p>
+        <p class="note">Whoever you are adding must sign in to this desk once first, so there is an account to attach. Then add their email here.</p>
+        <div class="wrap" style="margin-bottom:12px"><table id="k-table"></table></div>
+        <div class="filters">
+          <input id="k-email" type="email" placeholder="their email" style="flex:1 1 220px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <select id="k-role"><option value="watcher">Watcher &mdash; the Dreamers page only</option><option value="keeper">Keeper &mdash; everything</option></select>
+          <button class="btn" id="k-add">Add them</button>
+        </div>
+        <div id="k-msg" class="note" style="margin-top:10px"></div>
+
+        <h2 style="margin-top:40px">Settings for every dreamer</h2>
         <label for="s-ann">Announcement shown when the app opens (leave empty for none)</label>
         <textarea id="s-ann" rows="2"></textarea>
         <div class="switch"><input type="checkbox" id="s-dw"><label for="s-dw" style="margin:0;color:var(--bone)">Ask a Dream Walker is open</label></div>
@@ -318,7 +333,7 @@ Array.prototype.forEach.call(document.querySelectorAll("nav button"),function(b)
     if(t==="list") loadList();
     if(t==="research") loadResearch();
     if(t==="books"&&!loaded.books) loadBooks();
-    if(t==="settings") showSettings();
+    if(t==="settings"){ showSettings(); loadKeepers(); }
   };
 });
 
@@ -505,6 +520,79 @@ function showOrder(o){
       .eq("id",o.id).then(function(r){ if(r.error) return fail(r.error); say("Order saved."); loadOrders(); });
   };
 }
+
+/* ---------------- keepers of the desk ---------------- */
+function keeperMsg(t,bad){ var e=$("k-msg"); if(!e) return; e.textContent=t; e.style.color=bad?"#C0603A":"var(--dim)"; }
+function loadKeepers(){
+  if(!$("k-table")) return;
+  sb.rpc("admin_list_admins").then(function(r){
+    if(r.error){
+      $("k-table").innerHTML=/admin_list_admins/.test(r.error.message||"")
+        ? '<tr><td class="dim">Run <b>supabase/schema-update-4.sql</b> in the SQL Editor to switch this on.</td></tr>'
+        : '<tr><td class="dim">'+esc(r.error.message)+"</td></tr>";
+      return;
+    }
+    var d=r.data||[];
+    $("k-table").innerHTML="<tr><th>Who</th><th>Standing</th><th>Added</th><th></th></tr>"+d.map(function(x,i){
+      return "<tr><td>"+esc(x.email||"")+(x.is_me?' <span class="dim">(you)</span>':"")+"</td>"+
+        '<td><select id="kr-'+i+'"><option value="watcher"'+(x.role==="watcher"?" selected":"")+'>watcher</option>'+
+        '<option value="keeper"'+(x.role==="keeper"?" selected":"")+'>keeper</option></select></td>'+
+        "<td>"+day(x.added_at)+"</td>"+
+        '<td><button class="btn" data-kr="'+i+'">Save</button> <button class="btn" data-kx="'+i+'">Remove</button></td></tr>';
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#k-table [data-kr]"),function(b){
+      b.onclick=function(){ var i=+b.getAttribute("data-kr");
+        sb.rpc("admin_set_role",{p_user:d[i].user_id,p_role:$("kr-"+i).value}).then(function(r){
+          if(r.error) return keeperMsg(r.error.message,true);
+          keeperMsg("Standing changed."); loadKeepers(); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#k-table [data-kx]"),function(b){
+      b.onclick=function(){ var i=+b.getAttribute("data-kx");
+        if(!confirm("Remove "+(d[i].email||"them")+" from the desk?")) return;
+        sb.rpc("admin_remove",{p_user:d[i].user_id}).then(function(r){
+          if(r.error) return keeperMsg(r.error.message,true);
+          keeperMsg("Removed."); loadKeepers(); }); };
+    });
+  });
+}
+if($("k-add")) $("k-add").onclick=function(){
+  var em=$("k-email").value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)) return keeperMsg("That doesn't look like an email address.",true);
+  sb.rpc("admin_add",{p_email:em,p_role:$("k-role").value}).then(function(r){
+    if(r.error) return keeperMsg(r.error.message,true);
+    if(r.data!=="ok") return keeperMsg(r.data,true);
+    $("k-email").value=""; keeperMsg("Added."); loadKeepers();
+  });
+};
+
+/* ---------------- why is a name missing ---------------- */
+if($("d-why")) $("d-why").onclick=function(){
+  var box=$("d-diag");
+  if(box.style.display==="block"){ box.style.display="none"; return; }
+  box.style.display="block"; box.textContent="Looking\u2026";
+  sb.rpc("admin_diagnose").then(function(r){
+    if(r.error){
+      box.textContent=/admin_diagnose/.test(r.error.message||"")
+        ? "Run supabase/schema-update-4.sql in the SQL Editor to switch this on."
+        : r.error.message;
+      return;
+    }
+    var d=r.data||{}, L=[];
+    L.push("Accounts in Supabase: "+d.accounts_in_auth);
+    L.push("Of those, signed in at least once: "+d.signed_in_ever);
+    if(d.confirmed_accounts!==null&&d.confirmed_accounts!==undefined) L.push("Of those, confirmed their email: "+d.confirmed_accounts);
+    L.push("Profile rows: "+d.profiles+(d.accounts_without_profile?"   (missing for "+d.accounts_without_profile+")":"   (none missing)"));
+    L.push("New-account trigger in place: "+(d.new_account_trigger?"yes":"NO \u2014 run schema-update-4.sql"));
+    L.push("Keepers and watchers: "+d.admins+" ("+d.keepers+" keeper"+(d.keepers===1?"":"s")+").   You are a "+(d.you_are||"?")+".");
+    L.push("Devices using the Atlas: "+d.devices);
+    L.push("");
+    L.push("Worth knowing: the Atlas itself has no sign-in yet \u2014 only this desk does.");
+    L.push("So a dreamer using the Atlas creates no account, and cannot appear in the list above.");
+    L.push("They appear as a device instead, with nothing attached to them. Accounts here are");
+    L.push("people who signed in to this desk, or ones you made in Supabase by hand.");
+    box.textContent=L.join("\n");
+  });
+};
 
 /* ---------------- the prelaunch list ---------------- */
 var listRows=[], lWindow="all";
