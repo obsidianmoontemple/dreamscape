@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Dream Walker's Atlas</title>
+<title>SomnuMatrix — by Somnucor</title>
 <style>
 :root{
   --void:#07080B; --deep:#0E1118; --bone:#C9BEA8; --dim:#6C6757;
@@ -416,7 +416,7 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
 </head>
 <body>
 
-<h1 class="sr-only">The Dream Walker's Atlas — speak a dream and walk the world it builds</h1>
+<h1 class="sr-only">SomnuMatrix — speak a dream and walk the world it builds</h1>
 
 <div id="world"></div>
 
@@ -718,6 +718,49 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   </div>
   <div id="acc-msg" class="hint" style="font-size:12px;color:var(--dim);margin:8px 0 0;min-height:16px"></div>
 
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Your dreamscape, on every device</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Keep it to your account instead of to this one browser. It is locked on this device with a phrase only you know, and only then sent &mdash; what reaches the Temple is nonsense nobody there can open. <b>Lose the phrase and the copy is lost with it.</b> That is the price of the promise.</p>
+  <label for="sync-on">After each night</label>
+  <select id="sync-on">
+    <option value="off">Keep it on this device only</option>
+    <option value="on">Keep it to my account as well</option>
+  </select>
+  <input id="sync-phrase" type="password" placeholder="your vault phrase" autocomplete="off" style="margin-top:8px">
+  <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+    <button class="btn" id="sync-unlock" type="button">Unlock</button>
+    <button class="btn" id="sync-save" type="button">Keep it now</button>
+    <button class="btn" id="sync-fetch" type="button">Bring it to this device</button>
+  </div>
+  <div id="sync-state" class="hint" style="font-size:12px;color:var(--dim);margin:8px 0 0;min-height:16px"></div>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Your door in the great hall</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Somnucor is the hall every dreamer arrives in. Take a door and it joins the hall, however many there come to be. A door carries only what you write on it.</p>
+  <input id="door-name" type="text" placeholder="the name on your door" maxlength="40">
+  <input id="door-line" type="text" placeholder="a line, if you want one" maxlength="120" style="margin-top:8px">
+  <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+    <button class="btn" id="door-take" type="button">Take my door</button>
+    <button class="btn" id="door-hall" type="button">Go to the hall</button>
+    <button class="btn" id="door-give" type="button">Give it up</button>
+  </div>
+  <div id="door-state" class="hint" style="font-size:12px;color:var(--dim);margin:8px 0 0;min-height:16px"></div>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Letting people in</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Your door only opens if you say so, and only onto a copy you publish. That copy is not your vault &mdash; the vault stays locked and unreadable. Visitors can walk your world and change nothing.</p>
+  <label for="share-words">What a visitor sees</label>
+  <select id="share-words">
+    <option value="no">The world only &mdash; my written dreams stay with me</option>
+    <option value="yes">The world and what I wrote</option>
+  </select>
+  <label for="share-open" style="margin-top:10px">My door</label>
+  <select id="share-open">
+    <option value="shut">Shut &mdash; nobody comes in</option>
+    <option value="open">Open &mdash; anyone in the hall may walk in</option>
+  </select>
+  <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+    <button class="btn" id="share-publish" type="button">Publish a copy</button>
+    <button class="btn" id="share-remove" type="button">Take it down</button>
+  </div>
+
   <label for="solidall" style="margin-top:14px">What you dream is</label>
   <select id="solidall">
     <option value="solid">Solid &mdash; you can stand on it and it stops you</option>
@@ -759,7 +802,7 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>/* js/config.js */
-/* Dream Walker's Atlas — config.js
+/* SomnuMatrix — config.js
    Where the Atlas's Supabase project lives. Fill in both values from your
    project's Connect dialog (or Settings > API Keys).
 
@@ -780,7 +823,7 @@ var DW_BOOKS={"art":{"title":"The Interpretation of Dreames","by":"Artemidorus, 
 
 </script>
 <script>/* js/kit.js */
-/* Dream Walker's Atlas — kit.js
+/* SomnuMatrix — kit.js
    palette roles and the archetype kit — every form as data
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -1466,7 +1509,7 @@ A("portal","infra",[4.5,7,.5],[
 
 </script>
 <script>/* js/kit2.js */
-/* Dream Walker's Atlas — kit2.js
+/* SomnuMatrix — kit2.js
    the larger library: disasters, hidden chambers, magic, weapons, castles,
    fairgrounds, landforms and more. data like kit.js, plus a few custom builders
    for things that must move as one piece.
@@ -1950,7 +1993,7 @@ var MORE_VOCAB={
 
 </script>
 <script>/* js/colors.js */
-/* Dream Walker's Atlas — colors.js
+/* SomnuMatrix — colors.js
    the colour vocabulary, materials, and how residents look.
    a dreamt figure's look comes only from the dream or from the dreamer's hand;
    the nameless crowd is varied at random. skin is never inferred from words.
@@ -2129,7 +2172,7 @@ function appearanceIn(low){
 
 </script>
 <script>/* js/textures.js */
-/* Dream Walker's Atlas — textures.js
+/* SomnuMatrix — textures.js
    every texture is painted in code: brick, stone, wood, siding, plaster, concrete,
    glass, marble, metal, shingle, tile, slate, thatch, foliage, bark, and ground.
    they are pale detail maps, multiplied by a colour, so the colour system still
@@ -2335,7 +2378,7 @@ function surfaceOf(pt,def,spec,f){
 
 </script>
 <script>/* js/figures.js */
-/* Dream Walker's Atlas — figures.js
+/* SomnuMatrix — figures.js
    people: bodies with jointed limbs, hair, clothes and hats, drawn from a look;
    smooth walking between where they are and where they're going.
    loaded as a plain script; shares scope with the other files */
@@ -2597,7 +2640,7 @@ function shadowsFor(g,cast){
 
 </script>
 <script>/* js/land.js */
-/* Dream Walker's Atlas — land.js
+/* SomnuMatrix — land.js
    the ground the dreamscape stands on: what it's made of, whether hills rise beyond
    the town, the season, the colour of water, the mood of the sky, and shadows.
    hills are only ever raised where nothing stands, so nothing floats or sinks.
@@ -2787,7 +2830,7 @@ function wireLand(){
 
 </script>
 <script>/* js/store.js */
-/* Dream Walker's Atlas — store.js
+/* SomnuMatrix — store.js
    the saved record: schema, save, load, settings
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -2809,6 +2852,7 @@ function blank(){
 }
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function save(){
+  if(typeof visiting!=="undefined"&&visiting) return;   /* a guest changes nothing */
   try{
     var keep={};
     for(var k in store) if(k!=="blocks") keep[k]=store[k];
@@ -2843,7 +2887,7 @@ function setCfg(c){ try{ localStorage.setItem(CFGKEY, JSON.stringify(c)); }catch
 
 </script>
 <script>/* js/render.js */
-/* Dream Walker's Atlas — render.js
+/* SomnuMatrix — render.js
    turning parts lists into 3D, and the world they stand in
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -3198,7 +3242,7 @@ function drawStreet(ax,az,bx2,bz2){
 
 </script>
 <script>/* js/effects.js */
-/* Dream Walker's Atlas — effects.js
+/* SomnuMatrix — effects.js
    things that move: smoke and embers from a volcano, blowing sand, a turning
    funnel, falling snow and rain, flickering flame, lightning, drifting wisps,
    hovering islands, turning wheels. only what's near you is animated.
@@ -3376,7 +3420,7 @@ function animateEffects(dt){
 
 </script>
 <script>/* js/deities.js */
-/* Dream Walker's Atlas — deities.js
+/* SomnuMatrix — deities.js
    deities from many traditions, recognised by name when dreamt, drawn from their
    own iconography, awake from the first night, and speaking and acting as the
    dreamer dreamt them. one standard across every tradition.
@@ -3825,7 +3869,7 @@ function iconVal(d,t){ var v=null; d.icons.forEach(function(x){ var p=x.split(":
 
 </script>
 <script>/* js/deity-forms.js */
-/* Dream Walker's Atlas — deity-forms.js
+/* SomnuMatrix — deity-forms.js
    how deities and dragons are drawn: a body, then their iconography built onto it.
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -4196,7 +4240,7 @@ function buildDragon(spec,f,icons){
 
 </script>
 <script>/* js/openings.js */
-/* Dream Walker's Atlas — openings.js
+/* SomnuMatrix — openings.js
    doors and windows. every building with windows now has them on all four walls,
    not only the front. a dream (or the inspector) can change their style and colour,
    add doors, or take the windows away.
@@ -4418,7 +4462,7 @@ function facadeFrom(seg,inside){
 
 </script>
 <script>/* js/creatures.js */
-/* Dream Walker's Atlas — creatures.js
+/* SomnuMatrix — creatures.js
    the bestiary: folk of other realms, beasts real and mythical, sea creatures,
    serpents, flyers, crawlers, swarms, and the things that come at night.
    each has its own form. night:1 marks the ones a nightmare can be made of.
@@ -4835,7 +4879,7 @@ function buildSwarm(spec,f,o){
 
 </script>
 <script>/* js/realm-kit.js */
-/* Dream Walker's Atlas — realm-kit.js
+/* SomnuMatrix — realm-kit.js
    what each other world is made of. every realm now has its own scenery, set out
    around the way in when it is first reached, and its own inhabitants. all of it
    can also be dreamt by name, in any world.
@@ -5071,6 +5115,8 @@ EFFECTS.styx=function(g){ var p=particles(70,[28,2,4],0xA8B0C0,1.8,.4); p.positi
 var realmsExtended=false;
 function extendRealms(){
   if(realmsExtended) return; realmsExtended=true;
+  REALMS.somnucor={name:"Somnucor",ground:0x2A2E3C,tex:"paving",path:0x3A3F50,skyTop:0x0A0C1C,skyLow:0x2E2A5E,
+    dens:.55,light:0xDCE0FF,amb:1.15,sun:.85,stars:1,mix:["human","human","child"]};
   REALMS.fire={name:"The Burning Lands",ground:0x2A1A14,tex:"earth",path:0x4A2A1C,skyTop:0x1A0604,skyLow:0xC24A14,dens:1.8,light:0xFF9A5A,amb:.5,sun:.5,stars:0};
   REALMS.stars={name:"Among the Stars",ground:0x7E7E84,tex:"sand",path:0x9A9AA0,skyTop:0x000002,skyLow:0x06060E,dens:.55,light:0xE8ECFF,amb:.6,sun:.8,stars:1};
   REALMS.fire.mix=["fireelemental","imp","demon","fireelemental"];
@@ -5130,7 +5176,7 @@ function realmScenery(r){
 
 </script>
 <script>/* js/wasteland.js */
-/* Dream Walker's Atlas — wasteland.js
+/* SomnuMatrix — wasteland.js
    after the end of the world: ruins, wrecks, barricades, scrap, shelters and the
    people who survive there. the desert and its oasis. and a lair hollowed out of a
    volcano, which you can walk into.
@@ -5288,7 +5334,7 @@ function extendRealms2(){
 
 </script>
 <script>/* js/cultural.js */
-/* Dream Walker's Atlas — cultural.js
+/* SomnuMatrix — cultural.js
    buildings and decorations from around the world, so a dreamscape can look like
    the places people actually come from. public architecture and public festival
    decoration only: nothing sacred that belongs to a closed tradition, and nothing
@@ -5548,7 +5594,7 @@ EFFECTS.windchimes=function(g){ return function(t){ g.children.forEach(function(
 
 </script>
 <script>/* js/magic-transport.js */
-/* Dream Walker's Atlas — magic-transport.js
+/* SomnuMatrix — magic-transport.js
    ways of travelling that aren't roads. stand on a carpet, a broom, a sleigh or a
    chariot and you can rise and fly while you are on it. step into a teleport ring,
    a wardrobe, a whirlpool or onto the rainbow bridge and, if there is another of
@@ -5676,7 +5722,7 @@ function goThrough(o){
 
 </script>
 <script>/* js/scifi.js */
-/* Dream Walker's Atlas — scifi.js
+/* SomnuMatrix — scifi.js
    the far side of the dream: domes and habitats, reactors and hangars, shuttles
    and saucers, robots, greys and troopers — and a stargate, which works: step
    through one and it carries you to another, across worlds if there is one there.
@@ -5947,7 +5993,7 @@ function addSciFurniture(){
 
 </script>
 <script>/* js/arms.js */
-/* Dream Walker's Atlas — arms.js
+/* SomnuMatrix — arms.js
    weapons and workings. things lying about that you can pick up and carry, and use:
    a bow looses an arrow, a wand throws fire, a staff calls lightning, a horn sounds.
    the workings themselves — fire, lightning, ice, light, shields, summonings — can
@@ -6240,7 +6286,7 @@ function armsReach(){
 
 </script>
 <script>/* js/seasons.js */
-/* Dream Walker's Atlas — seasons.js
+/* SomnuMatrix — seasons.js
    the turning year. the eight sabbats, and the feasts people keep alongside them.
    dream any of it by name, or let the season set it out: the world knows what time
    of year it is, and dresses accordingly when you ask it to.
@@ -6432,7 +6478,7 @@ function undressSeason(){
 
 </script>
 <script>/* js/vocab-extra.js */
-/* Dream Walker's Atlas — vocab-extra.js
+/* SomnuMatrix — vocab-extra.js
    many more ways of saying the same thing. people don't dream in the app's
    words, they dream in their own: "the block of flats", "granny's place",
    "a lock-up", "a dirt track", "the woods". anything already understood keeps
@@ -6655,7 +6701,7 @@ var EXTRA_VOCAB={
 
 </script>
 <script>/* js/names.js */
-/* Dream Walker's Atlas — names.js
+/* SomnuMatrix — names.js
    streets, addresses and the names of places
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -6772,7 +6818,7 @@ function nearestNamed(x,z,range){
 
 </script>
 <script>/* js/placement.js */
-/* Dream Walker's Atlas — placement.js
+/* SomnuMatrix — placement.js
    blocks, lots, occupancy and where things land
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -7045,7 +7091,7 @@ function place(arch,label,attrs,opts){
 
 </script>
 <script>/* js/footprint.js */
-/* Dream Walker's Atlas — footprint.js
+/* SomnuMatrix — footprint.js
    buildings are placed by their real footprint, not by an 18-metre lot:
    a church or a library finds a stretch of its side of the block wide and deep
    enough, or another side, or the next block. nothing overlaps; nothing stands
@@ -7186,7 +7232,7 @@ function releaseLots(spec){
 
 </script>
 <script>/* js/distance.js */
-/* Dream Walker's Atlas — distance.js
+/* SomnuMatrix — distance.js
    what "two blocks away" means. a block is a block, a street away is the next one
    over, a neighbourhood is a cluster of blocks that keeps its own name, and across
    town is the far side of everything standing.
@@ -7324,7 +7370,7 @@ function stepBack(from){ if(from){ store.grid.bx=from.bx; store.grid.bz=from.bz;
 
 </script>
 <script>/* js/vehicles.js */
-/* Dream Walker's Atlas — vehicles.js
+/* SomnuMatrix — vehicles.js
    cars, trucks, buses and bicycles keep to the road: parked at the kerb or on a
    house's driveway, driving only along streets and turning at the corners.
    boats, ships, trains, planes and balloons go where they go.
@@ -7423,7 +7469,7 @@ function vehicleTarget(w){ var R=roadSpot(w.x,w.z,KERB_LANE); return {x:R.x,z:R.
 
 </script>
 <script>/* js/clock.js */
-/* Dream Walker's Atlas — clock.js
+/* SomnuMatrix — clock.js
    the hours, routines, sky, sun, moon and stars
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -8054,7 +8100,7 @@ function moveEveryone(h,dl){
 
 </script>
 <script>/* js/dreamer.js */
-/* Dream Walker's Atlas — dreamer.js
+/* SomnuMatrix — dreamer.js
    the dreamer, their abilities, and passages between places
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -8163,7 +8209,7 @@ function passageAt(x,z,r){
 
 </script>
 <script>/* js/fillers.js */
-/* Dream Walker's Atlas — fillers.js
+/* SomnuMatrix — fillers.js
    population drawn from buildings, and the nameless others
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -8336,7 +8382,7 @@ function populate(){
 
 </script>
 <script>/* js/households.js */
-/* Dream Walker's Atlas — households.js
+/* SomnuMatrix — households.js
    nothing stands empty. a house gets the people who live in it, a shop gets the
    one who keeps it, a hospital keeps somebody awake at four in the morning.
    their hours come from the building they belong to, not from a single template.
@@ -8479,7 +8525,7 @@ function peopleEverything(){
 
 </script>
 <script>/* js/characters.js */
-/* Dream Walker's Atlas — characters.js
+/* SomnuMatrix — characters.js
    figures: resolution, detail, waking, merging
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -8617,7 +8663,7 @@ function awakeNear(pos,range){
 
 </script>
 <script>/* js/ground.js */
-/* Dream Walker's Atlas — ground.js
+/* SomnuMatrix — ground.js
    something to stand on. a ship's deck holds you, a stair carries you up a step at
    a time, a bridge and a roof and a cloud bank hold you, and when you walk off the
    edge you fall rather than drift. you can step up about knee height; anything
@@ -8733,7 +8779,7 @@ function groundTick(dt){
 
 </script>
 <script>/* js/controls.js */
-/* Dream Walker's Atlas — controls.js
+/* SomnuMatrix — controls.js
    camera, walking, proximity and inspecting forms
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -8880,7 +8926,8 @@ function animate(){
   if(audio.on) audioTick();
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
   if(store.peopleLater){ store.peopleLater=false; peopleEverything(); }
-  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt); armsTick(dt);
+  navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt); armsTick(dt); hubTick(dt);
+  doorsTick(dt); visitTick(dt);
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
   renderView();
@@ -9118,7 +9165,7 @@ addEventListener("keydown",function(e){
 
 </script>
 <script>/* js/talk.js */
-/* Dream Walker's Atlas — talk.js
+/* SomnuMatrix — talk.js
    dialogue, strangers and the roster
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -9576,7 +9623,7 @@ function openRoster(){
 
 </script>
 <script>/* js/voice.js */
-/* Dream Walker's Atlas — voice.js
+/* SomnuMatrix — voice.js
    how a figure speaks when no model is connected. everything it says comes from
    what the dream recorded; it answers what was asked; it does not repeat itself.
    loaded as a plain script; shares scope with the other files */
@@ -9944,7 +9991,7 @@ function describeFigure(c,text){
 
 </script>
 <script>/* js/sound.js */
-/* Dream Walker's Atlas — sound.js
+/* SomnuMatrix — sound.js
    procedural positional audio
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -10035,7 +10082,7 @@ function stopAudio(){
 
 </script>
 <script>/* js/parse.js */
-/* Dream Walker's Atlas — parse.js
+/* SomnuMatrix — parse.js
    vocabulary, the instant tier and the model tier
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -10596,7 +10643,7 @@ function reconcile(p){
 
 </script>
 <script>/* js/journal.js */
-/* Dream Walker's Atlas — journal.js
+/* SomnuMatrix — journal.js
    sealing, outcomes, research summaries and the journal
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -10627,6 +10674,7 @@ function nightRecord(n){
 
 /* every way of finishing a dream goes through here, so a night is only ever filed once */
 function closeNight(title,text,full){
+  if(typeof syncAfterNight==="function") setTimeout(syncAfterNight,400);
   var n=store.session;
   if(nightRecord(n)){ return null; }
   var at=new Date();
@@ -10971,7 +11019,7 @@ function linkPlaces(keepId,dropId){
 
 </script>
 <script>/* js/books.js */
-/* Dream Walker's Atlas — books.js
+/* SomnuMatrix — books.js
    Artemidorus and Miller: indexing, matching, interpreting
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -11425,7 +11473,7 @@ function renderHeld(){
 
 </script>
 <script>/* js/story.js */
-/* Dream Walker's Atlas — story.js
+/* SomnuMatrix — story.js
    writing a full dream, and who is dreaming
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -11544,7 +11592,7 @@ function saveSelf(){
 
 </script>
 <script>/* js/speech.js */
-/* Dream Walker's Atlas — speech.js
+/* SomnuMatrix — speech.js
    speech recognition
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -11598,7 +11646,7 @@ function toggleMic(){
 
 </script>
 <script>/* js/ui.js */
-/* Dream Walker's Atlas — ui.js
+/* SomnuMatrix — ui.js
    the interface: transcript, panels, import and export
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -12000,7 +12048,7 @@ function deviceReport(){
 
 </script>
 <script>/* js/plot.js */
-/* Dream Walker's Atlas — plot.js
+/* SomnuMatrix — plot.js
    plotting by hand: place any form, drag it, turn it, give it floors, take it away
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -12270,7 +12318,7 @@ function frameTown(){
 
 </script>
 <script>/* js/compass.js */
-/* Dream Walker's Atlas — compass.js
+/* SomnuMatrix — compass.js
    north is a real direction in the dreamscape: north is -z, east is +x, so the
    east–west streets truly run east and west. a dial turns as you look around;
    in Plot, every building has a facing and a bearing from the heart of the town.
@@ -12360,7 +12408,7 @@ function wireCompass(){
 
 </script>
 <script>/* js/realms.js */
-/* Dream Walker's Atlas — realms.js
+/* SomnuMatrix — realms.js
    other worlds entirely, reached through passages: the underworld, the heavens,
    the depths beneath the sea, faerie, the void, the mirror world, the land of
    the dead, a frozen realm, or simply another world. each stands far off in the
@@ -12568,13 +12616,16 @@ function renderRealmList(){
     };
     return;
   }
-  var chooser='<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross">'+
+  var chooser='<div class="l-realm"><span><b>Somnucor</b> &mdash; the hall of doors</span><button class="btn" id="l-hub">Go there</button></div>'+
+    '<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross">'+
     '<option value="">choose a world</option>'+
     Object.keys(REALMS).map(function(k){ return '<option value="'+k+'">'+esc(REALMS[k].name)+"</option>"; }).join("")+
     '</select></div>';
   el.innerHTML=chooser+R.map(function(r){
     return '<div class="l-realm"><span>'+esc(r.name)+'</span><button class="btn" data-visit="'+r.id+'">Go there</button></div>';
   }).join("")+'<div class="l-realm"><span>The town</span><button class="btn" data-visit="0">Go there</button></div>';
+  var hubBtn=document.getElementById("l-hub");
+  if(hubBtn) hubBtn.onclick=function(){ toSomnucor(); closeLand(); };
   var cross=document.getElementById("l-cross");
   if(cross) cross.onchange=function(){
     var k=cross.value; if(!k) return;
@@ -12603,8 +12654,206 @@ if(typeof extendRealms3==="function") extendRealms3();
 if(typeof widenRealmWords==="function") widenRealmWords();
 
 </script>
+<script>/* js/somnucor.js */
+/* SomnuMatrix — somnucor.js
+   Somnucor: the hall every dreamer arrives in. A ring of doors, one for every world
+   the Atlas knows, and one that carries your own name and opens on your own town.
+   Between the doors stand mirrors. Around the hall, galleries showing what can be
+   dreamt — dwellings, figures, gods, creatures, workings, the turning year — and
+   signboards saying plainly how any of it is done.
+   It is built once, and it belongs to the app rather than to any one dream.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var HUB_STONE=0x2A2E3A, HUB_TRIM=0xC9A868, HUB_GLOW=0x9FD8FF;
+
+/* ---------- the pieces the hall is made of ---------- */
+S("hubdoor","structure",[3.4,5.2,1.2],[
+  {g:"box",s:[3.2,5,.8],p:[0,2.5,0],c:HUB_STONE},
+  {g:"box",s:[2.2,4,.3],p:[0,2,.3],c:0x141620},
+  {g:"pln",s:[2,3.8],p:[0,2,.48],c:HUB_GLOW,glow:1,opa:.42},
+  {g:"box",s:[3.4,.3,1],p:[0,5.1,0],c:HUB_TRIM},
+  {g:"box",s:[2.4,.5,.12],p:[0,4.5,.45],c:0x0E1018},
+  {g:"sph",s:[.12],p:[-1.3,2.4,.45],c:HUB_TRIM,glow:1,pulse:1},
+  {g:"sph",s:[.12],p:[1.3,2.4,.45],c:HUB_TRIM,glow:1,pulse:1}
+],["door of your own","a door with a name on it","hall door","doorway in the hall"]);
+S("hubmirror","structure",[2.2,4.6,.6],[
+  {g:"box",s:[2,4.4,.35],p:[0,2.2,0],c:HUB_STONE},
+  {g:"box",s:[1.5,3.6,.12],p:[0,2.2,.2],c:0xDDE3EC,glow:1,opa:.75},
+  {g:"tor",s:[.9,.09],p:[0,4.2,.1],r:[0,0,0],c:HUB_TRIM}
+],["standing mirror","tall mirror in a frame","mirror between the doors"]);
+S("maptable","structure",[7,1.6,7],[
+  {g:"cyl",s:[3,3.2,1.1,24],p:[0,.55,0],c:HUB_STONE},
+  {g:"cyl",s:[3.1,3.1,.12,24],p:[0,1.12,0],c:0x141620},
+  {g:"cyl",s:[2.7,2.7,.06,24],p:[0,1.2,0],c:HUB_GLOW,glow:1,opa:.5,pulse:1},
+  {g:"sph",s:[.16],p:[1.6,1.34,0],c:HUB_TRIM,glow:1,pulse:1,rep:[6,-.5,0,.5]},
+  {g:"tor",s:[3.25,.1],p:[0,1.14,0],r:[Math.PI/2,0,0],c:HUB_TRIM}
+],["map table","table with a map of the worlds","the great map","map of everywhere"]);
+S("signboard","infra",[3.4,2.8,.4],[
+  {g:"cyl",s:[.12,.14,2.6,8],p:[-1.2,1.3,0],c:0x4A4238},
+  {g:"cyl",s:[.12,.14,2.6,8],p:[1.2,1.3,0],c:0x4A4238},
+  {g:"box",s:[3.2,1.5,.14],p:[0,2.1,0],c:0x2A2E3A},
+  {g:"box",s:[2.9,1.2,.05],p:[0,2.1,.1],c:0xE8E4DA},
+  {g:"box",s:[3.3,.12,.2],p:[0,2.92,0],c:HUB_TRIM}
+],["signboard","a board with writing on it","notice board in the hall"]);
+S("hubpillar","structure",[2.6,9,2.6],[
+  {g:"cyl",s:[1,1.2,8,12],p:[0,4,0],c:HUB_STONE},
+  {g:"cyl",s:[1.4,1.4,.5,12],p:[0,8.2,0],c:HUB_TRIM},
+  {g:"cyl",s:[1.4,1.4,.5,12],p:[0,.25,0],c:HUB_TRIM},
+  {g:"sph",s:[.3],p:[0,8.8,0],c:HUB_GLOW,glow:1,pulse:1}
+],["great pillar","pillar of the hall"]);
+S("plinth","infra",[2.2,1.2,2.2],[
+  {g:"cyl",s:[.9,1,1,16],p:[0,.5,0],c:HUB_STONE},
+  {g:"cyl",s:[1.05,1.05,.1,16],p:[0,1.05,0],c:HUB_TRIM}
+],["plinth","pedestal","stand for something"]);
+
+EFFECTS.hubdoor=function(g,spec){
+  var pane=null;
+  g.traverse(function(m){ if(m.isMesh&&m.geometry&&m.geometry.type==="PlaneGeometry") pane=m; });
+  return function(t){ if(pane) pane.material.opacity=.32+.14*Math.sin(t*1.1+(spec.x||0)); };
+};
+EFFECTS.maptable=function(g){ return function(t){ g.children.forEach(function(m,i){ if(i>3) m.rotation.y=t*.15; }); }; };
+
+/* ---------- what the hall says ---------- */
+var HUB_SIGNS=[
+  ["Speak it while it is still there","Press the circle and talk, or type. A sentence is enough. The Atlas builds only what you dreamt \u2014 what you left out stays faint."],
+  ["Walk it","Press Walk. W A S D, or the pad on a phone. What is solid holds you: decks, stairs, floors, roofs. Doors let you in."],
+  ["Change what is wrong","Tap anything to open it. Its colours, its materials, its windows and doors, who lives there \u2014 all of it yours to correct."],
+  ["Cross over","Say how you went: \u201cI went down into the underworld\u201d, \u201cI found myself somewhere else\u201d. Or take one of the doors in this hall."],
+  ["Nobody reads your dreams","They stay on your device. Keep them to your account and they are locked here first, with a phrase only you know."]
+];
+/* the doors round the ring: every world the Atlas knows, and your own */
+function hubDoorList(){
+  var list=[{to:"town",name:"Your own town"}];
+  Object.keys(REALMS).forEach(function(k){ if(k!=="somnucor") list.push({to:k,name:REALMS[k].name}); });
+  return list;
+}
+/* the galleries: a little of everything, set out to be looked at */
+var HUB_GALLERY=[
+  {name:"Dwellings",of:["cottage","house","hanok","yurt","pueblo","toadstoolhouse","habitat","igloo"]},
+  {name:"Great places",of:["church","pagoda","mosque","castle","merpalace","icepalace","ziggurat","skyscraper"]},
+  {name:"Those you may meet",of:["human","child","fairy","elf","goblin","mermaid","angel","robot"]},
+  {name:"Creatures",of:["unicorn","griffin","kitsune","cerberus","spider","octopus","phoenix","dragon"]},
+  {name:"The gods, in their own terms",of:["deity","deity","deity","deity"],deities:["hecate","anubis","ganesha","thor","guanyin","odin"]},
+  {name:"Workings and arms",of:["fireball","lightningbolt","iceblast","shieldspell","swordlying","bowlying","staffmagic","wand"]},
+  {name:"The turning year",of:["yuletree","ostaraeggs","beltanefire","lithawheel","lughcorn","mabontable","samhainlanterns","imbolccandles"]},
+  {name:"Ways of travelling",of:["stargate","flyingcarpet","teleportpad","broomstick","shuttle","saucer","soulferry","firechariot"]}
+];
+
+function somnucorRealm(){
+  var R=realms();
+  for(var i=0;i<R.length;i++) if(R[i].kind==="somnucor") return R[i];
+  return null;
+}
+function buildSomnucor(){
+  if(somnucorRealm()) return somnucorRealm();
+  if(typeof REALMS==="undefined"||!REALMS.somnucor) return null;
+  var was=store.here||0, wasGrid=store.grid;
+  var r=makeRealm("somnucor");
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz);
+  function put(arch,x,z,rot,attrs,name){
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:true,detail:4,nights:[store.session],realm:r.id,hub:true,addr:null,name:name||null,named:name?"stated":null};
+    store.objects.push(spec);
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  /* the ring of doors, with mirrors between them */
+  var doors=hubDoorList(), n=doors.length, R0=30;
+  doors.forEach(function(d,i){
+    var a=(i/n)*Math.PI*2;
+    var x=Math.cos(a)*R0, z=Math.sin(a)*R0;
+    var spec=put("hubdoor",x,z,-a+Math.PI/2,{},d.name);
+    spec.leadsTo=d.to;
+    var am=((i+0.5)/n)*Math.PI*2;
+    put("hubmirror",Math.cos(am)*R0,Math.sin(am)*R0,-am+Math.PI/2);
+  });
+  /* pillars, the map, and the signs */
+  for(var p=0;p<8;p++){ var pa=(p/8)*Math.PI*2+0.2; put("hubpillar",Math.cos(pa)*18,Math.sin(pa)*18,0); }
+  for(var L=0;L<12;L++){ var la=(L/12)*Math.PI*2; put("streetlight",Math.cos(la)*24,Math.sin(la)*24,-la); }
+  for(var L2=0;L2<8;L2++){ var la2=(L2/8)*Math.PI*2+0.4; put("stringlights",Math.cos(la2)*52,Math.sin(la2)*52,-la2+Math.PI/2); }
+  put("maptable",0,0,0,{},"The map of everywhere");
+  HUB_SIGNS.forEach(function(s,i){
+    var a=(i/HUB_SIGNS.length)*Math.PI*2+0.4;
+    var spec=put("signboard",Math.cos(a)*12,Math.sin(a)*12,-a+Math.PI/2,{},s[0]);
+    spec.sign=s[0]; spec.note=s[1];
+  });
+  /* the galleries, in rows beyond the ring */
+  HUB_GALLERY.forEach(function(row,gi){
+    var a=(gi/HUB_GALLERY.length)*Math.PI*2, cx=Math.cos(a)*62, cz=Math.sin(a)*62;
+    var sx=Math.cos(a+Math.PI/2), sz=Math.sin(a+Math.PI/2);
+    var board=put("signboard",cx-sx*16,cz-sz*16,-a+Math.PI/2,{},row.name);
+    board.sign=row.name; board.note="Dream any of these by name, and it will stand in your own town.";
+    row.of.forEach(function(arch,k){
+      if(!KIT[arch]) return;
+      var off=(k-(row.of.length-1)/2)*9;
+      var px=cx+sx*off, pz=cz+sz*off;
+      put("plinth",px,pz,0);
+      /* everything stands on its plinth at a size you can look at */
+      var d=KIT[arch], tall=Math.max(d.size[0],d.size[1],d.size[2]);
+      var sc=Math.max(0.12,Math.min(1,5.5/tall));
+      var spec=put(arch,px,pz+1.6,-a+Math.PI,{s:sc});
+      if(row.deities&&row.deities[k]&&typeof makeDeity==="function"){ try{ makeDeity(spec,row.deities[k]); }catch(e){} }
+    });
+  });
+  r.dressed=true;
+  store.somnucor=r.id;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return r;
+}
+/* walking into a door in the hall */
+var hubCool=0;
+function hubTick(dt){
+  if(hubCool>0) hubCool-=dt;
+  if(!walkMode||store.inside||hubCool>0) return;
+  var P=camera.position;
+  for(var i=0;i<store.objects.length;i++){
+    var o=store.objects[i];
+    if(o.archetype!=="hubdoor") continue;
+    if(!o.leadsTo){
+      /* a dreamer's door: walk in, if they opened it */
+      if((o.realm||0)!==(store.here||0)) continue;
+      if(Math.hypot(o.x-P.x,o.z-P.z)>1.9) continue;
+      hubCool=2.5;
+      if(typeof walkIntoDoor==="function") walkIntoDoor(o);
+      return;
+    }
+    if((o.realm||0)!==(store.here||0)) continue;
+    if(Math.hypot(o.x-P.x,o.z-P.z)>1.9) continue;
+    hubCool=2.5;
+    if(o.leadsTo==="town"){
+      if(typeof beHere==="function") beHere(0);
+      var t=heartOf(0);
+      camera.position.set(t.x,camera.position.y,t.z+24);
+      setStatus("<b>Your own town.</b> Everything you have dreamt stands here.");
+    } else {
+      enterRealm(o.leadsTo,false,null,null);
+      var rr=realms()[realms().length-1];
+      if(typeof beHere==="function") beHere(rr?rr.id:0);
+      var hh=heartOf(store.here||0);
+      camera.position.set(hh.x,camera.position.y,hh.z+18);
+      setStatus("<b>"+esc((REALMS[o.leadsTo]||{}).name||o.leadsTo)+".</b> The way back stands where you came in.");
+    }
+    if(typeof save==="function") save();
+    return;
+  }
+}
+/* the way home to the hall, from anywhere */
+function toSomnucor(){
+  var r=somnucorRealm()||buildSomnucor();
+  if(!r) return;
+  if(typeof beHere==="function") beHere(r.id);
+  var h=heartOf(r.id);
+  if(walkMode){ camera.position.set(h.x,1.72,h.z+44); }
+  else if(typeof visitRealm==="function") visitRealm(r.id);
+  setStatus("<b>Somnucor.</b> Every door here opens on a world. One of them is yours.");
+}
+
+</script>
 <script>/* js/realm-words.js */
-/* Dream Walker's Atlas — realm-words.js
+/* SomnuMatrix — realm-words.js
    people don't cross over in the app's words. they write "I ended up in a forest
    that wasn't a forest", "the lift went down too far", "we came out under the sea".
    this widens what counts as a crossing, adds a plain fallback for "somewhere
@@ -12614,6 +12863,8 @@ if(typeof widenRealmWords==="function") widenRealmWords();
 "use strict";
 
 var MORE_REALM_WORDS={
+  somnucor:["somnucor","the hall of doors","the hall of mirrors and doors","the great hall of doors","the hub",
+    "the place all the doors open from","the meeting hall of the worlds"],
   underworld:["underworld","the underworld","the land of the dead","land of the dead","the lower world","the world below",
     "the world beneath","down among the dead","the kingdom of the dead","into hell","the inferno","the abyss below",
     "the dark below","beneath the earth","under the earth","the deep places","the halls below","the dead lands","perdition",
@@ -12701,7 +12952,7 @@ function crossingMeant(low,at,word){
 
 </script>
 <script>/* js/skies.js */
-/* Dream Walker's Atlas — skies.js
+/* SomnuMatrix — skies.js
    the other worlds do not get our sky. each one gets its own, alive and moving:
    aurora curtains over Faerie and the frozen north, rolling smoke in the
    underworld, shafts of light in the heavens, caustics overhead in the Deep,
@@ -12727,6 +12978,7 @@ var SKYWORK={
   stars:      {mode:7,a:0x2A1060,b:0xC050E8,c:0x4AE0FF,speed:0.35,lift:0.4,amt:1.5},
   wasteland:  {mode:8,a:0xC8B078,b:0x8A7A50,c:0xE8D8A8,speed:0.6,lift:0.5},
   desert:     {mode:8,a:0xF0D8A8,b:0xBFD8EC,c:0xFFF0D0,speed:0.4,lift:0.4},
+  somnucor:   {mode:5,a:0x6A5AC8,b:0xE8E4FF,c:0x4AE8FF,speed:0.35,lift:0.6,amt:1.2},
   station:    {mode:7,a:0x0A0A18,b:0x4A6AE8,c:0x6AE8FF,speed:0.3,lift:0.4,amt:1.4},
   future:     {mode:6,a:0x2A0A3A,b:0xFF4AE0,c:0x4AE8FF,speed:0.7,lift:0.55,amt:1.3},
   elsewhere:  {mode:7,a:0x1A4A4A,b:0x6AFFC4,c:0xFF6AC8,speed:0.8,lift:0.6,amt:1.5}
@@ -12865,7 +13117,7 @@ function realmSkyTick(dt){
 
 </script>
 <script>/* js/looks-ui.js */
-/* Dream Walker's Atlas — looks-ui.js
+/* SomnuMatrix — looks-ui.js
    the inspector's colour and look editor: walls and roofs for buildings,
    everything about a person for people, a plain colour for everything else.
    anything set here is recorded as chosen by the dreamer, never as dreamt.
@@ -13011,7 +13263,7 @@ function makeDeity(spec,key){
 
 </script>
 <script>/* js/avatar.js */
-/* Dream Walker's Atlas — avatar.js
+/* SomnuMatrix — avatar.js
    the dreamer has a body. walk seeing through your own eyes, or from behind
    yourself, or turn the view round to face yourself while you choose what you
    wear. the look is yours alone to set; nothing is guessed.
@@ -13139,7 +13391,7 @@ function renderView(){
 
 </script>
 <script>/* js/nightmares.js */
-/* Dream Walker's Atlas — nightmares.js
+/* SomnuMatrix — nightmares.js
    what chased you in the dream comes out after dark. it hunts you when you walk
    the dreamscape at night, and when it reaches you, you face it — in the way the
    dream said it ended, or any way you choose, which then becomes true.
@@ -13291,7 +13543,7 @@ function wakeAtDawn(msg){
 
 </script>
 <script>/* js/nav.js */
-/* Dream Walker's Atlas — nav.js
+/* SomnuMatrix — nav.js
    solid is solid for everyone. people, creatures and nightmares find a way round
    anything solid instead of walking through it: a straight line when it's clear,
    otherwise a route found over a two-metre grid, smoothed so they don't zigzag.
@@ -13378,7 +13630,7 @@ function navTick(){
 
 </script>
 <script>/* js/interiors.js */
-/* Dream Walker's Atlas — interiors.js
+/* SomnuMatrix — interiors.js
    walk in through a building's front door and you are inside it: rooms off a
    hallway in a house, pews and an altar in a church, stacks in a library, a stair
    winding up a tower. whatever the dream said about the inside — the rooms, the
@@ -13956,7 +14208,7 @@ function interiorTick(dt){
 
 </script>
 <script>/* js/cloud.js */
-/* Dream Walker's Atlas — cloud.js
+/* SomnuMatrix — cloud.js
    the Atlas's shared settings, set from the admin page: which held-back book
    readings are released, any announcement, whether the Dream Walker inbox is
    open. read once at start and remembered for when there is no connection.
@@ -14030,7 +14282,7 @@ function applyCloud(){
 
 </script>
 <script>/* js/account.js */
-/* Dream Walker's Atlas — account.js
+/* SomnuMatrix — account.js
    signing in. an account records who you are and what you have bought, and
    nothing else: your dreams stay on this device, and nobody at the Temple can
    read them. signing in is optional, and the Atlas works fully without it.
@@ -14097,6 +14349,7 @@ function signIn(){
   }).catch(function(e){ accountMsg(authWords(e),true); });
 }
 function signOut(){
+  if(typeof vaultKey!=="undefined") vaultKey=null;     /* the key never outlives the sitting */
   var tok=session&&session.access_token;
   keepSession(null); accountMsg("Signed out. Everything you have dreamt stays on this device.");
   if(tok) authPost("logout",{},tok).catch(function(){});
@@ -14118,6 +14371,7 @@ function authWords(e){
 }
 
 function showAccount(){
+  if(typeof syncStatus==="function") setTimeout(syncStatus,0);
   var out=document.getElementById("acc-out"), inn=document.getElementById("acc-in");
   if(!out||!inn) return;
   var on=signedIn();
@@ -14137,8 +14391,457 @@ function initAccount(){
 }
 
 </script>
+<script>/* js/sync.js */
+/* SomnuMatrix — sync.js
+   a dreamscape kept to an account rather than to one browser. it is locked on this
+   device with a phrase only the dreamer knows, and only then sent. what reaches the
+   Temple is a block of nonsense: no one there can open it, and neither can we.
+   lose the phrase and the copy is lost with it — that is the price of the promise.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var vaultKey=null, vaultSalt=null, vaultBusy=false, lastSaved=null, SYNCKEY="dreamwalker.sync";
+
+function subtle(){ return (typeof crypto!=="undefined"&&crypto.subtle)?crypto.subtle:null; }
+function syncOn(){ return cfg().sync===true; }
+function b64(buf){ var b=new Uint8Array(buf), s=""; for(var i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); }
+function unb64(str){ var s=atob(str), b=new Uint8Array(s.length); for(var i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b; }
+function randBytes(n){ var b=new Uint8Array(n); crypto.getRandomValues(b); return b; }
+
+/* the phrase becomes a key here, on this device, and the key never leaves it */
+function makeKey(phrase,salt){
+  var S=subtle(); if(!S) return Promise.reject(new Error("this browser cannot lock things"));
+  var enc=new TextEncoder();
+  return S.importKey("raw",enc.encode(phrase),{name:"PBKDF2"},false,["deriveKey"])
+    .then(function(base){
+      return S.deriveKey({name:"PBKDF2",salt:salt,iterations:210000,hash:"SHA-256"},base,
+        {name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+    });
+}
+function lockUp(text,key){
+  var iv=randBytes(12), enc=new TextEncoder();
+  return subtle().encrypt({name:"AES-GCM",iv:iv},key,enc.encode(text))
+    .then(function(ct){ return {cipher:b64(ct),iv:b64(iv)}; });
+}
+function unlock(cipher,iv,key){
+  return subtle().decrypt({name:"AES-GCM",iv:unb64(iv)},key,unb64(cipher))
+    .then(function(pt){ return new TextDecoder().decode(pt); });
+}
+
+/* setting, or entering, the phrase */
+function openVault(phrase){
+  if(!phrase||phrase.length<8) return Promise.reject(new Error("Use at least eight characters."));
+  return vaultRow().then(function(row){
+    vaultSalt=row&&row.salt?unb64(row.salt):randBytes(16);
+    return makeKey(phrase,vaultSalt).then(function(k){
+      vaultKey=k;
+      if(!row) return {fresh:true};
+      /* prove the phrase before trusting it */
+      return unlock(row.cipher,row.iv,k).then(function(){ return {fresh:false,row:row}; })
+        .catch(function(){ vaultKey=null; throw new Error("That phrase doesn't open this vault."); });
+    });
+  });
+}
+function vaultLocked(){ return !vaultKey; }
+
+function restHeaders(tok){
+  return {"Content-Type":"application/json",apikey:DW_CONFIG.supabaseKey,
+    Authorization:"Bearer "+tok,Prefer:"resolution=merge-duplicates,return=representation"};
+}
+function vaultRow(){
+  return freshToken().then(function(tok){
+    if(!tok) return null;
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/vault?select=*",{headers:restHeaders(tok)})
+      .then(function(r){ return r.ok?r.json():[]; })
+      .then(function(rows){ return (rows&&rows[0])||null; });
+  });
+}
+
+/* what is kept: the dreamscape itself, and nothing about this device */
+function dreamscapeText(){
+  var keep={};
+  ["objects","characters","sessions","transcript","dreamer","passages","realms","hoods","grid","townGrid",
+   "here","session","blocks","streets","land","research","insideSlots","lastId","lastAny","lastLot"].forEach(function(k){
+    if(store[k]!==undefined) keep[k]=store[k];
+  });
+  return JSON.stringify({v:1,at:Date.now(),store:keep});
+}
+function keepToAccount(quiet){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first."));
+  if(vaultLocked()) return Promise.reject(new Error("Unlock the vault with your phrase first."));
+  if(vaultBusy) return Promise.resolve(null);
+  vaultBusy=true;
+  var text=dreamscapeText();
+  return lockUp(text,vaultKey).then(function(sealed){
+    return freshToken().then(function(tok){
+      return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/vault",{
+        method:"POST",headers:restHeaders(tok),
+        body:JSON.stringify({user_id:session.user.id,cipher:sealed.cipher,iv:sealed.iv,
+          salt:b64(vaultSalt),bytes:text.length,updated_at:new Date().toISOString(),version:1})
+      });
+    });
+  }).then(function(r){
+    vaultBusy=false;
+    if(!r.ok) throw new Error("It didn't go up. Try again in a moment.");
+    lastSaved=Date.now();
+    try{ localStorage.setItem(SYNCKEY,String(lastSaved)); }catch(e){}
+    if(!quiet) setStatus("<b>Kept to your account.</b> Locked on this device before it left it.");
+    syncStatus();
+    return true;
+  }).catch(function(e){ vaultBusy=false; if(!quiet) setStatus(esc(e.message)); throw e; });
+}
+/* bringing it down to whatever device you are on */
+function bringToThisDevice(){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first."));
+  if(vaultLocked()) return Promise.reject(new Error("Unlock the vault with your phrase first."));
+  return vaultRow().then(function(row){
+    if(!row) throw new Error("There is nothing kept to this account yet.");
+    return unlock(row.cipher,row.iv,vaultKey).then(function(text){
+      var got=JSON.parse(text);
+      if(!got||!got.store) throw new Error("What came down could not be read.");
+      Object.keys(got.store).forEach(function(k){ store[k]=got.store[k]; });
+      save();
+      if(typeof rebuildAll==="function") rebuildAll();
+      else if(typeof rebuildWorld==="function") rebuildWorld();
+      setStatus("<b>Your dreamscape is on this device.</b> "+(store.objects||[]).length+" things standing.");
+      syncStatus();
+      return true;
+    });
+  });
+}
+/* after a night is written down, keep it — quietly */
+function syncAfterNight(){
+  if(!syncOn()||!signedIn()||vaultLocked()) return;
+  keepToAccount(true).catch(function(){});
+}
+
+/* ---- what the dreamer sees ---- */
+function syncStatus(){
+  var el=document.getElementById("sync-state"); if(!el) return;
+  if(!signedIn()){ el.textContent="Sign in above to keep your dreamscape to your account."; return; }
+  var when=lastSaved||(function(){ try{ return +localStorage.getItem(SYNCKEY)||0; }catch(e){ return 0; } })();
+  el.innerHTML=(vaultLocked()?"<b>Locked.</b> Enter your phrase to keep or fetch it. ":"<b>Unlocked on this device.</b> ")+
+    (when?("Last kept "+new Date(when).toLocaleString()+"."):"Nothing kept yet.");
+}
+function initSync(){
+  var b;
+  if((b=document.getElementById("sync-unlock"))) b.onclick=function(){
+    var ph=document.getElementById("sync-phrase").value;
+    setStatus("Working on it\u2026");
+    openVault(ph).then(function(res){
+      document.getElementById("sync-phrase").value="";
+      setStatus(res.fresh?"<b>Vault ready.</b> Nothing kept to this account yet \u2014 press Keep it now."
+                        :"<b>Vault open.</b> You can keep this dreamscape, or bring down the one on your account.");
+      syncStatus();
+    }).catch(function(e){ setStatus(esc(e.message)); });
+  };
+  if((b=document.getElementById("sync-save"))) b.onclick=function(){ keepToAccount(false).catch(function(){}); };
+  if((b=document.getElementById("sync-fetch"))) b.onclick=function(){
+    if(!confirm("Bring down the dreamscape kept to your account? What is on this device will be replaced.")) return;
+    bringToThisDevice().catch(function(e){ setStatus(esc(e.message)); });
+  };
+  if((b=document.getElementById("sync-on"))) b.onchange=function(){
+    var c=cfg(); c.sync=(b.value==="on"); setCfg(c);
+    setStatus(c.sync?"Your dreamscape will be kept to your account after each night."
+                    :"Kept on this device only.");
+  };
+  var s=document.getElementById("sync-on"); if(s) s.value=syncOn()?"on":"off";
+  syncStatus();
+}
+
+</script>
+<script>/* js/doors.js */
+/* SomnuMatrix — doors.js
+   the great hall of doors. every dreamer who accepts gets one, and the hall grows
+   to hold them: the oldest doors nearest the middle, newer ones in wider rings,
+   however many there come to be.
+   a door carries only what its owner wrote on it — a name and a line. It opens on
+   nobody's dreams. You may leave a light at somebody's door, and that is all
+   anyone can do to a door that is not theirs.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var hallDoors=[], hallCount=0, hallAt=0, myDoor=null, hallBusy=false, lightCool=0;
+var HALL_R0=30, HALL_GAP=13, HALL_PER=18;   // the first ring, the space between rings, doors in the first ring
+
+/* where the nth door stands: rings that widen as the hall fills */
+function doorPlace(n){
+  var ring=0, seen=0, per=HALL_PER;
+  while(seen+per<=n){ seen+=per; ring++; per=HALL_PER+ring*8; }
+  var i=n-seen, r=HALL_R0+ring*HALL_GAP, a=(i/per)*Math.PI*2+(ring%2?Math.PI/per:0);
+  return {x:Math.cos(a)*r, z:Math.sin(a)*r, rot:-a+Math.PI/2, ring:ring};
+}
+function hallRings(count){ var n=0,ring=0,per=HALL_PER; while(n<count){ n+=per; ring++; per=HALL_PER+ring*8; } return ring; }
+
+function restGet(path){
+  var tok=(typeof signedIn==="function"&&signedIn())?session.access_token:DW_CONFIG.supabaseKey;
+  return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/"+path,{
+    headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+tok,"Content-Type":"application/json"}
+  }).then(function(r){ return r.ok?r.json():null; });
+}
+function restRpc(name,body){
+  var tok=(typeof signedIn==="function"&&signedIn())?session.access_token:DW_CONFIG.supabaseKey;
+  return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/rpc/"+name,{
+    method:"POST",headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+tok,"Content-Type":"application/json"},
+    body:JSON.stringify(body||{})
+  }).then(function(r){ return r.ok?r.json():null; });
+}
+
+/* bring the hall down and stand it up */
+function fetchHall(){
+  if(hallBusy||!cloudOn()||typeof fetch!=="function") return Promise.resolve(0);
+  hallBusy=true;
+  return restRpc("hall_of_doors",{p_from:0,p_count:1000}).then(function(rows){
+    hallBusy=false;
+    hallDoors=rows||[];
+    hallCount=hallDoors.length;
+    return restRpc("doors_standing").then(function(n){ hallCount=(typeof n==="number")?n:hallCount; return hallCount; });
+  }).catch(function(){ hallBusy=false; return 0; });
+}
+function raiseHall(){
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  if(!r) return 0;
+  var h=blockOrigin(r.grid.bx,r.grid.bz);
+  /* clear the dreamers' doors, keep the doors to the worlds */
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if(o.dreamerDoor){ if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; } store.objects.splice(i,1); }
+  }
+  var mine=(typeof signedIn==="function"&&signedIn())?session.user.id:null;
+  hallDoors.forEach(function(d,n){
+    var p=doorPlace(n);
+    var spec={id:uid(),archetype:"hubdoor",label:d.name,name:d.name,named:"stated",attrs:{c:d.colour||undefined},
+      x:h.x+p.x*1.0,z:h.z+p.z*1.0,rot:p.rot,solid:true,detail:4,nights:[store.session],realm:r.id,
+      dreamerDoor:d.user_id,doorLine:d.line||"",lights:d.lights||0,hub:true,
+      note:(d.line?d.line+"\\n":"")+"A door in the great hall. "+(d.lights||0)+" lights left here."};
+    if(mine&&d.user_id===mine){ spec.leadsTo="town"; spec.name=d.name+" \u2014 yours"; myDoor=spec; }
+    store.objects.push(spec);
+    if(typeof addMesh==="function") addMesh(spec);
+  });
+  save();
+  return hallDoors.length;
+}
+/* the world-doors sit in the middle; the dreamers' doors stand in rings beyond them */
+function openHall(){
+  return fetchHall().then(function(){
+    var n=raiseHall();
+    if(n) setStatus("<b>The hall stands.</b> "+hallCount+" door"+(hallCount===1?"":"s")+", and the rings widen as more are taken.");
+    return n;
+  });
+}
+
+/* taking, changing, or giving up your own door */
+function takeDoor(name,line,colour){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first \u2014 a door belongs to an account, not a browser."));
+  return restRpc("take_door",{p_name:name,p_line:line||null,p_colour:colour||null}).then(function(out){
+    if(out!=="ok") throw new Error(out||"That didn't take.");
+    return openHall();
+  });
+}
+function giveUpDoor(){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first."));
+  return restRpc("give_up_door",{}).then(function(){ myDoor=null; return openHall(); });
+}
+/* leaving a light at somebody's door */
+function leaveLight(spec){
+  if(!spec||!spec.dreamerDoor||lightCool>0) return;
+  lightCool=2;
+  restRpc("leave_light",{p_door:spec.dreamerDoor}).then(function(n){
+    if(typeof n==="number"){ spec.lights=n; setStatus("<b>A light left at "+esc(spec.name||"their door")+".</b> "+n+" now burn there."); }
+    else setStatus("You cannot leave a light at your own door.");
+  }).catch(function(){});
+}
+/* walking up to somebody else's door tells you what they wrote on it */
+var doorNear=null;
+function doorsTick(dt){
+  if(lightCool>0) lightCool-=dt;
+  if(!walkMode||store.inside) return;
+  var P=camera.position, found=null;
+  for(var i=0;i<store.objects.length;i++){
+    var o=store.objects[i];
+    if(!o.dreamerDoor||(o.realm||0)!==(store.here||0)) continue;
+    if(Math.abs(o.x-P.x)>4||Math.abs(o.z-P.z)>4) continue;
+    if(Math.hypot(o.x-P.x,o.z-P.z)<2.6){ found=o; break; }
+  }
+  if(found&&found!==doorNear){
+    doorNear=found;
+    var mine=(typeof signedIn==="function"&&signedIn())&&found.dreamerDoor===session.user.id;
+    setStatus("<b>"+esc(found.name||"A door")+"</b>"+(found.doorLine?" \u2014 <i>"+esc(found.doorLine)+"</i>":"")+
+      ". "+(mine?"Yours. Walk in to go home to your own town."
+                 :(found.lights||0)+" lights left here. Press <b>L</b> to leave one."));
+  } else if(!found&&doorNear){ doorNear=null; }
+}
+
+/* ---- what the dreamer sees in Settings ---- */
+function doorPanel(){
+  var el=document.getElementById("door-state"); if(!el) return;
+  if(!signedIn()){ el.textContent="Sign in above to take a door in the great hall."; return; }
+  el.innerHTML=myDoor
+    ? "<b>Your door stands in the hall.</b> "+esc(myDoor.name||"")+(myDoor.lights?" \u2014 "+myDoor.lights+" lights left there.":"")
+    : "You have no door yet. Take one and it joins the hall, however many there come to be.";
+}
+function initDoors(){
+  var b;
+  if((b=document.getElementById("door-take"))) b.onclick=function(){
+    var nm=(document.getElementById("door-name").value||"").trim();
+    var ln=(document.getElementById("door-line").value||"").trim();
+    if(!nm) return setStatus("Give the door a name \u2014 yours, or one you dream under.");
+    takeDoor(nm,ln,null).then(function(){ setStatus("<b>Your door stands in the hall of Somnucor.</b>"); doorPanel(); })
+      .catch(function(e){ setStatus(esc(e.message)); });
+  };
+  if((b=document.getElementById("door-give"))) b.onclick=function(){
+    if(!confirm("Give up your door? It comes down from the hall.")) return;
+    giveUpDoor().then(function(){ setStatus("Your door has come down."); doorPanel(); })
+      .catch(function(e){ setStatus(esc(e.message)); });
+  };
+  if((b=document.getElementById("door-hall"))) b.onclick=function(){
+    openHall().then(function(){ if(typeof toSomnucor==="function") toSomnucor(); });
+  };
+  doorPanel();
+  if(cloudOn()) setTimeout(function(){ openHall().then(doorPanel); },1500);
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(e.code==="KeyL"&&walkMode&&doorNear) leaveLight(doorNear);
+});
+
+</script>
+<script>/* js/visit.js */
+/* SomnuMatrix — visit.js
+   walking into somebody's door. if they opened it, you walk in their world: their
+   streets, their houses, the people they dreamt. while you are there nothing you
+   do touches anything — theirs or yours. your own dreamscape is set aside whole
+   and put back the moment you leave.
+   publishing is the other half: a plain copy you choose to share. it is never the
+   vault, and the words you wrote are left out unless you ask for them too.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var visiting=null, visitKept=null, visitCool=0;
+
+function amVisiting(){ return !!visiting; }
+
+/* what a visitor is given: the world, and the writing only if it was offered */
+function scapeForVisitors(withWords){
+  var keep={};
+  ["objects","characters","realms","hoods","grid","townGrid","land","insideSlots"].forEach(function(k){
+    if(store[k]!==undefined) keep[k]=store[k];
+  });
+  keep.dreamer={name:(store.dreamer&&store.dreamer.name)||"",abilities:[]};
+  if(withWords){ keep.sessions=store.sessions||[]; keep.transcript=store.transcript||""; }
+  else {
+    keep.sessions=(store.sessions||[]).map(function(r){ return {n:r.n,date:r.date,title:r.title}; });
+    keep.transcript="";
+  }
+  /* nothing of the visitor's own account, device or vault travels with it */
+  return {v:1,at:Date.now(),name:(store.dreamer&&store.dreamer.name)||"",words:!!withWords,store:keep};
+}
+function publishScape(withWords){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first \u2014 a shared world belongs to an account."));
+  return restRpc("publish_scape",{p_scape:scapeForVisitors(withWords),p_words:!!withWords}).then(function(out){
+    if(out!=="ok") throw new Error(out||"It didn't publish.");
+    return true;
+  });
+}
+function unpublishScape(){ return restRpc("unpublish_scape",{}); }
+function setDoorOpen(open){
+  return restRpc("set_door_open",{p_open:!!open}).then(function(out){
+    if(out!=="ok") throw new Error(out||"That didn't take.");
+    return true;
+  });
+}
+
+/* ---- walking in ---- */
+function walkIntoDoor(spec){
+  if(visitCool>0||amVisiting()) return;
+  if(!spec.dreamerDoor) return;
+  if(signedIn()&&spec.dreamerDoor===session.user.id){ return; }   // your own door goes home
+  visitCool=2;
+  setStatus("<b>Knocking at "+esc(spec.name||"a door")+"\u2026</b>");
+  restRpc("walk_in",{p_door:spec.dreamerDoor}).then(function(got){
+    if(!got||!got.store){
+      setStatus("<b>"+esc(spec.name||"That door")+"</b> is shut. "+(spec.doorLine?"<i>"+esc(spec.doorLine)+"</i> \u2014 ":"")+
+        "Only a door its owner has opened can be walked through.");
+      return;
+    }
+    beginVisit(spec,got);
+  }).catch(function(){ setStatus("That door would not open just now."); });
+}
+function beginVisit(spec,got){
+  /* your own world, set aside whole */
+  visitKept={};
+  Object.keys(store).forEach(function(k){ visitKept[k]=store[k]; });
+  visiting={id:spec.dreamerDoor,name:spec.name||"a dreamer",line:spec.doorLine||"",was:visitKept.here||0,
+    wasAt:{x:camera.position.x,y:camera.position.y,z:camera.position.z}};
+  Object.keys(store).forEach(function(k){ if(k!=="dreamer") delete store[k]; });
+  Object.keys(got.store).forEach(function(k){ store[k]=got.store[k]; });
+  store.here=0; store.inside=null; store.visiting=true;
+  if(typeof rebuildAll==="function") rebuildAll();
+  var h=heartOf(0);
+  camera.position.set(h.x,1.72,h.z+26);
+  showVisitBar(true);
+  setStatus("<b>You are walking in "+esc(visiting.name)+"'s world.</b> "+(visiting.line?"<i>"+esc(visiting.line)+"</i>. ":"")+
+    "Nothing you do here changes anything. Press <b>Back to your own</b> when you are done.");
+}
+function endVisit(){
+  if(!visiting) return;
+  var back=visiting;
+  visiting=null;
+  Object.keys(store).forEach(function(k){ delete store[k]; });
+  Object.keys(visitKept).forEach(function(k){ store[k]=visitKept[k]; });
+  visitKept=null; visitCool=2;
+  if(typeof rebuildAll==="function") rebuildAll();
+  camera.position.set(back.wasAt.x,back.wasAt.y,back.wasAt.z);
+  showVisitBar(false);
+  setStatus("<b>Home.</b> Your own dreamscape is exactly as you left it.");
+  save();
+}
+/* while visiting: a bar that says whose world this is, and the way home */
+function showVisitBar(on){
+  var el=document.getElementById("visit-bar");
+  if(!el&&on&&document.body){
+    el=document.createElement("div"); el.id="visit-bar";
+    el.style.cssText="position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:40;display:flex;gap:12px;align-items:center;"+
+      "background:rgba(10,12,18,.94);border:1px solid var(--gold,#C9A868);border-radius:3px;padding:8px 14px;font-family:var(--sans);font-size:14px";
+    el.innerHTML='<span id="visit-who"></span><button class="btn" id="visit-out">Back to your own</button>';
+    document.body.appendChild(el);
+    document.getElementById("visit-out").onclick=endVisit;
+  }
+  if(!el) return;
+  el.style.display=on?"flex":"none";
+  if(on) document.getElementById("visit-who").innerHTML="Walking in <b>"+esc(visiting.name)+"</b>'s world";
+}
+function visitTick(dt){ if(visitCool>0) visitCool-=dt; }
+
+/* ---- the panel ---- */
+function initVisit(){
+  var b;
+  if((b=document.getElementById("share-publish"))) b.onclick=function(){
+    var words=document.getElementById("share-words").value==="yes";
+    setStatus("Publishing a copy\u2026");
+    publishScape(words).then(function(){
+      setStatus("<b>A copy of your world is published.</b> "+(words?"Your written dreams are included.":"The world only \u2014 your written dreams stay with you.")+
+        " Open your door to let people in.");
+    }).catch(function(e){ setStatus(esc(e.message)); });
+  };
+  if((b=document.getElementById("share-open"))) b.onchange=function(){
+    var on=b.value==="open";
+    setDoorOpen(on).then(function(){
+      setStatus(on?"<b>Your door stands open.</b> Anyone in the hall may walk in."
+                  :"<b>Your door is shut.</b> The way in closes at once.");
+    }).catch(function(e){ b.value="shut"; setStatus(esc(e.message)); });
+  };
+  if((b=document.getElementById("share-remove"))) b.onclick=function(){
+    if(!confirm("Take down the copy people can visit? Your door closes with it.")) return;
+    unpublishScape().then(function(){
+      var s=document.getElementById("share-open"); if(s) s.value="shut";
+      setStatus("The copy is gone, and your door is shut.");
+    });
+  };
+}
+
+</script>
 <script>/* js/touch.js */
-/* Dream Walker's Atlas — touch.js
+/* SomnuMatrix — touch.js
    phone and tablet controls.
    walking: left thumb on the joystick to move (push further to run), drag
             anywhere else to look, tap a form to inspect it or a figure to speak,
@@ -14296,7 +14999,7 @@ function touchUI(){
 
 </script>
 <script>/* js/pad.js */
-/* Dream Walker's Atlas — pad.js
+/* SomnuMatrix — pad.js
    an on-screen direction pad for walking, view controls for the overview and Plot,
    and a switch that turns the on-screen controls on even where a phone isn't
    recognised. the pad can be folded away with one tap so the buttons underneath
@@ -14485,7 +15188,7 @@ function padTick(){
 
 </script>
 <script>/* js/boot.js */
-/* Dream Walker's Atlas — boot.js
+/* SomnuMatrix — boot.js
    starting it all up — loads last
    loaded as a plain script; shares scope with the other files */
 "use strict";
@@ -14498,7 +15201,7 @@ function boot(){
     return;
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot(); wireCompass(); initTouch();
-  loadCloudConfig(); checkin(); initAccount();
+  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit();
   if(load()){
     committed=store.transcript||"";
     store.streets=[];
@@ -14541,6 +15244,7 @@ function boot(){
     });
     renderTranscript(committed,"");
   }
+  if(typeof buildSomnucor==="function"&&!somnucorRealm()) buildSomnucor();
   buildTerrain(); applyShadows(); realmGroundsAll();
   store.characters.forEach(assignLife);
   populate();
@@ -14574,6 +15278,24 @@ if(DW_TESTING && typeof document!=="undefined" && typeof window!=="undefined" &&
   });
 }
 
+
+
+/* everything drawn again, after a dreamscape arrives from an account */
+function rebuildAll(){
+  Object.keys(meshes).forEach(function(id){ scene.remove(meshes[id]); delete meshes[id]; });
+  store.streets=[]; store.blocks={};
+  store.objects.forEach(function(s){
+    if(!KIT[s.archetype]) s.archetype="house";
+    if(!s.addr) s.addr=addressOf(Math.round(s.x/PITCH),Math.round(s.z/PITCH),0);
+    if(!s.name) s.name=nameFor(s,s.addr);
+    ensureStreets(Math.round(s.x/PITCH),Math.round(s.z/PITCH));
+    addMesh(s);
+  });
+  store.characters.forEach(assignLife);
+  buildTerrain(); applyShadows(); realmGroundsAll();
+  populate(); tickClock(true); updateCount();
+  renderTranscript(store.transcript||"","");
+}
 
 </script>
 </body>
