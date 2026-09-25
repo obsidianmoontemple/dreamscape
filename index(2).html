@@ -421,7 +421,7 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
 <div id="world"></div>
 
 <div id="hud">
-  <span id="title">The Dream Walker&rsquo;s Atlas</span>
+  <span id="title">SomnuMatrix</span>
   <span id="clock" title="dream time">--:--</span>
   <span id="count">empty</span>
 </div>
@@ -733,6 +733,37 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   </div>
   <div id="sync-state" class="hint" style="font-size:12px;color:var(--dim);margin:8px 0 0;min-height:16px"></div>
 
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Somnucor &mdash; the shared city</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Somnucor is a city every dreamer shares: work, wages, a bank, ground to hold, a hall where every dreamer has a door, and Temple Row. <b>It is entirely optional.</b> The Atlas works exactly as it does without it, your own dreamscape stays yours either way, and nothing you dream is sent anywhere by joining.</p>
+  <div id="join-state" class="hint" style="font-size:13px;margin:0 0 8px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="join-btn" type="button">Join Somnucor</button></div>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Your work and your purse</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Somnucor is the city every dreamer shares. Gold is its money &mdash; 100 gold is worth a dollar &mdash; and the city's books are kept on the server, not here. Take work, and two months' starting income comes with it.</p>
+  <div id="city-state" class="hint" style="font-size:13px;color:var(--bone);line-height:1.7;margin:0 0 10px">Sign in above to work, earn and hold ground in Somnucor.</div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <button class="btn" id="city-pay" type="button">Draw my pay</button>
+    <button class="btn" id="city-refresh" type="button">Refresh</button>
+    <button class="btn" id="city-code" type="button">Change my office code</button>
+  </div>
+  <div id="city-jobs" style="margin-top:12px;font-family:var(--sans);font-size:13px"></div>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">The bank</h3>
+  <div id="bank-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <button class="btn" id="bank-in" type="button">Pay in</button>
+    <button class="btn" id="bank-out" type="button">Draw out</button>
+    <button class="btn" id="bank-borrow" type="button">Borrow</button>
+    <button class="btn" id="bank-repay" type="button">Repay</button>
+    <button class="btn" id="bank-settle" type="button">Interest</button>
+  </div>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:8px 0 0">The bank lends against what you have earned in wages, and never beyond it. Your starting income stays with you and cannot be handed to anybody.</p>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">What you own</h3>
+  <div id="things-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="shop-show" type="button">The shop</button></div>
+  <div id="city-shop" style="margin-top:10px;font-family:var(--sans);font-size:13px"></div>
+
   <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Your door in the great hall</h3>
   <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Somnucor is the hall every dreamer arrives in. Take a door and it joins the hall, however many there come to be. A door carries only what you write on it.</p>
   <input id="door-name" type="text" placeholder="the name on your door" maxlength="40">
@@ -873,7 +904,7 @@ A("apartment","structure",[22,28,18],[
   {g:"box",s:[3,2.6,.5],p:[0,1.3,9.2],c:"dark"}
 ]);
 
-A("tower","structure",[14,80,14],[
+A("tower","structure",[14,88,14],[
   {g:"box",s:[14,80,14],p:[0,40,0],c:"body"},
   {g:"cone",s:[11,10,4],p:[0,85,0],r:[0,0.785,0],c:"trim"},
   {g:"box",s:[1.3,2,.2],p:[-4,8,7.05],c:"glass",rep:[3,4,0,0],rep2:[16,0,4.6,0]}
@@ -922,7 +953,7 @@ A("school","structure",[44,13,24],[
   {g:"box",s:[5,4,.5],p:[0,2,12.2],c:"dark"}
 ],{sign:[0,11,12.3,12,2]});
 
-A("church","structure",[16,14,30],[
+A("church","structure",[16,34,30],[
   {g:"box",s:[16,12,30],p:[0,6,0],c:"stone"},
   {g:"cone",s:[12,7,4],p:[0,15.5,0],r:[0,0.785,0],c:"trim"},
   {g:"box",s:[7,20,7],p:[0,10,17],c:"stone"},
@@ -933,7 +964,7 @@ A("church","structure",[16,14,30],[
   {g:"box",s:[2.4,4.4,.4],p:[0,2.2,20.3],c:"dark"}
 ]);
 
-A("cathedral","structure",[30,20,60],[
+A("cathedral","structure",[30,52,60],[
   {g:"box",s:[30,22,60],p:[0,11,0],c:"stone"},
   {g:"cone",s:[22,10,4],p:[0,27,0],r:[0,0.785,0],c:"trim"},
   {g:"box",s:[9,42,9],p:[-10,21,32],c:"stone"},
@@ -980,13 +1011,13 @@ A("shop","structure",[10,7,14],[
   {g:"box",s:[1.1,2.4,.2],p:[3.6,1.2,7.05],c:"dark"}
 ],{sign:[0,5.2,7.2,7.6,1.5]});
 
-A("warehouse","structure",[30,13,46],[
+A("warehouse","structure",[30,22,46],[
   {g:"box",s:[30,10,46],p:[0,5,0],c:"metal"},
   {g:"cyl",s:[15.6,15.6,46,14],p:[0,6,0],r:[1.5708,0,0],c:"metal"},
   {g:"box",s:[9,7,.5],p:[0,3.5,23.2],c:"dark"}
 ]);
 
-A("factory","structure",[34,17,40],[
+A("factory","structure",[34,26,40],[
   {g:"box",s:[34,15,40],p:[0,7.5,0],c:"trim"},
   {g:"cyl",s:[2.2,2.6,26],p:[-11,26,-12],c:"stone"},
   {g:"cyl",s:[2.2,2.6,20],p:[-4,23,-12],c:"stone"},
@@ -1767,14 +1798,47 @@ A("banner","infra",[1.4,5.6,.2],[
 ]);
 
 /* ---------- castles and old things ---------- */
-A("castle","structure",[40,26,40],[
-  {g:"box",s:[16,20,16],p:[0,10,0],c:"stone"},
-  {g:"box",s:[2,1.6,2],p:[-7,20.8,-7],c:"stone",rep:[3,7,0,0],rep2:[3,0,0,7]},
-  {g:"cyl",s:[4,4.4,18,12],p:[-17,9,-17],c:"stone",rep:[2,34,0,0],rep2:[2,0,0,34]},
-  {g:"cone",s:[4.8,6,12],p:[-17,21,-17],c:"trim",rep:[2,34,0,0],rep2:[2,0,0,34]},
-  {g:"box",s:[34,10,1.6],p:[0,5,-17],c:"stone"},{g:"box",s:[34,10,1.6],p:[0,5,17],c:"stone"},
-  {g:"box",s:[1.6,10,34],p:[-17,5,0],c:"stone"},{g:"box",s:[1.6,10,34],p:[17,5,0],c:"stone"},
-  {g:"box",s:[5,7,.6],p:[0,3.5,17.6],c:"dark"}
+A("castle","structure",[76,44,76],[
+  {g:"box",s:[26,34,26],p:[0,17,0],c:"stone"},
+  {g:"box",s:[3,2.4,3],p:[-11,35.3,-11],c:"stone",rep:[4,7.3,0,0],rep2:[4,0,0,7.3]},
+  {g:"cyl",s:[6,6.6,30,12],p:[-32,15,-32],c:"stone",rep:[2,64,0,0],rep2:[2,0,0,64]},
+  {g:"cone",s:[7.2,10,12],p:[-32,35,-32],c:"trim",rep:[2,64,0,0],rep2:[2,0,0,64]},
+  {g:"cyl",s:[4,4.4,22,10],p:[0,11,-32],c:"stone"},{g:"cone",s:[4.8,7,10],p:[0,25.5,-32],c:"trim"},
+  {g:"box",s:[64,16,2.6],p:[0,8,-32],c:"stone"},{g:"box",s:[64,16,2.6],p:[0,8,32],c:"stone"},
+  {g:"box",s:[2.6,16,64],p:[-32,8,0],c:"stone"},{g:"box",s:[2.6,16,64],p:[32,8,0],c:"stone"},
+  {g:"box",s:[2,2,2],p:[-30,16.8,-32],c:"stone",rep:[16,4,0,0]},
+  {g:"box",s:[2,2,2],p:[-30,16.8,32],c:"stone",rep:[16,4,0,0]},
+  {g:"box",s:[8,11,1],p:[0,5.5,33],c:"dark"},
+  {g:"box",s:[10,1.4,7],p:[0,.7,37],c:"stone"}
+]);
+/* a palace is not a fortress: long ranges, courts, gardens and gilding */
+A("palace","structure",[84,34,60],[
+  {g:"box",s:[40,22,26],p:[0,11,-12],c:0xE8E0CC},
+  {g:"box",s:[41,1.6,27],p:[0,22.6,-12],c:0xC8A882},
+  {g:"box",s:[24,26,24],p:[0,13,-12],c:0xF0E8D4},
+  {g:"cyl",s:[8,8,4,16],p:[0,27,-12],c:0xC8A882},{g:"sph",s:[7.4,16,10],p:[0,31,-12],c:GOLD},
+  {g:"box",s:[24,18,22],p:[-29,9,4],c:0xE8E0CC},{g:"box",s:[25,1.4,23],p:[-29,18.4,4],c:0xC8A882},
+  {g:"box",s:[24,18,22],p:[29,9,4],c:0xE8E0CC},{g:"box",s:[25,1.4,23],p:[29,18.4,4],c:0xC8A882},
+  {g:"cyl",s:[1.1,1.1,16,12],p:[-12,8,1],c:0xF6F2E6,rep:[9,3,0,0]},
+  {g:"box",s:[28,1.6,3],p:[0,16.6,1],c:0xF0E8D4},
+  {g:"box",s:[6,9,.8],p:[0,4.5,2],c:0x6B4A32},
+  {g:"cyl",s:[3,3.2,.7,16],p:[0,.35,24],c:0xC8A882},{g:"cyl",s:[2.6,2.6,.5,16],p:[0,.5,24],c:"water"},
+  {g:"sph",s:[.6],p:[0,1.4,24],c:GOLD},
+  {g:"box",s:[54,.3,12],p:[0,.1,24],c:0xBFCBA8}
+]);
+/* a manor: a great house, and no more than that */
+A("manor","structure",[34,18,26],[
+  {g:"box",s:[26,12,18],p:[0,6,0],c:0xD8CCB4},
+  {g:"box",s:[27,.6,19],p:[0,12.4,0],r:[0,0,0],c:0x5A4238},
+  {g:"box",s:[27,.7,10],p:[0,14.4,-4.6],r:[.55,0,0],c:0x5A4238},
+  {g:"box",s:[27,.7,10],p:[0,14.4,4.6],r:[-.55,0,0],c:0x5A4238},
+  {g:"box",s:[8,13,7],p:[-13,6.5,2],c:0xD8CCB4},{g:"box",s:[8,13,7],p:[13,6.5,2],c:0xD8CCB4},
+  {g:"box",s:[2.4,4.4,.5],p:[0,2.2,9.2],c:0x4A3222},
+  {g:"cyl",s:[.5,.5,4.4,10],p:[-2.2,2.2,9.6],c:0xF2EEE2},{g:"cyl",s:[.5,.5,4.4,10],p:[2.2,2.2,9.6],c:0xF2EEE2},
+  {g:"box",s:[6,.5,3],p:[0,4.5,10.4],c:0xD8CCB4},
+  {g:"box",s:[2,2.6,.2],p:[-7,3.4,9.1],c:"glass",rep:[2,14,0,0]},
+  {g:"box",s:[2,2.2,.2],p:[-7,8.6,9.1],c:"glass",rep:[2,14,0,0]},
+  {g:"box",s:[1.4,3,1.4],p:[-8,14,-3],c:0x8A5A3A},{g:"box",s:[1.4,3,1.4],p:[8,14,-3],c:0x8A5A3A}
 ]);
 A("castlewall","infra",[20,9,3],[
   {g:"box",s:[20,8,2.4],p:[0,4,0],c:"stone"},
@@ -2921,6 +2985,7 @@ function resolveColor(c, spec){
 
 /* fidelity: how well this thing is remembered, 0..1 */
 function fidelity(spec){
+  if(spec.city||spec.hub) return 1;          /* Somnucor is a real place: nothing half-there */
   if(spec.filler) return spec.solid?1:0.34;
   if(viewNight!==null && spec.nights && spec.nights.indexOf(viewNight)===-1) return 0.06;
   var d=1, a=spec.attrs||{};
@@ -2981,6 +3046,8 @@ function levelParts(def,spec){
 var HIDDEN_KINDS={hiddenroom:1,secretstair:1,trapdoor:1,secretdoor:1};
 function isHidden(spec){ return !spec.found && ((spec.attrs&&spec.attrs.hidden)||HIDDEN_KINDS[spec.archetype]); }
 
+/* things that are simply floor: they take light, they never throw it */
+var FLATGROUND={groundpad:1,lawn:1,snowfield:1,blossomground:1,leaffall:1};
 function build(spec){
   var def=KIT[spec.archetype]||KIT.house;
   var a=spec.attrs||{};
@@ -3047,7 +3114,7 @@ function build(spec){
         m.position.set(px,py,pz);
         if(pt.r) m.rotation.set(pt.r[0],pt.r[1],pt.r[2]);
         var big=Math.max(pt.s[0]||0,pt.s[1]||0,(pt.s[2]||0));
-        m.castShadow=!pt.glow&&pt.c!=="glass"&&pt.g!=="pln"&&big>=1.2;
+        m.castShadow=!pt.glow&&pt.c!=="glass"&&pt.g!=="pln"&&big>=1.2&&!FLATGROUND[spec.archetype];
         m.receiveShadow=!pt.glow;
         g.add(m);
       }
@@ -5115,8 +5182,12 @@ EFFECTS.styx=function(g){ var p=particles(70,[28,2,4],0xA8B0C0,1.8,.4); p.positi
 var realmsExtended=false;
 function extendRealms(){
   if(realmsExtended) return; realmsExtended=true;
-  REALMS.somnucor={name:"Somnucor",ground:0x2A2E3C,tex:"paving",path:0x3A3F50,skyTop:0x0A0C1C,skyLow:0x2E2A5E,
-    dens:.55,light:0xDCE0FF,amb:1.15,sun:.85,stars:1,mix:["human","human","child"]};
+  REALMS.templerow={name:"Temple Row",ground:0x6A7058,tex:"grass",amp:4,path:0x8A8470,skyTop:0x1A2A56,skyLow:0xC8A8D8,
+    dens:.05,light:0xF0ECFF,amb:1.1,sun:.95,stars:.3,mix:["human","human"]};
+  REALMS.hall={name:"The Hall of Doors",ground:0x1A1A24,tex:"marble",path:0x2A2A38,skyTop:0x05060E,skyLow:0x1E1840,
+    dens:.05,light:0xD8DCFF,amb:1.2,sun:.5,stars:1,mix:[]};
+  REALMS.somnucor={name:"Somnucor",ground:0x55684A,tex:"grass",amp:7,path:0x5A6070,skyTop:0x24306A,skyLow:0x8A6AB8,
+    dens:.04,light:0xF0ECFF,amb:0.95,sun:0.9,stars:.45,mix:["human","human","child"]};
   REALMS.fire={name:"The Burning Lands",ground:0x2A1A14,tex:"earth",path:0x4A2A1C,skyTop:0x1A0604,skyLow:0xC24A14,dens:1.8,light:0xFF9A5A,amb:.5,sun:.5,stars:0};
   REALMS.stars={name:"Among the Stars",ground:0x7E7E84,tex:"sand",path:0x9A9AA0,skyTop:0x000002,skyLow:0x06060E,dens:.55,light:0xE8ECFF,amb:.6,sun:.8,stars:1};
   REALMS.fire.mix=["fireelemental","imp","demon","fireelemental"];
@@ -5394,7 +5465,7 @@ S("machiya","structure",[10,8,12],[
   {g:"box",s:[7,2.6,.1],p:[0,2,5.55],c:0xE8DCC0},
   {g:"box",s:[.08,2.6,.08],p:[-3,2,5.62],c:TEAK,rep:[9,.75,0,0]},
   {g:"box",s:[1,2.2,.2],p:[3.4,1.1,5.6],c:"dark"}
-],["machiya","japanese townhouse","wooden townhouse","tea house"]);
+],["machiya","japanese townhouse","wooden townhouse"]);
 S("izba","structure",[10,8,8],[
   {g:"box",s:[9,3.6,7],p:[0,1.8,0],c:0x8A6A48},
   {g:"box",s:[.2,3.6,7.2],p:[-4.5,1.8,0],c:0x6B4A32},{g:"box",s:[.2,3.6,7.2],p:[4.5,1.8,0],c:0x6B4A32},
@@ -5751,7 +5822,7 @@ S("stargate","structure",[10,11,3],[
   {g:"box",s:[1,1.4,.8],p:[4.6,.7,4],c:PANEL},
   {g:"box",s:[.8,.5,.1],p:[4.6,1.5,4.45],c:NEONC,glow:1,pulse:1}
 ],["stargate","star gate","ring gate","great ring","gate of the ancients","the ring stood upright"]);
-S("biodome","structure",[30,16,30],[
+S("biodome","structure",[30,26,30],[
   {g:"sph",s:[14],p:[0,0,0],c:GLASSB,opa:.34},
   {g:"cyl",s:[14.2,14.2,.6,28],p:[0,.3,0],c:PANEL},
   {g:"cyl",s:[.3,.3,14,6],p:[0,7,0],r:[0,0,1.5708],c:STEEL,rep:[4,0,0,0]},
@@ -5785,7 +5856,7 @@ S("reactor","structure",[14,18,14],[
   {g:"box",s:[2,3,.4],p:[0,1.5,6.2],c:DARKM},
   {g:"box",s:[1.2,.5,.1],p:[0,3.4,6.25],c:WARN,glow:1,pulse:1}
 ],["reactor","fusion reactor","power core","generator tower","energy plant"]);
-S("hangar","structure",[34,14,26],[
+S("hangar","structure",[34,22,26],[
   {g:"box",s:[32,10,24],p:[0,5,0],c:HULL},
   {g:"cyl",s:[16,16,24,18,1,false,0,Math.PI],p:[0,10,0],r:[1.5708,0,0],c:HULL},
   {g:"box",s:[16,9,.6],p:[0,4.5,12.2],c:DARKM},
@@ -6477,6 +6548,1156 @@ function undressSeason(){
 }
 
 </script>
+<script>/* js/farmyard.js */
+/* SomnuMatrix — farmyard.js
+   things the city asked for that the Atlas could not yet build: the animals of a
+   farm, the sheds and stacks that go with them, and a few civic pieces — a museum,
+   an obelisk, a roadside shrine, a pond.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var TIMBER=0x6B4A32, HAYC=0xD8B45A, STONEG=0x9A958A;
+
+/* ---- the yard ---- */
+S("crates","infra",[2.4,1.8,2.4],[
+  {g:"box",s:[1,1,1],p:[-.55,.5,-.3],r:[0,.2,0],c:0x8A6A44},
+  {g:"box",s:[1,1,1],p:[.55,.5,.25],r:[0,-.15,0],c:0x7A5C3C},
+  {g:"box",s:[.9,.9,.9],p:[0,1.45,-.05],r:[0,.35,0],c:0x8A6A44},
+  {g:"box",s:[1.04,.08,.1],p:[-.55,.5,.21],c:0x5A4430}
+],["crates","a stack of crates","wooden boxes","packing cases","crate"]);
+S("barrel","infra",[1.2,1.2,1.2],[
+  {g:"cyl",s:[.42,.36,1.1,14],p:[0,.55,0],c:0x7A5230},
+  {g:"tor",s:[.42,.05],p:[0,.25,0],r:[Math.PI/2,0,0],c:0x4A4238},
+  {g:"tor",s:[.42,.05],p:[0,.85,0],r:[Math.PI/2,0,0],c:0x4A4238}
+],["barrel","a barrel","cask","keg","barrels"]);
+S("haybale","nature",[1.8,1.4,1.8],[
+  {g:"cyl",s:[.7,.7,1.5,14],p:[0,.7,0],r:[0,0,1.5708],c:HAYC},
+  {g:"tor",s:[.7,.05],p:[-.7,.7,0],r:[0,1.5708,0],c:0xC8A44A}
+],["hay bale","bale of hay","round bale","hay","straw bale"]);
+S("silo","structure",[5,14,5],[
+  {g:"cyl",s:[2,2,11,16],p:[0,5.5,0],c:0xC8CCD2},
+  {g:"cone",s:[2.2,2,16],p:[0,12,0],c:0x8A8C92},
+  {g:"cyl",s:[.1,.1,11,6],p:[2,5.5,0],c:0x6A6C72,rep:[4,0,0,0]},
+  {g:"box",s:[1,1.4,.2],p:[0,.7,2],c:0x4A4238}
+],["silo","grain silo","feed silo","farm silo"]);
+S("farmhouse","structure",[12,9,10],[
+  {g:"box",s:[10,4.4,8],p:[0,2.2,0],c:0xE8E2D2},
+  {g:"box",s:[11,.5,5],p:[0,5.2,-2],r:[.62,0,0],c:0x6E4A3A},
+  {g:"box",s:[11,.5,5],p:[0,5.2,2],r:[-.62,0,0],c:0x6E4A3A},
+  {g:"box",s:[1.2,2.2,.2],p:[0,1.1,4.1],c:0x5A3A2A},
+  {g:"box",s:[1.4,1.2,.16],p:[-3,2.6,4.05],c:"glass",rep:[2,6,0,0]},
+  {g:"box",s:[1,2.4,1],p:[3,6.4,-1],c:0xB84A3A},
+  {g:"box",s:[3.4,.2,2],p:[0,2.9,4.9],c:0x6E4A3A},
+  {g:"cyl",s:[.1,.12,2.6,6],p:[-1.5,1.4,4.8],c:TIMBER},{g:"cyl",s:[.1,.12,2.6,6],p:[1.5,1.4,4.8],c:TIMBER}
+],["farm house","the farm","homestead","farmstead"]);
+S("stable","structure",[10,6,7],[
+  {g:"box",s:[9,3.4,6],p:[0,1.7,0],c:0x8A5A3A},
+  {g:"box",s:[9.6,.4,4],p:[0,4.1,-1.4],r:[.5,0,0],c:0x5A4232},
+  {g:"box",s:[9.6,.4,4],p:[0,4.1,1.4],r:[-.5,0,0],c:0x5A4232},
+  {g:"box",s:[2,1.6,.14],p:[-2.4,1.2,3.05],c:0x4A3222,rep:[3,2.4,0,0]},
+  {g:"box",s:[2,.9,.16],p:[-2.4,2.5,3.05],c:0x2A1E16,rep:[3,2.4,0,0]}
+],["stable","stables","horse stable","loose boxes"]);
+S("tractor","vehicle",[2.6,2.6,4.2],[
+  {g:"box",s:[1.6,1,2.6],p:[0,1.2,-.2],c:0x2E7A3A},
+  {g:"box",s:[1.2,1,1.2],p:[0,2,-.8],c:0x2E7A3A},
+  {g:"box",s:[1.1,.8,.1],p:[0,2.1,-.2],c:"glass"},
+  {g:"cyl",s:[.9,.9,.5,14],p:[-1,.9,-1],r:[0,0,1.5708],c:0x1A1C20},
+  {g:"cyl",s:[.9,.9,.5,14],p:[1,.9,-1],r:[0,0,1.5708],c:0x1A1C20},
+  {g:"cyl",s:[.45,.45,.4,12],p:[-.85,.45,1.4],r:[0,0,1.5708],c:0x1A1C20},
+  {g:"cyl",s:[.45,.45,.4,12],p:[.85,.45,1.4],r:[0,0,1.5708],c:0x1A1C20},
+  {g:"cyl",s:[.09,.09,.9,6],p:[.5,2.4,.6],c:0x3A3C42}
+],["tractor","a tractor","farm tractor"]);
+S("pond","nature",[9,1,7],[
+  {g:"cyl",s:[3.4,3.6,.4,22],p:[0,.1,0],c:"water"},
+  {g:"cyl",s:[3.9,4.1,.5,22],p:[0,.04,0],c:0x6A6A5A},
+  {g:"cyl",s:[.5,.5,.06,10],p:[1.2,.32,.6],c:0x3F7A3A,rep:[3,-.9,0,-.5]},
+  {g:"cyl",s:[.05,.05,1,5],p:[-2.8,.5,1.4],c:0x6A8A3A,rep:[5,.15,0,.12]}
+],["pond","a pond","duck pond","farm pond","still water"]);
+
+/* ---- civic ---- */
+S("museum","structure",[24,13,16],[
+  {g:"box",s:[22,8,14],p:[0,4,0],c:0xE6E2D6},
+  {g:"box",s:[23,.7,15],p:[0,8.4,0],c:0xC8C2B4},
+  {g:"box",s:[10,1,3],p:[0,9.4,5],r:[0,0,0],c:0xE6E2D6},
+  {g:"cyl",s:[.7,.7,7,14],p:[-4,3.5,7.4],c:0xF2EEE2,rep:[5,2,0,0]},
+  {g:"box",s:[12,.8,2.4],p:[0,7.6,7.4],c:0xE6E2D6},
+  {g:"box",s:[3,4,.3],p:[0,2,7.05],c:0x4A4238},
+  {g:"box",s:[2,1.6,.2],p:[-7,4.4,7.05],c:"glass",rep:[3,7,0,0]},
+  {g:"box",s:[9,.3,4],p:[0,.15,9],c:0xC8C2B4}
+],["museum","the museum","gallery of antiquities","hall of exhibits","art gallery"]);
+S("obelisk","structure",[3,16,3],[
+  {g:"box",s:[2.6,1,2.6],p:[0,.5,0],c:STONEG},
+  {g:"box",s:[1.5,12,1.5],p:[0,7,0],c:0xB8A890},
+  {g:"cone",s:[1.05,2,4],p:[0,14,0],r:[0,.785,0],c:GOLD}
+],["obelisk","a great obelisk","needle of stone","standing needle"]);
+S("shrine","structure",[3,3.6,2.6],[
+  {g:"box",s:[2.4,.4,2],p:[0,.2,0],c:STONEG},
+  {g:"box",s:[1.8,1.8,1.4],p:[0,1.3,0],c:0xD8D2C4},
+  {g:"box",s:[2.4,.3,2],p:[0,2.35,0],r:[0,0,0],c:0x6E4A3A},
+  {g:"box",s:[2,.9,2.2],p:[0,2.8,0],r:[.5,0,0],c:0x6E4A3A},
+  {g:"box",s:[1,1.2,.1],p:[0,1.3,.75],c:0x2A2622},
+  {g:"cyl",s:[.05,.05,.3,6],p:[-.6,2.6,.7],c:0xF2EEE6},
+  {g:"cone",s:[.05,.12,5],p:[-.6,2.8,.7],c:0xFFD08A,glow:1,pulse:1},
+  {g:"cyl",s:[.05,.05,.3,6],p:[.6,2.6,.7],c:0xF2EEE6},
+  {g:"cone",s:[.05,.12,5],p:[.6,2.8,.7],c:0xFFD08A,glow:1,pulse:1}
+],["shrine","roadside shrine","wayside shrine","little shrine","a shrine by the road"]);
+
+/* ---- the animals ---- */
+C("cow",["cow","cows","cattle","a heifer","dairy cow","bullock"],"beast",
+  {col:0xE8E4DA,body:"horse",s:1.05,feats:["horns","patches"]});
+C("sheep",["sheep","a ewe","lamb","flock of sheep","ram"],"beast",
+  {col:0xF0EDE4,body:"boar",s:.72,feats:["wool"]});
+C("pig",["pigs","sow","piglet"],"beast",{col:0xE8B0A8,body:"boar",s:.85});
+C("goat",["goat","goats","a nanny goat","billy goat","kid goat"],"beast",
+  {col:0xD8D2C4,body:"boar",s:.7,feats:["horns"]});
+C("chicken",["chicken","chickens","hen","hens","rooster","cockerel","a clutch of hens"],"flyer",
+  {col:0xE8E4DA,s:.32,feats:["comb"]});
+C("stag",["stag","a deer","doe","hart","fawn","deer in the trees"],"beast",
+  {col:0x9A7A52,body:"horse",s:.92,feats:["antlers"]});
+C("owl",["owl","an owl","barn owl","owl in the tree","tawny owl"],"flyer",
+  {col:0xB8A88A,s:.45,feats:["bigeyes"]});
+C("gull",["gull","gulls","seagull","seagulls","herring gull"],"flyer",{col:0xF2F2EC,s:.4});
+S("fishingboat","vehicle",[3.4,3,9],[
+  {g:"box",s:[2.4,1.2,7.6],p:[0,.8,0],c:0x3A5A7A},
+  {g:"box",s:[2.6,.2,7.8],p:[0,1.45,0],c:0xD8D2C4},
+  {g:"cone",s:[1.2,1.6,4],p:[0,.9,4.2],r:[Math.PI/2,0,0],c:0x3A5A7A},
+  {g:"box",s:[1.6,1.4,1.8],p:[0,2.1,-1.6],c:0xE8E4DA},
+  {g:"cyl",s:[.08,.08,3.4,6],p:[0,3.4,1],c:0x6B4A32},
+  {g:"box",s:[.9,.6,.06],p:[.5,3.8,1],c:0xC8763A}
+],["fishing boat","trawler","little fishing boat","smack"]);
+
+/* ---- ground you can lay: squares, lawns, snow, sand, orchard floor ---- */
+S("groundpad","infra",[20,.12,20],[
+  {g:"box",s:[21.4,.12,21.4],p:[0,.06,0],c:0x4E525C}
+],["paved square","a paved area","flagstones","plaza floor"]);
+S("lawn","nature",[20,.12,20],[
+  {g:"box",s:[21.4,.12,21.4],p:[0,.06,0],c:0x3E6434}
+],["a stretch of grass","green sward","mown grass","lawn of grass"]);
+S("snowfield","nature",[20,.14,20],[
+  {g:"box",s:[21.4,.14,21.4],p:[0,.07,0],c:0xDCE4EC}
+],["snow on the ground","a field of snow","snowfield","fresh snow"]);
+S("blossomground","nature",[20,.14,20],[
+  {g:"box",s:[21.4,.12,21.4],p:[0,.06,0],c:0x47713A},
+  {g:"box",s:[21,.02,21],p:[0,.13,0],c:0xD8AEC4}
+],["fallen blossom","petals on the ground","blossom underfoot"]);
+S("leaffall","nature",[20,.14,20],[
+  {g:"box",s:[21.4,.12,21.4],p:[0,.06,0],c:0x585A32},
+  {g:"box",s:[21,.02,21],p:[0,.13,0],c:0xA85F30}
+],["fallen leaves","leaves on the ground","leaf fall","drifts of leaves"]);
+
+/* ---- the pieces the new quarters wanted ---- */
+S("teahouse","structure",[10,7,12],[
+  {g:"box",s:[9,3.6,11],p:[0,1.8,0],c:0x6B5A46},
+  {g:"box",s:[10,.3,12],p:[0,3.8,0],c:0x3A3C42},
+  {g:"box",s:[10.4,.4,4],p:[0,4.7,-3.6],r:[.5,0,0],c:0x3A3C42},
+  {g:"box",s:[10.4,.4,4],p:[0,4.7,3.6],r:[-.5,0,0],c:0x3A3C42},
+  {g:"box",s:[6.4,2.4,.12],p:[0,1.6,5.55],c:0xF0E8D0},
+  {g:"box",s:[.08,2.4,.08],p:[-2.6,1.6,5.62],c:0x4A3A2A,rep:[7,.87,0,0]},
+  {g:"box",s:[1.1,2.2,.2],p:[3,1.1,5.6],c:0x2A2622},
+  {g:"sph",s:[.3],p:[2,3.2,5.7],c:0xC0392B,glow:1,pulse:1}
+],["teahouse","tea house","chashitsu","a house for tea"]);
+S("tenementblock","structure",[16,18,12],[
+  {g:"box",s:[15,16,11],p:[0,8,0],c:0xB8A492},
+  {g:"box",s:[15.6,.5,11.6],p:[0,16.3,0],c:0x7A6A58},
+  {g:"box",s:[1.5,1.8,.2],p:[-5,3,5.6],c:"glass",rep:[4,3.3,0,0]},
+  {g:"box",s:[1.5,1.8,.2],p:[-5,7,5.6],c:"glass",rep:[4,3.3,0,0]},
+  {g:"box",s:[1.5,1.8,.2],p:[-5,11,5.6],c:"glass",rep:[4,3.3,0,0]},
+  {g:"box",s:[1.5,1.8,.2],p:[-5,14.6,5.6],c:"glass",rep:[4,3.3,0,0]},
+  {g:"box",s:[13,.2,1.4],p:[0,5.2,6.2],c:0x5A5248},
+  {g:"box",s:[13,.2,1.4],p:[0,9.2,6.2],c:0x5A5248},
+  {g:"box",s:[.1,4,.1],p:[-6,7,6.8],c:0x4A4238,rep:[6,2.4,0,0]},
+  {g:"box",s:[1.6,2.6,.3],p:[0,1.3,5.7],c:0x3A2E26}
+],["tenement","tenement block","block of flats with a fire escape","walk-up block"]);
+S("washing","infra",[9,4,1],[
+  {g:"cyl",s:[.06,.06,3.4,6],p:[-4.2,1.7,0],c:0x6B4A32},
+  {g:"cyl",s:[.06,.06,3.4,6],p:[4.2,1.7,0],c:0x6B4A32},
+  {g:"cyl",s:[.01,.01,8.4,3],p:[0,3.2,0],r:[0,0,Math.PI/2],c:0xE8E4DA},
+  {g:"box",s:[.7,1,.02],p:[-3,2.7,0],c:0xE8E4DA,rep:[4,1.1,0,0]},
+  {g:"box",s:[.6,.8,.02],p:[1.4,2.8,0],c:0x6AB8E8,rep:[3,1,0,0]}
+],["washing on a line","laundry strung across","clothes line","washing line"]);
+S("crane","infra",[8,22,14],[
+  {g:"box",s:[3,3,3],p:[0,1.5,0],c:0xE8A63A},
+  {g:"cyl",s:[.5,.6,18,8],p:[0,10,0],c:0xE8A63A},
+  {g:"box",s:[.8,.8,13],p:[0,19,3],c:0xE8A63A},
+  {g:"box",s:[.6,.6,4],p:[0,19,-4],c:0xE8A63A},
+  {g:"cyl",s:[.02,.02,9,4],p:[0,14.6,8],c:0x3A3C42},
+  {g:"box",s:[1,.8,1],p:[0,10.2,8],c:0x4A4238},
+  {g:"box",s:[1.4,1.2,1.4],p:[0,19,-1],c:0x2A2C30}
+],["crane","dock crane","loading crane","gantry crane"]);
+S("kiln","structure",[9,14,9],[
+  {g:"cyl",s:[3.4,3.8,7,14],p:[0,3.5,0],c:0xB06A3A},
+  {g:"cone",s:[3.4,4,14],p:[0,9,0],c:0xA05A32},
+  {g:"cyl",s:[1,1,3,10],p:[0,12,0],c:0x8A4A2A},
+  {g:"box",s:[1.6,2,.4],p:[0,1,3.6],c:0x2A1E16},
+  {g:"box",s:[1.2,.6,.2],p:[0,1.2,3.75],c:0xFF8A2E,glow:1,pulse:1},
+  {g:"tor",s:[3.6,.2],p:[0,5.4,0],r:[Math.PI/2,0,0],c:0x6A4A2A}
+],["kiln","bottle kiln","brick kiln","pottery kiln"]);
+S("cart","vehicle",[2,2,3.4],[
+  {g:"box",s:[1.6,.8,2.8],p:[0,1,0],c:0x7A5230},
+  {g:"box",s:[1.7,.12,2.9],p:[0,1.45,0],c:0x8A6238},
+  {g:"cyl",s:[.6,.6,.16,12],p:[-.85,.6,-.6],r:[0,0,1.5708],c:0x4A3222},
+  {g:"cyl",s:[.6,.6,.16,12],p:[.85,.6,-.6],r:[0,0,1.5708],c:0x4A3222},
+  {g:"cyl",s:[.07,.07,2.4,6],p:[-.5,.9,2.2],r:[.1,0,0],c:0x6B4A32},
+  {g:"cyl",s:[.07,.07,2.4,6],p:[.5,.9,2.2],r:[.1,0,0],c:0x6B4A32}
+],["handcart","a cart","barrow cart","wooden cart"]);
+
+/* a classical temple: columns, pediment, and a step up to it */
+S("temple","structure",[18,13,26],[
+  {g:"box",s:[17,1.6,25],p:[0,.8,0],c:0xE8E4D8},
+  {g:"box",s:[15,1,23],p:[0,1.8,0],c:0xF0ECE0},
+  {g:"box",s:[10,7,17],p:[0,5.3,-1],c:0xE6E2D4},
+  {g:"cyl",s:[.75,.8,8,14],p:[-6.4,5.8,9.6],c:0xF2EEE2,rep:[5,3.2,0,0]},
+  {g:"cyl",s:[.75,.8,8,14],p:[-6.4,5.8,-9.6],c:0xF2EEE2,rep:[5,3.2,0,0]},
+  {g:"cyl",s:[.75,.8,8,14],p:[-6.4,5.8,4],c:0xF2EEE2,rep:[2,12.8,0,0]},
+  {g:"cyl",s:[.75,.8,8,14],p:[-6.4,5.8,-4],c:0xF2EEE2,rep:[2,12.8,0,0]},
+  {g:"box",s:[15.4,1.4,25.4],p:[0,10.4,0],c:0xE8E4D8},
+  {g:"box",s:[14,3,3],p:[0,12.2,11.6],r:[0,0,0],c:0xF0ECE0},
+  {g:"box",s:[3,3,14],p:[7,12.2,0],r:[0,0,0],c:0xF0ECE0},
+  {g:"box",s:[3.4,5.6,.4],p:[0,4.6,7.6],c:0x3A322A},
+  {g:"box",s:[16,.4,2.4],p:[0,.3,13.4],c:0xE8E4D8}
+],["temple","a temple","colonnaded temple","house of a god","pillared temple"]);
+
+</script>
+<script>/* js/somnucor-city.js */
+/* SomnuMatrix — somnucor-city.js
+   Somnucor: the city at the middle of the world map. Built as places rather than
+   scatter — buildings front onto streets and squares, decoration stands where
+   somebody would have put it (lanterns over the market lane, stalls along the
+   kerb, benches by the fountain), and the four seasons are gardens you walk into.
+   The Hall of Doors is not here: the Gate Plaza at the heart opens onto it.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var CITY_IN=210, CITY_OUT=980, CITY_BUILD=4;   /* raise this and every dreamer's city is rebuilt */
+var _cs=7761109;
+function cityRand(){ _cs=(_cs*1664525+1013904223)%4294967296; return _cs/4294967296; }
+function jit(n){ return (cityRand()-0.5)*n; }
+
+var QUARTERS=[
+ {name:"The Old Quarter", at:0.00, r:300, kind:"street", len:200, lane:26, ground:"lawn",
+  sign:"Where the city began. Ordinary houses, and the people who keep them.",
+  left:["cottage","house","cottage","house","shop","cottage"],
+  right:["house","cottage","house","manor","cottage","house"],
+  front:["fence","hedge","flowers","bench","streetlight"], extras:["well","fountain","tree","tree","cat","dog"]},
+ {name:"Temple Row", at:0.70, r:360, kind:"street", len:280, lane:40, ground:"groundpad",
+  sign:"Every tradition that has ever been dreamt keeps a house on this street.",
+  left:["cathedral","mosque","pagoda","stupa"],
+  right:["mandir","ziggurat","gopuram","shrine"],
+  front:["incenseburner","prayerflags","streetlight","bench"], extras:["torii","paifang","obelisk","statue","altarseasonal"]},
+ {name:"The Bazaar", at:1.45, r:300, kind:"street", len:170, lane:18, ground:"groundpad",
+  sign:"Everything that can be carried, and a good deal that cannot.",
+  left:["shop","shop","shop","marketawning"], right:["shop","marketawning","shop","shop"],
+  front:["marketstall","crates","barrel","streetlight"],
+  extras:["tiledfountain","papelpicado","crowd","human","human","bicycle"], over:["redlanterns","stringlights"]},
+ {name:"The Wynd", at:2.15, r:330, kind:"street", len:150, lane:14, ground:"groundpad",
+  sign:"Witches, workings, and the shops that supply them. Mind the circles.",
+  left:["cottage","tower","shop"], right:["cottage","cottage","tower"],
+  front:["cauldron","crystal","runestone","streetlight"],
+  extras:["summoning","sigil","standingstones","witch","wizard","wisps"], over:["stringlights"]},
+ {name:"Cogsfall", at:2.95, r:390, kind:"yard", size:200, ground:"groundpad",
+  sign:"The works. Mills, engines, and the din of things being made.",
+  big:["factory","warehouse","warehouse","windmill","watertower"],
+  against:["crates","barrel","scrapheap","brazier"], extras:["truck","truck","car","garage","pylon","human","human"]},
+ {name:"The Harbour", at:3.70, r:430, kind:"yard", size:230, ground:"groundpad",
+  sign:"Where the water comes into the city, and what comes in on it.",
+  big:["lighthouse","warehouse","pier","pier"],
+  against:["crates","barrel","streetlight"], extras:["ship","ship","boat","fishingboat","soulferry","gull","gull","reeds","human"]},
+ {name:"The Rim", at:4.45, r:500, kind:"square", size:240, ground:"groundpad",
+  sign:"The far quarter: steel, light, and doors that are not doors.",
+  around:["spaceport","hangar","reactor","biodome","researchlab","controltower"], middle:"stargate",
+  around2:["habitat","habitat","skyscraper","skyscraper"],
+  front:["landinglights","forcefield","holosign","satdish"],
+  extras:["shuttle","saucer","hovercar","rover","mech","robot","android","spacewalker"]},
+ {name:"The Yards", at:5.25, r:340, kind:"yard", size:160, ground:"groundpad",
+  sign:"Everything the city travels by, and some of it should not work at all.",
+  big:["stable","garage","station"], against:["barrel","crates","haybale","streetlight"],
+  extras:["hotairballoon","flyingcarpet","broomstick","teleportpad","sleigh","firechariot","horse","horse","bus","bicycle"]},
+ {name:"The New Quarter", at:5.85, r:540, kind:"square", size:230, ground:"groundpad",
+  sign:"The city as it will be. Or as somebody dreamt it might.",
+  around:["skyscraper","skyscraper","apartment","hotel","bank","courthouse"], middle:"fountain",
+  around2:["library","school","hospital","museum"],
+  front:["bench","streetlight","trafficlight","busstop"], extras:["car","car","bus","crowd","human","human","billboard"]},
+ {name:"The Menagerie", at:1.05, r:580, kind:"garden", size:270, ground:"lawn",
+  sign:"Kept, not caged. Some of them were dreamt only once.",
+  planting:["tree","tree","tree","giantmushroom","hollowtree","reeds"],
+  pieces:["pond","fairyring","fence","fence"],
+  life:["unicorn","griffin","phoenix","kitsune","pegasus","centaur","bear","stag","owl","butterflies"]},
+ {name:"The Long Fields", at:4.05, r:660, kind:"garden", size:310, ground:"lawn",
+  sign:"Farms, barns and the road out. The city has to eat.",
+  planting:["tree","tree","hedge","hedge"],
+  pieces:["farmhouse","barn","silo","stable","tractor","haybale","haybale","scarecrow","fence","fence","pond","windmill"],
+  life:["cow","cow","sheep","sheep","sheep","chicken","chicken","pig","goat","horse","human"]},
+ {name:"Lantern Street", at:0.35, r:430, kind:"street", len:190, lane:16, ground:"groundpad",
+  sign:"Paper lanterns from end to end, and a gate at either end of it.",
+  left:["machiya","machiya","shop","pagoda"], right:["hanok","machiya","shop","teahouse"],
+  front:["redlanterns","marketstall","bonsai","streetlight"],
+  extras:["torii","paifang","koipond","zengarden","incenseburner","windchimes"], over:["redlanterns","stringlights"]},
+ {name:"The Riad Quarter", at:1.80, r:400, kind:"street", len:170, lane:12, ground:"groundpad",
+  sign:"Blank walls to the street, and gardens behind every one of them.",
+  left:["riad","riad","shop"], right:["riad","hacienda","shop"],
+  front:["tiledfountain","marketawning","streetlight"],
+  extras:["eidlanterns","marketstall","palm","palm","crates","human"], over:["stringlights"]},
+ {name:"The Terraces", at:5.60, r:410, kind:"street", len:210, lane:20, ground:"groundpad",
+  sign:"Where most of the city actually lives. Flats stacked six deep.",
+  left:["apartment","apartment","apartment","shop"], right:["apartment","apartment","tenementblock","shop"],
+  front:["fence","bench","streetlight","trashcan"],
+  extras:["playground","busstop","bicycle","car","crowd","human","child","child"], over:["stringlights"]},
+ {name:"The Warrens", at:3.30, r:330, kind:"yard", size:170, ground:null,
+  sign:"The slums. Corrugated roofs, a standpipe, and everything mended twice.",
+  big:["shanty","shanty","shanty","shanty"],
+  against:["barrel","crates","firebarrel","scrapheap"],
+  extras:["shanty","shanty","well","washing","dog","dog","child","child","human","human","haybale"]},
+ {name:"The Docks", at:4.30, r:560, kind:"yard", size:250, ground:"groundpad",
+  sign:"Cranes, sheds and a tide. Everything the city imports comes over this stone.",
+  big:["warehouse","warehouse","warehouse","hangar"],
+  against:["crates","crates","barrel","pylon"],
+  extras:["ship","fishingboat","pier","crane","truck","truck","gull","gull","human","human","lighthouse"]},
+ {name:"Kiln End", at:2.35, r:470, kind:"yard", size:180, ground:"groundpad",
+  sign:"Brickworks and bottle kilns. The smoke never quite clears.",
+  big:["factory","kiln","warehouse","windmill"],
+  against:["crates","barrel","brazier","scrapheap"],
+  extras:["truck","cart","haybale","pylon","human","human","shed","shed"]},
+ {name:"The Strange Edge", at:2.55, r:790, kind:"garden", size:310, ground:null,
+  sign:"Where the city stops agreeing with itself. Go carefully.",
+  planting:["deadtree","deadtree","giantmushroom"],
+  pieces:["floatingisland","floatingisland","impossiblestair","monolith","mirrormaze","whirlpool","waterfall","rift","portal","voidshards","shardfield","moonpool"],
+  life:["wisps","wisps","ghost"]}
+];
+
+var SEASON_GARDENS=[
+ {name:"Winter", ground:"snowfield", pieces:["yuletree","yulelog","snowman","giftpile","imbolccandles","menorah","wreath"],
+  planting:["pine","pine","deadtree"], line:"Midwinter, and it stays midwinter here."},
+ {name:"Spring", ground:"blossomground", pieces:["ostaraeggs","maypoleribbons","beltanefire","hearts","pergola"],
+  planting:["tree","tree","flowers","flowers"], line:"The eggs are painted and the fire is lit."},
+ {name:"Summer", ground:"lawn", pieces:["lithawheel","stringlights","koipond","zengarden","tiledfountain"],
+  planting:["tree","flowers","flowers","bonsai"], line:"The longest day, held."},
+ {name:"Autumn", ground:"leaffall", pieces:["mabontable","lughcorn","harvestsheaf","samhainlanterns","ofrenda","diyas"],
+  planting:["tree","tree","haybale"], line:"The harvest in, and the dead remembered."}
+];
+
+/* an older Somnucor is taken down and built again, so nobody is left walking
+   through a city from a previous build */
+function razeSomnucor(){
+  var r=somnucorRealm(); if(!r) return;
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if((o.realm||0)!==r.id) continue;
+    if(typeof meshes!=="undefined"&&meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+    store.objects.splice(i,1);
+  }
+  for(var c=store.characters.length-1;c>=0;c--){
+    var ch=store.characters[c];
+    if(ch.objId&&!specById(ch.objId)) store.characters.splice(c,1);
+  }
+  var R=realms(), k=R.indexOf(r); if(k>-1) R.splice(k,1);
+  if(store.here===r.id) store.here=0;
+}
+function buildSomnucorCity(){
+  var had=somnucorRealm();
+  if(had&&(had.build||0)>=CITY_BUILD) return had;
+  if(had) razeSomnucor();
+  if(typeof REALMS==="undefined"||!REALMS.somnucor) return null;
+  _cs=7761109;
+  var was=store.here||0, wasGrid=store.grid;
+  var r=makeRealm("somnucor");
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz), made=0;
+
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+      addr:null,name:name||null,named:name?"stated":null,peopled:true};
+    store.objects.push(spec); made++;
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  /* one piece of ground for a whole place, rather than a grid of little slabs */
+  function lay(kind,cx,cz,w,d,rot){
+    if(!kind||!KIT[kind]) return;
+    var sz=KIT[kind].size;
+    put(kind,cx,cz,rot,null,{w:w/sz[0],d:d/sz[2]});
+  }
+  function frontage(list,cx,cz,ux,uz,vx,vz,span,set,faceRot,side){
+    var n=list.length;
+    list.forEach(function(arch,i){
+      if(!KIT[arch]) return;
+      var t=(n===1)?0:((i/(n-1))-0.5), along=t*span;
+      var d=KIT[arch].size, depth=Math.max(d[2],d[0])*0.55+7;
+      put(arch,cx+ux*along+vx*depth*side,cz+uz*along+vz*depth*side,faceRot+(side<0?Math.PI:0)+jit(0.05));
+      (set||[]).forEach(function(dec,k){
+        if(!KIT[dec]||cityRand()>0.6) return;
+        var off=(k-((set.length-1)/2))*3.4+jit(1.4), near=Math.max(7,d[2]*0.5+2);
+        put(dec,cx+ux*(along+off)+vx*(depth-near)*side,cz+uz*(along+off)+vz*(depth-near)*side,faceRot+(side<0?Math.PI:0));
+      });
+    });
+  }
+
+  /* the Gate Plaza */
+  lay("groundpad",0,0,120,120,0);
+  var gate=put("hubdoor",0,46,Math.PI,"The Hall of Doors",{s:2.6});
+  if(gate){ gate.leadsTo="hall"; gate.gate=true; }
+  for(var p=0;p<12;p++){ var pa=(p/12)*Math.PI*2+0.13; put("hubpillar",Math.cos(pa)*40,Math.sin(pa)*40,0); }
+  for(var L=0;L<20;L++){ var la=(L/20)*Math.PI*2; put("streetlight",Math.cos(la)*50,Math.sin(la)*50,-la); }
+  var tower=put("somnucortower",0,-4,0,"Somnucor Tower");
+  if(tower){ tower.attrs={}; tower.tower=true; }
+  put("maptable",0,34,0,"The map of everywhere");
+  put("obelisk",-42,-30,0,"The Needle of Somnucor");
+  put("tiledfountain",-26,10,0); put("tiledfountain",26,10,0);
+  put("bench",-14,-8,0.4); put("bench",14,-8,-0.4);
+  HUB_SIGNS.forEach(function(s,i){
+    var a=(i/HUB_SIGNS.length)*Math.PI*2+0.4;
+    var spec=put("signboard",Math.cos(a)*22,Math.sin(a)*22,-a+Math.PI/2,s[0]);
+    if(spec){ spec.sign=s[0]; spec.note=s[1]; }
+  });
+  var gs=put("signboard",11,54,Math.PI,"Through the gate");
+  if(gs){ gs.sign="Through the gate"; gs.note="The Hall of Doors lies beyond it: a door for every world, and one for every dreamer who takes one."; }
+
+  /* streets */
+  for(var ring=0;ring<4;ring++){
+    var rr=CITY_IN+ring*((CITY_OUT-CITY_IN)/3.4), steps=Math.max(30,Math.round(rr/10));
+    for(var i2=0;i2<steps;i2++){ var a2=(i2/steps)*Math.PI*2; put("road",Math.cos(a2)*rr,Math.sin(a2)*rr,-a2); }
+  }
+  for(var av=0;av<8;av++){
+    var aa=(av/8)*Math.PI*2+0.19;
+    for(var dd=90;dd<CITY_OUT+60;dd+=11) put("road",Math.cos(aa)*dd,Math.sin(aa)*dd,-aa+Math.PI/2);
+  }
+
+  /* the quarters */
+  QUARTERS.forEach(function(q){
+    var cx=Math.cos(q.at)*q.r, cz=Math.sin(q.at)*q.r;
+    var ux=Math.cos(q.at+Math.PI/2), uz=Math.sin(q.at+Math.PI/2);
+    var vx=Math.cos(q.at), vz=Math.sin(q.at), faceRot=-q.at;
+    var reach=(q.len||q.size||160)*0.55;
+    var sg=put("signboard",cx-vx*reach,cz-vz*reach,-q.at+Math.PI/2,q.name);
+    if(sg){ sg.sign=q.name; sg.note=q.sign; }
+
+    if(q.kind==="street"){
+      lay(q.ground,cx,cz,q.len+40,q.lane+40,q.at);
+      for(var s2=-q.len/2;s2<q.len/2;s2+=11) put("road",cx+ux*s2,cz+uz*s2,-q.at+Math.PI/2);
+      frontage(q.left ,cx,cz,ux,uz,vx,vz,q.len*0.86,q.front,faceRot,+1);
+      frontage(q.right,cx,cz,ux,uz,vx,vz,q.len*0.86,q.front,faceRot,-1);
+      (q.over||[]).forEach(function(k){
+        for(var t=-0.3;t<=0.31;t+=0.3) put(k,cx+ux*(t*q.len),cz+uz*(t*q.len),-q.at+Math.PI/2);
+      });
+      (q.extras||[]).forEach(function(k,i){
+        var along=(i/Math.max(1,q.extras.length-1)-0.5)*q.len*0.8;
+        var side=(i%2?1:-1)*(q.lane*0.5+18+jit(4));
+        put(k,cx+ux*along+vx*side,cz+uz*along+vz*side,faceRot+jit(0.6));
+      });
+    } else if(q.kind==="square"){
+      lay(q.ground,cx,cz,q.size,q.size,q.at);
+      if(q.middle) put(q.middle,cx,cz,-q.at);
+      var R1=q.size*0.44, R2=q.size*0.62;
+      (q.around||[]).forEach(function(k,i){ var a3=(i/q.around.length)*Math.PI*2+0.2;
+        put(k,cx+Math.cos(a3)*R1,cz+Math.sin(a3)*R1,-a3+Math.PI/2); });
+      (q.around2||[]).forEach(function(k,i){ var a4=(i/q.around2.length)*Math.PI*2+0.6;
+        put(k,cx+Math.cos(a4)*R2,cz+Math.sin(a4)*R2,-a4+Math.PI/2); });
+      (q.front||[]).forEach(function(k,i){
+        for(var j=0;j<3;j++){ var a5=(j/3)*Math.PI*2+i*0.5;
+          put(k,cx+Math.cos(a5)*(R1*0.5),cz+Math.sin(a5)*(R1*0.5),-a5); } });
+      (q.extras||[]).forEach(function(k,i){ var a6=(i/Math.max(1,q.extras.length))*Math.PI*2+0.1;
+        put(k,cx+Math.cos(a6)*(R2*0.8)+jit(6),cz+Math.sin(a6)*(R2*0.8)+jit(6),-a6); });
+    } else if(q.kind==="yard"){
+      lay(q.ground,cx,cz,q.size,q.size*0.8,q.at);
+      (q.big||[]).forEach(function(k,i){
+        var t=(i/Math.max(1,q.big.length-1)-0.5)*q.size*0.74;
+        put(k,cx+ux*t+vx*(q.size*0.22),cz+uz*t+vz*(q.size*0.22),faceRot);
+        (q.against||[]).forEach(function(dec,j){
+          if(cityRand()>0.5) return;
+          put(dec,cx+ux*(t+(j-1.5)*4.5)+vx*(q.size*0.22-14),cz+uz*(t+(j-1.5)*4.5)+vz*(q.size*0.22-14),faceRot);
+        });
+      });
+      (q.extras||[]).forEach(function(k,i){
+        var t2=(i/Math.max(1,q.extras.length-1)-0.5)*q.size*0.7;
+        put(k,cx+ux*t2+vx*(-q.size*0.2)+jit(6),cz+uz*t2+vz*(-q.size*0.2)+jit(6),faceRot+jit(0.8));
+      });
+    } else {
+      if(q.ground) lay(q.ground,cx,cz,q.size,q.size*0.8,q.at);
+      (q.pieces||[]).forEach(function(k,i){
+        var a7=(i/Math.max(1,q.pieces.length))*Math.PI*2+0.3, rr2=q.size*(0.18+0.22*((i%3)/2));
+        put(k,cx+Math.cos(a7)*rr2+jit(8),cz+Math.sin(a7)*rr2+jit(8),-a7+jit(0.8));
+      });
+      (q.planting||[]).forEach(function(k){
+        for(var j2=0;j2<3;j2++){ var a8=cityRand()*Math.PI*2, rr3=q.size*(0.2+cityRand()*0.28);
+          put(k,cx+Math.cos(a8)*rr3,cz+Math.sin(a8)*rr3,cityRand()*6.28); }
+      });
+      (q.life||[]).forEach(function(k){
+        var a9=cityRand()*Math.PI*2, rr4=q.size*(0.12+cityRand()*0.26);
+        put(k,cx+Math.cos(a9)*rr4,cz+Math.sin(a9)*rr4,cityRand()*6.28);
+      });
+    }
+  });
+
+  /* the Gardens of the Year */
+  var gAt=0.35, gR=720, gcx=Math.cos(gAt)*gR, gcz=Math.sin(gAt)*gR;
+  var gux=Math.cos(gAt+Math.PI/2), guz=Math.sin(gAt+Math.PI/2);
+  var gsign=put("signboard",gcx-Math.cos(gAt)*160,gcz-Math.sin(gAt)*160,-gAt+Math.PI/2,"The Gardens of the Year");
+  if(gsign){ gsign.sign="The Gardens of the Year"; gsign.note="Four gardens on one walk. Each keeps its own season, and keeps it always."; }
+  SEASON_GARDENS.forEach(function(g,i){
+    var t3=(i-1.5)*124, cx2=gcx+gux*t3, cz2=gcz+guz*t3;
+    lay(g.ground,cx2,cz2,96,96,gAt);
+    var sgn=put("signboard",cx2-Math.cos(gAt)*54,cz2-Math.sin(gAt)*54,-gAt+Math.PI/2,g.name);
+    if(sgn){ sgn.sign=g.name; sgn.note=g.line; }
+    g.pieces.forEach(function(k,j){
+      var a10=(j/g.pieces.length)*Math.PI*2+0.4, rr5=24+((j%3)*9);
+      put(k,cx2+Math.cos(a10)*rr5,cz2+Math.sin(a10)*rr5,-a10+jit(0.4));
+    });
+    g.planting.forEach(function(k){
+      var a11=cityRand()*Math.PI*2, rr6=32+cityRand()*12;
+      put(k,cx2+Math.cos(a11)*rr6,cz2+Math.sin(a11)*rr6,cityRand()*6.28);
+    });
+    put("bench",cx2+6,cz2+10,gAt); put("bench",cx2-6,cz2-10,gAt+Math.PI);
+    put("streetlight",cx2+32,cz2+32,0); put("streetlight",cx2-32,cz2-32,0);
+  });
+
+  if(typeof housePeople==="function"&&typeof BELONGS!=="undefined"){
+    store.objects.filter(function(o){ return o.city&&BELONGS[o.archetype]; })
+      .slice(0,34).forEach(function(o){ o.peopled=false; housePeople(o); });
+  }
+  r.dressed=true; r.city=true; r.build=CITY_BUILD;
+  store.somnucor=r.id;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return r;
+}
+
+/* ---------------------------------------------------------------- the heart */
+/* Somnucor Tower: the company's own building, and the only one in the city with
+   a floor you cannot simply walk into. */
+S("somnucortower","structure",[40,210,40],[
+  {g:"box",s:[38,6,38],p:[0,3,0],c:0x2A3040},
+  {g:"box",s:[30,150,30],p:[0,78,0],c:0x3A4458},
+  {g:"box",s:[30.4,2,30.4],p:[0,26,0],c:0x4AE8FF,glow:1,pulse:1},
+  {g:"box",s:[30.4,2,30.4],p:[0,62,0],c:0x4AE8FF,glow:1,pulse:1},
+  {g:"box",s:[30.4,2,30.4],p:[0,98,0],c:0x4AE8FF,glow:1,pulse:1},
+  {g:"box",s:[30.4,2,30.4],p:[0,134,0],c:0x4AE8FF,glow:1,pulse:1},
+  {g:"box",s:[26,1.4,.4],p:[0,20,15.3],c:0x9FD8FF,glow:1,opa:.8},
+  {g:"box",s:[24,146,.5],p:[0,80,15.3],c:0x6AB8E8,opa:.45},
+  {g:"box",s:[24,146,.5],p:[0,80,-15.3],c:0x6AB8E8,opa:.45},
+  {g:"box",s:[.5,146,24],p:[15.3,80,0],c:0x6AB8E8,opa:.45},
+  {g:"box",s:[.5,146,24],p:[-15.3,80,0],c:0x6AB8E8,opa:.45},
+  {g:"box",s:[36,10,36],p:[0,158,0],c:0x2E3648},
+  {g:"box",s:[34,1.6,34],p:[0,163.4,0],c:0xC050FF,glow:1,pulse:1},
+  {g:"cyl",s:[13,15,14,8],p:[0,170,0],c:0x3A4458},
+  {g:"tor",s:[17,.8],p:[0,170,0],r:[Math.PI/2,0,0],c:0x4AE8FF,glow:1,pulse:1},
+  {g:"tor",s:[20,.5],p:[0,176,0],r:[Math.PI/2,.2,0],c:0xC050FF,glow:1,pulse:1},
+  {g:"cyl",s:[2,2,14,8],p:[0,184,0],c:0x2E3648},
+  {g:"sph",s:[3.4],p:[0,192,0],c:0x6AF0C4,glow:1,pulse:1},
+  {g:"box",s:[8,14,1],p:[0,7,19],c:0x1A2028},
+  {g:"box",s:[7,1.2,.3],p:[0,15,19.4],c:0x4AE8FF,glow:1,pulse:1}
+],["somnucor tower","the tower","somnucor","the company tower","the glass tower at the middle"]);
+EFFECTS.somnucortower=function(g){
+  return function(t){
+    g.children.forEach(function(m,i){
+      if(!m.material||!m.material.emissive) return;
+      if(m.geometry&&m.geometry.type==="TorusGeometry") m.rotation.z=t*(i%2?0.25:-0.18);
+    });
+  };
+};
+
+</script>
+<script>/* js/temple-row.js */
+/* SomnuMatrix — temple-row.js
+   Temple Row, at the north of the world. A house for every deity the Atlas knows
+   — two hundred and seventy-five of them, in six-and-twenty precincts, each
+   precinct in the manner of its own tradition. Every temple has a candle stand
+   you may light, an incense burner whose wisps rise while it is lit, and an
+   offering bowl.
+   What is left in a bowl is left; nothing here asks anything of anybody, and no
+   deity is bought. The count of candles is kept because people like to see that
+   others have stood there too.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var ROW_IN=90, ROW_GAP=36, ROW_BUILD=6;
+
+/* the shape a tradition builds in — from what the Atlas already knows how to make */
+var PRECINCT={
+  Greek:{house:"temple",ground:"groundpad",trim:0xE8E4DA,note:"Olympos, and the older powers under it"},
+  Roman:{house:"temple",ground:"groundpad",trim:0xE0D8C4,note:"The state gods, and the household ones"},
+  Norse:{house:"longhouse",ground:"snowfield",trim:0x8A6A44,note:"Asgard's own, and the giants' kin"},
+  Egyptian:{house:"ziggurat",ground:"groundpad",trim:0xE8C27A,note:"The Two Lands, and the hall of judgement"},
+  Yoruba:{house:"roundhouse",ground:"lawn",trim:0xC8763A,note:"The orisha, and the roads between"},
+  Irish:{house:"roundhouse",ground:"lawn",trim:0x3F7A3A,note:"The Tuatha Dé Danann"},
+  Welsh:{house:"roundhouse",ground:"lawn",trim:0x4A7A5A,note:"Annwn, and the houses of the old tales"},
+  Gaulish:{house:"roundhouse",ground:"lawn",trim:0x6A8A4A,note:"What the Romans wrote down, and what they did not"},
+  Chinese:{house:"pagoda",ground:"groundpad",trim:0xB03A2E,note:"The celestial bureaucracy, and the immortals"},
+  Hindu:{house:"mandir",ground:"groundpad",trim:0xE8A63A,note:"The devas, and the great forms"},
+  Japanese:{house:"torii",ground:"zengarden",trim:0xC0392B,note:"The kami, at their own gates"},
+  Mesopotamian:{house:"ziggurat",ground:"groundpad",trim:0xC8A882,note:"Sumer, Akkad, and what came after"},
+  Aztec:{house:"ziggurat",ground:"groundpad",trim:0x2E8A6A,note:"The fifth sun, and its keepers"},
+  Maya:{house:"ziggurat",ground:"lawn",trim:0x3A8A5A,note:"The long count, and the hero twins"},
+  Inca:{house:"ziggurat",ground:"groundpad",trim:0xD4B83C,note:"The sun, the mountains, and the dead"},
+  Slavic:{house:"izba",ground:"snowfield",trim:0x7A5230,note:"The old ones of the forests and the hearth"},
+  Akan:{house:"roundhouse",ground:"lawn",trim:0xD4B83C,note:"Nyame, and the spider who told the stories"},
+  Hawaiian:{house:"stilthouse",ground:"lawn",trim:0x2E8A8A,note:"The islands, and the fire beneath them"},
+  Polynesian:{house:"stilthouse",ground:"lawn",trim:0x2E8A8A,note:"The long voyages, and what was found"},
+  Vodou:{house:"shrine",ground:"groundpad",trim:0x8A2A6A,note:"The lwa, and the crossroads"},
+  Persian:{house:"mandir",ground:"groundpad",trim:0xC8A040,note:"The light, and what stands against it"},
+  Demonology:{house:"crypt",ground:null,trim:0x6A1A1A,note:"Named here because they were named elsewhere first"},
+  Qliphothic:{house:"crypt",ground:null,trim:0x3A1A4A,note:"The shells, and the husks of the tree"},
+  Adversarial:{house:"crypt",ground:null,trim:0x4A1A2A,note:"Those who refused, in every telling"},
+  "Anglo-Saxon":{house:"longhouse",ground:"lawn",trim:0x8A7A4A,note:"What survived in charms and place-names"},
+  Hebrew:{house:"temple",ground:"groundpad",trim:0xC9A868,note:"The name, and the hosts about it"}
+};
+
+function templeRowRealm(){
+  var R=realms();
+  for(var i=0;i<R.length;i++) if(R[i].kind==="templerow") return R[i];
+  return null;
+}
+function candleCount(key){
+  try{ return +((JSON.parse(localStorage.getItem("somnu.candles")||"{}"))[key]||0); }catch(e){ return 0; }
+}
+function lightCandle(key,name){
+  var all={};
+  try{ all=JSON.parse(localStorage.getItem("somnu.candles")||"{}"); }catch(e){}
+  all[key]=(all[key]||0)+1;
+  try{ localStorage.setItem("somnu.candles",JSON.stringify(all)); }catch(e){}
+  setStatus("<b>A candle lit at the house of "+esc(name)+".</b> "+all[key]+" from you, so far.");
+  return all[key];
+}
+/* what is left in a bowl goes to the temple's own keeping, not to anybody's purse */
+function leaveOffering(key,name,howMuch){
+  if(typeof signedIn!=="function"||!signedIn()) { setStatus("An offering is left by account, so it can be remembered."); return; }
+  cityRpc("move_offering",{p_deity:key,p_gold:howMuch}).then(function(o){
+    setStatus(o==="ok"?("<b>Left at the bowl of "+esc(name)+".</b> Nothing is asked in return.")
+                      :esc(String(o)));
+    if(typeof refreshStanding==="function") refreshStanding();
+  }).catch(function(){ setStatus("The bowl is not ready yet — run schema-update-10."); });
+}
+
+function buildTempleRow(){
+  var had=templeRowRealm();
+  if(had&&(had.build||0)>=ROW_BUILD) return had;
+  if(had){
+    for(var i=store.objects.length-1;i>=0;i--){
+      var o=store.objects[i];
+      if((o.realm||0)!==had.id) continue;
+      if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+      store.objects.splice(i,1);
+    }
+    var R0=realms(), k0=R0.indexOf(had); if(k0>-1) R0.splice(k0,1);
+    if(store.here===had.id) store.here=0;
+  }
+  if(typeof REALMS==="undefined"||!REALMS.templerow) return null;
+  var was=store.here||0, wasGrid=store.grid;
+  var r=makeRealm("templerow");
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz), made=0;
+
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+      addr:null,name:name||null,named:name?"stated":null,peopled:true};
+    store.objects.push(spec); made++;
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  function lay(kind,cx,cz,w,d){
+    if(!kind||!KIT[kind]) return;
+    var sz=KIT[kind].size;
+    put(kind,cx,cz,0,null,{w:w/sz[0],d:d/sz[2]});
+  }
+
+  /* the deities, gathered into their own precincts */
+  var byTrad={};
+  Object.keys(DEITY).forEach(function(key){
+    var d=DEITY[key], t=d.trad||"Elsewhere";
+    (byTrad[t]=byTrad[t]||[]).push(d);
+  });
+  var trads=Object.keys(byTrad).sort(function(a,b){ return byTrad[b].length-byTrad[a].length; });
+
+  /* the Row itself: one long avenue running north, precincts either side of it */
+  /* the precincts stand four abreast, so the Row is a quarter you can walk
+     rather than a road you must travel */
+  var COLS=[-400,-135,135,400], z=ROW_IN, rowDepth=0, col=0;
+  put("signboard",0,ROW_IN-40,0,"Temple Row").note=
+    "A house for every power the Atlas knows. Light a candle, burn incense, leave what you wish in the bowl. Nothing here is asked of you.";
+  trads.forEach(function(t,ti){
+    var P=PRECINCT[t]||{house:"shrine",ground:"lawn",trim:0xC9A868,note:""};
+    var list=byTrad[t];
+    var per=4, rows=Math.ceil(list.length/per);
+    var depth=rows*ROW_GAP+26, cx=COLS[col], cz=z+depth/2;
+    if(P.ground) lay(P.ground,cx,cz,150,depth);
+    var sg=put("signboard",cx,z-6,Math.PI,t);
+    if(sg){ sg.sign=t; sg.note=P.note+" \u00b7 "+list.length+(list.length===1?" house":" houses"); }
+    rowDepth=Math.max(rowDepth,depth);
+    list.forEach(function(d,i){
+      var col=i%per, row=Math.floor(i/per);
+      var x=cx+(col-(per-1)/2)*31, zz=z+18+row*ROW_GAP;
+      var face=Math.PI;        /* every house faces the way you come in */
+      var temple=put(P.house,x,zz,face,d.name+"'s house");
+      if(temple){
+        temple.deity=d.key;
+        /* every house is cut to the same standing: a street, not a skyline */
+        var sz=KIT[P.house].size, want=22/Math.max(sz[0],sz[2]);
+        temple.attrs={s:Math.max(0.3,Math.min(1,want))};
+        refresh(temple);
+      }
+      /* what stands before every house, whatever the tradition */
+      put("altarseasonal",x,zz+12,face,"The offering bowl of "+d.name).deity=d.key;
+      put("imbolccandles",x-3.8,zz+12,face,"Candles at "+d.name+"'s house").deity=d.key;
+      put("incenseburner",x+3.8,zz+12,face,"Incense at "+d.name+"'s house").deity=d.key;
+      /* incense enough to see, not enough to hide the god behind it */
+      if(i%4===0) put("wisps",x+9,zz+14,0);
+      put("streetlight",x-12,zz+4,face);
+      /* the deity is at home: the same being you would meet in a dream */
+      var was=store.here;
+      var body=(typeof placeDeity==="function")?placeDeity(d.key,{},{at:{x:h.x+x,z:h.z+zz-2}}):null;
+      if(body){
+        body.x=h.x+x-6; body.z=h.z+zz+15;   /* on the steps, beside the bowl, facing whoever comes */ body.realm=r.id; body.rot=face+Math.PI;
+        body.solid=true; body.detail=4; body.hub=true; body.city=true;
+        var ch=charOf(body);
+        if(ch){ ch.x=body.x; ch.z=body.z; ch.awake=true; ch.atId=temple?temple.id:null;
+                ch.home=temple?temple.id:null; ch.routine=null; ch.anchor={x:body.x,z:body.z}; }
+        refresh(body);
+      }
+      store.here=was;
+    });
+    /* four precincts to a row, then the next row of them */
+    col++;
+    if(col>=COLS.length||ti===trads.length-1){
+      for(var av=z-14;av<z+rowDepth+14;av+=11){ put("road",-268,av,Math.PI/2); put("road",0,av,Math.PI/2); put("road",268,av,Math.PI/2); }
+      z+=rowDepth+34; rowDepth=0; col=0;
+      for(var cr=-470;cr<480;cr+=11) put("road",cr,z-17,0);
+    }
+  });
+  /* the far end: the pole itself */
+  put("obelisk",0,z+34,0,"The North Pole");
+  put("signboard",0,z+16,Math.PI,"The end of the Row").note="Two hundred and seventy-five houses stand behind you, and every one of them is somebody's.";
+
+  r.dressed=true; r.build=ROW_BUILD; store.templerow=r.id;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return r;
+}
+function toTempleRow(){
+  var r=templeRowRealm()||buildTempleRow();
+  if(!r) return;
+  if(typeof beHere==="function") beHere(r.id);
+  var h=blockOrigin(r.grid.bx,r.grid.bz);
+  if(walkMode) camera.position.set(h.x,1.72,h.z+ROW_IN-60);
+  else if(typeof visitRealm==="function") visitRealm(r.id);
+  setStatus("<b>Temple Row.</b> A house for every power the Atlas knows. Light a candle, or leave what you wish.");
+}
+
+/* standing before a house: the candle, the incense, the bowl */
+var rowNear=null, rowCool=0;
+function templeTick(dt){
+  if(rowCool>0) rowCool-=dt;
+  if(!walkMode||store.inside){ rowNear=null; return; }
+  var P=camera.position, found=null;
+  for(var i=0;i<store.objects.length;i++){
+    var o=store.objects[i];
+    if(!o.deity||(o.realm||0)!==(store.here||0)) continue;
+    if(Math.abs(o.x-P.x)>6||Math.abs(o.z-P.z)>6) continue;
+    if(Math.hypot(o.x-P.x,o.z-P.z)<3.4){ found=o; break; }
+  }
+  if(found&&found!==rowNear){
+    rowNear=found;
+    var d=DEITY[found.deity]||{name:found.deity};
+    var lit=candleCount(found.deity);
+    setStatus("<b>"+esc(d.name)+"</b>"+(d.domains?" \u2014 "+esc(d.domains):"")+
+      ". Press <b>C</b> to light a candle"+(lit?(" ("+lit+" so far)"):"")+", <b>O</b> to leave something in the bowl.");
+  } else if(!found&&rowNear) rowNear=null;
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(!rowNear||rowCool>0) return;
+  var d=DEITY[rowNear.deity]||{name:rowNear.deity};
+  if(e.code==="KeyC"){ rowCool=0.6; lightCandle(rowNear.deity,d.name); }
+  if(e.code==="KeyO"){
+    rowCool=0.6;
+    var n=+(prompt("How much to leave in the bowl of "+d.name+"?")||0);
+    if(n>0) leaveOffering(rowNear.deity,d.name,Math.floor(n));
+  }
+});
+
+</script>
+<script>/* js/housing.js */
+/* SomnuMatrix — housing.js
+   where people live. Somnucor's neighbourhoods, each with its own grade of home:
+   rooms over a shop in Saltmarket, flats in the Terraces, cottages and houses in
+   the Old Quarter, grand houses along Northgate, hotels for those not staying.
+   Every plot is a lot in the city's books. Walk up to the board on it and you
+   can see what it costs, take the lease, or buy it outright. The server decides
+   whether you can — the sign only asks.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var HOUSE_BUILD=2;
+
+/* a neighbourhood: where it lies, what stands in it, and what such a place costs.
+   price is what the realtor asks to sell; rent is by the week. */
+var NEIGHBOURHOODS=[
+ {name:"Saltmarket", at:3.30, r:250, kind:"home", grade:"rooms",
+  note:"Rooms over the shops. Cheap, loud, and near everything.",
+  homes:["shanty","shanty","tenementblock","tenementblock","shanty"],
+  price:[2600,4200], rent:[90,150], ground:null, dress:["washing","firebarrel","crates","barrel"]},
+
+ {name:"The Terraces", at:5.60, r:340, kind:"home", grade:"flat",
+  note:"Flats stacked six deep, and a bench outside every door.",
+  homes:["apartment","apartment","tenementblock","apartment","apartment","apartment"],
+  price:[7000,12000], rent:[210,340], ground:"groundpad", dress:["bench","streetlight","trashcan","bicycle","hedge"]},
+
+ {name:"The Old Quarter", at:0.00, r:300, kind:"home", grade:"house",
+  note:"Cottages and houses, the oldest streets in the city.",
+  homes:["cottage","house","cottage","house","cottage","house","farmhouse"],
+  price:[14000,26000], rent:[380,620], ground:"lawn", dress:["fence","hedge","flowers","tree","well"]},
+
+ {name:"Lantern Street", at:0.35, r:430, kind:"home", grade:"house",
+  note:"Machiya and hanok under strung lanterns, with gardens behind.",
+  homes:["machiya","hanok","machiya","teahouse","hanok"],
+  price:[16000,30000], rent:[420,680], ground:"groundpad", dress:["redlanterns","bonsai","koipond","hedge"]},
+
+ {name:"The Riad Quarter", at:1.80, r:400, kind:"home", grade:"house",
+  note:"Blank walls to the street, and a fountain in every court.",
+  homes:["riad","hacienda","riad","cycladic"],
+  price:[18000,34000], rent:[460,720], ground:"groundpad", dress:["tiledfountain","palm","marketawning"]},
+
+ {name:"Northgate", at:6.00, r:520, kind:"home", grade:"grand",
+  note:"Great houses behind gates, with ground enough to lose somebody in.",
+  homes:["manor","manor","palace","castle","manor"],
+  price:[90000,320000], rent:[1600,4800], ground:"lawn", dress:["fence","tree","tree","fountain","statue","pergola","hedge"]},
+
+ {name:"Bellwater", at:4.75, r:470, kind:"home", grade:"house",
+  note:"Quiet streets by the water, and a longer walk to work.",
+  homes:["house","cottage","stilthouse","house","izba"],
+  price:[15000,28000], rent:[400,640], ground:"lawn", dress:["reeds","pond","tree","fence","bench"]},
+
+ {name:"The Warrens", at:2.60, r:280, kind:"home", grade:"rooms",
+  note:"What the city would rather you did not see. It houses people all the same.",
+  homes:["shanty","shanty","shanty","ruin","shanty"],
+  price:[1400,2600], rent:[50,95], ground:null, dress:["firebarrel","scrapheap","washing","barrel"]},
+
+ {name:"The Hotels", at:1.20, r:360, kind:"business", grade:"hotel",
+  note:"For those not staying. Rooms by the week, and somebody at the desk.",
+  homes:["hotel","motel","hotel","hotel"],
+  price:[60000,140000], rent:[900,2200], ground:"groundpad", dress:["streetlight","bench","hedge","busstop"]}
+];
+
+function inBand(band,t){ return Math.round(band[0]+(band[1]-band[0])*t); }
+
+/* the housing, standing in the world. the lots themselves live in the city's books. */
+function buildHousing(){
+  var r=somnucorRealm(); if(!r) return 0;
+  if(r.housing>=HOUSE_BUILD) return 0;
+  var was=store.here, wasGrid=store.grid;
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz), made=0, plots=[];
+
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+      addr:null,name:name||null,named:name?"stated":null,peopled:true};
+    store.objects.push(spec); made++;
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  function lay(kind,cx,cz,w,d){
+    if(!kind||!KIT[kind]) return;
+    var sz=KIT[kind].size; put(kind,cx,cz,0,null,{w:w/sz[0],d:d/sz[2]});
+  }
+
+  NEIGHBOURHOODS.forEach(function(N,ni){
+    var cx=Math.cos(N.at)*N.r, cz=Math.sin(N.at)*N.r;
+    var ux=Math.cos(N.at+Math.PI/2), uz=Math.sin(N.at+Math.PI/2);
+    var vx=Math.cos(N.at), vz=Math.sin(N.at), face=-N.at;
+    /* houses are spaced by how big they are: a palace wants more street than a shanty */
+    var per=N.homes.length, widest=0;
+    N.homes.forEach(function(a2){ if(KIT[a2]) widest=Math.max(widest,KIT[a2].size[0],KIT[a2].size[2]); });
+    var step=Math.max(46,widest*1.35), span=per*step;
+    if(N.ground) lay(N.ground,cx,cz,span+50,120);
+    var sg=put("signboard",cx-vx*74,cz-vz*74,-N.at+Math.PI/2,N.name);
+    if(sg){ sg.sign=N.name; sg.note=N.note; }
+    for(var s=-span/2;s<span/2;s+=11) put("road",cx+ux*s,cz+uz*s,-N.at+Math.PI/2);
+
+    N.homes.forEach(function(arch,i){
+      if(!KIT[arch]) return;
+      var t=per===1?0.5:i/(per-1);
+      var along=(i-(per-1)/2)*step;
+      var d=KIT[arch].size, depth=Math.max(d[2],d[0])*0.55+16;
+      [1,-1].forEach(function(sideSign,si){
+        var x=cx+ux*along+vx*(depth+widest*0.15)*sideSign, z=cz+uz*along+vz*(depth+widest*0.15)*sideSign;
+        var rot=face+(sideSign<0?Math.PI:0);
+        var home=put(arch,x,z,rot,null);
+        if(!home) return;
+        /* the board on the plot: what it is, and what it costs */
+        var board=put("signboard",x-ux*14*sideSign,z-uz*14*sideSign,rot,N.name+" \u2014 "+(si?"north":"south")+" side");
+        var price=inBand(N.price,(t+si*0.13)%1), rent=inBand(N.rent,(t+si*0.13)%1);
+        if(board){
+          board.plot={name:N.name+" "+(ni*20+i*2+si+1),quarter:N.name,kind:N.kind,grade:N.grade,
+                      price:price,rent:rent,x:home.x,z:home.z};
+          board.sign=N.name+" "+(ni*20+i*2+si+1);
+          board.note=KIT[arch].size[0]>30?"A great house. ":"";
+          plots.push(board.plot);
+        }
+        (N.dress||[]).forEach(function(dec,k){
+          if(!KIT[dec]||((i+k+si)%3)) return;
+          put(dec,x+ux*(k-1.5)*4.2-vx*7*sideSign,z+uz*(k-1.5)*4.2-vz*7*sideSign,rot);
+        });
+      });
+    });
+  });
+  r.housing=HOUSE_BUILD;
+  store.plots=plots;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return made;
+}
+
+/* the realtor's work: entering these plots in the city's books, once */
+function sectionHousing(){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first."));
+  var plots=(store.plots||[]);
+  if(!plots.length) return Promise.reject(new Error("There are no plots laid out yet."));
+  var done=0, failed=0;
+  function one(i){
+    if(i>=plots.length){
+      setStatus("<b>"+done+" plots entered in the books.</b>"+(failed?(" "+failed+" were refused."):""));
+      return loadLots();
+    }
+    var p=plots[i];
+    return cityRpc("section_lot",{p_name:p.name,p_quarter:p.quarter,p_kind:p.kind,
+        p_x:p.x,p_z:p.z,p_w:34,p_d:34})
+      .then(function(id){
+        done++;
+        return cityRpc("price_lot",{p_lot:id,p_price:p.price,p_rent:p.rent,p_sale:true,p_let:true});
+      })
+      .catch(function(){ failed++; })
+      .then(function(){ return one(i+1); });
+  }
+  setStatus("Entering the plots in the books\u2026");
+  return one(0);
+}
+
+/* what the books say, so a board can show it */
+var cityLots=[], lotsAt=0;
+function loadLots(){
+  if(!signedIn()) return Promise.resolve([]);
+  if(Date.now()-lotsAt<20000&&cityLots.length) return Promise.resolve(cityLots);
+  return cityRpc("lot_board").then(function(rows){ cityLots=rows||[]; lotsAt=Date.now(); return cityLots; })
+    .catch(function(){ return []; });
+}
+function lotByName(name){
+  for(var i=0;i<cityLots.length;i++) if(cityLots[i].name===name) return cityLots[i];
+  return null;
+}
+
+/* standing at a board */
+var plotNear=null, plotCool=0;
+function housingTick(dt){
+  if(plotCool>0) plotCool-=dt;
+  if(!walkMode||store.inside){ plotNear=null; return; }
+  var P=camera.position, found=null;
+  for(var i=0;i<store.objects.length;i++){
+    var o=store.objects[i];
+    if(!o.plot||(o.realm||0)!==(store.here||0)) continue;
+    if(Math.abs(o.x-P.x)>7||Math.abs(o.z-P.z)>7) continue;
+    if(Math.hypot(o.x-P.x,o.z-P.z)<3.6){ found=o; break; }
+  }
+  if(found&&found!==plotNear){
+    plotNear=found;
+    var rec=lotByName(found.plot.name), p=found.plot;
+    var held=rec&&rec.held;
+    setStatus("<b>"+esc(p.name)+"</b> \u2014 "+esc(p.quarter)+". "+
+      (held?"Taken."
+           :("To buy <b>"+p.price.toLocaleString()+" gold</b>, or <b>"+p.rent.toLocaleString()+
+             " a week</b> to rent. Press <b>B</b> to buy, <b>R</b> to take the lease.")));
+    loadLots();
+  } else if(!found&&plotNear) plotNear=null;
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(!plotNear||plotCool>0) return;
+  var rec=lotByName(plotNear.plot.name);
+  if(!rec) { setStatus("That plot is not in the books yet. The realtor must enter it first."); return; }
+  if(e.code==="KeyB"){ plotCool=1; buyLot(rec.lot_id).then(function(){ lotsAt=0; loadLots(); }); }
+  if(e.code==="KeyR"){ plotCool=1; takeLease(rec.lot_id).then(function(){ lotsAt=0; loadLots(); }); }
+});
+
+/* ---------------------------------------------------------------- the yard */
+/* The transport lot: everything the city sells to get about on, standing in rows
+   with a price board at each. Walk up and buy it where it stands. */
+var YARD_BUILD=1;
+function buildYard(){
+  var r=somnucorRealm(); if(!r) return 0;
+  if(r.yard>=YARD_BUILD) return 0;
+  var was=store.here, wasGrid=store.grid;
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz), made=0;
+  var at=5.25, R=250;                       /* beside The Yards quarter */
+  var cx=Math.cos(at)*R, cz=Math.sin(at)*R;
+  var ux=Math.cos(at+Math.PI/2), uz=Math.sin(at+Math.PI/2), vx=Math.cos(at), vz=Math.sin(at);
+
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+      addr:null,name:name||null,named:name?"stated":null,peopled:true};
+    store.objects.push(spec); made++;
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  var sz=KIT.groundpad.size;
+  put("groundpad",cx,cz,0,null,{w:200/sz[0],d:130/sz[2]});
+  var sg=put("signboard",cx-vx*72,cz-vz*72,-at+Math.PI/2,"The Transport Yard");
+  if(sg){ sg.sign="The Transport Yard";
+    sg.note="Everything the city sells to get about on, from a skateboard to a saucer. The price is on the board beside each. What you buy is yours, and it carries you faster than your own feet."; }
+
+  /* what stands in the yard, in the order the catalogue lists it */
+  var rows=[
+    ["bicycle","Skateboard"],["bicycle","Bicycle"],["horse","Horse"],["car","Motor car"],
+    ["truck","Truck"],["bus","Omnibus"],["broomstick","Broomstick"],["flyingcarpet","Flying carpet"],
+    ["sleigh","Sleigh"],["firechariot","Chariot of fire"],["hovercar","Hovercar"],["shuttle","Shuttle"],
+    ["saucer","Flying saucer"],["unicorn","Unicorn"],["pegasus","Pegasus"],["griffin","Griffin"],
+    ["kitsune","Kitsune"],["dragon","Dragon"]
+  ];
+  rows.forEach(function(row,i){
+    var col=i%6, ln=Math.floor(i/6);
+    var x=cx+ux*((col-2.5)*30)+vx*((ln-1)*38), z=cz+uz*((col-2.5)*30)+vz*((ln-1)*38);
+    var thing=put(row[0],x,z,-at+Math.PI, null, {s:row[0]==="shuttle"?0.7:1});
+    var board=put("signboard",x,z+ (ln-1)*0+8,-at+Math.PI/2,row[1]);
+    if(board){ board.forSale=row[1]; board.sign=row[1]; }
+    put("streetlight",x-14,z,0);
+  });
+  put("stable",cx+ux*98,cz+uz*98,-at+Math.PI/2,"The stables");
+  put("garage",cx-ux*98,cz-uz*98,-at+Math.PI/2,"The yard workshop");
+  r.yard=YARD_BUILD;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return made;
+}
+
+/* standing before something for sale in the yard */
+var yardNear=null, yardCool=0, yardPrices=null;
+function yardTick(dt){
+  if(yardCool>0) yardCool-=dt;
+  if(!walkMode||store.inside){ yardNear=null; return; }
+  var P=camera.position, found=null;
+  for(var i=0;i<store.objects.length;i++){
+    var o=store.objects[i];
+    if(!o.forSale||(o.realm||0)!==(store.here||0)) continue;
+    if(Math.abs(o.x-P.x)>7||Math.abs(o.z-P.z)>7) continue;
+    if(Math.hypot(o.x-P.x,o.z-P.z)<3.6){ found=o; break; }
+  }
+  if(found&&found!==yardNear){
+    yardNear=found;
+    yardLook(found.forSale).then(function(item){
+      if(!item) return setStatus("<b>"+esc(found.forSale)+"</b> — the yard has no price on it yet.");
+      setStatus("<b>"+esc(item.name)+"</b> — "+item.price.toLocaleString()+" gold"+
+        (item.speed?(", "+(+item.speed).toFixed(1)+" times your own pace"):"")+
+        (item.note?(". "+esc(item.note)):"")+". Press <b>B</b> to buy it.");
+    });
+  } else if(!found&&yardNear) yardNear=null;
+}
+function yardLook(name){
+  if(yardPrices) return Promise.resolve(yardPrices[name]||null);
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/catalogue?select=id,name,price,speed,note&listed=eq.true",{
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+(tok||DW_CONFIG.supabaseKey)}
+    }).then(function(r){ return r.ok?r.json():[]; });
+  }).then(function(rows){
+    yardPrices={}; (rows||[]).forEach(function(r){ yardPrices[r.name]=r; });
+    return yardPrices[name]||null;
+  }).catch(function(){ return null; });
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(e.code!=="KeyB"||!yardNear||yardCool>0) return;
+  yardCool=1.2;
+  yardLook(yardNear.forSale).then(function(item){
+    if(!item) return setStatus("The yard cannot price that yet.");
+    if(typeof buyItem==="function") buyItem(item.id,null);
+  });
+});
+
+</script>
+<script>/* js/joining.js */
+/* SomnuMatrix — joining.js
+   Somnucor is somewhere you may go, not somewhere you are put. Until a dreamer
+   says yes, none of it is built: no city, no hall, no Temple Row, no housing,
+   no yard, and nothing of theirs is sent anywhere. The Atlas is whole without it.
+   Saying yes builds it. Saying no again takes it down and leaves the dreamscape
+   exactly as it was.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+function joinedSomnucor(){ return cfg().somnucor===true; }
+
+/* what the city is, said plainly, before anybody agrees to it */
+var JOIN_WORDS=
+  "Somnucor is a city every dreamer shares: work, wages, a bank, ground to hold, "+
+  "a hall where every dreamer has a door, and Temple Row. It is entirely optional. "+
+  "The Atlas works exactly as it does now without it, and your own dreamscape is "+
+  "yours either way \u2014 nothing you dream is sent anywhere by joining.";
+
+function joinSomnucor(){
+  var c=cfg(); c.somnucor=true; setCfg(c);
+  setStatus("<b>Building Somnucor\u2026</b> this takes a moment, once.");
+  /* built in the order things lean on each other */
+  setTimeout(function(){
+    if(typeof buildSomnucorCity==="function") buildSomnucorCity();
+    if(typeof buildHall==="function") buildHall();
+    if(typeof buildTempleRow==="function") buildTempleRow();
+    if(typeof buildHousing==="function") buildHousing();
+    if(typeof buildYard==="function") buildYard();
+    if(typeof renderRealmList==="function") renderRealmList();
+    if(typeof paintJoin==="function") paintJoin();
+    save();
+    setStatus("<b>Somnucor stands.</b> The city, the Hall of Doors and Temple Row are in The land.");
+  },50);
+}
+/* leaving takes the city down. it does not touch the dreamer's own world, their
+   account, their gold or their door — those are theirs whether they visit or not. */
+function leaveSomnucor(){
+  var kinds={somnucor:1,hall:1,templerow:1};
+  var ids={};
+  realms().forEach(function(r){ if(kinds[r.kind]) ids[r.id]=1; });
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if(!ids[o.realm||0]) continue;
+    if(typeof meshes!=="undefined"&&meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+    store.objects.splice(i,1);
+  }
+  for(var c2=store.characters.length-1;c2>=0;c2--){
+    var ch=store.characters[c2];
+    if(ch.objId&&!specById(ch.objId)) store.characters.splice(c2,1);
+  }
+  var R=realms();
+  for(var k=R.length-1;k>=0;k--) if(kinds[R[k].kind]) R.splice(k,1);
+  if(ids[store.here||0]) beHere(0);
+  store.plots=[];
+  var c=cfg(); c.somnucor=false; setCfg(c);
+  if(typeof renderRealmList==="function") renderRealmList();
+  paintJoin(); save();
+  setStatus("<b>Somnucor is gone from your Atlas.</b> Your own dreamscape is exactly as it was.");
+}
+
+function paintJoin(){
+  var el=document.getElementById("join-state"); if(!el) return;
+  var on=joinedSomnucor();
+  el.innerHTML=on
+    ? "<b>You are in Somnucor.</b> The city, the Hall of Doors and Temple Row are in The land."
+    : "<span style='color:var(--dim)'>You have not joined. Nothing of the city is built, and nothing of yours goes anywhere.</span>";
+  var b=document.getElementById("join-btn");
+  if(b) b.textContent=on?"Leave Somnucor":"Join Somnucor";
+}
+function initJoin(){
+  var b=document.getElementById("join-btn");
+  if(b) b.onclick=function(){
+    if(joinedSomnucor()){
+      if(confirm("Take Somnucor down? Your own dreamscape, your account and your door are untouched.")) leaveSomnucor();
+    } else joinSomnucor();
+  };
+  paintJoin();
+}
+
+</script>
 <script>/* js/vocab-extra.js */
 /* SomnuMatrix — vocab-extra.js
    many more ways of saying the same thing. people don't dream in the app's
@@ -6487,10 +7708,34 @@ function undressSeason(){
 "use strict";
 
 var EXTRA_VOCAB={
+  somnucortower:["somnucor tower","the somnucor tower","the company tower","the tower at the middle of the city","somnucor's tower"],
+  palace:["palace","palaces","the palace","royal palace","chateau","stately home","grand palace","summer palace"],
+  manor:["manor","manors","manor house","mansion","mansions","great house","big house on the hill","country house"],
+  /* the yard, the farm and the civic pieces: their own names back */
+  cow:["cow","cows","cattle","a heifer","dairy cow","bullock","the cows in the field"],
+  sheep:["sheep","a ewe","lamb","lambs","ram","flock of sheep"],
+  pig:["pig","pigs","hog","sow","piglet"],
+  goat:["goat","goats","nanny goat","billy goat"],
+  chicken:["chicken","chickens","hen","hens","rooster","cockerel"],
+  stag:["stag","deer","doe","hart","fawn","a deer in the trees"],
+  owl:["owl","barn owl","tawny owl","an owl in the tree"],
+  gull:["gull","gulls","seagull","seagulls"],
+  crates:["crates","crate","packing cases","stack of crates","wooden boxes"],
+  barrel:["barrel","barrels","cask","keg"],
+  haybale:["hay bale","bale of hay","hay bales","round bale","straw bale"],
+  silo:["silo","grain silo","feed silo"],
+  farmhouse:["farmhouse","farm house","homestead","farmstead"],
+  stable:["stable","stables","loose boxes","horse stable"],
+  tractor:["tractor","farm tractor"],
+  pond:["pond","duck pond","farm pond","a pond"],
+  museum:["museum","the museum","art gallery","gallery of antiquities","hall of exhibits"],
+  obelisk:["obelisk","a great obelisk","needle of stone"],
+  shrine:["shrine","roadside shrine","wayside shrine","little shrine"],
+  fishingboat:["fishing boat","trawler","smack"],
   /* ---- where people live and work ---- */
   house:["my house","our house","the old house","childhood home","family home","a home","semi","a place to live","the house i grew up in","my parents house","my parents' house","my childhood house","two-up two-down","a dwelling","the family place"],
   cottage:["bungalow","cabin","chalet","lodge","croft","hut","little house","small house","country cottage","log cabin","summer house","one-room house","wee house"],
-  apartment:["flat","block of flats","apartment block","tenement","condo","studio flat","high-rise flats","bedsit","my flat","apartment building","walk-up","duplex"],
+  apartment:["flat","block of flats","apartment block","condo","studio flat","high-rise flats","bedsit","my flat","apartment building","walk-up","duplex"],
   tower:["turret","spire","belfry","keep","watchtower","bell tower","campanile","clock tower","round tower","tall tower","stone tower"],
   skyscraper:["office tower","glass tower","high rise","tower block","city tower","corporate tower","glass and steel tower"],
   hotel:["inn","guest house","boarding house","bed and breakfast","tavern with rooms","hostel","lodging house","the hotel lobby"],
@@ -6506,7 +7751,7 @@ var EXTRA_VOCAB={
   shop:["store","corner shop","bakery","butcher","grocer","boutique","chemist","pharmacy","newsagent","bookshop","record shop","dress shop","the shop on the corner","general store","cafe","coffee shop","diner","restaurant","bar","pub","teahouse","tea shop","pizzeria","takeaway"],
   warehouse:["depot building","storehouse","godown","goods shed","storage building","loading dock"],
   factory:["mill","foundry","refinery","assembly hall","industrial building","smokestack building"],
-  barn:["byre","stable","stables","cowshed","hayloft","granary","farm building","threshing barn"],
+  barn:["byre","stables","cowshed","hayloft","granary","farm building","threshing barn"],
   shed:["lock-up","outhouse","potting shed","garden shed","tool shed","lean-to shed","workshop shed"],
   garage:["carport","car park building","auto shop","repair shop","mechanic's","chop shop"],
   ruin:["ruins","derelict building","abandoned building","wreck of a building","burnt-out building","shell of a house","crumbling walls","old ruin","gutted building"],
@@ -6517,7 +7762,7 @@ var EXTRA_VOCAB={
   tomb:["mausoleum","sepulchre","sepulcher","burial vault","family tomb","sarcophagus tomb","resting place"],
   lighthouse:["light tower","beacon tower","harbour light","the lighthouse beam"],
   windmill:["wind pump","old mill","mill with sails","water mill","mill house"],
-  castle:["fortress","citadel","stronghold","palace","chateau","manor","mansion","stately home","great house","fort","keep and walls"],
+  castle:["fortress","citadel","stronghold","fort","keep and walls"],
   crypt:["undercroft","burial chamber","charnel house","vault beneath","stone crypt"],
   hiddenroom:["secret room","hidden chamber","concealed room","room behind the wall","room that shouldn't be there","room i never knew about","priest hole"],
   mineshaft:["pit head","colliery","quarry workings","old mine"],
@@ -6531,7 +7776,7 @@ var EXTRA_VOCAB={
   bush:["shrub","shrubbery","bushes","undergrowth","scrub","thicket","gorse","heather"],
   hedge:["hedgerow","privet","box hedge","garden hedge","hedges"],
   grass:["lawn","meadow","field","grassland","pasture","village green","paddock","playing field","clearing"],
-  water:["river","stream","brook","creek","canal","lake","pond","the sea","ocean","bay","lagoon","estuary","loch","fjord","reservoir","harbour","harbor","the water","flowing water","still water","the shore","shoreline","beach","waves"],
+  water:["river","stream","brook","creek","canal","lake","the sea","ocean","bay","lagoon","estuary","loch","fjord","reservoir","harbour","harbor","the water","flowing water","still water","the shore","shoreline","beach","waves"],
   hill:["knoll","hillside","slope","mound","ridge","hillock","downs","bank of earth","embankment"],
   mountain:["mountains","peak","summit","crag","alp","massif","mountainside","cliff","cliffs","escarpment","bluff","mountain range"],
   rock:["boulder","boulders","stone","stones","outcrop","rocks","rubble","scree","standing rock"],
@@ -6598,7 +7843,7 @@ var EXTRA_VOCAB={
   truck:["lorry","pickup","pick-up truck","semi truck","articulated lorry","delivery truck","dump truck","fire engine","ambulance"],
   bus:["coach","double decker","school bus","minibus","the bus came"],
   train:["locomotive","steam train","freight train","carriages","the train pulled in","tram","streetcar","underground train","subway train"],
-  boat:["rowing boat","dinghy","canoe","kayak","punt","raft","fishing boat","little boat","gondola"],
+  boat:["rowing boat","dinghy","canoe","kayak","punt","raft","little boat","gondola"],
   ship:["vessel","liner","steamer","galleon","schooner","frigate","tanker","ferry","tall ship","sailing ship"],
   bicycle:["bike","pushbike","cycle","my bike","bicycles"],
   plane:["aeroplane","airplane","jet","airliner","biplane","helicopter","aircraft"],
@@ -6611,8 +7856,8 @@ var EXTRA_VOCAB={
   shadow:["shadowy figure","dark figure","silhouette","shape in the dark","something in the corner","a shade","dark shape","figure with no face"],
   dog:["hound","puppy","stray dog","my dog","the neighbour's dog","wolfhound","collie","alsatian","terrier","barking dog"],
   cat:["kitten","tomcat","stray cat","my cat","black cat","tabby"],
-  horse:["mare","stallion","pony","foal","colt","carthorse","racehorse","donkey","mule","ox","cattle","goat","sheep","lamb","pig","hog","chickens","hens","rooster"],
-  bird:["birds","sparrow","starling","swallow","magpie","pigeon","dove","gull","seagull","heron","swan","duck","goose","geese","robin","blackbird","kingfisher","eagle","hawk","falcon","owl","parrot","flock of birds","birdsong"],
+  horse:["mare","stallion","pony","foal","colt","carthorse","racehorse","donkey","mule","ox","goat"],
+  bird:["birds","sparrow","starling","swallow","magpie","pigeon","dove","gull","seagull","heron","swan","duck","goose","geese","robin","blackbird","kingfisher","eagle","hawk","falcon","parrot","flock of birds","birdsong"],
   creature:["thing","beast","animal","something alive","strange animal","unknown animal","something moving"],
   ghost:["spirit of someone","dead relative","the dead","shade of a person","someone who died","a haunting","presence in the room"],
 
@@ -8422,6 +9667,24 @@ var SHIFT={
   guest:[[0,8,"work","asleep in their room"],[8,9.5,"work","at breakfast"],[9.5,17,"out","out for the day"],
     [17,19,"out","out for the evening"],[19,23,"work","in their room"],[23,24,"work","asleep in their room"]],
   patient:[[0,24,"work","in the ward"]],
+  /* Somnucor: the company that keeps the map of everywhere */
+  cartographer:[[0,7,"home","asleep"],[7,8.5,"travel","crossing the plaza"],[8.5,12.5,"work","over the map"],
+    [12.5,13.5,"out","out at midday"],[13.5,18,"work","over the map"],[18,19,"travel","going home"],
+    [19,23,"home","at home"],[23,24,"home","asleep"]],
+  archivist:[[0,6.5,"home","asleep"],[6.5,8,"travel","on the way in"],[8,16,"work","in the archive"],
+    [16,17,"travel","going home"],[17,23,"home","at home"],[23,24,"home","asleep"]],
+  gatekeeper:[[0,8,"work","watching the gate"],[8,9,"travel","going home"],[9,17,"home","asleep"],
+    [17,19,"home","about the house"],[19,20,"travel","on the way in"],[20,24,"work","watching the gate"]],
+  engineer:[[0,5.5,"home","asleep"],[5.5,6.5,"travel","on the way in"],[6.5,15,"work","keeping it running"],
+    [15,16,"travel","going home"],[16,22.5,"home","at home"],[22.5,24,"home","asleep"]],
+  runner:[[0,7,"home","asleep"],[7,9,"work","carrying word"],[9,13,"out","across the city"],
+    [13,14,"work","back at the desk"],[14,18,"out","across the city"],[18,19,"work","last of the day"],
+    [19,23,"home","at home"],[23,24,"home","asleep"]],
+  nightdesk:[[0,7,"work","on the night desk"],[7,8,"travel","going home"],[8,16,"home","asleep"],
+    [16,19,"home","about the house"],[19,20,"travel","on the way in"],[20,24,"work","on the night desk"]],
+  founder:[[0,4,"work","still in the office"],[4,10,"home","asleep"],[10,13,"work","in the office"],
+    [13,14,"out","out at midday"],[14,19,"work","in the office"],[19,21,"out","walking the city"],
+    [21,24,"work","in the office"]],
   prisoner:[[0,24,"work","in the cell"]]
 };
 
@@ -8447,6 +9710,10 @@ var BELONGS={
   shop:[{n:[1,2],kind:"human",role:"shopkeeper"}],
   gasstation:[{n:[1,1],kind:"human",role:"shopkeeper"}],
   school:[{n:[2,4],kind:"human",role:"teacher"},{n:[5,10],kind:"child",role:"child"}],
+  somnucortower:[{n:[4,6],kind:"human",role:"cartographer"},{n:[2,3],kind:"human",role:"archivist"},
+    {n:[2,3],kind:"human",role:"engineer"},{n:[2,2],kind:"human",role:"gatekeeper"},
+    {n:[2,3],kind:"human",role:"runner"},{n:[1,2],kind:"human",role:"nightdesk"},
+    {n:[1,1],kind:"android",role:"nightdesk"}],
   hospital:[{n:[2,3],kind:"human",role:"nurse_day"},{n:[1,2],kind:"human",role:"nurse_night"},{n:[2,4],kind:"human",role:"patient"}],
   church:[{n:[1,1],kind:"human",role:"priest"}],
   cathedral:[{n:[2,3],kind:"human",role:"priest"}],
@@ -8497,8 +9764,8 @@ function housePeople(spec){
       var seed=spec.id+":"+ri+":"+i, a=(hash(seed)%628)/100, r=6+(hash(seed+"r")%9);
       var x=spec.x+Math.cos(a)*r, z=spec.z+Math.sin(a)*r;
       var ps={id:uid(),archetype:row.kind,label:null,attrs:{},x:x,z:z,rot:(hash(seed+"t")%628)/100,
-        sign:null,note:null,solid:false,detail:0,addr:spec.addr||null,name:null,named:null,filler:true,
-        belongs:spec.id};
+        sign:null,note:null,solid:!!spec.city,detail:spec.city?3:0,addr:spec.addr||null,name:null,named:null,
+        filler:!spec.city,city:spec.city||undefined,hub:spec.hub||undefined,belongs:spec.id};
       if(spec.realm) ps.realm=spec.realm;
       var c={id:uid(),archetype:row.kind,name:"someone",aka:[],details:[],sessions:[],awake:false,log:[],
         objId:ps.id,x:x,z:z,primary:false,src:{role:"belongs"},role:row.role,shift:null,
@@ -8772,7 +10039,11 @@ function groundTick(dt){
   if(store.inside&&INT){
     var lvl=Math.round(feet/INT.floor);
     lvl=Math.max(0,Math.min(INT.levels-1,lvl));
-    if(lvl!==INT.level){ INT.level=lvl; wallsAt=-1;
+    if(lvl!==INT.level&&typeof levelAllowed==="function"&&!levelAllowed(lvl)){
+      /* held at the locked floor until the code is given */
+      feet=Math.min(feet,(INT.level||0)*INT.floor);
+      P.y=1.72+feet; flyY=feet>0.04?feet:0;
+    } else if(lvl!==INT.level){ INT.level=lvl; wallsAt=-1;
       setStatus(lvl?"Floor "+(lvl+1)+" of "+INT.levels+".":"The ground floor."); }
   }
 }
@@ -8883,6 +10154,8 @@ function animate(){
     /* the phone's joystick: how far you push is how fast you go */
     var jv=joyInput()||padInput(), pace=1;
     if(jv&&!f&&!s){ f=jv.f; s=jv.s; pace=jv.mag; if(jv.run) sp=20; }
+    /* what you are riding carries you faster; pushing the pad gently still means gently */
+    if(typeof rideSpeed!=="undefined"&&rideSpeed>1) sp*=rideSpeed;
     if(f||s){
       var l=Math.hypot(f,s); f/=l; s/=l; f*=pace; s*=pace;
       walkBy((Math.sin(yaw)*-f+Math.cos(yaw)*s)*sp*dt,(Math.cos(yaw)*-f-Math.sin(yaw)*s)*sp*dt);
@@ -8927,7 +10200,7 @@ function animate(){
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
   if(store.peopleLater){ store.peopleLater=false; peopleEverything(); }
   navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt); armsTick(dt); hubTick(dt);
-  doorsTick(dt); visitTick(dt);
+  doorsTick(dt); visitTick(dt); deskTick(dt); templeTick(dt); housingTick(dt); yardTick(dt);
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
   renderView();
@@ -9085,7 +10358,7 @@ var NOWALL={driveway:1,road:1,sidewalk:1,water:1,grass:1,pool:1,flood:1,crater:1
   secretdoor:1,fire:1,wisps:1,flowers:1,reeds:1,parking:1,bridge:1,stairs:1,tunnel:1,pier:1,trapdoor:1,cellar:1,
   secretstair:1,impossiblestair:1,sinkhole:1,fissure:1,lavaflow:1,tidalwave:1,sandstorm:1,tornado:1,wildfire:1,
   blizzard:1,stormcloud:1,lightningstorm:1,ashcloud:1,meteor:1,dune:1,hill:1,mountain:1,cave:1,floatingisland:1,
-  spiritfire:1,orb:1,standingstones:1,graveyard:1,playground:1,geyser:1,waterfall:1,barrow:1,busstop:0};
+  spiritfire:1,orb:1,standingstones:1,graveyard:1,playground:1,geyser:1,waterfall:1,barrow:1,busstop:0,groundpad:1,lawn:1,snowfield:1,blossomground:1,leaffall:1,landinglights:1,washing:1};
 var TRUNK={tree:.55,pine:.5,deadtree:.45,palm:.4,worldtree:4,giantmushroom:1,cactus:.5,streetlight:.25,trafficlight:.25,
   sign:.2,pylon:.8,hydrant:.3,bollard:.25,mailbox:.35,trashcan:.4,statue:1.2,runestone:.6,glyphobelisk:1.4,crystalspire:4};
 var WALLS=[], wallsAt=-1;
@@ -9111,7 +10384,11 @@ function solidWalls(){
     else {
       var S=(typeof SURFACE!=="undefined")?SURFACE[o.archetype]:null;
       var wt=S?(S.top!==undefined?S.top*s:(S.ramp?S.ramp[1]*s:(S.mound?S.mound[1]*s:(S.roof?h:undefined)))):undefined;
-      WALLS.push({x:x,z:z,rot:rot,hw:d.size[0]*s*(a.w||1)/2,hd:d.size[2]*s*(a.d||1)/2,h:h,walkTop:wt});
+      var dr=null;
+      if(typeof enterable==="function"&&enterable(o)&&typeof doorWorld==="function"){
+        try{ dr=doorWorld(o); }catch(e){ dr=null; }
+      }
+      WALLS.push({x:x,z:z,rot:rot,hw:d.size[0]*s*(a.w||1)/2,hd:d.size[2]*s*(a.d||1)/2,h:h,walkTop:wt,door:dr});
     }
   });
   return WALLS;
@@ -9139,6 +10416,7 @@ function blockedAt(x,z,feet){
     if(Math.abs(dx)>w.hw+w.hd+1||Math.abs(dz)>w.hw+w.hd+1) continue;
     var c=Math.cos(-w.rot), sn=Math.sin(-w.rot);
     var lx=dx*c+dz*sn, lz=-dx*sn+dz*c;
+    if(w.door&&Math.abs(x-w.door.x)<1.5&&Math.abs(z-w.door.z)<1.5) continue;   /* the way in */
     if(Math.abs(lx)<w.hw+R&&Math.abs(lz)<w.hd+R){
       /* something you can stand on stops blocking once you are level with its top */
       if(w.walkTop!==undefined&&feet>=w.walkTop-0.35) continue;
@@ -10092,7 +11370,7 @@ function stopAudio(){
 var VOCAB={
 house:["house","home","bungalow","farmhouse","dwelling","residence"],
 cottage:["log cabin","wooden cabin","cottage","shack","hut","cabin"],
-apartment:["apartment","flat","tenement","block of flats","condo","projects"],
+apartment:["apartment","flat","block of flats","condo","projects"],
 tower:["tower","highrise","high-rise","spire"],
 skyscraper:["skyscraper","tower block"],
 motel:["motel","inn","lodge"],
@@ -10100,7 +11378,7 @@ hotel:["hotel","resort"],
 institution:["institution","asylum","facility","complex","office","offices","government"],
 hospital:["hospital","clinic","infirmary","ward","emergency room","surgery"],
 school:["school","classroom","college","university","academy","gymnasium"],
-church:["church","chapel","parish","steeple","synagogue","shrine"],
+church:["church","chapel","parish","steeple","synagogue"],
 cathedral:["cathedral","basilica","minster"],
 bank:["bank vault","bank","treasury"],
 library:["library","archive","records"],
@@ -10109,7 +11387,7 @@ courthouse:["courthouse","court","tribunal","city hall","town hall"],
 shop:["shop","store","market","cafe","diner","bar","pub","restaurant","bakery","boutique","pharmacy"],
 warehouse:["storage depot","supply depot","goods depot","warehouse","storage"],
 factory:["steel mill","cotton mill","paper mill","factory","plant","refinery","foundry","mill"],
-barn:["barn","stable","silo"],
+barn:["barn","byre"],
 shed:["garden shed","tool shed","shed","outhouse"],
 garage:["garage","carport","workshop"],
 ruin:["ruin","ruins","rubble","wreckage","derelict","collapsed"],
@@ -10120,7 +11398,7 @@ stairs:["stairs","staircase","steps","stairway","stairwell","escalator"],
 tunnel:["tunnel","underpass","subway","passage","culvert"],
 gate:["stone archway","iron gate","garden gate","gateway","entrance","gate"],
 statue:["statue","effigy","idol","figure on a plinth"],
-monument:["monument","obelisk","memorial","pillar"],
+monument:["monument","memorial","pillar"],
 fountain:["fountain","basin"],
 well:["well","cistern"],
 tomb:["tomb","mausoleum","sepulchre"],
@@ -10136,7 +11414,7 @@ palm:["palm tree","palm trees","palm"],
 bush:["bush","shrub","thicket","bracken"],
 hedge:["hedge","hedgerow"],
 grass:["grass","lawn","meadow","field","clearing"],
-water:["water","river","lake","sea","ocean","pond","canal","stream","marsh","bay"],
+water:["water","river","lake","sea","ocean","canal","stream","marsh","bay"],
 gasstation:["gas station","petrol station","filling station","service station","gas pumps","forecourt"],
 parking:["parking lot","car park","parking garage","parking"],
 playground:["playground","swings","play park","swing set"],
@@ -10179,8 +11457,8 @@ crowd:["crowd","people","mob","queue","congregation","audience","throng"],
 shadow:["shadow","shade","dark figure","silhouette","presence","watcher"],
 dog:["dog","hound","wolf","puppy"],
 cat:["cat","kitten","feline"],
-horse:["horse","pony","mare","stallion","deer","stag","cow","sheep"],
-bird:["bird","crow","raven","gull","owl","pigeon","hawk"],
+horse:["horse","pony","mare","stallion"],
+bird:["bird","crow","raven","pigeon","hawk"],
 creature:["creature","beast","monster","thing","entity","animal"],
 portal:["door","doorway","portal","threshold","mirror","opening","hatch"],
 circle:["ritual circle","stone circle","summoning circle","circle of salt","sigil on the ground","circle"],
@@ -12540,7 +13818,30 @@ var realmGrounds={};
 function realmGround(r){
   if(!scene||realmGrounds[r.id]) return;
   var t=realmTemplate(r);
-  var g=new THREE.PlaneGeometry(3000,3000); metreUVs(g,"pln",[3000,3000]);
+  /* real ground, not a sheet: it rises and falls, and keeps clear of what stands on it */
+  var SEG=90, SIZE=3000;
+  var g=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG); metreUVs(g,"pln",[SIZE,SIZE]);
+  var pos=g.attributes&&g.attributes.position;
+  var amp=(t.flat===true)?0:(t.amp!==undefined?t.amp:5);
+  if(pos&&amp>0&&typeof vnoise==="function"){
+    var keep=[];
+    store.objects.forEach(function(o){
+      if((o.realm||0)!==r.id) return;
+      var d=KIT[o.archetype]; if(!d) return;
+      keep.push([o.x-r.x0,o.z,Math.max(d.size[0],d.size[2])*((o.attrs&&o.attrs.s)||1)*0.6+14]);
+    });
+    for(var i=0;i<pos.count;i++){
+      var x=pos.getX(i), zz=-pos.getY(i), near=Infinity;
+      for(var k=0;k<keep.length;k++){
+        var dx=x-keep[k][0], dz=zz-keep[k][1];
+        near=Math.min(near,Math.sqrt(dx*dx+dz*dz)-keep[k][2]);
+      }
+      var flat=near<0?0:Math.min(1,near/70);
+      var hgt=(vnoise(x/180,zz/180)-0.5)*amp*2+(vnoise(x/60,zz/60)-0.5)*amp*0.6;
+      pos.setZ(i,hgt*flat);
+    }
+    pos.needsUpdate=true; if(g.computeVertexNormals) g.computeVertexNormals();
+  }
   var tx=t.tex&&landOpt("detail")?texOf(t.tex):null;
   var m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:t.ground,map:tx,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:4}));
   m.rotation.x=-Math.PI/2; m.position.set(r.x0,-0.06,0); m.receiveShadow=true;
@@ -12604,7 +13905,7 @@ function renderRealmList(){
   var R=realms();
   if(!R.length){
     el.innerHTML='<p class="small-note">No other worlds yet. Dream your way into one &mdash; <i>"I went down into the underworld", "I found myself somewhere else"</i> &mdash; or cross straight into one here.</p>'+
-      '<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross"><option value="">choose a world</option>'+
+      (joined?'':'')+'<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross"><option value="">choose a world</option>'+
       Object.keys(REALMS).map(function(k){ return '<option value="'+k+'">'+esc(REALMS[k].name)+"</option>"; }).join("")+'</select></div>';
     var c0=document.getElementById("l-cross");
     if(c0) c0.onchange=function(){
@@ -12616,7 +13917,12 @@ function renderRealmList(){
     };
     return;
   }
-  var chooser='<div class="l-realm"><span><b>Somnucor</b> &mdash; the hall of doors</span><button class="btn" id="l-hub">Go there</button></div>'+
+  var joined=(typeof joinedSomnucor==="function")&&joinedSomnucor();
+  var chooser=!joined
+    ? '<div class="l-realm"><span><b>Somnucor</b> &mdash; the shared city, if you want it. Joining is in Settings.</span></div>'
+    : '<div class="l-realm"><span><b>Somnucor</b> &mdash; the city at the middle of everything</span><button class="btn" id="l-hub">Go there</button></div>'+
+    (joined?'<div class="l-realm"><span><b>Temple Row</b> &mdash; a house for every power the Atlas knows</span><button class="btn" id="l-row">Go there</button></div>':'')+
+    (joined?'<div class="l-realm"><span><b>The Hall of Doors</b> &mdash; a door for every world, and for every dreamer</span><button class="btn" id="l-hall">Go there</button></div>':'')+
     '<div class="l-realm"><span>Cross into\u2026</span><select id="l-cross">'+
     '<option value="">choose a world</option>'+
     Object.keys(REALMS).map(function(k){ return '<option value="'+k+'">'+esc(REALMS[k].name)+"</option>"; }).join("")+
@@ -12624,6 +13930,10 @@ function renderRealmList(){
   el.innerHTML=chooser+R.map(function(r){
     return '<div class="l-realm"><span>'+esc(r.name)+'</span><button class="btn" data-visit="'+r.id+'">Go there</button></div>';
   }).join("")+'<div class="l-realm"><span>The town</span><button class="btn" data-visit="0">Go there</button></div>';
+  var rowBtn=document.getElementById("l-row");
+  if(rowBtn) rowBtn.onclick=function(){ if(typeof toTempleRow==="function") toTempleRow(); closeLand(); };
+  var hallBtn=document.getElementById("l-hall");
+  if(hallBtn) hallBtn.onclick=function(){ if(typeof toHall==="function") toHall(); if(typeof openHall==="function") openHall(); closeLand(); };
   var hubBtn=document.getElementById("l-hub");
   if(hubBtn) hubBtn.onclick=function(){ toSomnucor(); closeLand(); };
   var cross=document.getElementById("l-cross");
@@ -12823,6 +14133,14 @@ function hubTick(dt){
     if((o.realm||0)!==(store.here||0)) continue;
     if(Math.hypot(o.x-P.x,o.z-P.z)>1.9) continue;
     hubCool=2.5;
+    if(o.leadsTo==="hall"){ toHall(); if(typeof openHall==="function") openHall(); return; }
+    if(o.leadsTo==="somnucor"){
+      var c=somnucorRealm()||(typeof buildSomnucorCity==="function"?buildSomnucorCity():null);
+      if(c){ beHere(c.id); var cb=blockOrigin(c.grid.bx,c.grid.bz);
+        camera.position.set(cb.x,camera.position.y,cb.z+30);
+        setStatus("<b>Somnucor.</b> The gate to the hall stands behind you."); }
+      return;
+    }
     if(o.leadsTo==="town"){
       if(typeof beHere==="function") beHere(0);
       var t=heartOf(0);
@@ -12842,13 +14160,83 @@ function hubTick(dt){
 }
 /* the way home to the hall, from anywhere */
 function toSomnucor(){
-  var r=somnucorRealm()||buildSomnucor();
+  var r=somnucorRealm()||(typeof buildSomnucorCity==="function"?buildSomnucorCity():buildSomnucor());
   if(!r) return;
   if(typeof beHere==="function") beHere(r.id);
   var h=heartOf(r.id);
   if(walkMode){ camera.position.set(h.x,1.72,h.z+44); }
   else if(typeof visitRealm==="function") visitRealm(r.id);
   setStatus("<b>Somnucor.</b> Every door here opens on a world. One of them is yours.");
+}
+
+
+/* ---------- the Hall of Doors: a world of its own ---------- */
+function hallRealm(){
+  var R=realms();
+  for(var i=0;i<R.length;i++) if(R[i].kind==="hall") return R[i];
+  return null;
+}
+var HALL_BUILD=2;
+function buildHall(){
+  var had=hallRealm();
+  if(had&&(had.build||0)>=HALL_BUILD) return had;
+  if(had){
+    for(var i=store.objects.length-1;i>=0;i--){
+      var o=store.objects[i];
+      if((o.realm||0)!==had.id) continue;
+      if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+      store.objects.splice(i,1);
+    }
+    var R=realms(), k=R.indexOf(had); if(k>-1) R.splice(k,1);
+    if(store.here===had.id) store.here=0;
+  }
+  if(typeof REALMS==="undefined"||!REALMS.hall) return null;
+  var was=store.here||0, wasGrid=store.grid;
+  var r=makeRealm("hall");
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz);
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:true,detail:4,nights:[store.session],realm:r.id,hub:true,peopled:true,
+      addr:null,name:name||null,named:name?"stated":null};
+    store.objects.push(spec);
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  /* the way back to the city stands where you come in */
+  var back=put("hubdoor",0,22,Math.PI,"Back to Somnucor");
+  if(back) back.leadsTo="somnucor";
+  /* the doors to the worlds, ringing the middle */
+  var doors=hubDoorList().filter(function(d){ return d.to!=="hall"; }), n=doors.length;
+  doors.forEach(function(d,i){
+    var a=(i/n)*Math.PI*2;
+    var spec=put("hubdoor",Math.cos(a)*34,Math.sin(a)*34,-a+Math.PI/2,d.name);
+    if(spec) spec.leadsTo=d.to;
+    var am=((i+0.5)/n)*Math.PI*2;
+    put("hubmirror",Math.cos(am)*34,Math.sin(am)*34,-am+Math.PI/2);
+  });
+  for(var p=0;p<12;p++){ var pa=(p/12)*Math.PI*2+0.13; put("hubpillar",Math.cos(pa)*20,Math.sin(pa)*20,0); }
+  for(var L=0;L<20;L++){ var la=(L/20)*Math.PI*2; put("streetlight",Math.cos(la)*27,Math.sin(la)*27,-la); }
+  put("maptable",0,0,0,"The map of everywhere");
+  HUB_SIGNS.forEach(function(s,i){
+    var a=(i/HUB_SIGNS.length)*Math.PI*2+0.4;
+    var spec=put("signboard",Math.cos(a)*13,Math.sin(a)*13,-a+Math.PI/2,s[0]);
+    if(spec){ spec.sign=s[0]; spec.note=s[1]; }
+  });
+  r.dressed=true; r.build=HALL_BUILD; store.hall=r.id;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return r;
+}
+function toHall(){
+  var r=hallRealm()||buildHall();
+  if(!r) return;
+  if(typeof beHere==="function") beHere(r.id);
+  var h=blockOrigin(r.grid.bx,r.grid.bz);
+  if(walkMode) camera.position.set(h.x,1.72,h.z+16);
+  else if(typeof visitRealm==="function") visitRealm(r.id);
+  setStatus("<b>The Hall of Doors.</b> Every door here opens on a world, and one of them is yours.");
 }
 
 </script>
@@ -12863,6 +14251,8 @@ function toSomnucor(){
 "use strict";
 
 var MORE_REALM_WORDS={
+  templerow:["temple row","the temple row","the row of temples","the street of the gods","the north pole"],
+  hall:["the hall of doors","the great hall of doors","the hall of all doors","the door hall"],
   somnucor:["somnucor","the hall of doors","the hall of mirrors and doors","the great hall of doors","the hub",
     "the place all the doors open from","the meeting hall of the worlds"],
   underworld:["underworld","the underworld","the land of the dead","land of the dead","the lower world","the world below",
@@ -12978,6 +14368,8 @@ var SKYWORK={
   stars:      {mode:7,a:0x2A1060,b:0xC050E8,c:0x4AE0FF,speed:0.35,lift:0.4,amt:1.5},
   wasteland:  {mode:8,a:0xC8B078,b:0x8A7A50,c:0xE8D8A8,speed:0.6,lift:0.5},
   desert:     {mode:8,a:0xF0D8A8,b:0xBFD8EC,c:0xFFF0D0,speed:0.4,lift:0.4},
+  templerow:  {mode:3,a:0xFFE0B0,b:0xFFFFFF,c:0xC8A8FF,speed:0.4,lift:0.8,amt:1.1},
+  hall:       {mode:5,a:0x7A6AD8,b:0xFFFFFF,c:0x6AE8FF,speed:0.3,lift:0.75,amt:1.3},
   somnucor:   {mode:5,a:0x6A5AC8,b:0xE8E4FF,c:0x4AE8FF,speed:0.35,lift:0.6,amt:1.2},
   station:    {mode:7,a:0x0A0A18,b:0x4A6AE8,c:0x6AE8FF,speed:0.3,lift:0.4,amt:1.4},
   future:     {mode:6,a:0x2A0A3A,b:0xFF4AE0,c:0x4AE8FF,speed:0.7,lift:0.55,amt:1.3},
@@ -13062,7 +14454,7 @@ function buildRealmSky(kind){
               cC:{value:new THREE.Color(W.c)},lift:{value:W.lift},amt:{value:W.amt||1}},
     vertexShader:"varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
     fragmentShader:SKY_FRAG,
-    side:THREE.BackSide, transparent:true, depthWrite:false, depthTest:false, fog:false,
+    side:THREE.BackSide, transparent:true, depthWrite:false, depthTest:true, fog:false,
     /* light-like skies add their glow; smoke and dust veil instead */
     blending:(W.mode===2||W.mode===8)?THREE.NormalBlending:THREE.AdditiveBlending
   });
@@ -13733,6 +15125,8 @@ var PLANS={
     wall:0xE0D4BC,floor:"carpet",lift:true},
   institution:{mode:"mixed",ground:"lobby",w:18,d:18,upper:["cell","cell","cell","office","bathroom"],
     wall:0xC8CCC8,floor:"tile",lift:true},
+  somnucortower:{mode:"mixed",ground:"lobby",w:26,d:22,upper:["office","meeting","office","kitchenette","archive","bathroom"],
+    wall:0xD8E4EE,floor:"tile",lift:true,locked:{level:11,what:"the penthouse"}},
   skyscraper:{mode:"mixed",ground:"lobby",w:22,d:18,upper:["office","office","meeting","kitchenette","bathroom","archive"],
     wall:0xDCDCD8,floor:"carpet",lift:true},
   toadstoolhouse:{mode:"rooms",rooms:["living","bedroom"],wall:0xE8D8C0,floor:"wood"},
@@ -13774,15 +15168,32 @@ var PLANS={
   bunker:{mode:"rooms",rooms:["lobby","office","basement"],wall:0x9A9A92,floor:"tile"}
 };
 var DEFAULT_PLAN={mode:"hall",w:8,d:8,fill:"cozy",wall:0xDCD4C4,floor:"wood"};
-function planOf(spec){ if(typeof addSciFurniture==="function") addSciFurniture(); return PLANS[spec.archetype]||DEFAULT_PLAN; }
+/* things you plainly do not walk inside */
+var NOT_INSIDE={statue:1,monument:1,obelisk:1,glyphobelisk:1,altar:1,altarseasonal:1,ofrenda:1,torii:1,paifang:1,
+  moongate:1,monolith:1,trebuchet:1,ferriswheel:1,carousel:1,pergola:1,wardrobedoor:1,celestialstair:1,goldengate:1,
+  bonegate:1,sandpillars:1,brokenhighway:1,rainbowbridge:1,hubdoor:1,hubmirror:1,signboard:1,plinth:1,hubpillar:1,
+  maptable:1,groundpad:1,lawn:1,snowfield:1,blossomground:1,leaffall:1,pier:1,shrine:1,stargate:1,spaceelevator:1,
+  ruin:1,shipwreck:1,sunkenruins:1,collapsedtower:1,volcanolair:1,forcefield:1,landinglights:1,solarfarm:1,satdish:1};
+/* any building can be walked into; if it has no plan of its own, one is cut to its own size */
+function planOf(spec){
+  if(typeof addSciFurniture==="function") addSciFurniture();
+  if(PLANS[spec.archetype]) return PLANS[spec.archetype];
+  var d=KIT[spec.archetype]||KIT.house, a=spec.attrs||{}, sc=a.s||1;
+  var w=Math.max(6,Math.min(30,d.size[0]*sc*0.8)), dp=Math.max(6,Math.min(34,d.size[2]*sc*0.8));
+  var floorArea=w*dp;
+  if(floorArea>360) return {mode:"mixed",ground:"lobby",w:w,d:dp,upper:["bedroom","office","bathroom","chamber"],
+    wall:0xDCD4C4,floor:"wood",lift:d.size[1]>40};
+  if(floorArea>150) return {mode:"rooms",rooms:["living","kitchen","bedroom","bedroom","bathroom"],wall:0xDCD4C4,floor:"wood"};
+  return {mode:"hall",w:w,d:dp,fill:"cozy",wall:0xDCD4C4,floor:"wood"};
+}
 /* how many floors inside: what the dream said, else what the kind of building suggests */
-var STOREYS={house:2,cottage:1,apartment:3,hotel:3,motel:2,institution:2,skyscraper:6,castle:2,tower:3,
+var STOREYS={somnucortower:12,house:2,cottage:1,apartment:3,hotel:3,motel:2,institution:2,skyscraper:6,castle:2,tower:3,
   lighthouse:3,windmill:2,hanok:1,machiya:2,izba:1,hacienda:2,riad:2,longhouse:1,stilthouse:1,cycladic:2,
   pueblo:2,shop:1,school:2,hospital:2,library:2,bank:2,courthouse:2,factory:1,warehouse:1,barn:1};
 function levelsOf(spec){
   var a=spec.attrs||{}, n=a.lv||STOREYS[spec.archetype]||1;
   if((spec.inside||{}).endless) n=Math.max(n,3);
-  return Math.max(1,Math.min(8,n));
+  return Math.max(1,Math.min(16,n));
 }
 /* what belongs on the ground floor, and what belongs upstairs */
 var GROUND_ROOMS={living:1,kitchen:1,dining:1,hallway:1,lobby:1,office:1,classroom:1,ballroom:1,throneroom:1};
@@ -13798,9 +15209,13 @@ function roomsByLevel(rooms,levels){
   return out;
 }
 function enterable(spec){
-  if(!spec||KIT[spec.archetype]&&KIT[spec.archetype].cat!=="structure") return false;
-  if(spec.archetype==="volcanolair"||spec.archetype==="ruin"||spec.archetype==="collapsedtower") return false;
-  return !!PLANS[spec.archetype]||!!frontDoorOf(levelParts(KIT[spec.archetype]||KIT.house,spec));
+  if(!spec) return false;
+  var d=KIT[spec.archetype];
+  if(!d||d.cat!=="structure") return false;
+  if(NOT_INSIDE[spec.archetype]) return false;
+  var a=spec.attrs||{}, sc=a.s||1;
+  /* if it is big enough to stand up in, you can go in */
+  return d.size[0]*sc>=4&&d.size[2]*sc>=4&&d.size[1]*sc>=3;
 }
 
 /* ---- where the front door is, out in the world ---- */
@@ -13875,8 +15290,12 @@ function makeInterior(spec){
   var wallMat=new THREE.MeshLambertMaterial({color:wallCol,side:THREE.DoubleSide});
   var walls=[], spots=[], items=[], lights=[], windows=[];
   var yOff=0, lvl=0;
-  function wallBox(x,z,w,d,h){ var m=P(box(w,h||H,d),wallMat,x,yOff+(h||H)/2,z); root.add(m);
-    walls.push({x:ox+x,z:oz+z,rot:0,hw:w/2,hd:d/2,h:h||H,level:lvl}); }
+  function wallBox(x,z,w,d,h){
+    /* a wall reaches the floor above it: leave no band to see or slip through */
+    var hh=h||((typeof FLOOR!=="undefined")?FLOOR:H);
+    var m=P(box(w,hh,d),wallMat,x,yOff+hh/2,z); root.add(m);
+    walls.push({x:ox+x,z:oz+z,rot:0,hw:w/2,hd:d/2,h:hh,level:lvl});
+  }
   /* a wall from (x1,z1) to (x2,z2), axis-aligned, with door gaps at the given centres */
   function wallLine(x1,z1,x2,z2,gaps,gw){
     gw=gw||1.4; var horiz=Math.abs(z1-z2)<0.01, a=horiz?Math.min(x1,x2):Math.min(z1,z2), b=horiz?Math.max(x1,x2):Math.max(z1,z2);
@@ -13975,7 +15394,22 @@ function makeInterior(spec){
       spots.forEach(function(q){ if(q.level===undefined) q.level=0; });
       for(var glz=-D/2+4;glz<D/2-2;glz+=7) for(var glx=-W/2+4;glx<W/2-2;glx+=8) lights.push({x:glx,z:glz,y:0});
       for(var gwz=-D/2+3;gwz<D/2-2;gwz+=5){ windows.push({x:-W/2+.12,z:gwz,ry:Math.PI/2,y:0}); windows.push({x:W/2-.12,z:gwz,ry:-Math.PI/2,y:0}); }
-      for(var L2=1;L2<levels;L2++) roomFloor(L2,rooms,W,D,rw,rd,hall,false);
+      for(var L2=1;L2<levels;L2++){
+        if(plan.locked&&L2===plan.locked.level){
+          /* the penthouse: one room, the whole floor, and no corridor */
+          lvl=L2; yOff=L2*FLOOR;
+          wallLine(-W/2,D/2,W/2,D/2); wallLine(-W/2,-D/2,W/2,-D/2);
+          wallLine(-W/2,-D/2,-W/2,D/2); wallLine(W/2,-D/2,W/2,D/2);
+          fillHall("penthouse",W,D,put,spots);
+          spots.forEach(function(q){ if(q.level===undefined) q.level=L2; });
+          for(var pz=-D/2+4;pz<D/2-2;pz+=6) lights.push({x:0,z:pz,y:yOff});
+          for(var pw=-D/2+3;pw<D/2-2;pw+=4){
+            windows.push({x:-W/2+.12,z:pw,ry:Math.PI/2,y:yOff});
+            windows.push({x:W/2-.12,z:pw,ry:-Math.PI/2,y:yOff});
+          }
+          root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+        } else roomFloor(L2,rooms,W,D,rw,rd,hall,false);
+      }
       exitZ=zFront0;
     } else {
       var byLevel=roomsByLevel(rooms,levels);
@@ -14030,16 +15464,21 @@ function makeInterior(spec){
   root.add(fl);
   if(floorKind==="checker") for(var ci=0;ci<Math.min(W*D/4,900);ci++){ var cx=-W/2+1+(ci%Math.floor(W/2))*2, cz=-D/2+1+Math.floor(ci/Math.floor(W/2))*2; if(cz>D/2) break;
     if(((Math.round(cx/2)+Math.round(cz/2))&1)===0) root.add(P(box(2,.02,2),mL(0x1A1A1E),cx,.01,cz)); }
-  root.add(P(box(W,.1,D),new THREE.MeshLambertMaterial({color:shade(wallCol,-.1),side:THREE.DoubleSide}),0,(levels-1)*FLOOR+H+.05,0));
+  root.add(P(box(W+1.2,.3,D+1.2),new THREE.MeshLambertMaterial({color:shade(wallCol,-.12),side:THREE.DoubleSide}),0,(levels-1)*FLOOR+H+.15,0));
   var winMats=[];
+  /* every interior has a floor of its own: it is built away from the world, where
+     no ground reaches. without this you stand on nothing and see under everything. */
+  root.add(P(box(W+2.4,.4,D+2.4),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,-0.2,0));
   windows.forEach(function(w){ var wm=new THREE.MeshBasicMaterial({color:0xCFE0F0}); winMats.push(wm);
     var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,(w.y||0)+1.7,w.z); wp.rotation.y=w.ry; root.add(wp); });
-  lights.slice(0,14).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.52,13,1.9); pl.position.set(l.x,(l.y||0)+H-.3,l.z); root.add(pl);
+  lights.slice(0,18).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.62,15,1.7); pl.position.set(l.x,(l.y||0)+H-.3,l.z); root.add(pl);
     root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,(l.y||0)+H-.12,l.z)); });
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
+  var amb=new THREE.HemisphereLight(0xFFF0D8,0x2A2018,.3); amb.position.set(0,H,0); root.add(amb);
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
-    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0};
+    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,
+    locked:plan.locked||null,unlocked:false};
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
   fireplace:[2,.6],stove:[.8,.7],fridge:[.75,.7],bathtub:[1.7,.8],desk:[1.4,.7],pew:[3.4,.6],altarinside:[2.3,1],throneseat:[1.4,1.4],shelfgoods:[2.4,.5],till:[2,.7],
@@ -14075,6 +15514,15 @@ function fillHall(kind,W,D,put,spots){
     put("till",0,D/2-4,0); spots.push({x:0,z:D/2-5,room:"reception"},{x:0,z:0,room:"ward"}); }
   else if(kind==="bank"){ put("counterbank",0,-D/6,0); put("vaultround",0,-D/2+.2,0); put("plant",-W/2+1,D/2-2,0); put("plant",W/2-1,D/2-2,0); put("chandelier",0,D/6,0);
     spots.push({x:0,z:-D/6-1.4,room:"counter"}); }
+  else if(kind==="penthouse"){
+    put("desk",0,-D/2+3,Math.PI); put("chair",0,-D/2+5,0);
+    put("sofa",-W/4,D/6,0.4); put("armchair",W/4,D/6,-0.6); put("table",0,D/6,0);
+    put("bookshelf",-W/2+1.2,0,Math.PI/2); put("bookshelf",-W/2+1.2,4,Math.PI/2);
+    put("maptable",W/4,-D/4,0); put("rug",0,D/8,0); put("chandelier",0,0,0);
+    put("plant",W/2-1.4,-D/2+1.6,0); put("plant",-W/2+1.4,-D/2+1.6,0);
+    put("painting",0,-D/2+.2,0);
+    spots.push({x:0,z:-D/2+4.4,room:"the office"});
+  }
   else if(kind==="lobby"){
     put("till",0,-D/2+2.2,Math.PI);
     put("armchair",-W/4,D/6,0.6); put("armchair",-W/4+2,D/6-1.4,-0.8); put("table",-W/4+1,D/6-0.7,0);
@@ -14137,17 +15585,51 @@ function inLift(){
   }
   return null;
 }
+/* the code on the penthouse door. set by the keeper; kept on the device until then */
+function penthouseCode(){
+  var c=(typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config&&DW_CLOUD.config.penthouseCode)||null;
+  if(c) return String(c);
+  try{ return localStorage.getItem("somnucor.code")||"1987"; }catch(e){ return "1987"; }
+}
+function askForCode(what){
+  var tries=(typeof prompt==="function")?prompt("The way to "+what+" is locked.\nCode:"):null;
+  if(tries===null) return false;
+  if(String(tries).trim()===penthouseCode()){ INT.unlocked=true; setStatus("<b>The door opens.</b> Somnucor, "+esc(what)+"."); return true; }
+  setStatus("That code is not the one.");
+  return false;
+}
+function towerRule(k){ return (typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config&&DW_CLOUD.config[k])||null; }
+function levelAllowed(to){
+  if(!INT) return true;
+  /* the keeper can shut the whole tower above the lobby */
+  if(INT.locked&&to>0&&towerRule("towerOpen")==="lobby"){
+    setStatus("<b>The lift will not go up.</b> Somnucor has the upper floors closed today.");
+    return false;
+  }
+  if(!INT.locked||INT.unlocked) return true;
+  if(to!==INT.locked.level) return true;
+  var who=towerRule("penthouseWho")||"code";
+  if(who==="shut"){ setStatus("<b>Sealed.</b> Nobody is admitted to "+esc(INT.locked.what)+" today."); return false; }
+  if(who==="keepers"&&!(typeof signedIn==="function"&&signedIn())){
+    setStatus("<b>The door does not know you.</b> Only a keeper of the desk is admitted today.");
+    return false;
+  }
+  return askForCode(INT.locked.what);
+}
+
 function liftMove(dir){
   if(!INT||liftCool>0||!inLift()) return false;
   var to=(INT.level||0)+dir;
   if(to<0||to>INT.levels-1) return false;
+  if(!levelAllowed(to)){ liftCool=1.2; return false; }
   INT.level=to; camera.position.y=1.72+to*INT.floor; liftCool=0.7; wallsAt=-1;
   setStatus("<b>Floor "+(to+1)+" of "+INT.levels+".</b>");
   return true;
 }
 
 /* the people whose hour has them in this building are in here with you */
-var ROLE_ROOM={nurse_day:"ward",nurse_night:"ward",patient:"ward",clerk:"office",guest:"bedroom",
+var ROLE_ROOM={cartographer:"office",archivist:"archive",engineer:"kitchenette",gatekeeper:"lobby",
+  runner:"lobby",nightdesk:"lobby",founder:"the office",nurse_day:"ward",nurse_night:"ward",patient:"ward",clerk:"office",guest:"bedroom",
   resident:"living",teacher:"classroom",child:"classroom",priest:"nave",shopkeeper:"counter",
   keeper:"lobby",worker:"floor",prisoner:"cell",farmer:"barn",innkeeper:"lobby",nightwatch:"lobby"};
 function bringOccupants(){
@@ -14182,18 +15664,8 @@ function interiorTick(dt){
   if(INT){
     var day=daylight(dreamHour()), wc=blend(0x1A2238,0xCFE0F0,day);
     INT.winMats.forEach(function(m){ m.color.setHex(wc); });
-    /* the stairs: step onto them and you are on the floor above, or below */
-    if(intCool<=0&&INT.stairs&&INT.stairs.length){
-      for(var si=0;si<INT.stairs.length;si++){
-        var st=INT.stairs[si];
-        if(Math.hypot(P.x-st.x,P.z-st.z)>1.5) continue;
-        if(INT.level===st.from&&INT.level<INT.levels-1){ INT.level++; camera.position.y+=INT.floor; intCool=0.9; wallsAt=-1;
-          setStatus("Upstairs \u2014 floor "+(INT.level+1)+" of "+INT.levels+"."); break; }
-        if(INT.level===st.from+1){ INT.level--; camera.position.y-=INT.floor; intCool=0.9; wallsAt=-1;
-          setStatus(INT.level?"Floor "+(INT.level+1)+" of "+INT.levels+".":"Back on the ground floor."); break; }
-      }
-    }
-    if(intCool<=0&&Math.hypot(P.x-INT.exit.x,P.z-INT.exit.z)<0.9) exitInterior(false);
+    /* the stairs are walked up, not stepped through: ground.js carries you */
+    if(intCool<=0&&(INT.level||0)===0&&Math.hypot(P.x-INT.exit.x,P.z-INT.exit.z)<0.9) exitInterior(false);
     return;
   }
   if(intCool>0||P.y-1.72>2) return;
@@ -14372,6 +15844,7 @@ function authWords(e){
 
 function showAccount(){
   if(typeof syncStatus==="function") setTimeout(syncStatus,0);
+  if(typeof refreshStanding==="function") setTimeout(function(){ refreshStanding(); loadOffice(); },50);
   var out=document.getElementById("acc-out"), inn=document.getElementById("acc-in");
   if(!out||!inn) return;
   var on=signedIn();
@@ -14562,10 +16035,11 @@ function initSync(){
 "use strict";
 
 var hallDoors=[], hallCount=0, hallAt=0, myDoor=null, hallBusy=false, lightCool=0;
-var HALL_R0=30, HALL_GAP=13, HALL_PER=18;   // the first ring, the space between rings, doors in the first ring
+var HALL_R0=46, HALL_GAP=12, HALL_PER=22;   // the first ring, the space between rings, doors in the first ring
 
 /* where the nth door stands: rings that widen as the hall fills */
 function doorPlace(n){
+  /* the hall is a world of its own now: the rings simply widen, for ever */
   var ring=0, seen=0, per=HALL_PER;
   while(seen+per<=n){ seen+=per; ring++; per=HALL_PER+ring*8; }
   var i=n-seen, r=HALL_R0+ring*HALL_GAP, a=(i/per)*Math.PI*2+(ring%2?Math.PI/per:0);
@@ -14599,7 +16073,7 @@ function fetchHall(){
   }).catch(function(){ hallBusy=false; return 0; });
 }
 function raiseHall(){
-  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  var r=(typeof hallRealm==="function")?(hallRealm()||(typeof buildHall==="function"?buildHall():null)):null;
   if(!r) return 0;
   var h=blockOrigin(r.grid.bx,r.grid.bz);
   /* clear the dreamers' doors, keep the doors to the worlds */
@@ -14695,7 +16169,7 @@ function initDoors(){
       .catch(function(e){ setStatus(esc(e.message)); });
   };
   if((b=document.getElementById("door-hall"))) b.onclick=function(){
-    openHall().then(function(){ if(typeof toSomnucor==="function") toSomnucor(); });
+    openHall().then(function(){ if(typeof toHall==="function") toHall(); });
   };
   doorPanel();
   if(cloudOn()) setTimeout(function(){ openHall().then(doorPanel); },1500);
@@ -14838,6 +16312,474 @@ function initVisit(){
     });
   };
 }
+
+</script>
+<script>/* js/city.js */
+/* SomnuMatrix — city.js
+   the dreamer's side of Somnucor: what is in your purse, what work you hold,
+   which office is yours and what opens its door, and what ground you hold.
+   nothing here decides anything — every figure comes back from the server,
+   which is the only thing that can move gold.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var standing=null, cityBusy=false;
+
+function cityRpc(name,body){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first — the city keeps its books by account."));
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/rpc/"+name,{
+      method:"POST",
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+tok,"Content-Type":"application/json"},
+      body:JSON.stringify(body||{})
+    }).then(function(r){ return r.ok?r.json():r.text().then(function(t){ throw new Error(t||"that didn't go through"); }); });
+  });
+}
+function gold(n){ return (n||0).toLocaleString()+" gold"; }
+function inDollars(n){ return "about $"+((n||0)/100).toFixed(2); }
+
+/* ---- where you stand ---- */
+function refreshStanding(){
+  if(!signedIn()) { standing=null; paintCity(); return Promise.resolve(null); }
+  return cityRpc("my_standing").then(function(s){ standing=s; paintCity(); return s; })
+    .catch(function(){ return null; });
+}
+function drawPay(){
+  return cityRpc("draw_pay").then(function(rows){
+    var total=(rows||[]).reduce(function(a,r){ return a+(r.gold||0); },0);
+    if(!total) setStatus("Nothing owing just now. Pay is worked out from the hours since you were last paid.");
+    else setStatus("<b>"+gold(total)+"</b> drawn for "+(rows.length===1?rows[0].job:(rows.length+" posts"))+".");
+    return refreshStanding();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+
+/* ---- what work there is ---- */
+function jobBoard(){ return cityRpc("job_board").catch(function(){ return []; }); }
+function applyFor(jobId,said){
+  return cityRpc("apply_for",{p_job:jobId,p_said:said||null}).then(function(out){
+    setStatus(out==="ok"?"<b>Your application is in.</b> Whoever runs that work will see it."
+                        :esc(String(out)));
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+/* leaving your someone at work while you sleep */
+function workOffline(jobId,on){
+  return cityRpc("set_offline_work",{p_job:jobId,p_on:!!on}).then(function(o){
+    setStatus(o==="ok"
+      ? (on?"<b>Your someone stays at work.</b> They earn while you are away — less than you would, but the city keeps turning."
+          :"<b>Called home.</b> Your someone works no more until you do.")
+      : esc(String(o)));
+    return refreshStanding();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function leaveJob(jobId){ return cityRpc("leave_job",{p_job:jobId}).then(refreshStanding); }
+
+/* ---- your office ---- */
+var myOffice=null;
+function loadOffice(){
+  if(!signedIn()) { myOffice=null; return Promise.resolve(null); }
+  return cityRpc("my_office").then(function(o){ myOffice=o; paintCity(); return o; }).catch(function(){ return null; });
+}
+function setMyKeycode(code){
+  return cityRpc("set_my_keycode",{p_code:code}).then(function(out){
+    setStatus(out==="ok"?"<b>Your code is changed.</b> Only you and a keeper know it.":esc(String(out)));
+    return loadOffice();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+/* a door in the tower asks the server, never the browser, whether a code fits */
+function tryOfficeDoor(officeId){
+  var code=prompt("The office door asks for a code.")||"";
+  return cityRpc("open_office",{p_office:officeId,p_code:code}).then(function(ok){
+    if(ok) setStatus("<b>The door opens.</b>");
+    else setStatus("That code is not the one.");
+    return !!ok;
+  }).catch(function(){ setStatus("The door does not answer just now."); return false; });
+}
+
+/* ---- ground ---- */
+function lotBoard(){ return cityRpc("lot_board").catch(function(){ return []; }); }
+function buyLot(id){ return cityRpc("buy_lot",{p_lot:id}).then(function(o){ setStatus(o==="ok"?"<b>The ground is yours.</b>":esc(String(o))); return refreshStanding(); }).catch(function(e){ setStatus(esc(e.message)); }); }
+function takeLease(id){ return cityRpc("take_lease",{p_lot:id}).then(function(o){ setStatus(o==="ok"?"<b>You hold the lease.</b> Rent falls due in a week.":esc(String(o))); return refreshStanding(); }).catch(function(e){ setStatus(esc(e.message)); }); }
+function payRent(id){ return cityRpc("pay_rent",{p_lot:id}).then(function(o){ setStatus(o==="ok"?"<b>Rent paid.</b>":esc(String(o))); return refreshStanding(); }).catch(function(e){ setStatus(esc(e.message)); }); }
+
+/* ---- what the dreamer sees ---- */
+function paintCity(){
+  var el=document.getElementById("city-state"); if(!el) return;
+  if(!signedIn()){ el.innerHTML="Sign in above to work, earn and hold ground in Somnucor."; return; }
+  if(!standing){ el.innerHTML="Looking\u2026"; return; }
+  var L=[];
+  L.push("<b>"+gold(standing.gold)+"</b> <span style='color:var(--dim)'>("+inDollars(standing.gold)+")</span>");
+  if(standing.granted) L.push("<span style='color:var(--dim)'>Your starting income was "+gold(standing.granted)+", and it stays with you.</span>");
+  (standing.jobs||[]).forEach(function(j){
+    L.push("<b>"+esc(j.job)+"</b> at "+esc(j.employer)+" \u2014 "+j.rate+" gold "+(j.kind==="salary"?"a week":"an hour")+
+      (j.job_id?(" <button class='btn' data-off='"+j.job_id+"' data-on='"+(j.offline?"0":"1")+"'>"+
+        (j.offline?"call my someone home":"leave my someone at work")+"</button>"):"")+
+      (j.offline?" <span style='color:var(--dim)'>\u00b7 at work while you sleep, at two fifths</span>":""));
+  });
+  if(!(standing.jobs||[]).length) L.push("<span style='color:var(--dim)'>No work yet. The board below shows what the city needs.</span>");
+  (standing.lots||[]).forEach(function(l){
+    L.push(esc(l.lot)+" \u2014 "+(l.own?"yours":"leased")+(l.rent?" \u00b7 "+gold(l.rent)+" a week":""));
+  });
+  if(myOffice) L.push("<b>Office "+esc(myOffice.number)+"</b>, floor "+(myOffice.floor+1)+
+    (myOffice.name?" \u2014 "+esc(myOffice.name):"")+" \u00b7 code <b>"+esc(myOffice.keycode||"\u2014")+"</b>");
+  if(standing.prison) L.push("<span style='color:#C0603A'><b>Held by Somnucor</b> for "+esc(standing.prison.crime)+
+    (standing.prison.work_off?(" \u2014 "+(standing.prison.done||0)+" of "+standing.prison.hours+" hours worked off"):"")+
+    ". Your own dreamscape is untouched.</span>");
+  el.innerHTML=L.join("<br>");
+  Array.prototype.forEach.call(el.querySelectorAll("[data-off]"),function(b){
+    b.onclick=function(){ workOffline(+b.getAttribute("data-off"),b.getAttribute("data-on")==="1"); };
+  });
+}
+function showJobBoard(){
+  var el=document.getElementById("city-jobs"); if(!el) return;
+  el.innerHTML="Looking\u2026";
+  jobBoard().then(function(rows){
+    if(!rows||!rows.length){ el.innerHTML="<span style='color:var(--dim)'>No work listed. Run schema-update-7 and 8 in the SQL Editor.</span>"; return; }
+    var by={};
+    rows.forEach(function(r){ (by[r.panel||"the city"]=by[r.panel||"the city"]||[]).push(r); });
+    var h="";
+    Object.keys(by).sort().forEach(function(k){
+      h+="<div style='margin-top:10px;color:var(--gold);font-family:var(--sans);font-size:12px;letter-spacing:.08em;text-transform:uppercase'>"+esc(k)+"</div>";
+      by[k].forEach(function(r){
+        var left=r.positions-r.taken;
+        h+="<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)'>"+
+          "<span>"+esc(r.title)+" <span style='color:var(--dim)'>\u00b7 "+r.rate+" gold "+(r.pay_kind==="salary"?"a week":"an hour")+"</span></span>"+
+          "<span>"+(left>0?("<button class='btn' data-apply='"+r.job_id+"'>Apply</button> <span style='color:var(--dim)'>"+left+" free</span>")
+                         :"<span style='color:var(--dim)'>full</span>")+"</span></div>";
+      });
+    });
+    el.innerHTML=h;
+    Array.prototype.forEach.call(el.querySelectorAll("[data-apply]"),function(b){
+      b.onclick=function(){ applyFor(+b.getAttribute("data-apply"),prompt("A word about why you want it?")||null); };
+    });
+  });
+}
+function initCity(){
+  var b;
+  if((b=document.getElementById("city-pay"))) b.onclick=drawPay;
+  if((b=document.getElementById("city-refresh"))) b.onclick=function(){ refreshStanding(); loadOffice(); showJobBoard(); };
+  if((b=document.getElementById("city-code"))) b.onclick=function(){
+    var c=prompt("A new code for your office door (four to twelve characters):");
+    if(c) setMyKeycode(c.trim());
+  };
+  if(signedIn()){ refreshStanding(); loadOffice(); }
+  setTimeout(showJobBoard,1200);
+}
+
+/* ---- the bank ---- */
+function bankSettle(){ return cityRpc("bank_settle").then(function(b){ paintBank(b); return refreshStanding(); }); }
+function bankDeposit(n){ return cityRpc("bank_deposit",{p_gold:n}).then(function(o){
+  setStatus(o==="ok"?("<b>"+gold(n)+"</b> paid into the bank."):esc(String(o))); return refreshStanding(); })
+  .catch(function(e){ setStatus(esc(e.message)); }); }
+function bankWithdraw(n){ return cityRpc("bank_withdraw",{p_gold:n}).then(function(o){
+  setStatus(o==="ok"?("<b>"+gold(n)+"</b> drawn out."):esc(String(o))); return refreshStanding(); })
+  .catch(function(e){ setStatus(esc(e.message)); }); }
+function bankBorrow(n){ return cityRpc("bank_borrow",{p_gold:n}).then(function(o){
+  setStatus(o==="ok"?("<b>"+gold(n)+"</b> borrowed. The bank charges by the week."):esc(String(o))); return refreshStanding(); })
+  .catch(function(e){ setStatus(esc(e.message)); }); }
+function bankRepay(n){ return cityRpc("bank_repay",{p_gold:n}).then(function(o){
+  setStatus(o==="ok"?"<b>Repaid.</b>":esc(String(o))); return refreshStanding(); })
+  .catch(function(e){ setStatus(esc(e.message)); }); }
+function payDreamer(to,n,note){ return cityRpc("pay_dreamer",{p_to:to,p_gold:n,p_note:note||null})
+  .then(function(o){ setStatus(o==="ok"?("<b>"+gold(n)+"</b> paid."):esc(String(o))); return refreshStanding(); })
+  .catch(function(e){ setStatus(esc(e.message)); }); }
+function paintBank(b){
+  var el=document.getElementById("bank-state"); if(!el) return;
+  if(!standing){ el.textContent=""; return; }
+  var saved=(b&&b.saved!==undefined)?b.saved:standing.saved, owed=(b&&b.owed!==undefined)?b.owed:standing.owed;
+  el.innerHTML="In the bank: <b>"+gold(saved)+"</b>"+(owed?(" &middot; owing <b style='color:#C0603A'>"+gold(owed)+"</b>"):"")+
+    (b&&b.interest?(" <span style='color:var(--dim)'>&middot; "+gold(b.interest)+" interest</span>"):"");
+}
+
+/* ---- the catalogue, and what you own ---- */
+var myThings=[], riding=null, rideSpeed=1;
+function loadThings(){
+  if(!signedIn()) { myThings=[]; return Promise.resolve([]); }
+  return cityRpc("my_belongings").then(function(rows){ myThings=rows||[]; paintThings(); return myThings; })
+    .catch(function(){ return []; });
+}
+function buyItem(id,lot){
+  return cityRpc("buy_item",{p_item:id,p_lot:lot||null}).then(function(o){
+    setStatus(o==="ok"?"<b>Bought.</b> It is yours, and it is in your things.":esc(String(o)));
+    return Promise.all([refreshStanding(),loadThings()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+/* getting on something you own: it carries you faster about the city */
+function ride(name){
+  if(!name){ riding=null; rideSpeed=1; setStatus("On foot again."); paintThings(); return; }
+  var t=myThings.filter(function(x){ return x.name===name&&x.speed; })[0];
+  if(!t) return setStatus("You do not own that, or it is not for riding.");
+  riding=t.name; rideSpeed=+t.speed||1;
+  setStatus("<b>On the "+esc(t.name.toLowerCase())+".</b> "+(rideSpeed.toFixed(1))+" times your own pace."+
+    ((t.archetype==="broomstick"||t.archetype==="flyingcarpet")?" It rises while you are on it.":""));
+  if((t.archetype==="broomstick"||t.archetype==="flyingcarpet"||t.archetype==="saucer")&&typeof canFly!=="undefined") canFly=true;
+  paintThings();
+}
+function paintThings(){
+  var el=document.getElementById("things-state"); if(!el) return;
+  if(!myThings.length){ el.innerHTML="<span style='color:var(--dim)'>Nothing of your own yet. The shop is below.</span>"; return; }
+  var h=myThings.map(function(t){
+    return "<span style='display:inline-block;margin:0 10px 6px 0'>"+esc(t.name)+
+      (t.speed?(" <button class='btn' data-ride='"+esc(t.name)+"'>"+(riding===t.name?"riding":"ride")+"</button>"):"")+"</span>";
+  }).join("");
+  if(riding) h+="<div style='margin-top:6px'><button class='btn' id='ride-off'>Get off</button></div>";
+  el.innerHTML=h;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-ride]"),function(b){ b.onclick=function(){ ride(b.getAttribute("data-ride")); }; });
+  var off=document.getElementById("ride-off"); if(off) off.onclick=function(){ ride(null); };
+}
+function showShop(){
+  var el=document.getElementById("city-shop"); if(!el) return;
+  el.innerHTML="Looking\u2026";
+  cityRpc("catalogue_board").catch(function(){
+    /* the catalogue is a plain table: read it directly */
+    return freshToken().then(function(tok){
+      return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/catalogue?select=id,kind,archetype,name,price,speed,note&listed=eq.true&order=kind,price",{
+        headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+(tok||DW_CONFIG.supabaseKey)}
+      }).then(function(r){ return r.ok?r.json():[]; });
+    });
+  }).then(function(rows){
+    if(!rows||!rows.length){ el.innerHTML="<span style='color:var(--dim)'>The shop is empty. Run schema-update-9 in the SQL Editor.</span>"; return; }
+    var by={};
+    rows.forEach(function(r){ (by[r.kind]=by[r.kind]||[]).push(r); });
+    var h="";
+    Object.keys(by).forEach(function(k){
+      h+="<div style='margin-top:10px;color:var(--gold);font-family:var(--sans);font-size:12px;letter-spacing:.08em;text-transform:uppercase'>"+esc(k)+"</div>";
+      by[k].forEach(function(r){
+        h+="<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)'>"+
+          "<span>"+esc(r.name)+(r.speed?(" <span style='color:var(--dim)'>\u00b7 "+(+r.speed).toFixed(1)+"\u00d7 pace</span>"):"")+
+          (r.note?("<br><span style='color:var(--dim);font-size:12px'>"+esc(r.note)+"</span>"):"")+"</span>"+
+          "<span style='white-space:nowrap'>"+gold(r.price)+" <button class='btn' data-buy='"+r.id+"'>Buy</button></span></div>";
+      });
+    });
+    el.innerHTML=h;
+    Array.prototype.forEach.call(el.querySelectorAll("[data-buy]"),function(b){
+      b.onclick=function(){ buyItem(+b.getAttribute("data-buy"),null); };
+    });
+  });
+}
+function initShop(){
+  var b;
+  if((b=document.getElementById("bank-in"))) b.onclick=function(){ var n=+prompt("How much to pay in?")||0; if(n>0) bankDeposit(n); };
+  if((b=document.getElementById("bank-out"))) b.onclick=function(){ var n=+prompt("How much to draw out?")||0; if(n>0) bankWithdraw(n); };
+  if((b=document.getElementById("bank-borrow"))) b.onclick=function(){ var n=+prompt("How much to borrow? The bank lends against what you have earned.")||0; if(n>0) bankBorrow(n); };
+  if((b=document.getElementById("bank-repay"))) b.onclick=function(){ var n=+prompt("How much to repay?")||0; if(n>0) bankRepay(n); };
+  if((b=document.getElementById("bank-settle"))) b.onclick=bankSettle;
+  if((b=document.getElementById("shop-show"))) b.onclick=showShop;
+  if(signedIn()){ loadThings(); setTimeout(function(){ bankSettle().catch(function(){}); },900); }
+}
+
+</script>
+<script>/* js/keeper-desk.js */
+/* SomnuMatrix — keeper-desk.js
+   the desk in the penthouse. sit at it and the city's controls open: who holds
+   which office, how many positions each post keeps, the codes on the tower, and
+   who keeps the desk itself.
+   it is the same desk as the admin page — the same functions, the same rules.
+   the server checks that you are a keeper on every one of them; nothing here
+   grants anything the browser could grant itself.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var deskOpen=false, deskNear=false, deskOffices=[], deskJobs=[];
+
+function amKeeper(){ return !!(deskStanding&&deskStanding.keeper); }
+var deskStanding=null;
+function checkKeeper(){
+  if(!signedIn()) { deskStanding=null; return Promise.resolve(false); }
+  return cityRpc("admin_diagnose").then(function(d){
+    deskStanding={keeper:(d&&d.you_are==="keeper")};
+    return deskStanding.keeper;
+  }).catch(function(){ deskStanding={keeper:false}; return false; });
+}
+
+/* ---- the desk itself, in the penthouse ---- */
+function deskTick(dt){
+  if(!walkMode||!store.inside||!INT||!INT.locked) { deskNear=false; return; }
+  if((INT.level||0)!==INT.locked.level) { deskNear=false; return; }
+  /* the desk stands at the far end of the office */
+  var P=camera.position, dx=P.x-INT.ox, dz=P.z-(INT.oz-INT.D/2+3);
+  var near=Math.hypot(dx,dz)<3.2;
+  if(near&&!deskNear){
+    deskNear=true;
+    setStatus("<b>The Keeper's Desk.</b> Press <b>K</b> to open the city's books.");
+  } else if(!near&&deskNear) deskNear=false;
+}
+function openDesk(){
+  if(deskOpen) return closeDesk();
+  if(!signedIn()) return setStatus("Sign in first — the desk knows its keeper by account.");
+  deskOpen=true;
+  var p=document.getElementById("keeper-desk");
+  if(!p){
+    p=document.createElement("div"); p.id="keeper-desk";
+    p.style.cssText="position:fixed;inset:6% 8%;z-index:60;overflow-y:auto;background:rgba(8,10,16,.97);"+
+      "border:1px solid var(--gold,#C9A868);border-radius:4px;padding:22px 26px;font-family:var(--sans);font-size:14px";
+    document.body.appendChild(p);
+  }
+  p.style.display="block";
+  p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+    '<b style="font-family:var(--serif);font-size:20px;color:var(--gold)">The Keeper\u2019s Desk</b>'+
+    '<button class="btn" id="kd-close">Leave the desk</button></div>'+
+    '<div id="kd-body">Asking the city whether you keep this desk\u2026</div>';
+  document.getElementById("kd-close").onclick=closeDesk;
+  checkKeeper().then(function(isKeeper){
+    var body=document.getElementById("kd-body");
+    if(!isKeeper){
+      body.innerHTML="<p>This desk answers only to a keeper. You may sit at it, but it will tell you nothing.</p>"+
+        "<p style='color:var(--dim)'>If that is wrong, a keeper can add you at the Keeper\u2019s Desk in the admin page.</p>";
+      return;
+    }
+    drawDesk(body);
+  });
+}
+function closeDesk(){
+  deskOpen=false;
+  var p=document.getElementById("keeper-desk"); if(p) p.style.display="none";
+}
+
+function drawDesk(body){
+  body.innerHTML='<div id="kd-msg" style="color:var(--dim);min-height:18px;margin-bottom:10px"></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+      '<button class="btn" data-kd="offices">Offices</button>'+
+      '<button class="btn" data-kd="posts">Positions</button>'+
+      '<button class="btn" data-kd="security">Tower security</button>'+
+      '<button class="btn" data-kd="housing">Housing</button>'+
+      '<button class="btn" data-kd="city">The city</button>'+
+    '</div><div id="kd-pane"></div>';
+  Array.prototype.forEach.call(body.querySelectorAll("[data-kd]"),function(b){
+    b.onclick=function(){ deskPane(b.getAttribute("data-kd")); };
+  });
+  deskPane("offices");
+}
+function kdMsg(t,bad){ var e=document.getElementById("kd-msg"); if(e){ e.textContent=t; e.style.color=bad?"#C0603A":"var(--dim)"; } }
+function deskPane(which){
+  var pane=document.getElementById("kd-pane"); if(!pane) return;
+  pane.innerHTML="Looking\u2026";
+  if(which==="offices"){
+    Promise.all([cityRpc("office_board"),cityRpc("admin_list_dreamers")]).then(function(r){
+      deskOffices=r[0]||[];
+      var who=(r[1]||[]).map(function(d){ return '<option value="'+d.id+'">'+esc(d.email||d.id)+"</option>"; }).join("");
+      pane.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
+        '<select id="kd-off">'+deskOffices.map(function(o){
+          return '<option value="'+o.office_id+'">Floor '+(o.floor+1)+' \u00b7 '+esc(o.number)+(o.name?" \u2014 "+esc(o.name):"")+(o.occupied?" (taken)":"")+"</option>"; }).join("")+'</select>'+
+        '<select id="kd-who"><option value="">— nobody —</option>'+who+'</select>'+
+        '<input id="kd-name" placeholder="what it is called" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
+        '<button class="btn" id="kd-assign">Assign</button></div>'+
+        '<table style="width:100%;border-collapse:collapse">'+
+        deskOffices.map(function(o){
+          return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">Floor '+(o.floor+1)+'</td>'+
+            '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(o.number)+'</td>'+
+            '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(o.name||"")+'</td>'+
+            '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+(o.occupant?esc(o.occupant):'<span style="color:var(--dim)">empty</span>')+"</td></tr>";
+        }).join("")+"</table>";
+      document.getElementById("kd-assign").onclick=function(){
+        var u=document.getElementById("kd-who").value||null;
+        cityRpc("assign_office",{p_office:+document.getElementById("kd-off").value,p_user:u,
+          p_name:(document.getElementById("kd-name").value||"").trim()||null,p_panel:null})
+          .then(function(out){
+            kdMsg(/^\d+$/.test(String(out))?("Assigned. Their door code is "+out+".") : String(out));
+            deskPane("offices");
+          }).catch(function(e){ kdMsg(e.message,true); });
+      };
+    }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
+  }
+  else if(which==="posts"){
+    cityRpc("job_board").then(function(rows){
+      deskJobs=rows||[];
+      pane.innerHTML='<table style="width:100%;border-collapse:collapse">'+
+        '<tr><th style="text-align:left;padding:4px 6px">Post</th><th style="text-align:left">Pay</th>'+
+        '<th style="text-align:left">Filled</th><th style="text-align:left">Positions</th><th></th></tr>'+
+        deskJobs.map(function(j,i){
+          return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(j.title)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+j.rate+" gold "+(j.pay_kind==="salary"?"a week":"an hour")+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+j.taken+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)"><input id="kdp-'+i+'" type="number" min="0" value="'+j.positions+
+            '" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:3px"></td>'+
+            '<td style="border-bottom:1px solid var(--line)"><button class="btn" data-kdp="'+i+'" data-job="'+j.job_id+'">Set</button></td></tr>';
+        }).join("")+"</table>";
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-kdp]"),function(b){
+        b.onclick=function(){
+          cityRpc("set_positions",{p_job:+b.getAttribute("data-job"),
+            p_positions:+document.getElementById("kdp-"+b.getAttribute("data-kdp")).value})
+            .then(function(o){ kdMsg(o==="ok"?"Positions set.":String(o),o!=="ok"); deskPane("posts"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
+    });
+  }
+  else if(which==="security"){
+    var cur=(typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config)||{};
+    pane.innerHTML='<p style="color:var(--dim);line-height:1.6">The code on this office, who it admits, and whether the tower opens above the lobby. A code is a door, not a vault \u2014 nobody\u2019s dreams are behind it.</p>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      '<input id="kd-code" placeholder="penthouse code" value="'+esc(cur.penthouseCode||"")+'" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
+      '<select id="kd-who2"><option value="code">Anyone with the code</option><option value="keepers">Keepers only</option><option value="shut">Sealed</option></select>'+
+      '<select id="kd-tower"><option value="open">Tower open</option><option value="lobby">Lobby only</option></select>'+
+      '<button class="btn" id="kd-sec">Set</button></div>';
+    document.getElementById("kd-who2").value=cur.penthouseWho||"code";
+    document.getElementById("kd-tower").value=cur.towerOpen==="lobby"?"lobby":"open";
+    document.getElementById("kd-sec").onclick=function(){
+      var code=(document.getElementById("kd-code").value||"").trim();
+      if(code&&(code.length<4||code.length>12)) return kdMsg("A code wants between four and twelve characters.",true);
+      Promise.all([
+        putCloudConfig("penthouseCode",code||null),
+        putCloudConfig("penthouseWho",document.getElementById("kd-who2").value),
+        putCloudConfig("towerOpen",document.getElementById("kd-tower").value)
+      ]).then(function(){ kdMsg("Set. The tower obeys at once."); loadCloudConfig(); })
+        .catch(function(e){ kdMsg(e.message,true); });
+    };
+  }
+  else if(which==="housing"){
+    loadLots().then(function(rows){
+      var laid=(store.plots||[]).length, inBooks=(rows||[]).length;
+      var held=(rows||[]).filter(function(l){ return l.held; }).length;
+      pane.innerHTML='<p style="line-height:1.7">Plots laid out in the world: <b>'+laid+'</b><br>'+
+        'Entered in the books: <b>'+inBooks+'</b> \u00b7 held by somebody: <b>'+held+'</b></p>'+
+        '<p style="color:var(--dim);line-height:1.6">A plot has to be entered in the books before anybody can take it. '+
+        'The realtor does this, or you.</p>'+
+        '<button class="btn" id="kd-section">Enter the plots in the books</button>'+
+        '<div style="margin-top:12px;max-height:280px;overflow-y:auto"><table style="width:100%;border-collapse:collapse">'+
+        (rows||[]).slice(0,200).map(function(l){
+          return '<tr><td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+esc(l.name)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+esc(l.quarter||"")+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+(l.price?l.price.toLocaleString()+" gold":"")+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+(l.rent?l.rent.toLocaleString()+" a week":"")+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+(l.held?"held":"free")+'</td></tr>';
+        }).join("")+'</table></div>';
+      document.getElementById("kd-section").onclick=function(){
+        kdMsg("Entering them\u2026");
+        sectionHousing().then(function(){ deskPane("housing"); }).catch(function(e){ kdMsg(e.message,true); });
+      };
+    });
+  }
+  else {
+    Promise.all([cityRpc("admin_diagnose"),cityRpc("doors_standing")]).then(function(r){
+      var d=r[0]||{}, doors=r[1];
+      pane.innerHTML='<div style="line-height:1.8">'+
+        "Accounts: <b>"+d.accounts_in_auth+"</b><br>"+
+        "Signed in at least once: <b>"+d.signed_in_ever+"</b><br>"+
+        "Doors in the hall: <b>"+(doors||0)+"</b><br>"+
+        "Devices using the Atlas: <b>"+d.devices+"</b><br>"+
+        "Keepers and watchers: <b>"+d.admins+"</b> ("+d.keepers+" keeper"+(d.keepers===1?"":"s")+")<br>"+
+        "<span style='color:var(--dim)'>You are a "+esc(d.you_are||"?")+".</span></div>";
+    }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
+  }
+}
+
+/* writing a setting for everybody, from in the world */
+function putCloudConfig(key,value){
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/app_config",{
+      method:"POST",
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+tok,"Content-Type":"application/json",
+               Prefer:"resolution=merge-duplicates"},
+      body:JSON.stringify({key:key,value:value,updated_at:new Date().toISOString()})
+    }).then(function(r){ if(!r.ok) throw new Error("the desk could not write that"); return true; });
+  });
+}
+
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(e.code==="KeyK"&&(deskNear||deskOpen)) openDesk();
+  if(e.code==="Escape"&&deskOpen) closeDesk();
+});
 
 </script>
 <script>/* js/touch.js */
@@ -15047,6 +16989,7 @@ function padBuild(){
     '<button class="pd pd-wide" id="pd-abil">powers</button>'+
     '<button class="pd pd-wide" id="pd-take">take</button>'+
     '<button class="pd pd-wide" id="pd-use">use</button>'+
+    '<button class="pd pd-wide" id="pd-desk">desk</button>'+
     '<button class="pd" id="pd-rise" aria-label="Rise">&#9650;</button>'+
     '<button class="pd" id="pd-fall" aria-label="Fall">&#9660;</button>';
   document.body.appendChild(side);
@@ -15112,6 +17055,7 @@ function padBuild(){
   document.getElementById("pd-abil").onclick=openPowers;
   document.getElementById("pd-take").onclick=function(){ if(typeof armsReach==="function") armsReach(); };
   document.getElementById("pd-use").onclick=function(){ if(typeof useCarried==="function") useCarried(); };
+  document.getElementById("pd-desk").onclick=function(){ if(typeof openDesk==="function") openDesk(); };
 
   fold.onclick=function(){
     padHidden=!padHidden;
@@ -15182,6 +17126,7 @@ function padTick(){
     document.getElementById("pd-abil").style.display=walkMode?"flex":"none";
     document.getElementById("pd-take").style.display=walkMode?"flex":"none";
     document.getElementById("pd-use").style.display=(walkMode&&typeof carrying!=="undefined"&&carrying)?"flex":"none";
+    document.getElementById("pd-desk").style.display=(typeof deskNear!=="undefined"&&(deskNear||deskOpen))?"flex":"none";
   }
   if(padHidden&&(padKeys.f||padKeys.b||padKeys.l||padKeys.r)) padKeys={f:0,b:0,l:0,r:0};
 }
@@ -15201,7 +17146,7 @@ function boot(){
     return;
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot(); wireCompass(); initTouch();
-  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit();
+  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit(); initCity(); initShop(); initJoin();
   if(load()){
     committed=store.transcript||"";
     store.streets=[];
@@ -15244,7 +17189,14 @@ function boot(){
     });
     renderTranscript(committed,"");
   }
-  if(typeof buildSomnucor==="function"&&!somnucorRealm()) buildSomnucor();
+  /* Somnucor is opt-in: nothing of it exists until the dreamer says yes */
+  if(typeof joinedSomnucor==="function"&&joinedSomnucor()){
+    if(typeof buildSomnucorCity==="function") buildSomnucorCity();
+    if(typeof buildHall==="function") buildHall();
+    if(typeof buildTempleRow==="function") buildTempleRow();
+    if(typeof buildHousing==="function") buildHousing();
+    if(typeof buildYard==="function") buildYard();
+  }
   buildTerrain(); applyShadows(); realmGroundsAll();
   store.characters.forEach(assignLife);
   populate();
