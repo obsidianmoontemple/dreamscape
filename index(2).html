@@ -759,6 +759,14 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   </div>
   <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:8px 0 0">The bank lends against what you have earned in wages, and never beyond it. Your starting income stays with you and cannot be handed to anybody.</p>
 
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">The quarry and the stand</h3>
+  <div id="stock-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <button class="btn" id="ground-work" type="button">Work my shift</button>
+    <button class="btn" id="ground-refresh" type="button">My stock</button>
+  </div>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:8px 0 0">What comes up is yours. The city buys it at a standing price, and what gets built in Somnucor is built out of it.</p>
+
   <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">What you own</h3>
   <div id="things-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px"></div>
   <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="shop-show" type="button">The shop</button></div>
@@ -7616,6 +7624,67 @@ if(typeof addEventListener==="function") addEventListener("keydown",function(e){
   });
 });
 
+/* ---------------------------------------------------------- the ground works */
+/* The quarries and the stands: where the city's stone and timber come from.
+   They lie beyond the last ring road, because nobody wants a pit for a neighbour. */
+var WORKS_BUILD=1;
+function buildGroundWorks(){
+  var r=somnucorRealm(); if(!r) return 0;
+  if(r.works>=WORKS_BUILD) return 0;
+  var was=store.here, wasGrid=store.grid;
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz), made=0;
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+      addr:null,name:name||null,named:name?"stated":null,peopled:true};
+    store.objects.push(spec); made++;
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  function lay(kind,cx,cz,w,d){ if(!KIT[kind]) return; var sz=KIT[kind].size; put(kind,cx,cz,0,null,{w:w/sz[0],d:d/sz[2]}); }
+
+  /* the quarry, east beyond the ring */
+  var qa=0.9, qr=1160, qx=Math.cos(qa)*qr, qz=Math.sin(qa)*qr;
+  lay("groundpad",qx,qz,260,200);
+  var qs=put("signboard",qx-Math.cos(qa)*120,qz-Math.sin(qa)*120,-qa+Math.PI/2,"The Quarry");
+  if(qs){ qs.sign="The Quarry"; qs.note="Stone, ore, coal and clay. A quarryman's shift brings up what the city builds with. The pit foreman counts the gemstones."; }
+  for(var i=0;i<14;i++){
+    var a=(i/14)*Math.PI*2, rr=40+((i%3)*22);
+    put("rock",qx+Math.cos(a)*rr,qz+Math.sin(a)*rr,a);
+  }
+  put("crater",qx,qz,0,"The seam",{s:2.2});
+  put("mineshaft",qx+56,qz-30,-qa,"The shaft");
+  put("crane",qx-48,qz+24,-qa+Math.PI/2);
+  ["crates","barrel","scrapheap","brazier","cart"].forEach(function(k,j){
+    put(k,qx-60+j*22,qz+64,-qa);
+  });
+  put("shed",qx+70,qz+56,-qa+Math.PI/2,"The pit office");
+  put("tractor",qx+30,qz+70,-qa);
+
+  /* the stand of timber, west beyond the ring */
+  var fa=3.9, fr=1180, fx=Math.cos(fa)*fr, fz=Math.sin(fa)*fr;
+  lay("lawn",fx,fz,300,240);
+  var fs=put("signboard",fx-Math.cos(fa)*130,fz-Math.sin(fa)*130,-fa+Math.PI/2,"The Long Stand");
+  if(fs){ fs.sign="The Long Stand"; fs.note="Timber and charcoal. A forester's shift fells and sends it down to the sawyers."; }
+  for(var t=0;t<44;t++){
+    var ta=(t*2.399), tr=30+((t*37)%110);
+    put((t%4===0)?"pine":"tree",fx+Math.cos(ta)*tr,fz+Math.sin(ta)*tr,ta);
+  }
+  for(var d2=0;d2<6;d2++) put("deadtree",fx+40-d2*18,fz-84,d2*0.7);
+  put("barn",fx-70,fz+70,-fa+Math.PI/2,"The sawmill");
+  put("haybale",fx-52,fz+54,0); put("haybale",fx-44,fz+58,0.6);
+  put("cart",fx-30,fz+62,-fa);
+  put("firebarrel",fx+20,fz+60,0);
+  put("shed",fx+66,fz+58,-fa+Math.PI/2,"The charcoal burner's hut");
+
+  r.works=WORKS_BUILD;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return made;
+}
+
 </script>
 <script>/* js/joining.js */
 /* SomnuMatrix — joining.js
@@ -7646,6 +7715,7 @@ function joinSomnucor(){
     if(typeof buildTempleRow==="function") buildTempleRow();
     if(typeof buildHousing==="function") buildHousing();
     if(typeof buildYard==="function") buildYard();
+    if(typeof buildGroundWorks==="function") buildGroundWorks();
     if(typeof renderRealmList==="function") renderRealmList();
     if(typeof paintJoin==="function") paintJoin();
     save();
@@ -16567,6 +16637,49 @@ function initShop(){
   if(signedIn()){ loadThings(); setTimeout(function(){ bankSettle().catch(function(){}); },900); }
 }
 
+/* ---- what the ground gives up ---- */
+var myStock=[];
+function loadStock(){
+  if(!signedIn()) { myStock=[]; return Promise.resolve([]); }
+  return cityRpc("my_stock").then(function(rows){ myStock=rows||[]; paintStock(); return myStock; })
+    .catch(function(){ return []; });
+}
+function workGround(){
+  return cityRpc("work_the_ground").then(function(rows){
+    if(!rows||!rows.length) setStatus("Nothing came up. Either your work is not of the ground, or you have only just been paid.");
+    else setStatus("<b>Brought up:</b> "+rows.map(function(r){ return r.got+" "+r.kind; }).join(", ")+".");
+    return loadStock();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function sellStock(kind,n){
+  return cityRpc("sell_stock",{p_kind:kind,p_amount:n}).then(function(o){
+    setStatus(o==="ok"?"<b>Sold to the city.</b>":esc(String(o)));
+    return Promise.all([loadStock(),refreshStanding()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function paintStock(){
+  var el=document.getElementById("stock-state"); if(!el) return;
+  var have=myStock.filter(function(s){ return s.amount>0; });
+  if(!have.length){ el.innerHTML="<span style='color:var(--dim)'>Nothing in your stock. Work the quarry or the stand and it fills.</span>"; return; }
+  el.innerHTML=have.map(function(s){
+    return "<span style='display:inline-block;margin:0 10px 6px 0'>"+esc(s.name)+" <b>"+s.amount+"</b>"+
+      " <button class='btn' data-sell='"+esc(s.kind)+"'>sell at "+s.buys+"</button></span>";
+  }).join("");
+  Array.prototype.forEach.call(el.querySelectorAll("[data-sell]"),function(b){
+    b.onclick=function(){
+      var k=b.getAttribute("data-sell"), row=myStock.filter(function(s){ return s.kind===k; })[0];
+      var n=+(prompt("How much "+row.name.toLowerCase()+" to sell? You have "+row.amount+".")||0);
+      if(n>0) sellStock(k,Math.min(n,row.amount));
+    };
+  });
+}
+function initGround(){
+  var b;
+  if((b=document.getElementById("ground-work"))) b.onclick=workGround;
+  if((b=document.getElementById("ground-refresh"))) b.onclick=loadStock;
+  if(signedIn()) setTimeout(loadStock,1400);
+}
+
 </script>
 <script>/* js/keeper-desk.js */
 /* SomnuMatrix — keeper-desk.js
@@ -17146,7 +17259,7 @@ function boot(){
     return;
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot(); wireCompass(); initTouch();
-  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit(); initCity(); initShop(); initJoin();
+  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit(); initCity(); initShop(); initJoin(); initGround();
   if(load()){
     committed=store.transcript||"";
     store.streets=[];
@@ -17196,6 +17309,7 @@ function boot(){
     if(typeof buildTempleRow==="function") buildTempleRow();
     if(typeof buildHousing==="function") buildHousing();
     if(typeof buildYard==="function") buildYard();
+    if(typeof buildGroundWorks==="function") buildGroundWorks();
   }
   buildTerrain(); applyShadows(); realmGroundsAll();
   store.characters.forEach(assignLife);
