@@ -10701,9 +10701,14 @@ function throughWalls(){
 }
 function blockedAt(x,z,feet){
   var ws=solidWalls(), R=0.35;
+  /* a wall's own height is measured from its own floor, not from the ground
+     outside — on any storey but the first, "feet" is the cumulative height
+     since entering, so it has to come back down to that floor's own terms
+     before it means anything to a wall built on it. */
+  var relFeet=(typeof INT!=="undefined"&&INT)?feet-(INT.level||0)*INT.floor:feet;
   for(var i=0;i<ws.length;i++){
     var w=ws[i];
-    if(feet>w.h) continue;
+    if(relFeet>w.h) continue;
     var dx=x-w.x, dz=z-w.z;
     if(w.r!==undefined){ if(dx*dx+dz*dz<(w.r+R)*(w.r+R)) return true; continue; }
     if(w.lair){
@@ -14967,6 +14972,7 @@ function makeDeity(spec,key){
 
 var meView="eyes";            // eyes | behind | mirror
 var meG=null, meLast=null, meBar=null, meClock=0;
+var cityView=false;           // held down: looking out over the real city from the penthouse
 var VIEWS=["eyes","behind"];
 var VIEW_LABEL={eyes:"Your eyes",behind:"Behind you",mirror:"Mirror"};
 
@@ -15006,21 +15012,33 @@ function rebuildMe(){
   meG.visible=false;
 }
 
+/* the one floor the tower's real view is offered from */
+function onPenthouse(){ return !!(INT&&INT.locked&&(INT.level||0)===INT.locked.level); }
+
 /* ---- the buttons: shown only while walking ---- */
 function meButtons(){
   if(meBar||typeof document==="undefined"||!document.body) return;
   meBar=document.createElement("div"); meBar.id="me-bar";
   meBar.style.cssText="position:fixed;top:64px;left:12px;z-index:30;display:none;gap:6px;flex-direction:column";
   meBar.innerHTML='<button class="btn" id="me-view" title="Change view (V)">View: Your eyes</button>'+
-                  '<button class="btn" id="me-dress" title="How you look (B)">How you look</button>';
+                  '<button class="btn" id="me-dress" title="How you look (B)">How you look</button>'+
+                  '<button class="btn" id="me-cityview" title="Hold to look out over the city (L)" '+
+                  'style="display:none">Look down on the city</button>';
   document.body.appendChild(meBar);
   document.getElementById("me-view").onclick=cycleView;
   document.getElementById("me-dress").onclick=openWardrobe;
+  var cvBtn=document.getElementById("me-cityview");
+  var press=function(e){ e.preventDefault&&e.preventDefault(); if(onPenthouse()) cityView=true; };
+  var release=function(){ cityView=false; };
+  cvBtn.onmousedown=press; cvBtn.onmouseup=release; cvBtn.onmouseleave=release;
+  cvBtn.ontouchstart=press; cvBtn.ontouchend=release; cvBtn.ontouchcancel=release;
   addEventListener("keydown",function(e){
     if(!walkMode||/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
     if(e.code==="KeyV") cycleView();
     if(e.code==="KeyB") openWardrobe();
+    if(e.code==="KeyL"&&onPenthouse()) cityView=true;
   });
+  addEventListener("keyup",function(e){ if(e.code==="KeyL") cityView=false; });
 }
 function setView(v){
   meView=v; var b=document.getElementById("me-view"); if(b) b.textContent="View: "+VIEW_LABEL[v];
@@ -15072,6 +15090,9 @@ function renderWardrobe(){
 function avatarTick(dt){
   meButtons();
   if(meBar) meBar.style.display=walkMode?"flex":"none";
+  var cvBtn=document.getElementById("me-cityview");
+  if(cvBtn) cvBtn.style.display=(walkMode&&onPenthouse())?"block":"none";
+  if(!walkMode||!onPenthouse()) cityView=false;
   if(!walkMode){ if(meG) meG.visible=false; closeWardrobeIfOpen(); return; }
   if(!meG) rebuildMe();
   var P=camera.position, feet=P.y-1.72;
@@ -15091,6 +15112,25 @@ function avatarTick(dt){
 function closeWardrobeIfOpen(){ var w=document.getElementById("me-ward"); if(w&&w.style.display!=="none") closeWardrobe(); }
 
 function renderView(){
+  /* held down, from the penthouse only: swap out to a bird's-eye camera
+     positioned over the tower's real spot in the city outside — the
+     interior is built off in its own private slot of world space, but the
+     city itself was never hidden or moved, so looking down at the REAL
+     coordinates the tower stands at shows the real, live city below.
+     one render pass, then straight back to the ordinary view, exactly like
+     the over-the-shoulder trick below does for a single frame. */
+  if(walkMode&&cityView&&onPenthouse()&&INT){
+    var spec=INT.spec, P0=camera.position, px0=P0.x, py0=P0.y, pz0=P0.z;
+    var def=(typeof KIT!=="undefined")?KIT[spec.archetype]:null;
+    var sc=(spec.attrs&&spec.attrs.s)||1;
+    var towerH=(def&&def.size?def.size[1]*sc:210);
+    camera.position.set(spec.x,towerH+60,spec.z+80);
+    camera.lookAt(spec.x,towerH*0.25,spec.z);
+    renderer.render(scene,camera);
+    camera.position.set(px0,py0,pz0);
+    camera.rotation.order="YXZ"; camera.rotation.set(pitch,yaw,0);
+    return;
+  }
   if(!walkMode||meView==="eyes"||!meG){ renderer.render(scene,camera); return; }
   var P=camera.position, px=P.x, py=P.y, pz=P.z;
   var fx=-Math.sin(yaw), fz=-Math.cos(yaw);
@@ -15438,10 +15478,25 @@ var FURN={
   spiralstair:function(){ var g=F([P(cyl(.15,.15,INT_H*2.5,8),mL(METAL),0,INT_H*1.25,0)]);
     for(var i=0;i<22;i++){ var a=i*.42, st=P(box(1.2,.08,.35),mL(WOOD),Math.cos(a)*.7,.2+i*.33,Math.sin(a)*.7); st.rotation.y=-a; g.add(st); } return g; },
   counterbank:function(){ var g=F([P(box(5,1.1,.7),mL(DARKWOOD),0,.55,0)]); for(var i=0;i<6;i++) g.add(P(box(.03,.9,.03),mL(GOLD),-2.3+i*.9,1.55,0)); g.add(P(box(5,.05,.1),mL(GOLD),0,2,0)); return g; },
-  vaultround:function(){ return F([P(cyl(1.2,1.2,.3,24),mL(0x6A6C72),0,1.3,0,Math.PI/2),P(tor(.5,.06),mL(0xA7AAB0),0,1.3,.2),P(box(.8,.08,.08),mL(0xA7AAB0),0,1.3,.2)]); }
+  vaultround:function(){ return F([P(cyl(1.2,1.2,.3,24),mL(0x6A6C72),0,1.3,0,Math.PI/2),P(tor(.5,.06),mL(0xA7AAB0),0,1.3,.2),P(box(.8,.08,.08),mL(0xA7AAB0),0,1.3,.2)]); },
+  /* a tech-company office: a screen on a stand, a blinking rack in the
+     corner, a wall-mounted display — the same low-poly box-and-glow
+     furniture as everything else, just wired to look alive */
+  monitor:function(){ return F([P(box(.5,.9,.35),mL(0x2A2E36),0,.45,0),P(box(.62,.42,.04),mL(0x14171C),0,1.02,-.16),
+    P(box(.54,.34,.02),mG(0x6AC8FF,.95),0,1.02,-.14)]); },
+  servertower:function(){ var g=F([P(box(.6,1.9,.6),mL(0x1C1E22),0,.95,0)]);
+    var cols=[0x4AE8FF,0x6AF0C4,0xFFD08A]; for(var r=0;r<8;r++){
+      g.add(P(box(.06,.06,.02),mG(cols[r%3],1),-.2+(r%2)*.4,.28+Math.floor(r/2)*.42,.31)); }
+    return g; },
+  wallscreen:function(){ return F([P(box(1.6,.9,.06),mL(0x14171C),0,1.7,0),P(box(1.42,.74,.02),mG(0x6AC8FF,.9),0,1.7,.035)]); },
+  /* the map of everywhere, in miniature: a round table with a softly glowing
+     map for a top. named in the penthouse's furnishing for a long time
+     without ever actually being drawn — this is what was missing. */
+  maptable:function(){ return F([P(cyl(.85,.7,.74,14),mL(DARKWOOD),0,.37,0),P(cyl(.95,.95,.06,24),mL(0x1C1E22),0,.77,0),
+    P(cyl(.82,.82,.02,24),mG(0x6AC8FF,.85),0,.8,0)]); }
 };
 var SOLIDFURN={bed:1,sofa:1,table:1,longtable:1,counter:1,piano:1,wardrobe:1,bookshelf:1,fireplace:1,stove:1,fridge:1,bathtub:1,desk:1,pew:1,altarinside:1,
-  throneseat:1,shelfgoods:1,till:1,hospitalbed:1,crates:1,machine:1,judgebench:1,counterbank:1,sarcophagus:1};
+  throneseat:1,shelfgoods:1,till:1,hospitalbed:1,crates:1,machine:1,judgebench:1,counterbank:1,sarcophagus:1,servertower:1,maptable:1};
 
 /* ---- what each kind of building holds ---- */
 var ROOMFURN={
@@ -15451,12 +15506,14 @@ var ROOMFURN={
   lobbybig:["till","plant","armchair","armchair","painting","chandelier"], study:["desk","chair","bookshelf","bookshelf","lamp"], dining:["longtable","chandelier","painting"],
   nursery:["crib","toys","rug","lamp"], attic:["crates","barrel","wardrobe"], basement:["crates","barrel","machine"], ballroom:["chandelier","chandelier","piano"],
   office:["desk","chair","desk","chair","plant","bookshelf"], cell:["bed","sink"], lobby:["till","plant","armchair","painting"],
-  throneroom:["throneseat","banner","banner","chandelier","rug"], classroom:["blackboard","schooldesk","schooldesk","schooldesk","schooldesk"]
+  throneroom:["throneseat","banner","banner","chandelier","rug"], classroom:["blackboard","schooldesk","schooldesk","schooldesk","schooldesk"],
+  /* Somnucor's own upper floors: a tech-company office, not a generic one */
+  techoffice:["desk","monitor","chair","wallscreen","desk","monitor","chair","servertower","plant","bookshelf"]
 };
 var ROOMNAME={chapel:"a side chapel",vestry:"the vestry",meeting:"the meeting room",ward:"a ward",
   chamber:"a chamber",kitchenette:"the kitchen",suite:"a suite",archive:"the archive",hallway:"the hallway",living:"the living room",kitchen:"the kitchen",bedroom:"the bedroom",bathroom:"the bathroom",study:"the study",
   dining:"the dining room",nursery:"the nursery",attic:"the attic",basement:"the basement",ballroom:"the ballroom",office:"the office",cell:"a cell",
-  lobby:"the lobby",throneroom:"the throne room",classroom:"the classroom"};
+  lobby:"the lobby",throneroom:"the throne room",classroom:"the classroom",techoffice:"the office"};
 /* mode rooms: rooms either side of a hallway. mode hall: one great space, laid out by fill() */
 var PLANS={
   house:{mode:"rooms",rooms:["living","kitchen","bedroom","bathroom","dining","bedroom"],wall:0xE6DCC8,floor:"wood"},
@@ -15467,7 +15524,7 @@ var PLANS={
     wall:0xE0D4BC,floor:"carpet",lift:true},
   institution:{mode:"mixed",ground:"lobby",w:18,d:18,upper:["cell","cell","cell","office","bathroom"],
     wall:0xC8CCC8,floor:"tile",lift:true},
-  somnucortower:{mode:"mixed",ground:"lobby",w:26,d:22,upper:["office","meeting","office","kitchenette","archive","bathroom"],
+  somnucortower:{mode:"mixed",ground:"lobby",w:26,d:22,upper:["techoffice","meeting","techoffice","kitchenette","archive","bathroom"],
     wall:0xD8E4EE,floor:"tile",lift:true,locked:{level:11,what:"the penthouse"}},
   skyscraper:{mode:"mixed",ground:"lobby",w:22,d:18,upper:["office","office","meeting","kitchenette","bathroom","archive"],
     wall:0xDCDCD8,floor:"carpet",lift:true},
@@ -15747,15 +15804,29 @@ function makeInterior(spec){
       lights.push({x:xc,z:zc,y:yOff});
     });
   }
-  /* a lift: step in, and it takes you up or down */
+  /* a lift: step in, and it takes you up or down. reads clearly as an
+     elevator rather than a platform in a box — doors at the opening it's
+     boarded through, and a small lit dot for each floor beside the call
+     button so the one you're standing on is obvious at a glance. */
   function liftShaft(Wf,Df,levels){
-    var lx=Wf/2-2.2, lz=-Df/2+2.4;
+    var lx=Wf/2-2.2, lz=-Df/2+2.4, doorGap=0.55, doorW=(2.6-doorGap)/2;
     for(var L=0;L<levels;L++){
       lvl=L; yOff=L*FLOOR;
       root.add(P(box(2.6,.12,2.6),new THREE.MeshLambertMaterial({color:0x4A4E56}),lx,yOff+.04,lz));
       [-1,1].forEach(function(sd){ root.add(P(box(.14,H-.4,2.6),new THREE.MeshLambertMaterial({color:0x6A6E76}),lx+sd*1.3,yOff+(H-.4)/2,lz)); });
       root.add(P(box(2.6,H-.4,.14),new THREE.MeshLambertMaterial({color:0x6A6E76}),lx,yOff+(H-.4)/2,lz-1.3));
+      /* two static door panels, parted around a centre gap you walk through —
+         a cab you can recognise even standing still */
+      var doorH=H-.7, doorY=yOff+doorH/2+.15, doorMat=new THREE.MeshLambertMaterial({color:0x9AA0AA});
+      root.add(P(box(doorW,doorH,.1),doorMat,lx-doorGap/2-doorW/2,doorY,lz+1.28));
+      root.add(P(box(doorW,doorH,.1),doorMat,lx+doorGap/2+doorW/2,doorY,lz+1.28));
+      root.add(P(box(2.6,.08,.1),new THREE.MeshLambertMaterial({color:0x5A5E68}),lx,yOff+doorH+.19,lz+1.28));
+      /* the call button, and a little lit panel of floor dots beside it —
+         the dot for the floor you're actually on shines gold */
       root.add(P(box(.5,.22,.1),mG(0xFFD08A,1),lx+1.0,yOff+1.5,lz+1.3));
+      for(var d=0;d<levels;d++){
+        root.add(P(box(.16,.16,.06),mG(d===L?0xFFD08A:0x3A3E48,1),lx-1.0,yOff+1.1+d*0.22,lz+1.3));
+      }
       walls.push({x:ox+lx,z:oz+lz-1.3,rot:0,hw:1.3,hd:.1,h:H,level:L});
     }
     lifts.push({x:ox+lx,z:oz+lz});
@@ -15806,8 +15877,14 @@ function makeInterior(spec){
       if(levels) furnishRoom("hallway",0,D/2-2.5,hall,4,1,put);
       exitZ=D/2;
     }
-    /* the way between floors */
-    for(var SL=0;SL<levels-1;SL++) flight(0,-D/2+2.2,SL,1.8);
+    /* the way between floors: a floor's stair up and its stair down land at
+       opposite ends of the corridor, so nobody climbs the whole building
+       through one straight shaft — each landing is a walk from the last. */
+    fitStairs();
+    for(var SL=0;SL<levels-1;SL++){
+      var backEnd=SL%2===0;
+      flight(0,backEnd?(-D/2+2.2):(D/2-2.2-STAIR_RUN),SL,1.8);
+    }
     if(plan.lift&&levels>2) liftShaft(W,D,levels);
     lvl=0; yOff=0;
   } else {
@@ -15821,7 +15898,12 @@ function makeInterior(spec){
       spots.forEach(function(q){ if(q.level===undefined) q.level=HL; });
       for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz,y:yOff});
       for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff}); }
-      if(HL<levels-1) flight(W/2-2.4,-D/2+2.4,HL,1.8);
+      if(HL<levels-1){
+        fitStairs();
+        var farCorner=HL%2===0;
+        if(farCorner) flight(W/2-2.4,-D/2+2.4,HL,1.8);
+        else flight(-W/2+2.4,D/2-2.4-STAIR_RUN,HL,1.8);
+      }
       lvl=HL; yOff=HL*FLOOR;
       if(HL>0) planSlab(HL,W,D,yOff-0.06);
     }
@@ -15843,12 +15925,24 @@ function makeInterior(spec){
   if(floorKind==="checker") for(var ci=0;ci<Math.min(W*D/4,900);ci++){ var cx=-W/2+1+(ci%Math.floor(W/2))*2, cz=-D/2+1+Math.floor(ci/Math.floor(W/2))*2; if(cz>D/2) break;
     if(((Math.round(cx/2)+Math.round(cz/2))&1)===0) root.add(P(box(2,.02,2),mL(0x1A1A1E),cx,.01,cz)); }
   root.add(P(box(W+1.2,.3,D+1.2),new THREE.MeshLambertMaterial({color:shade(wallCol,-.12),side:THREE.DoubleSide}),0,(levels-1)*FLOOR+H+.15,0));
-  var winMats=[];
+  var winMats=[], winGlints=[];
   /* every interior has a floor of its own: it is built away from the world, where
      no ground reaches. without this you stand on nothing and see under everything. */
   root.add(P(box(W+2.4,.4,D+2.4),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,-0.2,0));
-  windows.forEach(function(w){ var wm=new THREE.MeshBasicMaterial({color:0xCFE0F0}); winMats.push(wm);
-    var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,(w.y||0)+1.7,w.z); wp.rotation.y=w.ry; root.add(wp); });
+  windows.forEach(function(w){
+    /* the glass itself: a little shininess so the room's own lights catch it,
+       instead of a flat painted-on tint */
+    var wm=new THREE.MeshPhongMaterial({color:0xCFE0F0,shininess:70,specular:0x889AB0});
+    winMats.push(wm);
+    var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,(w.y||0)+1.7,w.z); wp.rotation.y=w.ry; root.add(wp);
+    /* a bright strip near the top of the pane that flares warm at dawn and
+       dusk and fades at night and at noon — the "catching the outdoor light"
+       cue, cheap and without any texture work */
+    var gm=new THREE.MeshBasicMaterial({color:0xFFC98A,transparent:true,opacity:0});
+    winGlints.push(gm);
+    var gp=P(new THREE.PlaneGeometry(1.4,.3),gm,w.x+Math.sin(w.ry)*0.01,(w.y||0)+2.25,w.z+Math.cos(w.ry)*0.01);
+    gp.rotation.y=w.ry; root.add(gp);
+  });
   lights.slice(0,18).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.62,15,1.7); pl.position.set(l.x,(l.y||0)+H-.3,l.z); root.add(pl);
     root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,(l.y||0)+H-.12,l.z)); });
   /* the way out: a door in the front wall */
@@ -15861,7 +15955,7 @@ function makeInterior(spec){
      ways through a solid floor */
   var holesOut=holes.map(function(h){ return {level:h.level,x:ox+h.x,z:oz+h.z,hw:h.hw,hd:h.hd}; });
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
-    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,holes:holesOut,
+    winMats:winMats,winGlints:winGlints,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,holes:holesOut,
     locked:plan.locked||null,unlocked:false};
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
@@ -15874,7 +15968,7 @@ function furnishRoom(kind,xc,zc,w,d,sd,put){
   var list=ROOMFURN[kind]||ROOMFURN.living, far=xc+sd*(w/2-.6);
   list.forEach(function(k,i){
     if(k==="rug"||k==="chandelier"){ put(k,xc,zc,0); return; }
-    if(k==="painting"||k==="wallmirror"){ put(k,xc,zc-d/2+.15,0); return; }
+    if(k==="painting"||k==="wallmirror"||k==="wallscreen"){ put(k,xc,zc-d/2+.15,0); return; }
     if(k==="bed"||k==="hospitalbed"){ put(k,far-sd*.4,zc-d/2+1.3,0); return; }
     if(k==="bookshelf"||k==="wardrobe"||k==="fridge"||k==="shelfgoods"){ put(k,xc+(i%2?1:-1)*1.6,zc-d/2+.35,0); return; }
     if(k==="fireplace"){ put(k,far-sd*.35,zc,sd>0?-Math.PI/2:Math.PI/2); return; }
@@ -15899,13 +15993,23 @@ function fillHall(kind,W,D,put,spots){
   else if(kind==="bank"){ put("counterbank",0,-D/6,0); put("vaultround",0,-D/2+.2,0); put("plant",-W/2+1,D/2-2,0); put("plant",W/2-1,D/2-2,0); put("chandelier",0,D/6,0);
     spots.push({x:0,z:-D/6-1.4,room:"counter"}); }
   else if(kind==="penthouse"){
+    /* the whole top floor, dressed as the reward it's meant to be: a proper
+       executive office up front, a lounge spread through the middle instead
+       of huddled at its centre, a library wall and a cabinet facing each
+       other, and the map of everywhere actually built this time — it used to
+       be named here and never drawn. */
     put("desk",0,-D/2+3,Math.PI); put("chair",0,-D/2+5,0);
-    put("sofa",-W/4,D/6,0.4); put("armchair",W/4,D/6,-0.6); put("table",0,D/6,0);
-    put("bookshelf",-W/2+1.2,0,Math.PI/2); put("bookshelf",-W/2+1.2,4,Math.PI/2);
-    put("maptable",W/4,-D/4,0); put("rug",0,D/8,0); put("chandelier",0,0,0);
-    put("plant",W/2-1.4,-D/2+1.6,0); put("plant",-W/2+1.4,-D/2+1.6,0);
-    put("painting",0,-D/2+.2,0);
-    spots.push({x:0,z:-D/2+4.4,room:"the office"});
+    put("monitor",-.9,-D/2+3,Math.PI); put("wallscreen",-W/4,-D/2+.15,0);
+    put("maptable",W/4,-D/4,0);
+    put("sofa",-W/4,D/8,0.4); put("armchair",W/4-1.6,D/8,-0.5); put("armchair",-W/4-1.8,D/6+2,0.9);
+    put("table",-W/6,D/8,0); put("lamp",W/4,D/8+1.7,0); put("rug",-W/6,D/8,0);
+    put("bookshelf",-W/2+1.2,-D/6,Math.PI/2); put("bookshelf",-W/2+1.2,-D/6+4,Math.PI/2);
+    put("wardrobe",W/2-1.3,D/4,-Math.PI/2);      // dressed here as a dark-wood, gilt-handled cabinet
+    put("wallmirror",W/2-.15,-D/6,-Math.PI/2);
+    put("chandelier",0,0,0); put("candles",-W/6+1,D/8,0);
+    put("plant",W/2-1.4,-D/2+1.6,0); put("plant",-W/2+1.4,-D/2+1.6,0); put("plant",0,D/2-2,0);
+    put("painting",0,-D/2+.2,0); put("painting",-W/2+.15,D/2-4,Math.PI/2);
+    spots.push({x:0,z:-D/2+4.4,room:"the office"},{x:-W/4,z:D/8,room:"the office"});
   }
   else if(kind==="lobby"){
     put("till",0,-D/2+2.2,Math.PI);
@@ -15963,8 +16067,17 @@ function exitInterior(quiet){
 function rebuildInterior(){ if(!INT) return; var spec=INT.spec, p={x:camera.position.x,z:camera.position.z};
   scene.remove(INT.root); INT=makeInterior(spec); scene.add(INT.root); wallsAt=-1; camera.position.x=p.x; camera.position.z=p.z; bringOccupants(); }
 
+/* how strongly a window's glass should be catching outdoor light right now:
+   dim at night, dim again at flat noon, and warmest right around dawn and
+   dusk, when the sun is low enough to actually flare off a pane of glass.
+   `day` is daylight()'s own 0..1 value, already ramping through both. */
+function daySunAngle(day){
+  var low=4*day*(1-day);                     // 0 at night and at full day, peaks mid-ramp
+  return {col:0xFFC98A, o:Math.min(0.62,low*0.7)};
+}
+
 /* the lift: stand in it and rise or fall a floor at a time */
-var liftCool=0;
+var liftCool=0, liftNear=false;
 function inLift(){
   if(!INT||!INT.lifts||!INT.lifts.length) return null;
   var P=camera.position;
@@ -16017,7 +16130,7 @@ function liftMove(dir){
 }
 
 /* the people whose hour has them in this building are in here with you */
-var ROLE_ROOM={cartographer:"office",archivist:"archive",engineer:"kitchenette",gatekeeper:"lobby",
+var ROLE_ROOM={cartographer:"techoffice",archivist:"archive",engineer:"kitchenette",gatekeeper:"lobby",
   runner:"lobby",nightdesk:"lobby",founder:"the office",nurse_day:"ward",nurse_night:"ward",patient:"ward",clerk:"office",guest:"bedroom",
   resident:"living",teacher:"classroom",child:"classroom",priest:"nave",shopkeeper:"counter",
   keeper:"lobby",worker:"floor",prisoner:"cell",farmer:"barn",innkeeper:"lobby",nightwatch:"lobby"};
@@ -16052,7 +16165,14 @@ function interiorTick(dt){
   var P=camera.position;
   if(INT){
     var day=daylight(dreamHour()), wc=blend(0x1A2238,0xCFE0F0,day);
+    var sun=daySunAngle(day);
     INT.winMats.forEach(function(m){ m.color.setHex(wc); });
+    if(INT.winGlints) INT.winGlints.forEach(function(m){ m.color.setHex(sun.col); m.opacity=sun.o; });
+    /* the lift: a status line the first time you step near it, the same way
+       the keeper's desk announces itself, so nobody has to guess it exists */
+    var near=inLift();
+    if(near&&!liftNear){ liftNear=true; setStatus("<b>The lift.</b> Press <b>Space</b> to rise, <b>C</b> to descend."); }
+    else if(!near&&liftNear) liftNear=false;
     /* the stairs are walked up, not stepped through: ground.js carries you */
     if(intCool<=0&&(INT.level||0)===0&&Math.hypot(P.x-INT.exit.x,P.z-INT.exit.z)<0.9) exitInterior(false);
     return;
