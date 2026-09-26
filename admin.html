@@ -332,7 +332,14 @@ td select,td input{padding:5px 7px;font-size:12.5px}
 
 <div id="bar"></div>
 
-<script src="js/config.js"></script>
+<script>
+/* the Atlas's Supabase project — kept right here so this page opens on its
+   own, with nothing else needed alongside it */
+var DW_CONFIG={
+  supabaseUrl:"https://ryxmrkwgdyphcdlglwka.supabase.co",
+  supabaseKey:"sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY"
+};
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
 <script>
 (function(){
@@ -354,11 +361,11 @@ function fail(e){ say((e&&(e.message||e.error_description))||String(e),true); }
 /* ---------------- sign-in ---------------- */
 function start(){
   if(!window.DW_CONFIG||!DW_CONFIG.supabaseUrl||!DW_CONFIG.supabaseKey){
-    $("gate-note").innerHTML="Fill in <b>js/config.js</b> with your project URL and publishable key first.";
+    $("gate-note").innerHTML="The Supabase project details near the top of this file are missing. Open the file and fill in the <b>DW_CONFIG</b> block with your project URL and publishable key.";
     $("gate-form").classList.add("hidden"); return;
   }
   if(/^sb_secret_/.test(DW_CONFIG.supabaseKey)){
-    $("gate-note").innerHTML="<b style='color:var(--ember)'>js/config.js contains a secret key.</b> Remove it now, replace it with the publishable key, and rotate the secret key in your Supabase dashboard.";
+    $("gate-note").innerHTML="<b style='color:var(--ember)'>This file has a secret key in it.</b> Remove it, replace it with the publishable key, and rotate the secret key in your Supabase dashboard.";
     $("gate-form").classList.add("hidden"); return;
   }
   if(!window.supabase){ $("gate-note").textContent="The Supabase library didn't load. Check the connection and reload."; return; }
