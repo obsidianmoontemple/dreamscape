@@ -413,6 +413,25 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   #compass svg{width:64px;height:64px}
 }
 
+/* ---- panels built by hand, in code, since app.css was first written:
+   the Keeper's Desk, the wardrobe, the lift's floor picker. these are
+   rebuilt from scratch every time they open, with tables and inputs sized
+   for a desktop screen, so on a phone they get the same treatment every
+   other panel already has: never wider than the screen, and anything that
+   would otherwise run off the edge scrolls instead of clipping. ---- */
+#keeper-desk{max-width:100vw}
+#keeper-desk table{border-collapse:collapse}
+@media (max-width:600px){
+  #keeper-desk{inset:2% 2%!important;padding:16px 14px!important}
+  /* a table wider than the panel scrolls sideways on its own, rather than
+     pushing the whole panel — and the panel itself — off the right edge */
+  #keeper-desk table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  #keeper-desk input[type=text],#keeper-desk input[type=number],#keeper-desk input[type=password]{font-size:16px}
+  #keeper-desk .btn{min-height:40px;padding:9px 12px}
+}
+#me-ward,#lift-panel{max-width:calc(100vw - 24px)}
+
+
 </style>
 </head>
 <body>
@@ -2089,6 +2108,135 @@ var MORE_VOCAB={
   reeds:["reeds","bulrushes","cattails","rushes"],
   dune:["dune","sand dune","dunes","desert"]
 };
+
+</script>
+<script>/* js/custom-kit.js */
+/* SomnuMatrix — custom-kit.js
+   something dreamed that isn't in the catalogue, yet.
+   the second tier (parse.js) is allowed to invent an archetype when
+   nothing on the built-in list is close to what the dreamer described.
+   this file turns that invention into a real KIT entry — built from the
+   same box/cylinder/cone primitives every hand-authored archetype in
+   kit.js already uses, so it stands in the world in the house visual
+   style, not a mismatched one — and, once it's real, saves it to a
+   small shared table so every dreamer's client ends up with the same
+   grown catalogue. a dreamt thing nobody had a word for yet never just
+   vanishes: it renders now, and it's there next time, for anyone.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var CUSTOM_CAT={structure:1,nature:1,infra:1,vehicle:1};
+var CUSTOM_SHAPE={box:3,cyl:3,cone:2};
+
+/* a dreamt thing whose own recipe didn't hold up, or that arrived with
+   no recipe at all: a plain, clearly-marked box, so it stands for
+   something rather than for nothing. the sign draws whatever word the
+   dreamer actually used for it. */
+A("dreamplaceholder","structure",[3,3,4],[
+  {g:"box",s:[3,3,4],p:[0,1.5,0],c:"body"}
+],{sign:[0,3.3,2.05,2.6,.9]});
+
+function numOK(n,lo,hi){ return typeof n==="number"&&isFinite(n)&&n>=lo&&n<=hi; }
+
+/* one part of a recipe, turned into a KIT part — or null, if it isn't
+   actually one of the shapes the rest of the kit is built from */
+function compilePart(pt){
+  if(!pt||typeof pt!=="object") return null;
+  var g=pt.g, need=CUSTOM_SHAPE[g];
+  if(!need) return null;                       /* box / cyl / cone only */
+  var s=pt.s;
+  if(!Array.isArray(s)||s.length<need) return null;
+  for(var i=0;i<s.length;i++) if(!numOK(s[i],0.03,60)) return null;
+  var p=pt.p;
+  if(!Array.isArray(p)||p.length!==3) return null;
+  if(!numOK(p[0],-60,60)||!numOK(p[1],0,220)||!numOK(p[2],-60,60)) return null;
+  var out={g:g,s:s.slice(0,Math.max(need,s.length)),p:[p[0],p[1],p[2]]};
+  if(Array.isArray(pt.r)&&pt.r.length===3&&pt.r.every(function(v){ return numOK(v,-6.3,6.3); })) out.r=pt.r.slice();
+  var c=pt.c;
+  if(typeof c==="string"&&ROLE[c]!==undefined) out.c=c;
+  else if(typeof c==="string"&&hexToInt(c)!==undefined) out.c=hexToInt(c);
+  else out.c="body";
+  return out;
+}
+
+/* the whole recipe, as one real KIT entry — or null, if the model's
+   answer didn't actually hold together. never something half-built:
+   either every part of it is sound, or none of it is used. */
+function compileArchetype(key,def){
+  if(typeof key!=="string"||!/^[a-z][a-z0-9]{1,23}$/.test(key)) return null;
+  if(KIT[key]) return KIT[key];                /* already real; never overwritten */
+  if(!def||!CUSTOM_CAT[def.cat]) return null;
+  var size=def.size;
+  if(!Array.isArray(size)||size.length!==3||!size.every(function(v){ return numOK(v,0.2,220); })) return null;
+  var parts=def.parts;
+  if(!Array.isArray(parts)||!parts.length||parts.length>12) return null;
+  var built=[];
+  for(var i=0;i<parts.length;i++){
+    var cp=compilePart(parts[i]);
+    if(!cp) return null;
+    built.push(cp);
+  }
+  KIT[key]=Object.assign({cat:def.cat,size:size,parts:built},{grown:true});
+  return KIT[key];
+}
+
+/* the word for it — so if this dreamer, or any dreamer, says the same
+   thing again, the instant tier (parse.js's VOCAB/PHRASES) recognises
+   it at once, rather than asking the model to invent it all over again */
+function learnWord(key,word){
+  if(!key||!word||!KIT[key]) return;
+  word=String(word).toLowerCase().trim();
+  if(!word||(VOCAB[key]&&VOCAB[key].indexOf(word)>-1)) return;
+  if(!VOCAB[key]) VOCAB[key]=[];
+  VOCAB[key].push(word);
+  PHRASES.push([word,key]);
+  PHRASES.sort(function(a,b){ return b[0].length-a[0].length; });
+}
+
+/* what the shared catalogue already holds, pulled down once at the
+   start so this client's KIT matches everyone else's before a single
+   saved object is drawn from it. skipped entirely, at no cost, when
+   signed out — Somnucor's sharing was always opt-in, and this is no
+   different: signed out, a dreamt thing still renders and still saves
+   to VOCAB for this session, it just isn't shared beyond it. */
+var customArchetypesLoaded=false;
+function loadCustomArchetypes(){
+  if(customArchetypesLoaded) return Promise.resolve();
+  if(typeof cityRpc!=="function"||typeof signedIn!=="function"||!signedIn()) return Promise.resolve();
+  customArchetypesLoaded=true;
+  return cityRpc("list_custom_archetypes").then(function(rows){
+    (rows||[]).forEach(function(row){
+      if(!row||KIT[row.key]) return;
+      var recipe=row.recipe||{};
+      var got=compileArchetype(row.key,{cat:row.cat,size:row.size,parts:recipe.parts||recipe});
+      if(got&&row.label) learnWord(row.key,row.label);
+    });
+  }).catch(function(){ customArchetypesLoaded=false; });
+}
+
+/* a brand new archetype, just proposed by the model for this fragment:
+   compiled and standing at once, in this browser, whether or not this
+   dreamer is signed in — and saved up to the shared table, once, only
+   when signing in makes that possible and this key genuinely hasn't
+   been saved there before (checked by key, so two dreamers describing
+   the same new thing in the same minute don't spam two near-duplicate
+   rows: whichever save reaches the server first wins, the table's own
+   primary key on the way a duplicate insert is quietly ignored). */
+var savedArchetypeKeys={};
+function growArchetype(key,def,label){
+  if(!key) return null;
+  if(KIT[key]){ if(label) learnWord(key,label); return KIT[key]; }
+  var got=compileArchetype(key,def);
+  if(!got) return null;
+  if(label) learnWord(key,label);
+  if(!savedArchetypeKeys[key]&&typeof cityRpc==="function"&&typeof signedIn==="function"&&signedIn()){
+    savedArchetypeKeys[key]=true;
+    cityRpc("save_custom_archetype",
+      {p_key:key,p_recipe:{parts:def.parts},p_cat:def.cat,p_size:def.size,p_label:label||null}
+    ).catch(function(){ savedArchetypeKeys[key]=false; });
+  }
+  return got;
+}
 
 </script>
 <script>/* js/colors.js */
@@ -12257,12 +12405,28 @@ function findExisting(arch,word){
 /* ============================================================
    12. SECOND TIER — the model (Groq)
    ============================================================ */
-var ARCHLIST=Object.keys(KIT).join(", ");
-var SYS=[
+/* "dreamplaceholder" is never on this list — it's this client's own
+   stand-in for a recipe that didn't work out, not something to ask
+   the model to pick on purpose. any archetype grown by an earlier
+   fragment tonight (KIT[x].grown) is real by now, though, and belongs
+   on the list like any other, so the model reuses it instead of
+   inventing the same thing twice. */
+function archList(){
+  return Object.keys(KIT).filter(function(k){ return k!=="dreamplaceholder"; }).join(", ");
+}
+/* built fresh on every call, not once at load: an archetype grown from
+   an earlier fragment — this session, or pulled down at the start from
+   what other dreamers have already grown — belongs on the list from
+   then on, the same as any built-in one, so the model reuses it rather
+   than inventing the same thing over again under a different name */
+function buildSys(){ return [
 "You read a remembered dream fragment and return the physical world it implies.",
 "Return ONLY valid JSON, no prose, no markdown fences:",
-'{"objects":[{"archetype":"","label":"","name":"","sign":"","attrs":{"h":1,"w":1,"d":1,"s":1,"lv":2,"c":"#RRGGBB"}}],"people":[{"label":"","role":"","shift":"day|night|none","livesAt":"","worksAt":"","doing":""}],"emotions":[""],"lucidity":0}',
-"archetype MUST be exactly one of: "+ARCHLIST+".",
+'{"objects":[{"archetype":"","label":"","name":"","sign":"","attrs":{"h":1,"w":1,"d":1,"s":1,"lv":2,"c":"#RRGGBB"}}],"people":[{"label":"","role":"","shift":"day|night|none","livesAt":"","worksAt":"","doing":""}],"newArchetypes":[{"key":"","cat":"","size":[1,1,1],"parts":[{"g":"box","s":[1,1,1],"p":[0,0,0],"c":"#RRGGBB"}]}],"emotions":[""],"lucidity":0}',
+"archetype should be exactly one of: "+archList()+" whenever one of those is truly what the dreamer meant.",
+"If — and only if — the fragment names a solid, physical thing that is genuinely not on that list and not a person, an animal, or a feeling, you may invent one instead: set archetype to a short new key of your own, lowercase letters and digits only, no spaces, under 20 characters, not already on the list, and add one matching entry for it to newArchetypes so it can actually be built.",
+"A newArchetypes entry: key matches the archetype you invented. cat is structure for a building, nature for a living or grown thing, infra for street furniture or a small fixture, vehicle for something that moves — never invent one for a person or a creature, the list already has words for those. size is its own overall width, height and depth in metres, each from 0.3 to 120. parts is 2 to 8 solid shapes it's built from: g is box, cyl, or cone only. box's s is [width,height,depth]; cyl's s is [radiusTop,radiusBottom,height]; cone's s is [radius,height]. p is that part's centre in metres measured from the ground at the object's own middle, so p's height (the second number) is never negative. c is an approximate colour, as a hex string.",
+"Invent a key only once per fragment: if the same new thing comes up again in it, reuse the key you already gave it rather than inventing it twice.",
 "label is the dreamer's own words for the thing, short.",
 "sign is any lettering visible on it, else omit.",
 "attrs are multipliers around 1 - h height, w width, d depth, s overall scale. lv is the number of floors, only if stated. Omit what you cannot infer.",
@@ -12275,7 +12439,7 @@ var SYS=[
 "The dreamer's dreams contain magic, secret ways and impossible things. Take them literally. A hidden door is a hidden door, not a metaphor.",
 "passages: any way the dreamer moved between two named places. kind is door, stairs, street, portal, secret or fall. Use portal when the way is not physically possible, secret when it was hidden. Only report ways actually travelled or described.",
 "Add a passages array: [{\"from\":\"\",\"to\":\"\",\"kind\":\"\"}] using place names as given."
-].join(" ");
+].join(" "); }
 
 var parseTimer=null;
 function scheduleParse(delay){
@@ -12296,7 +12460,7 @@ function runParse(){
   setStatus("Listening closer&hellip;");
   fetch(url,{method:"POST",headers:headers,body:JSON.stringify(llmBody(c,{
     temperature:0.2,max_tokens:4000,
-    messages:[{role:"system",content:SYS},{role:"user",content:text}]
+    messages:[{role:"system",content:buildSys()},{role:"user",content:text}]
   }))})
   .then(function(r){ if(!r.ok) return r.text().then(function(t){ throw new Error(r.status+" "+t.slice(0,160)); }); return r.json(); })
   .then(function(d){
@@ -12315,9 +12479,23 @@ function hexToInt(h){
   return isNaN(n)?undefined:n;
 }
 function reconcile(p){
-  var objs=p.objects||[], used={}, solid=0, added=0;
+  var objs=p.objects||[], used={}, solid=0, added=0, grown=0;
+  /* what the model proposed for anything it couldn't match to the built-in
+     kit, keyed by the archetype name it invented for it */
+  var newDefs={};
+  (p.newArchetypes||[]).forEach(function(nd){ if(nd&&typeof nd.key==="string"&&!newDefs[nd.key]) newDefs[nd.key]=nd; });
   objs.forEach(function(o){
-    if(!o||!o.archetype||!KIT[o.archetype]) return;
+    if(!o||!o.archetype) return;
+    if(!KIT[o.archetype]){
+      /* something the dreamer named that isn't in the catalogue yet: build
+         it for real, from the model's own recipe, rather than dropping it
+         the way this used to. a recipe that doesn't hold together — or
+         that never arrived at all — still gets a plainly-labelled stand-in,
+         so the dreamt thing is never simply gone. */
+      var got=typeof growArchetype==="function"?growArchetype(o.archetype,newDefs[o.archetype],o.label):null;
+      if(got) grown++;
+      else o=Object.assign({},o,{archetype:"dreamplaceholder",sign:o.sign||o.label||o.archetype});
+    }
     var attrs={};
     ["h","w","d","s"].forEach(function(k){
       if(o.attrs&&typeof o.attrs[k]==="number") attrs[k]=Math.max(0.2,Math.min(6,o.attrs[k]));
@@ -12397,6 +12575,7 @@ function reconcile(p){
   var bits=[];
   if(solid) bits.push(solid+" sharpened");
   if(added) bits.push(added+" added");
+  if(grown) bits.push(grown+" built for the first time");
   if(lives) bits.push(lives+" given hours");
   tickClock(true);
   setStatus(bits.length?"<b>"+bits.join(", ")+"</b>":"Nothing new in that.");
@@ -15238,7 +15417,7 @@ function openWardrobe(){
   var w=document.getElementById("me-ward");
   if(!w){
     w=document.createElement("div"); w.id="me-ward";
-    w.style.cssText="position:fixed;top:64px;right:12px;z-index:31;width:300px;max-height:calc(100vh - 90px);overflow-y:auto;"+
+    w.style.cssText="position:fixed;top:64px;right:12px;z-index:31;width:min(300px,calc(100vw - 24px));max-height:calc(100vh - 90px);overflow-y:auto;"+
       "background:rgba(11,13,19,.94);border:1px solid var(--line,#333);padding:14px 16px;border-radius:3px";
     if(document.body) document.body.appendChild(w);
   }
@@ -16391,7 +16570,7 @@ function liftButtons(){
   if(liftPanel||typeof document==="undefined"||!document.body) return;
   liftPanel=document.createElement("div");
   liftPanel.id="lift-panel";
-  liftPanel.style.cssText="position:fixed;bottom:96px;left:12px;z-index:30;display:none;flex-direction:column-reverse;gap:4px;max-height:56vh;overflow-y:auto;padding:6px;background:rgba(11,13,19,.7);border-radius:4px";
+  liftPanel.style.cssText="position:fixed;bottom:96px;left:12px;z-index:30;display:none;flex-direction:column-reverse;gap:4px;max-width:calc(100vw - 24px);max-height:56vh;overflow-y:auto;padding:6px;background:rgba(11,13,19,.7);border-radius:4px";
   document.body.appendChild(liftPanel);
 }
 function paintLiftPanel(){
@@ -16405,7 +16584,7 @@ function paintLiftPanel(){
     var h="";
     for(var L=0;L<INT.levels;L++){
       var nm=(INT.floorNames&&INT.floorNames[L])||("Floor "+(L+1));
-      h+='<button class="btn" data-floor="'+L+'" style="text-align:left;white-space:nowrap">'+(L+1)+" — "+esc(nm)+"</button>";
+      h+='<button class="btn" data-floor="'+L+'" style="text-align:left;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;display:block">'+(L+1)+" — "+esc(nm)+"</button>";
     }
     liftPanel.innerHTML=h;
     Array.prototype.forEach.call(liftPanel.querySelectorAll("[data-floor]"),function(b){
@@ -17681,7 +17860,7 @@ function openOfficeDesk(){
   var p=document.getElementById("keeper-desk");
   if(!p){
     p=document.createElement("div"); p.id="keeper-desk";
-    p.style.cssText="position:fixed;inset:6% 8%;z-index:60;overflow-y:auto;background:rgba(8,10,16,.97);"+
+    p.style.cssText="position:fixed;inset:4% 3%;z-index:60;overflow-y:auto;overflow-x:auto;background:rgba(8,10,16,.97);"+
       "border:1px solid var(--gold,#C9A868);border-radius:4px;padding:22px 26px;font-family:var(--sans);font-size:14px";
     document.body.appendChild(p);
   }
@@ -17721,7 +17900,7 @@ function openDesk(){
   var p=document.getElementById("keeper-desk");
   if(!p){
     p=document.createElement("div"); p.id="keeper-desk";
-    p.style.cssText="position:fixed;inset:6% 8%;z-index:60;overflow-y:auto;background:rgba(8,10,16,.97);"+
+    p.style.cssText="position:fixed;inset:4% 3%;z-index:60;overflow-y:auto;overflow-x:auto;background:rgba(8,10,16,.97);"+
       "border:1px solid var(--gold,#C9A868);border-radius:4px;padding:22px 26px;font-family:var(--sans);font-size:14px";
     document.body.appendChild(p);
   }
@@ -18553,6 +18732,17 @@ function boot(){
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot(); wireCompass(); initTouch();
   loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit(); initCity(); initShop(); initJoin(); initGround(); initMarket(); initBusiness();
+  /* a grown archetype from an earlier night is still just a name in this
+     object's saved record — the shape it actually built to only lives in
+     KIT, in memory, on whichever browser grew it. asking the shared
+     catalogue for it takes a real round trip, so boot never waits on it:
+     it renders anything not yet in KIT as a plain house for now (the very
+     same fallback build() already falls back to on its own, below), keeps
+     a note of which objects that was, and quietly redraws the true shape
+     over them the moment the catalogue answers — rather than delay
+     everything else boot does, or, worse, overwrite the object's own
+     saved archetype with "house" for good before the answer even arrives. */
+  var awaitingCustom=[];
   if(load()){
     committed=store.transcript||"";
     store.streets=[];
@@ -18589,7 +18779,7 @@ function boot(){
       if(!o.name) o.name=nameFor(o,o.addr);
     });
     store.objects.forEach(function(s){
-      if(!KIT[s.archetype]) s.archetype="house";
+      if(!KIT[s.archetype]) awaitingCustom.push(s);   /* build() itself falls back to a house meanwhile */
       ensureStreets(Math.round(s.x/PITCH),Math.round(s.z/PITCH));
       addMesh(s);
     });
@@ -18612,6 +18802,11 @@ function boot(){
   tickClock(true);
   updateCount();
   if(!store.objects.length) setStatus("Press the circle and talk, or type below.");
+  if(awaitingCustom.length&&typeof loadCustomArchetypes==="function"){
+    loadCustomArchetypes().then(function(){
+      awaitingCustom.forEach(function(s){ if(KIT[s.archetype]) refresh(s); });
+    });
+  }
 }
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
 else boot();
@@ -18643,8 +18838,9 @@ if(DW_TESTING && typeof document!=="undefined" && typeof window!=="undefined" &&
 function rebuildAll(){
   Object.keys(meshes).forEach(function(id){ scene.remove(meshes[id]); delete meshes[id]; });
   store.streets=[]; store.blocks={};
+  var awaitingCustom=[];
   store.objects.forEach(function(s){
-    if(!KIT[s.archetype]) s.archetype="house";
+    if(!KIT[s.archetype]) awaitingCustom.push(s);   /* build() itself falls back to a house meanwhile */
     if(!s.addr) s.addr=addressOf(Math.round(s.x/PITCH),Math.round(s.z/PITCH),0);
     if(!s.name) s.name=nameFor(s,s.addr);
     ensureStreets(Math.round(s.x/PITCH),Math.round(s.z/PITCH));
@@ -18654,6 +18850,11 @@ function rebuildAll(){
   buildTerrain(); applyShadows(); realmGroundsAll();
   populate(); tickClock(true); updateCount();
   renderTranscript(store.transcript||"","");
+  if(awaitingCustom.length&&typeof loadCustomArchetypes==="function"){
+    loadCustomArchetypes().then(function(){
+      awaitingCustom.forEach(function(s){ if(KIT[s.archetype]) refresh(s); });
+    });
+  }
 }
 
 </script>
