@@ -6979,6 +6979,27 @@ var _cs=7761109;
 function cityRand(){ _cs=(_cs*1664525+1013904223)%4294967296; return _cs/4294967296; }
 function jit(n){ return (cityRand()-0.5)*n; }
 
+/* CITY_OUT used to be a number picked once and never revisited, and every
+   district's placement was hand-set against it — which is exactly how
+   Temple Row and the Employee District ended up drifting past it unseen.
+   it is recomputed here instead, from the city's own static lists: the
+   farthest ring any QUARTERS or NEIGHBOURHOODS entry actually stands at,
+   and how far out the Employee District's own block reaches given how
+   many plots it currently holds. add a new quarter, a new neighbourhood,
+   or grow the District past sixty-odd homes, and this number moves with
+   it — nobody has to remember to bump a constant by hand again.
+   this only ever reads STATIC data (array lengths, fixed KIT sizes) —
+   never cityRand() or anything seeded — so it comes out bit-for-bit the
+   same for every dreamer, exactly like the rest of this deterministic
+   build. */
+function cityOutward(){
+  var far=0;
+  if(typeof QUARTERS!=="undefined") QUARTERS.forEach(function(q){ if(q.r>far) far=q.r; });
+  if(typeof NEIGHBOURHOODS!=="undefined") NEIGHBOURHOODS.forEach(function(n){ if(n.r>far) far=n.r; });
+  if(typeof districtReach==="function"){ var dr=districtReach(); if(dr>far) far=dr; }
+  return far>0?Math.round(far+190):980;   // the same margin the ring has always kept past its farthest quarter
+}
+
 var QUARTERS=[
  {name:"The Old Quarter", at:0.00, r:300, kind:"street", len:200, lane:26, ground:"lawn",
   sign:"Where the city began. Ordinary houses, and the people who keep them.",
@@ -7098,6 +7119,7 @@ function razeSomnucor(){
   if(store.here===r.id) store.here=0;
 }
 function buildSomnucorCity(){
+  CITY_OUT=cityOutward();   /* refreshed every call, cache hit or not, so a grown District or a new quarter is never gated by a stale ring */
   var had=somnucorRealm();
   if(had&&(had.build||0)>=CITY_BUILD) return had;
   if(had) razeSomnucor();
@@ -7361,10 +7383,19 @@ EFFECTS.somnucortower=function(g){
    loaded as a plain script; shares scope with the other files */
 "use strict";
 
-var ROW_GAP=36, ROW_BUILD=7;
+var ROW_GAP=36, ROW_BUILD=8;
 /* where the city's own plan has always marked this quarter: the bearing and
    ring radius from somnucor-city.js's QUARTERS scheme (at:0.70, r:360) */
 var ROW_AT=0.70, ROW_R0=360, ROW_ENTRY=150;
+/* the Row used to be two columns marching straight outward for as long as
+   275 houses took to lay down — its far end came out more than two and a
+   half times farther from the city's own centre than anything else in
+   Somnucor, quarry and timber stand included, so nobody walking the city
+   would ever casually reach it. It is laid out now as a genuine block:
+   several lanes side by side, each holding a handful of precincts stacked
+   outward on its own, so the whole district's reach stays close to the
+   rest of the city instead of one line running off the map. */
+var ROW_LANES=9, ROW_LANE_GAP=30, ROW_PRECINCT_GAP=24;
 
 /* the shape a tradition builds in — from what the Atlas already knows how to make */
 var PRECINCT={
@@ -7473,63 +7504,109 @@ function buildTempleRow(){
   if(gsg){ gsg.sign="Temple Row"; gsg.note="A house for every power the Atlas knows: two hundred and seventy-five of them, in six-and-twenty precincts. The street runs on from here."; }
   for(var gr=-30;gr<ROW_ENTRY+20;gr+=11){ put("road",-40,gr,Math.PI/2); put("road",0,gr,Math.PI/2); put("road",40,gr,Math.PI/2); }
 
-  /* two precincts to a row rather than four — the Row runs on outward
-     along its own bearing instead of sideways across its neighbours, so a
-     district built for 275 houses doesn't crowd the streets either side
-     of it near the ring */
-  var COLS=[-95,95], z=ROW_ENTRY, rowDepth=0, col=0;
-  trads.forEach(function(t,ti){
-    var P=PRECINCT[t]||{house:"shrine",ground:"lawn",trim:0xC9A868,note:""};
-    var list=byTrad[t];
-    var per=4, rows=Math.ceil(list.length/per);
-    var depth=rows*ROW_GAP+26, cx=COLS[col], cz=z+depth/2;
-    if(P.ground) lay(P.ground,cx,cz,120,depth);
-    var sg=put("signboard",cx,z-6,Math.PI,t);
-    if(sg){ sg.sign=t; sg.note=P.note+" · "+list.length+(list.length===1?" house":" houses"); }
-    rowDepth=Math.max(rowDepth,depth);
-    list.forEach(function(d,i){
-      var col2=i%per, row=Math.floor(i/per);
-      var x=cx+(col2-(per-1)/2)*24, zz=z+18+row*ROW_GAP;
-      var face=Math.PI;        /* every house faces the way you come in */
-      var temple=put(P.house,x,zz,face,d.name+"'s house");
-      if(temple){
-        temple.deity=d.key;
-        /* every house is cut to the same standing: a street, not a skyline */
-        var sz=KIT[P.house].size, want=20/Math.max(sz[0],sz[2]);
-        temple.attrs={s:Math.max(0.28,Math.min(1,want))};
-        refresh(temple);
-      }
-      /* what stands before every house, whatever the tradition */
-      put("altarseasonal",x,zz+11,face,"The offering bowl of "+d.name).deity=d.key;
-      put("imbolccandles",x-3.4,zz+11,face,"Candles at "+d.name+"'s house").deity=d.key;
-      put("incenseburner",x+3.4,zz+11,face,"Incense at "+d.name+"'s house").deity=d.key;
-      /* incense enough to see, not enough to hide the god behind it */
-      if(i%4===0) put("wisps",x+8,zz+13,0);
-      put("streetlight",x-11,zz+4,face);
-      /* the deity is at home: the same being you would meet in a dream */
-      var placeAt=toWorld(zz-2,x);
-      var body=(typeof placeDeity==="function")?placeDeity(d.key,{},{at:{x:h.x+placeAt.x,z:h.z+placeAt.z}}):null;
-      if(body){
-        var bodyAt=toWorld(zz+14,x-5);   /* on the steps, beside the bowl, facing whoever comes */
-        body.x=h.x+bodyAt.x; body.z=h.z+bodyAt.z; body.realm=r.id; body.rot=face+Math.PI-ROW_AT;
-        body.solid=true; body.detail=4; body.hub=true; body.city=true; body.templerow=true;
-        var ch=charOf(body);
-        if(ch){ ch.x=body.x; ch.z=body.z; ch.awake=true; ch.atId=temple?temple.id:null;
-                ch.home=temple?temple.id:null; ch.routine=null; ch.anchor={x:body.x,z:body.z}; }
-        refresh(body);
-      }
-    });
-    /* two precincts to a row, then the next row of them, further out */
-    col++;
-    if(col>=COLS.length||ti===trads.length-1){
-      for(var av=z-14;av<z+rowDepth+14;av+=11){ put("road",-190,av,Math.PI/2); put("road",0,av,Math.PI/2); put("road",190,av,Math.PI/2); }
-      z+=rowDepth+34; rowDepth=0; col=0;
-      for(var cr=-200;cr<210;cr+=11) put("road",cr,z-17,0);
-    }
+  /* each precinct cut to a block of its own — as square as its own house
+     count allows, rather than one column four houses wide — so a precinct
+     of thirty-five gods doesn't run four times deeper than one of nine */
+  var precincts=trads.map(function(t){
+    var list=byTrad[t], per=Math.max(2,Math.ceil(Math.sqrt(list.length))), rows=Math.ceil(list.length/per);
+    return {t:t,list:list,per:per,rows:rows,depth:rows*ROW_GAP+26,width:per*24+30};
   });
-  /* the far end: the pole itself */
-  put("obelisk",0,z+34,0,"The North Pole");
-  put("signboard",0,z+16,Math.PI,"The end of the Row").note="Two hundred and seventy-five houses stand behind you, and every one of them is somebody's.";
+  /* every lane starts at the same ring and runs outward on its own; each
+     precinct joins whichever lane is shortest so far (the same greedy
+     balancing a mason would do by eye), so the eight lanes end up close
+     to even instead of the district's whole weight sitting in one or two
+     of them. this depends only on DEITY's own static list — never on
+     anything randomised — so it comes out identical for every dreamer,
+     exactly as the rest of Somnucor's build does. */
+  var lanes=[];
+  for(var li=0;li<ROW_LANES;li++) lanes.push({along:ROW_ENTRY,width:70,items:[]});
+  precincts.forEach(function(p){
+    var pick=0;
+    for(var i=1;i<ROW_LANES;i++) if(lanes[i].along<lanes[pick].along) pick=i;
+    var lane=lanes[pick], z0=lane.along;
+    lane.items.push({p:p,z0:z0});
+    lane.along=z0+p.depth+ROW_PRECINCT_GAP;
+    lane.width=Math.max(lane.width,p.width);
+  });
+  /* lanes are only as wide as the biggest precinct actually put in them,
+     so a run of small precincts doesn't force its neighbours apart to
+     match Greek's thirty-five houses. and whichever lane ends up running
+     deepest is given the spot nearest the centreline, with the shallower
+     lanes fanning out either side of it — a corner that is both the
+     farthest lane out AND the farthest lane across would stand much
+     farther from the gate than either measure alone, so keeping the one
+     deep lane close to the middle keeps every corner of the block honest */
+  var byDepth=lanes.slice().sort(function(a,b){ return b.along-a.along; });
+  var slots=[0]; for(var sk=1;slots.length<ROW_LANES;sk++){ slots.push(sk); slots.push(-sk); }
+  slots=slots.slice(0,ROW_LANES);
+  var placed=byDepth.map(function(l,i){ return {lane:l,slot:slots[i]}; });
+  placed.sort(function(a,b){ return a.slot-b.slot; });
+  var totalWidth=0; placed.forEach(function(p){ totalWidth+=p.lane.width+ROW_LANE_GAP; });
+  var cursor=-totalWidth/2;
+  placed.forEach(function(p){ p.lane.cx=cursor+p.lane.width/2; cursor+=p.lane.width+ROW_LANE_GAP; });
+  var farAlong=Math.max.apply(null,lanes.map(function(l){ return l.along; }));
+  var farAcross=totalWidth/2;
+
+  /* the lane roads: a street down the spine of every lane, and cross
+     streets tying them together every so often, so the block is walked
+     as a real quarter and not just found by cutting across the lawn.
+     a cross street only runs as wide as the lanes that actually still
+     reach that far out — it doesn't pave all the way to the district's
+     own outer corner past where the shallower lanes have already ended */
+  lanes.forEach(function(l){
+    for(var av=ROW_ENTRY-14;av<l.along+14;av+=11) put("road",l.cx,av,Math.PI/2);
+  });
+  for(var cross=ROW_ENTRY+40;cross<farAlong;cross+=170){
+    var lo=farAcross, hi=-farAcross;
+    lanes.forEach(function(l){ if(l.along>cross){ lo=Math.min(lo,l.cx-20); hi=Math.max(hi,l.cx+20); } });
+    if(hi>lo) for(var cr=lo;cr<hi;cr+=11) put("road",cr,cross,0);
+  }
+
+  lanes.forEach(function(lane){
+    lane.items.forEach(function(item){
+      var P=PRECINCT[item.p.t]||{house:"shrine",ground:"lawn",trim:0xC9A868,note:""};
+      var list=item.p.list, per=item.p.per, depth=item.p.depth, cx=lane.cx, z=item.z0;
+      var cz=z+depth/2;
+      if(P.ground) lay(P.ground,cx,cz,item.p.width-20,depth);
+      var sg=put("signboard",cx,z-6,Math.PI,item.p.t);
+      if(sg){ sg.sign=item.p.t; sg.note=P.note+" · "+list.length+(list.length===1?" house":" houses"); }
+      list.forEach(function(d,i){
+        var col2=i%per, row=Math.floor(i/per);
+        var x=cx+(col2-(per-1)/2)*24, zz=z+18+row*ROW_GAP;
+        var face=Math.PI;        /* every house faces the way you come in */
+        var temple=put(P.house,x,zz,face,d.name+"'s house");
+        if(temple){
+          temple.deity=d.key;
+          /* every house is cut to the same standing: a street, not a skyline */
+          var sz=KIT[P.house].size, want=20/Math.max(sz[0],sz[2]);
+          temple.attrs={s:Math.max(0.28,Math.min(1,want))};
+          refresh(temple);
+        }
+        /* what stands before every house, whatever the tradition */
+        put("altarseasonal",x,zz+11,face,"The offering bowl of "+d.name).deity=d.key;
+        put("imbolccandles",x-3.4,zz+11,face,"Candles at "+d.name+"'s house").deity=d.key;
+        put("incenseburner",x+3.4,zz+11,face,"Incense at "+d.name+"'s house").deity=d.key;
+        /* incense enough to see, not enough to hide the god behind it */
+        if(i%4===0) put("wisps",x+8,zz+13,0);
+        put("streetlight",x-11,zz+4,face);
+        /* the deity is at home: the same being you would meet in a dream */
+        var placeAt=toWorld(zz-2,x);
+        var body=(typeof placeDeity==="function")?placeDeity(d.key,{},{at:{x:h.x+placeAt.x,z:h.z+placeAt.z}}):null;
+        if(body){
+          var bodyAt=toWorld(zz+14,x-5);   /* on the steps, beside the bowl, facing whoever comes */
+          body.x=h.x+bodyAt.x; body.z=h.z+bodyAt.z; body.realm=r.id; body.rot=face+Math.PI-ROW_AT;
+          body.solid=true; body.detail=4; body.hub=true; body.city=true; body.templerow=true;
+          var ch=charOf(body);
+          if(ch){ ch.x=body.x; ch.z=body.z; ch.awake=true; ch.atId=temple?temple.id:null;
+                  ch.home=temple?temple.id:null; ch.routine=null; ch.anchor={x:body.x,z:body.z}; }
+          refresh(body);
+        }
+      });
+    });
+  });
+  /* the far end: the pole itself, at the deepest a lane actually reaches */
+  put("obelisk",0,farAlong+34,0,"The North Pole");
+  put("signboard",0,farAlong+16,Math.PI,"The end of the Row").note="Two hundred and seventy-five houses stand behind you, and every one of them is somebody's.";
 
   r.templerow=ROW_BUILD; store.templerow=r.id;
   store.here=was; store.grid=wasGrid;
@@ -7731,9 +7808,36 @@ function buildHousing(){
    power the penthouse holds (see schema-update-17): a keeper, or whoever
    currently holds the penthouse, assigns a dreamer to a numbered plot, the
    same way an office is assigned rather than sold. */
-var DISTRICT_AT=5.05, DISTRICT_R=1100, DISTRICT_BUILD=1;
-var DISTRICT_HOMES=["house","cottage","house","cottage","apartment","house","cottage","apartment",
-  "house","cottage","house","apartment","cottage","house","apartment","house","cottage","house","apartment","cottage"];
+/* the "manor neighbourhood" for the sixty-and-more desks in the Tower,
+   and for backers — grand housing stock, the same archetypes Northgate
+   already builds its own "grand" grade from (manor, palace, castle), not
+   the plain house/cottage/apartment mix a first pass gave it. sixty-six
+   plots, comfortably past the sixty desks the Tower already has, with
+   room in the cycle to grow past that without a rewrite: raise
+   DISTRICT_ROWS and the list grows with it. */
+var DISTRICT_AT=5.05, DISTRICT_R=520, DISTRICT_BUILD=2;
+var DISTRICT_CYCLE=["manor","manor","palace","manor","manor","castle"];
+var DISTRICT_TOTAL=72, DISTRICT_ROW_CAP=24;   // 72 plots in rows of 24, well past 60
+var DISTRICT_HOMES=(function(){
+  var out=[]; for(var i=0;i<DISTRICT_TOTAL;i++) out.push(DISTRICT_CYCLE[i%DISTRICT_CYCLE.length]);
+  return out;
+})();
+/* how far out the District's own block actually reaches, worked out from
+   nothing but its own static numbers (how many homes it holds, and the
+   fixed sizes the catalogue already gives manor/palace/castle) — read by
+   somnucor-city.js's cityOutward() so the ring grows to meet the District
+   if it's ever given more than seventy-two plots, instead of the District
+   quietly drifting past a ring that stopped watching it */
+function districtReach(){
+  if(typeof KIT==="undefined") return 0;
+  var widest=0; DISTRICT_CYCLE.forEach(function(a){ if(KIT[a]) widest=Math.max(widest,KIT[a].size[0],KIT[a].size[2]); });
+  var step=Math.max(60,widest*1.15), rowGap=widest*0.62+70;
+  var rowsNeeded=Math.ceil(DISTRICT_HOMES.length/DISTRICT_ROW_CAP);
+  var maxPer=Math.ceil(DISTRICT_ROW_CAP/2), span=maxPer*step;
+  var along0=(rowsNeeded-1)*rowGap, depth=widest*0.55+18;
+  var rr=DISTRICT_R+along0+depth;
+  return Math.hypot(rr,span/2+20);
+}
 function buildEmployeeDistrict(){
   var r=somnucorRealm(); if(!r) return 0;
   if(r.district>=DISTRICT_BUILD) return 0;
@@ -7750,32 +7854,54 @@ function buildEmployeeDistrict(){
     return spec;
   }
   function lay(kind,cx,cz,w,d){ if(!KIT[kind]) return; var sz=KIT[kind].size; put(kind,cx,cz,0,null,{w:w/sz[0],d:d/sz[2]}); }
-  var cx=Math.cos(DISTRICT_AT)*DISTRICT_R, cz=Math.sin(DISTRICT_AT)*DISTRICT_R;
+  var cx0=Math.cos(DISTRICT_AT)*DISTRICT_R, cz0=Math.sin(DISTRICT_AT)*DISTRICT_R;
   var ux=Math.cos(DISTRICT_AT+Math.PI/2), uz=Math.sin(DISTRICT_AT+Math.PI/2);
   var vx=Math.cos(DISTRICT_AT), vz=Math.sin(DISTRICT_AT), face=-DISTRICT_AT;
-  var per=DISTRICT_HOMES.length, step=48, span=per*step;
-  lay("lawn",cx,cz,span+70,150);
-  var sg=put("signboard",cx-vx*(span/2+50),cz-vz*(span/2+50),-DISTRICT_AT+Math.PI/2,"The Somnucor Employee & Backer District");
+
+  /* a block of streets, two sides to a street, several streets deep —
+     not one long row of sixty-six houses in a line. the old single-row
+     layout at r=1100 put its far end past everything else the city has,
+     the same mistake Temple Row made; a compact block keeps the whole
+     "manor neighbourhood" inside a normal walk from the gate */
+  var widest=0; DISTRICT_CYCLE.forEach(function(a){ if(KIT[a]) widest=Math.max(widest,KIT[a].size[0],KIT[a].size[2]); });
+  var step=Math.max(60,widest*1.15), rowGap=widest*0.62+70;
+  var rowsNeeded=Math.ceil(DISTRICT_HOMES.length/DISTRICT_ROW_CAP);
+  var maxPer=Math.ceil(DISTRICT_ROW_CAP/2), maxSpan=maxPer*step;
+
+  var sg=put("signboard",cx0-vx*70,cz0-vz*70-maxSpan/2-20,-DISTRICT_AT+Math.PI/2,"The Somnucor Employee & Backer District");
   if(sg){ sg.sign="The Somnucor Employee & Backer District";
     sg.note="Kept for Somnucor's own people, and for the backers who made the city possible. Who lives here is not bought — it is the penthouse's own say."; }
-  for(var s=-span/2;s<span/2;s+=11) put("road",cx+ux*s,cz+uz*s,-DISTRICT_AT+Math.PI/2);
-  DISTRICT_HOMES.forEach(function(arch,i){
-    if(!KIT[arch]) return;
-    var along=(i-(per-1)/2)*step;
-    var d=KIT[arch].size, depth=Math.max(d[2],d[0])*0.55+18;
-    var x=cx+ux*along+vx*depth, z=cz+uz*along+vz*depth;
-    var home=put(arch,x,z,face);
-    if(!home) return;
-    var board=put("signboard",x-ux*13,z-uz*13,face,"Somnucor Row "+(i+1));
-    if(board){
-      board.plot={name:"Somnucor Row "+(i+1),quarter:"The Somnucor Employee & Backer District",kind:"district",
-                  price:0,rent:0,x:home.x,z:home.z,homeId:home.id,archetype:arch};
-      board.sign="Somnucor Row "+(i+1);
-      plots.push(board.plot);
-    }
-    put("streetlight",x+ux*7,z+uz*7,face);
-    put("fence",x,z-uz*2,face);
-  });
+
+  var idx=0;
+  for(var row=0;row<rowsNeeded;row++){
+    var base=idx, chunk=DISTRICT_HOMES.slice(idx,idx+DISTRICT_ROW_CAP); idx+=chunk.length;
+    var along0=row*rowGap;
+    var rcx=cx0+vx*along0, rcz=cz0+vz*along0;
+    var per=Math.ceil(chunk.length/2), span=per*step;
+    lay("lawn",rcx,rcz,span+70,rowGap*0.85);
+    for(var s=-span/2;s<span/2;s+=11) put("road",rcx+ux*s,rcz+uz*s,-DISTRICT_AT+Math.PI/2);
+    chunk.forEach(function(arch,i){
+      if(!KIT[arch]) return;
+      var side=(i<per)?1:-1, slot=(i<per)?i:(i-per);
+      var slotPer=(i<per)?per:(chunk.length-per);
+      var along=(slot-(slotPer-1)/2)*step;
+      var d=KIT[arch].size, depth=Math.max(d[2],d[0])*0.55+18;
+      var x=rcx+ux*along+vx*depth*side, z=rcz+uz*along+vz*depth*side;
+      var rot=face+(side<0?Math.PI:0);
+      var home=put(arch,x,z,rot);
+      if(!home) return;
+      var n=base+i+1;
+      var board=put("signboard",x-ux*13,z-uz*13,rot,"Somnucor Row "+n);
+      if(board){
+        board.plot={name:"Somnucor Row "+n,quarter:"The Somnucor Employee & Backer District",kind:"district",
+                    price:0,rent:0,x:home.x,z:home.z,homeId:home.id,archetype:arch};
+        board.sign="Somnucor Row "+n;
+        plots.push(board.plot);
+      }
+      put("streetlight",x+ux*7*side,z+uz*7*side,rot);
+      put("fence",x,z-uz*2*side,rot);
+    });
+  }
   r.district=DISTRICT_BUILD;
   store.districtPlots=plots;
   store.here=was; store.grid=wasGrid;
@@ -8079,8 +8205,10 @@ function buildGroundWorks(){
   }
   function lay(kind,cx,cz,w,d){ if(!KIT[kind]) return; var sz=KIT[kind].size; put(kind,cx,cz,0,null,{w:w/sz[0],d:d/sz[2]}); }
 
-  /* the quarry, east beyond the ring */
-  var qa=0.9, qr=1160, qx=Math.cos(qa)*qr, qz=Math.sin(qa)*qr;
+  /* the quarry, east beyond the ring — kept a fixed margin past CITY_OUT
+     itself, rather than a second hardcoded distance of its own, so it
+     stays beyond the wall even if the wall grows to meet a bigger city */
+  var qa=0.9, qr=CITY_OUT+180, qx=Math.cos(qa)*qr, qz=Math.sin(qa)*qr;
   lay("groundpad",qx,qz,260,200);
   var qs=put("signboard",qx-Math.cos(qa)*120,qz-Math.sin(qa)*120,-qa+Math.PI/2,"The Quarry");
   if(qs){ qs.sign="The Quarry"; qs.note="Stone, ore, coal and clay. A quarryman's shift brings up what the city builds with. The pit foreman counts the gemstones."; }
@@ -8097,8 +8225,9 @@ function buildGroundWorks(){
   put("shed",qx+70,qz+56,-qa+Math.PI/2,"The pit office");
   put("tractor",qx+30,qz+70,-qa);
 
-  /* the stand of timber, west beyond the ring */
-  var fa=3.9, fr=1180, fx=Math.cos(fa)*fr, fz=Math.sin(fa)*fr;
+  /* the stand of timber, west beyond the ring — same idea: a margin past
+     CITY_OUT, not a second number that could fall behind it */
+  var fa=3.9, fr=CITY_OUT+200, fx=Math.cos(fa)*fr, fz=Math.sin(fa)*fr;
   lay("lawn",fx,fz,300,240);
   var fs=put("signboard",fx-Math.cos(fa)*130,fz-Math.sin(fa)*130,-fa+Math.PI/2,"The Long Stand");
   if(fs){ fs.sign="The Long Stand"; fs.note="Timber and charcoal. A forester's shift fells and sends it down to the sawyers."; }
