@@ -16848,9 +16848,21 @@ function gold(n){ return (n||0).toLocaleString()+" gold"; }
 function inDollars(n){ return "about $"+((n||0)/100).toFixed(2); }
 
 /* ---- where you stand ---- */
+/* rent that has fallen behind is drawn the moment standing is asked for —
+   the same way the bank settles itself before it shows you its figures.
+   a lease given up for it is worth knowing about, so it gets its own line. */
+function settleRent(){
+  return cityRpc("settle_rent").then(function(rows){
+    (rows||[]).forEach(function(r){
+      if(r.evicted) setStatus("<b>The lease on "+esc(r.lot)+" has lapsed.</b> Rent went unpaid too long, and it is back on the books for somebody else.");
+      else if(r.gold) setStatus("<b>"+gold(r.gold)+"</b> in back rent drawn for "+esc(r.lot)+".");
+    });
+    return rows;
+  }).catch(function(){ return []; });
+}
 function refreshStanding(){
   if(!signedIn()) { standing=null; paintCity(); return Promise.resolve(null); }
-  return cityRpc("my_standing").then(function(s){
+  return settleRent().then(function(){ return cityRpc("my_standing"); }).then(function(s){
     standing=s; paintCity();
     if((s&&s.business||[]).length) loadMyJobs();
     return s;
