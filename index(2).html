@@ -412,6 +412,7 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   #compass{top:calc(8px + env(safe-area-inset-top,0px))}
   #compass svg{width:64px;height:64px}
 }
+
 </style>
 </head>
 <body>
@@ -766,6 +767,20 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
     <button class="btn" id="ground-refresh" type="button">My stock</button>
   </div>
   <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:8px 0 0">What comes up is yours. The city buys it at a standing price, and what gets built in Somnucor is built out of it.</p>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">The market</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Dreamers buying and selling to each other, at whatever they ask &mdash; usually better than the city's own floor price, since the city takes a small toll on what changes hands here.</p>
+  <div id="market-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="market-refresh" type="button">Refresh</button></div>
+
+  <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">A business of your own</h3>
+  <p class="hint" style="font-size:12px;color:var(--dim);line-height:1.55;margin:0 0 10px">Open one, and post the work Somnucor needs done under it. Opening one costs gold; posting work and hiring who applies doesn't.</p>
+  <div id="business-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 10px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <button class="btn" id="business-open" type="button">Open a business</button>
+    <button class="btn" id="business-post" type="button">Post work</button>
+    <button class="btn" id="business-refresh" type="button">Refresh</button>
+  </div>
 
   <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">What you own</h3>
   <div id="things-state" class="hint" style="font-size:13px;color:var(--bone);margin:0 0 8px"></div>
@@ -4708,13 +4723,23 @@ function seeThrough(root,col,o){
 }
 function buildFolk(spec,f,o){
   creatureLook(spec);
-  var g=buildFigure(spec,f), body=g.children[0], L=lookOf(spec), limbs=g.userData.limbs, headY=1.72;
+  var g=buildFigure(spec,f);
+  return dressFolk(g,spec,f,o);
+}
+/* the feats loop on its own, apart from creatureLook — so anything already
+   built by buildFigure (the player's own body, dressed however they chose)
+   can be given a folk's features without its chosen skin, hair or clothes
+   being overwritten by the creature's own defaults. */
+function dressFolk(g,spec,f,o){
+  var body=g.children[0], L=lookOf(spec), limbs=g.userData.limbs, headY=1.72;
   function hide(names){ body.traverse(function(m){ if(m.userData&&names.indexOf(m.userData.part)>-1) m.visible=false; }); }
   var skinMat=mL(L.skin!==null&&L.skin!==undefined?L.skin:STATUE.skin), dark=mL(0x2A2622);
   o.feats.forEach(function(ft){
     var p=ft.split(":"), k=p[0];
     if(k==="ears"){ body.add(P(cone(.03,.14,4),skinMat,-.12,headY+.03,0,0,0,1.1)); body.add(P(cone(.03,.14,4),skinMat,.12,headY+.03,0,0,0,-1.1)); }
     if(k==="horns"){ body.add(P(cone(.035,.2,6),dark,-.07,headY+.16,0,0,0,.35)); body.add(P(cone(.035,.2,6),dark,.07,headY+.16,0,0,0,-.35)); }
+    if(k==="tusks"){ var tuC=mG(0xEFE8D8,1);
+      body.add(P(cone(.018,.09,5),tuC,-.05,headY-.09,.09,Math.PI*.62)); body.add(P(cone(.018,.09,5),tuC,.05,headY-.09,.09,Math.PI*.62)); }
     if(k==="beard") body.add(P(box(.13,.22,.06),mL(L.hair!==null&&L.hair!==undefined?L.hair:0x9A9690),0,headY-.2,.08));
     if(k==="hat"){ var hc=p[2]?parseInt(p[2]):0x1B1C20;
       if(p[1]==="witch"){ body.add(P(cyl(.24,.24,.02,16),mL(0x1B1C20),0,headY+.1,0)); body.add(P(cone(.12,.46,10),mL(0x1B1C20),0,headY+.34,0,-.15)); }
@@ -4744,15 +4769,28 @@ function buildFolk(spec,f,o){
     if(k==="blocky"){ body.add(P(box(.5,.5,.35),mL(L.skin||0x8A8478),0,1.3,0)); body.add(P(box(.3,.28,.28),mL(L.skin||0x8A8478),0,headY,0)); hide(["head","haircap","hairlong","eye"]); }
     if(k==="goatlegs"){ [limbs.ll,limbs.rl].forEach(function(l){ l.traverse(function(m){ if(m.isMesh) m.material=mL(m.userData.part==="shoe"?0x1A1614:0x5A4232); }); }); }
     if(k==="birdlegs"){ [limbs.ll,limbs.rl].forEach(function(l){ l.traverse(function(m){ if(m.isMesh) m.material=mL(0xC8A04A); }); }); }
-    if(k==="wings"){ var wk=p[1], wc=p[2]?parseInt(p[2]):0xF2EEE6;
+    if(k==="wings"){ var wk=p[1], wc=p[2]?parseInt(p[2]):(wk==="dragon"?shade(L.skin!==null&&L.skin!==undefined?L.skin:0x6B4A32,-.35):0xF2EEE6);
       [-1,1].forEach(function(sd){ var wg=new THREE.Group();
         if(wk==="fairy"){ var fm=new THREE.MeshBasicMaterial({color:0xDFF4FF,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false});
           wg.add(P(new THREE.PlaneGeometry(.55,.8),fm,sd*.3,.2,0,0,0,sd*-.3)); wg.add(P(new THREE.PlaneGeometry(.4,.5),fm,sd*.24,-.28,0,0,0,sd*.4)); }
         else if(wk==="bat"){ var bm=new THREE.MeshLambertMaterial({color:0x2A1A1A,side:THREE.DoubleSide});
           wg.add(P(new THREE.PlaneGeometry(.9,.6),bm,sd*.48,.05,0,0,0,sd*-.25)); wg.add(P(cyl(.015,.015,.95,4),mL(0x1A1010),sd*.48,.35,0,0,0,Math.PI/2+sd*.25)); }
+        else if(wk==="dragon"){ var dm=new THREE.MeshLambertMaterial({color:wc,side:THREE.DoubleSide});
+          wg.add(P(new THREE.PlaneGeometry(1.3,.85),dm,sd*.68,.05,0,0,0,sd*-.28));
+          wg.add(P(cyl(.02,.02,1.35,5),mL(shade(wc,-.3)),sd*.68,.4,0,0,0,Math.PI/2+sd*.28));
+          wg.add(P(cyl(.014,.014,.7,4),mL(shade(wc,-.3)),sd*1.1,-.1,0,0,0,Math.PI/2+sd*.5)); }
         else for(var i=0;i<4;i++) wg.add(P(box(.9-i*.12,.2,.02),mL(wc),sd*(.45-i*.03),.1-i*.17,0,0,0,sd*(.25+i*.1)));
         wg.position.set(sd*.08,1.42,-.14); wg.rotation.y=sd*-.35; wg.userData.flap=sd; body.add(wg); }); }
-    if(k==="tail"){ if(p[1]==="devil"){ body.add(P(cyl(.015,.015,.7,5),mL(0x6A1A14),0,.7,-.35,-.9)); body.add(P(cone(.05,.1,3),mL(0x6A1A14),0,.46,-.64,-2.5)); } }
+    if(k==="tail"){
+      if(p[1]==="devil"){ body.add(P(cyl(.015,.015,.7,5),mL(0x6A1A14),0,.7,-.35,-.9)); body.add(P(cone(.05,.1,3),mL(0x6A1A14),0,.46,-.64,-2.5)); }
+      if(p[1]==="dragon"){
+        var tm=p[2]?mL(parseInt(p[2])):skinMat;
+        for(var tg=0;tg<6;tg++){ var tt=tg/5;
+          body.add(P(cone(.075-tt*.05,.22,6),tm,0,.86-tt*.55,-.16-tt*.42,Math.PI/2-tt*.22,0,0));
+        }
+      }
+    }
+    if(k==="scales") for(var rg=0;rg<5;rg++) body.add(P(cone(.03,.09,4),skinMat,0,1.05+rg*.13,-.14-rg*.01,Math.PI));
     if(k==="fishtail"||k==="smoketail"||k==="horsebody"){
       hide(["leg","shoe","hips","skirt","dress"]); limbs.ll.visible=false; limbs.rl.visible=false;
       if(k==="fishtail"){ var tc=parseInt(p[1]);
@@ -7309,8 +7347,17 @@ function templeTick(dt){
     var d=DEITY[found.deity]||{name:found.deity};
     var lit=candleCount(found.deity);
     setStatus("<b>"+esc(d.name)+"</b>"+(d.domains?" \u2014 "+esc(d.domains):"")+
-      ". Press <b>C</b> to light a candle"+(lit?(" ("+lit+" so far)"):"")+", <b>O</b> to leave something in the bowl.");
+      ". Press <b>C</b> to light a candle"+(lit?(" ("+lit+" so far)"):"")+
+      ", <b>O</b> to leave something in the bowl, <b>T</b> to see what the bowl holds.");
   } else if(!found&&rowNear) rowNear=null;
+}
+function templeStanding(key,name){
+  return cityRpc("temple_standing",{p_deity:key}).then(function(s){
+    if(!s||!s.offerings) return setStatus("Nothing left at "+esc(name)+"'s house yet.");
+    setStatus("<b>"+esc(name)+"</b> \u2014 "+s.offerings+" offering"+(s.offerings===1?"":"s")+
+      " left over time, "+gold(s.gold||0)+" in all"+
+      (s.waiting?(", "+gold(s.waiting)+" still waiting in the bowl"):"")+".");
+  }).catch(function(e){ setStatus(esc(e.message)); });
 }
 if(typeof addEventListener==="function") addEventListener("keydown",function(e){
   if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
@@ -7322,6 +7369,7 @@ if(typeof addEventListener==="function") addEventListener("keydown",function(e){
     var n=+(prompt("How much to leave in the bowl of "+d.name+"?")||0);
     if(n>0) leaveOffering(rowNear.deity,d.name,Math.floor(n));
   }
+  if(e.code==="KeyT"){ rowCool=0.6; templeStanding(rowNear.deity,d.name); }
 });
 
 </script>
@@ -7439,7 +7487,7 @@ function buildHousing(){
         var price=inBand(N.price,(t+si*0.13)%1), rent=inBand(N.rent,(t+si*0.13)%1);
         if(board){
           board.plot={name:N.name+" "+(ni*20+i*2+si+1),quarter:N.name,kind:N.kind,grade:N.grade,
-                      price:price,rent:rent,x:home.x,z:home.z};
+                      price:price,rent:rent,x:home.x,z:home.z,homeId:home.id,archetype:arch};
           board.sign=N.name+" "+(ni*20+i*2+si+1);
           board.note=KIT[arch].size[0]>30?"A great house. ":"";
           plots.push(board.plot);
@@ -7495,6 +7543,11 @@ function lotByName(name){
   for(var i=0;i<cityLots.length;i++) if(cityLots[i].name===name) return cityLots[i];
   return null;
 }
+/* lot_board() doesn't say who holds a lot, only that it is held — "yours" is
+   read off my_standing()'s own lots list, which city.js keeps in `standing` */
+function ownLot(lotId){
+  return !!(typeof standing!=="undefined"&&standing&&(standing.lots||[]).some(function(l){ return l.lot_id===lotId&&l.own; }));
+}
 
 /* standing at a board */
 var plotNear=null, plotCool=0;
@@ -7512,8 +7565,9 @@ function housingTick(dt){
     plotNear=found;
     var rec=lotByName(found.plot.name), p=found.plot;
     var held=rec&&rec.held;
+    var mine=rec&&ownLot(rec.lot_id);
     setStatus("<b>"+esc(p.name)+"</b> \u2014 "+esc(p.quarter)+". "+
-      (held?"Taken."
+      (held?(mine?"Yours. Press <b>G</b> to raise something new on it, <b>D</b> to dress it.":"Taken.")
            :("To buy <b>"+p.price.toLocaleString()+" gold</b>, or <b>"+p.rent.toLocaleString()+
              " a week</b> to rent. Press <b>B</b> to buy, <b>R</b> to take the lease.")));
     loadLots();
@@ -7526,7 +7580,71 @@ if(typeof addEventListener==="function") addEventListener("keydown",function(e){
   if(!rec) { setStatus("That plot is not in the books yet. The realtor must enter it first."); return; }
   if(e.code==="KeyB"){ plotCool=1; buyLot(rec.lot_id).then(function(){ lotsAt=0; loadLots(); }); }
   if(e.code==="KeyR"){ plotCool=1; takeLease(rec.lot_id).then(function(){ lotsAt=0; loadLots(); }); }
+  if(e.code==="KeyG"){ plotCool=1; offerToRaise(rec,plotNear); }
+  if(e.code==="KeyD"){ plotCool=1; offerToDress(rec,plotNear); }
 });
+
+/* ---------------------------------------------------------- raising and dressing your own ground */
+var buildCostsCache=null;
+function loadBuildCosts(){
+  if(buildCostsCache) return Promise.resolve(buildCostsCache);
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/build_costs?select=archetype,kind,amount&order=archetype",{
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+(tok||DW_CONFIG.supabaseKey)}
+    }).then(function(r){ return r.ok?r.json():[]; });
+  }).then(function(rows){
+    var byArch={};
+    (rows||[]).forEach(function(r){ (byArch[r.archetype]=byArch[r.archetype]||[]).push(r); });
+    buildCostsCache=byArch;
+    return byArch;
+  }).catch(function(){ return {}; });
+}
+function offerToRaise(rec,board){
+  if(!rec||!ownLot(rec.lot_id)) return setStatus("Only ground you hold can be built on.");
+  loadBuildCosts().then(function(byArch){
+    var archs=Object.keys(byArch);
+    if(!archs.length) return setStatus("Nobody knows how to build anything here yet.");
+    var menu=archs.map(function(a,i){
+      return (i+1)+". "+a+" ("+byArch[a].map(function(c){ return c.amount+" "+c.kind; }).join(", ")+")";
+    }).join("\n");
+    var pick=(prompt("Raise what on "+rec.name+"?\n\n"+menu+"\n\nType the name:")||"").trim().toLowerCase();
+    if(!pick||archs.indexOf(pick)<0) return;
+    raiseBuilding(rec.lot_id,pick,board);
+  });
+}
+function raiseBuilding(lotId,archetype,board){
+  return cityRpc("raise_building",{p_lot:lotId,p_archetype:archetype}).then(function(o){
+    if(o!=="ok"){ setStatus(esc(String(o))); return; }
+    setStatus("<b>Raised.</b> "+esc(archetype)+" now stands there.");
+    if(board&&board.plot&&board.plot.homeId&&KIT[archetype]){
+      var home=store.objects.filter(function(x){ return x.id===board.plot.homeId; })[0];
+      if(home){ home.archetype=archetype; if(typeof refresh==="function") refresh(home); if(typeof save==="function") save(); }
+      board.plot.archetype=archetype;
+    }
+    lotsAt=0; return loadLots();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function offerToDress(rec,board){
+  if(!rec||!ownLot(rec.lot_id)) return setStatus("Only ground you hold can be dressed.");
+  var choice=(prompt("Dress "+rec.name+" with what? A word or two \u2014 it is remembered on the lot.")||"").trim();
+  if(!choice) return;
+  dressLot(rec.lot_id,choice);
+}
+function dressLot(lotId,note){
+  /* decor is shared with raise_building's {built:archetype} flag \u2014 read, merge, then write */
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/lots?select=decor&id=eq."+lotId,{
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+(tok||DW_CONFIG.supabaseKey)}
+    }).then(function(r){ return r.ok?r.json():[]; });
+  }).then(function(rows){
+    var decor=(rows&&rows[0]&&rows[0].decor)||{};
+    decor.dressed=note;
+    return cityRpc("dress_lot",{p_lot:lotId,p_decor:decor});
+  }).then(function(o){
+    setStatus(o==="ok"?"<b>Dressed.</b>":esc(String(o)));
+    lotsAt=0; return loadLots();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
 
 /* ---------------------------------------------------------------- the yard */
 /* The transport lot: everything the city sells to get about on, standing in rows
@@ -10009,6 +10127,15 @@ function awakeNear(pos,range){
 "use strict";
 
 var standFall=0, SURF=[], surfAt=-1, STEP_UP=0.62;
+/* the level a flying player is currently being held against by a solid
+   floor/ceiling — see groundTick and insideSupport. Distinct from levelFor:
+   levelFor guesses a level from height alone, which is fine for walking (it
+   should round generously — a foot that's 97% of the way up a ramp is close
+   enough to say you've arrived) but wrong for a player pinned 8cm under a
+   ceiling, who is by that same generous rounding almost indistinguishable
+   from having arrived. Only an explicit block, remembered across frames
+   while you hold still against it, can tell those two apart. */
+var pinnedLevel=null;
 
 /* what you can stand on, and how high its walking surface is.
    top: flat, over the whole footprint. ramp: rises along the thing's own length. */
@@ -10075,7 +10202,11 @@ function supportAt(x,z,feet){
   return best;
 }
 
-/* inside a building, the floor you are on is the floor that holds you */
+/* Inside a building the floor holds you — unless you have stepped onto a flight
+   of stairs, and then the flight holds you, and carries you up or down according
+   to which way you walk along it.
+   A flight has a footprint. Stand beside it and you are on the floor, not
+   halfway up in the air: that is the difference between a staircase and a hill. */
 /* If you are standing on a flight, the height of the step under you.
    Deliberately asks nothing about which floor you are "on": the floor you are on
    is worked out from where you are, not the other way round. Letting the two
@@ -10097,7 +10228,11 @@ function flightAt(P,feet){
   return best;
 }
 
-/* which floor you are on, judged by how high you are standing */
+/* which floor you are on, judged by how high you are standing. Rounds to
+   the nearest floor on purpose — stepping off a ramp a few centimetres shy
+   of the top should still read as having arrived. (A flying player pinned
+   under a ceiling is a different situation, handled by pinnedLevel instead
+   of by tightening this.) */
 function levelFor(feet){
   if(!INT) return 0;
   return Math.max(0,Math.min(INT.levels-1,Math.round(feet/INT.floor)));
@@ -10106,34 +10241,110 @@ function levelFor(feet){
 function insideSupport(P,feet){
   if(!INT) return 0;
   var f=flightAt(P,feet);
-  return f===null?levelFor(feet)*INT.floor:f;
+  if(f!==null) return f;
+  if(pinnedLevel!==null) return pinnedLevel*INT.floor;
+  return levelFor(feet)*INT.floor;
 }
 
-/* each frame: stand, step up, or fall */
+/* Whether a floor/ceiling boundary at height Hb (in the same "feet" units as
+   everything else here) is open at this spot — true only at an actual
+   stairwell or lift shaft cut into it. The roof, above the top floor, and the
+   ground slab, below the bottom one, are never open: there is no legitimate
+   way through either, on foot or flying. */
+function floorOpenAt(x,z,Hb){
+  if(!INT) return true;
+  var L=Math.round(Hb/INT.floor);
+  if(L<=0||L>=INT.levels) return false;
+  var open=false;
+  (INT.holes||[]).forEach(function(h){
+    if(h.level!==L) return;
+    if(Math.abs(x-h.x)<=h.hw&&Math.abs(z-h.z)<=h.hd) open=true;
+  });
+  (INT.lifts||[]).forEach(function(l){ if(Math.hypot(x-l.x,z-l.z)<1.8) open=true; });
+  return open;
+}
+
+/* The nearest solid floor or ceiling between two heights, if the way is
+   blocked at all — the height you'd have to stop at, from whichever side
+   you're approaching. Walking never calls this (a step at a time, it always
+   lands exactly on a support); it exists for flying, which can otherwise
+   cross any height in a single frame and would sail straight through a solid
+   pad with nothing to stop it. */
+function verticalStop(x,z,fromFeet,toFeet){
+  if(!INT||fromFeet===toFeet) return null;
+  var up=toFeet>fromFeet, lo=Math.min(fromFeet,toFeet), hi=Math.max(fromFeet,toFeet), first=null;
+  for(var L=0;L<=INT.levels;L++){
+    var Hb=L*INT.floor;
+    if(Hb<=lo+1e-6||Hb>=hi-1e-6) continue;             /* this boundary isn't actually crossed */
+    if(floorOpenAt(x,z,Hb)) continue;                  /* a real opening: nothing to stop you */
+    if(first===null||(up?Hb<first:Hb>first)) first=Hb;
+  }
+  return first;
+}
+
+/* each frame: stand, step up, fly, or fall — but a solid floor is a solid
+   floor whichever way you're moving through it, and a locked floor stays
+   locked whichever way you try to reach it */
 function groundTick(dt){
   if(!walkMode) return;
   var P=camera.position, feet=P.y-1.72;
   var sup=store.inside?insideSupport(P,feet):supportAt(P.x,P.z,feet);
-  if(canFly&&flyY>sup+0.05){ standFall=0; P.y=1.72+flyY; return; }
-  if(feet>sup+0.02){
-    standFall=Math.min(26,standFall+24*dt);
-    feet=Math.max(sup,feet-standFall*dt);
-  } else { standFall=0; feet=sup; }
-  flyY=feet>0.04?feet:0;
-  P.y=1.72+feet;
-  /* going up or down a floor inside: the walls change with you */
+  var flying=canFly&&flyY>sup+0.05, flyLevel=null;
+  if(flying){
+    /* flying can cross any height in one frame; a solid pad in between has to
+       actually stop you, not just get skipped over */
+    var stop=store.inside?verticalStop(P.x,P.z,feet,flyY):null;
+    if(stop===null){
+      /* genuinely open space this frame, not just holding still against a
+         block (fromFeet===toFeet also lands here) — only real movement
+         through clear air un-pins you. feet is P.y round-tripped through a
+         +1.72/-1.72, which can drift from flyY by a float sliver even when
+         nothing moved, so this is a tolerance, not an exact match. */
+      if(Math.abs(feet-flyY)>1e-6) pinnedLevel=null;
+      feet=flyY;
+    } else {
+      var goingUp=flyY>feet;
+      feet=goingUp?stop-0.15:stop+0.15;
+      /* held short of a boundary at L*floor: which floor you were reaching
+         for is exact, not a question of which way the clamp margin happens
+         to round — and it has to stay exact every following frame you hold
+         still against it, not just the one frame the block was found, or
+         the held height quietly gets counted as the floor beyond the
+         ceiling that is stopping it */
+      flyLevel=Math.round(stop/INT.floor)+(goingUp?-1:0);
+      pinnedLevel=flyLevel;
+    }
+    standFall=0;
+  } else {
+    pinnedLevel=null;
+    if(feet>sup+0.02){
+      standFall=Math.min(26,standFall+24*dt);
+      feet=Math.max(sup,feet-standFall*dt);
+    } else { standFall=0; feet=sup; }
+  }
+
+  /* going up or down a floor inside: the walls change with you, and a locked
+     floor holds you back — flying included, even straight up an open
+     stairwell, because a hole you can walk through is not the same as
+     permission to be on the floor at the top of it */
   if(store.inside&&INT){
-    var lvl=levelFor(feet);
-    /* halfway up a flight you are between floors, and still on the one you left,
-       so the walls do not flicker as you climb. */
-    if(flightAt(P,feet)!==null&&Math.abs(feet-lvl*INT.floor)>INT.floor*0.12) lvl=INT.level;
+    var lvl=flyLevel!==null?flyLevel:(pinnedLevel!==null?pinnedLevel:levelFor(feet));
+    if(!flying&&flightAt(P,feet)!==null&&Math.abs(feet-lvl*INT.floor)>INT.floor*0.12) lvl=INT.level;
     if(lvl!==INT.level&&typeof levelAllowed==="function"&&!levelAllowed(lvl)){
-      /* held at the locked floor until the code is given */
-      feet=Math.min(feet,(INT.level||0)*INT.floor);
-      P.y=1.72+feet; flyY=feet>0.04?feet:0;
+      /* held at the edge of the floor you're allowed on, from whichever side
+         you were trying to cross it */
+      feet=lvl>INT.level?Math.min(feet,(INT.level+1)*INT.floor-0.1):Math.max(feet,INT.level*INT.floor+0.1);
+      lvl=INT.level;
     } else if(lvl!==INT.level){ INT.level=lvl; wallsAt=-1;
       setStatus(lvl?"Floor "+(lvl+1)+" of "+INT.levels+".":"The ground floor."); }
   }
+
+  /* keep flyY tracking your actual (possibly clamped) height, so a held key
+     against a locked floor or a solid ceiling doesn't quietly rack up a
+     backlog that only unwinds after you let go and press the opposite key
+     for a while */
+  flyY=feet>0.04?feet:0;
+  P.y=1.72+feet;
 }
 
 </script>
@@ -14755,9 +14966,28 @@ function makeDeity(spec,key){
 "use strict";
 
 var meView="eyes";            // eyes | behind | mirror
-var meG=null, meLast=null, meBar=null;
+var meG=null, meLast=null, meBar=null, meClock=0;
 var VIEWS=["eyes","behind"];
 var VIEW_LABEL={eyes:"Your eyes",behind:"Behind you",mirror:"Mirror"};
+
+/* what you can look like, past your own body: worn like a costume over
+   whatever skin, hair and clothes you already chose — none of it is taken
+   from you, only added to. */
+var SPECIES=["human","elf","dwarf","fairy","dragonborn","gnome","halfling","orc","goblin","angel","tiefling","giant"];
+var SPECIES_LABEL=["Human","Elf","Dwarf","Fairy","Dragonborn","Gnome","Halfling","Orc","Goblin","Angel","Tiefling","Giant"];
+var SPECIES_FEATS={
+  elf:{feats:["ears","thin"],s:1.06},
+  dwarf:{feats:["beard","wide"],s:.72},
+  fairy:{feats:["ears","wings:fairy","glow"],s:.55,hover:.22},
+  dragonborn:{feats:["horns","tail:dragon","scales","wings:dragon"],s:1.05},
+  gnome:{feats:["beard","ears"],s:.48},
+  halfling:{feats:["ears"],s:.64},
+  orc:{feats:["wide","tusks"],s:1.08},
+  goblin:{feats:["ears","hunched","thin"],s:.66},
+  angel:{feats:["wings:feather:0xF2EEE6","glow","halo"],s:1.08},
+  tiefling:{feats:["horns","tail:devil"],s:1.02},
+  giant:{feats:["wide","beard"],s:1.5}
+};
 
 function meLook(){
   var d=dreamer();
@@ -14767,7 +14997,10 @@ function meLook(){
 function meSpec(){ return {id:"__me",archetype:"human",attrs:{},look:meLook(),solid:true,detail:4,nights:[store.session]}; }
 function rebuildMe(){
   if(meG&&scene) scene.remove(meG);
-  meG=buildFigure(meSpec(),1); meG.userData.me=1; shadowsFor(meG,true);
+  var spec=meSpec(), sp=meLook().species, o=sp&&SPECIES_FEATS[sp];
+  meG=buildFigure(spec,1);
+  if(o){ dressFolk(meG,spec,1,o); if(o.hover) meG.children[0].position.y+=o.hover; }
+  meG.userData.me=1; shadowsFor(meG,true);
   if(typeof showCarried==="function") setTimeout(showCarried,0);
   if(scene) scene.add(meG);
   meG.visible=false;
@@ -14817,6 +15050,7 @@ function renderWardrobe(){
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
         '<b style="color:var(--bone,#ddd);font-weight:500">How you look</b><button class="btn" id="me-close">Done</button></div>'+
         '<p style="font-size:12px;color:var(--dim,#999);margin:0 0 10px;line-height:1.5">Turn to see yourself from behind with the View button. Only you choose this.</p>';
+  h+=selectRow("Species",S.species,SPECIES,L.species,function(v){ set("species",v||null); },SPECIES_LABEL);
   h+=selectRow("Body",S.sex,["f","m"],L.sex,function(v){ set("sex",v||null); },["woman","man"]);
   h+=swatchRow("Skin",S.skin,SKIN,L.skin,function(v){ set("skin",v); });
   h+=swatchRow("Hair",S.hair,HAIR,L.hair,function(v){ set("hair",v); });
@@ -14851,6 +15085,8 @@ function avatarTick(dt){
     u.amp=(u.amp||0)+((mv?0.55:0)-(u.amp||0))*Math.min(dt*6,1);
     u.phase=(u.phase||0)+dt*(mv?(moved/dt>12?11:7.2):0);
     var s=Math.sin(u.phase)*u.amp; L.ll.rotation.x=s; L.rl.rotation.x=-s; L.la.rotation.x=-s*.75; L.ra.rotation.x=s*.75; }
+  /* a fairy's wings, or anything else a species feat set in motion */
+  meClock+=dt; if(u.anim) u.anim(meClock,dt);
 }
 function closeWardrobeIfOpen(){ var w=document.getElementById("me-ward"); if(w&&w.style.display!=="none") closeWardrobe(); }
 
@@ -15193,7 +15429,9 @@ var FURN={
      see and the slope you stand on are the same slope. */
   stairs:function(){ var g=new THREE.Group(), n=14, r=STAIR_RISE/n, run=STAIR_RUN/n,
     ang=Math.atan2(STAIR_RISE,STAIR_RUN), len=Math.hypot(STAIR_RUN,STAIR_RISE);
-    for(var i=0;i<n;i++) g.add(P(box(1.3,r,run*1.08),mL(WOOD),0,(i+.5)*r,-i*run));
+    for(var i=0;i<n;i++){
+      g.add(P(box(1.3,r,run*1.08),mL(WOOD),0,(i+.5)*r,-i*run));       // the tread and its riser
+    }
     g.add(P(box(.06,.06,len),mL(DARKWOOD),.68,STAIR_RISE/2+.95,-STAIR_RUN/2,ang));
     g.add(P(box(.06,.06,len),mL(DARKWOOD),-.68,STAIR_RISE/2+.95,-STAIR_RUN/2,ang));
     return g; },
@@ -15418,10 +15656,10 @@ function makeInterior(spec){
   }
   var W,D, exitZ, levels=levelsOf(spec), FLOOR=H+0.5, stairsAt=[];
   var lifts=[], holes=[], slabs=[];
-  STAIR_RISE=FLOOR; STAIR_RUN=FLOOR*1.15;
+  STAIR_RISE=FLOOR; STAIR_RUN=FLOOR*1.15;          // a comfortable pitch, whatever the floor height
 
   /* A flight has to climb a whole floor and still fit in the room. In a tall,
-     narrow place - a tower with an eight-metre ceiling - a gentle stair would be
+     narrow place — a tower with an eight-metre ceiling — a gentle stair would be
      longer than the floor is wide, so it steepens instead of overrunning the wall. */
   function fitStairs(){
     var room=Math.min(W||99,D||99);
@@ -15430,15 +15668,15 @@ function makeInterior(spec){
   }
 
   /* Lay one flight, from the floor `from` to the floor above it.
-     (xc,zHead) is where the top of the flight lands. It climbs toward -z. Three
-     things have to agree with each other or the stairs misbehave: the mesh you
-     see, the sloped surface that carries you, and the hole it needs in the floor
-     above so that you have somewhere to arrive. */
+     (xc,zHead) is where the top of the flight lands. It climbs toward -z. Three things have
+     to agree with each other or the stairs misbehave: the mesh you see, the
+     sloped surface that carries you, and the hole it needs in the floor above
+     so that you have somewhere to arrive. */
   function flight(xc,zHead,from,wide){
     fitStairs();
     var hw=(wide||1.5)/2, hd=STAIR_RUN/2, zc=zHead+hd;
     lvl=from; yOff=from*FLOOR;
-    put("stairs",xc,zc+hd,0);                      /* the mesh begins at the bottom step */
+    put("stairs",xc,zc+hd,0);                      // the mesh begins at the bottom step
     stairsAt.push({x:ox+xc,z:oz+zc,from:from,rot:Math.PI,hw:hw+0.35,hd:hd});
     holes.push({level:from+1,x:xc,z:zc,hw:hw+0.35,hd:hd+0.25});
   }
@@ -15454,7 +15692,7 @@ function makeInterior(spec){
     var mat=new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634});
     var cut=holes.filter(function(h){ return h.level===L; });
     if(!cut.length){ root.add(P(box(Wf,.12,Df),mat,0,y,0)); return; }
-    var h=cut[0];
+    var h=cut[0];                                   // one stairwell per floor in these plans
     var z0=Math.max(-Df/2,h.z-h.hd), z1=Math.min(Df/2,h.z+h.hd);
     if(z0+Df/2>0.05) root.add(P(box(Wf,.12,z0+Df/2),mat,0,y,(-Df/2+z0)/2));
     if(Df/2-z1>0.05) root.add(P(box(Wf,.12,Df/2-z1),mat,0,y,(z1+Df/2)/2));
@@ -15569,10 +15807,7 @@ function makeInterior(spec){
       exitZ=D/2;
     }
     /* the way between floors */
-    for(var SL=0;SL<levels-1;SL++){
-      lvl=SL; yOff=SL*FLOOR;
-      flight(0,-D/2+2.2,SL,1.8);
-    }
+    for(var SL=0;SL<levels-1;SL++) flight(0,-D/2+2.2,SL,1.8);
     if(plan.lift&&levels>2) liftShaft(W,D,levels);
     lvl=0; yOff=0;
   } else {
@@ -15586,9 +15821,7 @@ function makeInterior(spec){
       spots.forEach(function(q){ if(q.level===undefined) q.level=HL; });
       for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz,y:yOff});
       for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff}); }
-      if(HL<levels-1){
-        flight(W/2-2.4,-D/2+2.4,HL,1.8);
-      }
+      if(HL<levels-1) flight(W/2-2.4,-D/2+2.4,HL,1.8);
       lvl=HL; yOff=HL*FLOOR;
       if(HL>0) planSlab(HL,W,D,yOff-0.06);
     }
@@ -15621,10 +15854,14 @@ function makeInterior(spec){
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
   var amb=new THREE.HemisphereLight(0xFFF0D8,0x2A2018,.3); amb.position.set(0,H,0); root.add(amb);
-  buildSlabs();                                   /* floors last, with the stairwells cut out */
+  buildSlabs();                                   // floors last, with the stairwells cut out
   lvl=0; yOff=0;
+  /* holes in world coordinates, for anything that needs to know where a floor
+     is actually open — the stairwells and lift shafts, the only legitimate
+     ways through a solid floor */
+  var holesOut=holes.map(function(h){ return {level:h.level,x:ox+h.x,z:oz+h.z,hw:h.hw,hd:h.hd}; });
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
-    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,
+    winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,holes:holesOut,
     locked:plan.locked||null,unlocked:false};
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
@@ -15706,6 +15943,10 @@ function enterBuilding(spec){
   INT.outside={x:camera.position.x,z:camera.position.z,y:camera.position.y,here:store.here||0};
   camera.position.set(INT.start.x,1.72,INT.start.z); yaw=0; pitch=0;
   if(typeof flyY!=="undefined") flyY=0;
+  /* a level you were pinned against belongs to the building you were just
+     in — its floor height and floor count both differ building to building,
+     so carrying it into a new interior can hold you at a nonsense height */
+  if(typeof pinnedLevel!=="undefined") pinnedLevel=null;
   bringOccupants();
   setStatus("<b>Inside "+esc(placeName(spec))+".</b> Walk back out through the door you came in by.");
 }
@@ -15713,6 +15954,7 @@ function exitInterior(quiet){
   if(!INT) return;
   var spec=INT.spec;
   scene.remove(INT.root); INT=null; store.inside=null; wallsAt=-1; intCool=1.2;
+  if(typeof pinnedLevel!=="undefined") pinnedLevel=null;
   var D=doorWorld(spec);
   camera.position.set(D.x+D.out.x*2.2,1.72,D.z+D.out.z*2.2); yaw=Math.atan2(-D.out.x,-D.out.z)+Math.PI; pitch=0;
   if(!quiet) setStatus("Back outside "+esc(placeName(spec))+".");
@@ -16488,8 +16730,11 @@ function inDollars(n){ return "about $"+((n||0)/100).toFixed(2); }
 /* ---- where you stand ---- */
 function refreshStanding(){
   if(!signedIn()) { standing=null; paintCity(); return Promise.resolve(null); }
-  return cityRpc("my_standing").then(function(s){ standing=s; paintCity(); return s; })
-    .catch(function(){ return null; });
+  return cityRpc("my_standing").then(function(s){
+    standing=s; paintCity();
+    if((s&&s.business||[]).length) loadMyJobs();
+    return s;
+  }).catch(function(){ return null; });
 }
 function drawPay(){
   return cityRpc("draw_pay").then(function(rows){
@@ -16560,21 +16805,46 @@ function paintCity(){
     L.push("<b>"+esc(j.job)+"</b> at "+esc(j.employer)+" \u2014 "+j.rate+" gold "+(j.kind==="salary"?"a week":"an hour")+
       (j.job_id?(" <button class='btn' data-off='"+j.job_id+"' data-on='"+(j.offline?"0":"1")+"'>"+
         (j.offline?"call my someone home":"leave my someone at work")+"</button>"):"")+
-      (j.offline?" <span style='color:var(--dim)'>\u00b7 at work while you sleep, at two fifths</span>":""));
+      (j.offline?" <span style='color:var(--dim)'>\u00b7 at work while you sleep, at two fifths</span>":"")+
+      (j.panel==="temple"?" <button class='btn' id='city-temple-collect'>collect the bowls of Temple Row</button>":""));
   });
   if(!(standing.jobs||[]).length) L.push("<span style='color:var(--dim)'>No work yet. The board below shows what the city needs.</span>");
   (standing.lots||[]).forEach(function(l){
-    L.push(esc(l.lot)+" \u2014 "+(l.own?"yours":"leased")+(l.rent?" \u00b7 "+gold(l.rent)+" a week":""));
+    L.push(esc(l.lot)+" \u2014 "+(l.own?"yours":"leased")+(l.rent?" \u00b7 "+gold(l.rent)+" a week":"")+
+      (!l.own&&l.rent&&l.lot_id?(" <button class='btn' data-rent='"+l.lot_id+"'>pay rent</button>"):""));
   });
   if(myOffice) L.push("<b>Office "+esc(myOffice.number)+"</b>, floor "+(myOffice.floor+1)+
     (myOffice.name?" \u2014 "+esc(myOffice.name):"")+" \u00b7 code <b>"+esc(myOffice.keycode||"\u2014")+"</b>");
   if(standing.prison) L.push("<span style='color:#C0603A'><b>Held by Somnucor</b> for "+esc(standing.prison.crime)+
-    (standing.prison.work_off?(" \u2014 "+(standing.prison.done||0)+" of "+standing.prison.hours+" hours worked off"):"")+
+    (standing.prison.work_off?(" \u2014 "+(standing.prison.done||0)+" of "+standing.prison.hours+" hours worked off"+
+      " <button class='btn' id='city-work-off'>work an hour off</button>"):"")+
     ". Your own dreamscape is untouched.</span>");
   el.innerHTML=L.join("<br>");
   Array.prototype.forEach.call(el.querySelectorAll("[data-off]"),function(b){
     b.onclick=function(){ workOffline(+b.getAttribute("data-off"),b.getAttribute("data-on")==="1"); };
   });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-rent]"),function(b){
+    b.onclick=function(){ payRent(+b.getAttribute("data-rent")); };
+  });
+  var tc=document.getElementById("city-temple-collect");
+  if(tc) tc.onclick=function(){ collectTemplePurse(); };
+  var wo=document.getElementById("city-work-off");
+  if(wo) wo.onclick=function(){ workOffMySentence(1); };
+  paintBusiness();
+}
+function amOfficer(){ return (standing&&standing.jobs||[]).some(function(j){ return j.panel==="police"||j.panel==="court"; }); }
+function collectTemplePurse(){
+  return cityRpc("collect_temple_purse").then(function(sum){
+    setStatus(sum>0?("<b>"+gold(sum)+"</b> collected from the bowls of Temple Row."):"The bowls are empty just now.");
+    return refreshStanding();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function workOffMySentence(hours){
+  if(!standing||!standing.prison) return;
+  return cityRpc("work_off",{p_sentence:standing.prison.id,p_hours:hours||1}).then(function(o){
+    setStatus(o==="served"?"<b>Time served.</b> You are free.":o==="ok"?"An hour worked off.":esc(String(o)));
+    return refreshStanding();
+  }).catch(function(e){ setStatus(esc(e.message)); });
 }
 function showJobBoard(){
   var el=document.getElementById("city-jobs"); if(!el) return;
@@ -16740,7 +17010,8 @@ function paintStock(){
   if(!have.length){ el.innerHTML="<span style='color:var(--dim)'>Nothing in your stock. Work the quarry or the stand and it fills.</span>"; return; }
   el.innerHTML=have.map(function(s){
     return "<span style='display:inline-block;margin:0 10px 6px 0'>"+esc(s.name)+" <b>"+s.amount+"</b>"+
-      " <button class='btn' data-sell='"+esc(s.kind)+"'>sell at "+s.buys+"</button></span>";
+      " <button class='btn' data-sell='"+esc(s.kind)+"'>sell to the city at "+s.buys+"</button>"+
+      " <button class='btn' data-list='"+esc(s.kind)+"'>list on the market</button></span>";
   }).join("");
   Array.prototype.forEach.call(el.querySelectorAll("[data-sell]"),function(b){
     b.onclick=function(){
@@ -16749,12 +17020,171 @@ function paintStock(){
       if(n>0) sellStock(k,Math.min(n,row.amount));
     };
   });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-list]"),function(b){
+    b.onclick=function(){
+      var k=b.getAttribute("data-list"), row=myStock.filter(function(s){ return s.kind===k; })[0];
+      var n=+(prompt("How much "+row.name.toLowerCase()+" to list? You have "+row.amount+".")||0);
+      if(n<=0) return;
+      var each=+(prompt("Gold apiece? The city itself buys at "+row.buys+", so the market is worth more than that.")||0);
+      if(each>0) listStock(k,Math.min(n,row.amount),each);
+    };
+  });
 }
 function initGround(){
   var b;
   if((b=document.getElementById("ground-work"))) b.onclick=workGround;
   if((b=document.getElementById("ground-refresh"))) b.onclick=loadStock;
   if(signedIn()) setTimeout(loadStock,1400);
+}
+
+/* ---- the materials market: dreamers building their own ground, buying and selling to each other ---- */
+function listStock(kind,amount,each){
+  return cityRpc("list_stock",{p_kind:kind,p_amount:amount,p_each:each}).then(function(o){
+    setStatus(o==="ok"?"<b>Listed.</b> Somebody building their own ground will find it.":esc(String(o)));
+    return Promise.all([loadStock(),loadMarket()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function unlistStock(id){
+  return cityRpc("unlist_stock",{p_listing:id}).then(function(o){
+    setStatus(o==="ok"?"<b>Taken down.</b> What was left is back in your stock.":esc(String(o)));
+    return Promise.all([loadStock(),loadMarket()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function buyFromMarket(id,amount){
+  return cityRpc("buy_stock",{p_listing:id,p_amount:amount}).then(function(o){
+    setStatus(o==="ok"?"<b>Bought.</b> It is in your stock.":esc(String(o)));
+    return Promise.all([loadStock(),loadMarket(),refreshStanding()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+var myMarket=[];
+function loadMarket(){
+  return cityRpc("market_board").then(function(rows){ myMarket=rows||[]; paintMarket(); return myMarket; })
+    .catch(function(){ myMarket=[]; paintMarket(); return []; });
+}
+function paintMarket(){
+  var el=document.getElementById("market-state"); if(!el) return;
+  if(!myMarket.length){ el.innerHTML="<span style='color:var(--dim)'>Nothing listed just now. What comes up in the quarry or the stand can go up here, at whatever price its owner asks.</span>"; return; }
+  el.innerHTML='<table style="width:100%;border-collapse:collapse">'+
+    myMarket.map(function(m){
+      return '<tr><td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+esc(m.name)+'</td>'+
+        '<td style="border-bottom:1px solid var(--line)">'+m.amount+'</td>'+
+        '<td style="border-bottom:1px solid var(--line)">'+m.each+' gold each</td>'+
+        '<td style="border-bottom:1px solid var(--line)">'+
+          (m.mine?'<button class="btn" data-unlist="'+m.listing_id+'">take down</button>'
+                 :'<button class="btn" data-buyfrom="'+m.listing_id+'" data-max="'+m.amount+'">buy</button>')+
+        '</td></tr>';
+    }).join("")+'</table>';
+  Array.prototype.forEach.call(el.querySelectorAll("[data-unlist]"),function(b){
+    b.onclick=function(){ unlistStock(+b.getAttribute("data-unlist")); };
+  });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-buyfrom]"),function(b){
+    b.onclick=function(){
+      var max=+b.getAttribute("data-max");
+      var n=+(prompt("How much to buy? Up to "+max+".")||0);
+      if(n>0) buyFromMarket(+b.getAttribute("data-buyfrom"),Math.min(n,max));
+    };
+  });
+}
+function initMarket(){
+  var b;
+  if((b=document.getElementById("market-refresh"))) b.onclick=loadMarket;
+  setTimeout(loadMarket,1600);
+}
+
+/* ---- a business of your own: open one, post work, hire who applies ---- */
+var dreamerEmailsCache=null;
+function dreamerEmails(){
+  if(dreamerEmailsCache) return Promise.resolve(dreamerEmailsCache);
+  return cityRpc("admin_list_dreamers").then(function(rows){
+    var map={}; (rows||[]).forEach(function(r){ map[r.id]=r.email; });
+    dreamerEmailsCache=map; return map;
+  }).catch(function(){ return {}; });
+}
+function openBusiness(name,lotId){
+  return cityRpc("open_business",{p_name:name,p_lot:lotId||null}).then(function(o){
+    setStatus(o==="ok"?"<b>Opened.</b> Post work under it whenever you like.":esc(String(o)));
+    return Promise.all([refreshStanding(),loadMyJobs()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function postJobFor(employerId,title,kind,rate,positions){
+  return cityRpc("post_job",{p_employer:employerId,p_title:title,p_kind:kind,p_rate:rate,p_positions:positions}).then(function(o){
+    setStatus(o==="ok"?"<b>Posted.</b> It is on the job board now.":esc(String(o)));
+    return Promise.all([loadMyJobs(),showJobBoard()]);
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+/* applications, read straight from the table — RLS already lets an
+   operator or a keeper see the ones on their own jobs */
+function loadApplications(jobId){
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/applications?select=id,user_id,said,at&job_id=eq."+jobId+"&state=eq.waiting&order=at",{
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+(tok||DW_CONFIG.supabaseKey)}
+    }).then(function(r){ return r.ok?r.json():[]; });
+  }).catch(function(){ return []; });
+}
+function hireApplicant(applicationId){
+  return cityRpc("hire",{p_application:applicationId}).then(function(o){
+    setStatus(o==="ok"?"<b>Hired.</b> They start drawing pay from now.":esc(String(o)));
+    return loadMyJobs();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+var myJobs=[];
+function loadMyJobs(){
+  if(!standing||!(standing.business||[]).length){ myJobs=[]; paintBusiness(); return Promise.resolve([]); }
+  return jobBoard().then(function(rows){
+    var mine=(standing.business||[]).map(function(b){ return b.name; });
+    myJobs=(rows||[]).filter(function(r){ return mine.indexOf(r.employer)>=0; });
+    return Promise.all(myJobs.map(function(j){
+      return loadApplications(j.job_id).then(function(apps){ j.applications=apps; });
+    })).then(function(){ return dreamerEmails(); }).then(function(emails){
+      myJobs.forEach(function(j){ (j.applications||[]).forEach(function(a){ a.email=emails[a.user_id]||a.user_id; }); });
+      paintBusiness();
+      return myJobs;
+    });
+  });
+}
+function paintBusiness(){
+  var el=document.getElementById("business-state"); if(!el) return;
+  if(!signedIn()){ el.innerHTML=""; return; }
+  var biz=(standing&&standing.business)||[];
+  var h="";
+  if(!biz.length) h="<span style='color:var(--dim)'>You run nothing yet. Opening one costs 2,000 gold, and can stand on ground you hold.</span>";
+  else h=biz.map(function(b){ return "<b>"+esc(b.name)+"</b>"; }).join(", ")+"<br>";
+  h+=myJobs.map(function(j){
+    return "<div style='margin-top:8px;padding-top:6px;border-top:1px solid var(--line)'>"+
+      "<b>"+esc(j.title)+"</b> — "+j.rate+" gold "+(j.pay_kind==="salary"?"a week":"an hour")+
+      " · "+j.taken+" of "+j.positions+" filled"+
+      (j.applications&&j.applications.length?j.applications.map(function(a){
+        return "<div style='margin-left:10px'>"+esc(a.email)+(a.said?(" — “"+esc(a.said)+"”"):"")+
+          " <button class='btn' data-hire='"+a.id+"'>hire</button></div>";
+      }).join(""):"<div style='margin-left:10px;color:var(--dim)'>No applications waiting.</div>")+
+      "</div>";
+  }).join("");
+  el.innerHTML=h;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-hire]"),function(b){
+    b.onclick=function(){ hireApplicant(+b.getAttribute("data-hire")); };
+  });
+}
+function initBusiness(){
+  var b;
+  if((b=document.getElementById("business-open"))) b.onclick=function(){
+    var name=(prompt("What is the business called?")||"").trim();
+    if(!name) return;
+    var lot=(prompt("A lot number it stands on, if it stands on one you hold? Leave blank otherwise.")||"").trim();
+    openBusiness(name,lot?+lot:null);
+  };
+  if((b=document.getElementById("business-post"))) b.onclick=function(){
+    var biz=(standing&&standing.business)||[];
+    if(!biz.length) return setStatus("Open a business first.");
+    var employerId=biz.length===1?biz[0].id:+(prompt("Which business? "+biz.map(function(x){ return x.id+"="+x.name; }).join(", "))||0);
+    if(!employerId) return;
+    var title=(prompt("What is the post called?")||"").trim(); if(!title) return;
+    var kind=(prompt("Hourly or salary?","hourly")||"hourly").trim().toLowerCase();
+    var rate=+(prompt("Gold "+(kind==="salary"?"a week":"an hour")+"?")||0); if(rate<=0) return;
+    var positions=+(prompt("How many positions?","1")||1);
+    postJobFor(employerId,title,kind,rate,positions);
+  };
+  if((b=document.getElementById("business-refresh"))) b.onclick=loadMyJobs;
+  if(signedIn()) setTimeout(loadMyJobs,1800);
 }
 
 </script>
@@ -16772,13 +17202,18 @@ function initGround(){
 var deskOpen=false, deskNear=false, deskOffices=[], deskJobs=[];
 
 function amKeeper(){ return !!(deskStanding&&deskStanding.keeper); }
+function amDeskOfficer(){ return !!(deskStanding&&(deskStanding.keeper||deskStanding.officer)); }
 var deskStanding=null;
 function checkKeeper(){
-  if(!signedIn()) { deskStanding=null; return Promise.resolve(false); }
-  return cityRpc("admin_diagnose").then(function(d){
-    deskStanding={keeper:(d&&d.you_are==="keeper")};
-    return deskStanding.keeper;
-  }).catch(function(){ deskStanding={keeper:false}; return false; });
+  if(!signedIn()) { deskStanding=null; return Promise.resolve(deskStanding); }
+  return Promise.all([
+    cityRpc("admin_diagnose").catch(function(){ return null; }),
+    (standing?Promise.resolve(standing):refreshStanding())
+  ]).then(function(r){
+    var d=r[0];
+    deskStanding={keeper:!!(d&&d.you_are==="keeper"), officer:(typeof amOfficer==="function"&&amOfficer())};
+    return deskStanding;
+  }).catch(function(){ deskStanding={keeper:false,officer:false}; return deskStanding; });
 }
 
 /* ---- the desk itself, in the penthouse ---- */
@@ -16810,10 +17245,10 @@ function openDesk(){
     '<button class="btn" id="kd-close">Leave the desk</button></div>'+
     '<div id="kd-body">Asking the city whether you keep this desk\u2026</div>';
   document.getElementById("kd-close").onclick=closeDesk;
-  checkKeeper().then(function(isKeeper){
+  checkKeeper().then(function(){
     var body=document.getElementById("kd-body");
-    if(!isKeeper){
-      body.innerHTML="<p>This desk answers only to a keeper. You may sit at it, but it will tell you nothing.</p>"+
+    if(!amDeskOfficer()){
+      body.innerHTML="<p>This desk answers only to a keeper, or to Somnucor's own police and courts. You may sit at it, but it will tell you nothing.</p>"+
         "<p style='color:var(--dim)'>If that is wrong, a keeper can add you at the Keeper\u2019s Desk in the admin page.</p>";
       return;
     }
@@ -16826,18 +17261,20 @@ function closeDesk(){
 }
 
 function drawDesk(body){
+  var keeper=amKeeper();
+  var tabs=[];
+  if(keeper) tabs.push(["offices","Offices"],["posts","Positions & wages"],["catalogue","Catalogue"],
+                        ["security","Tower security"],["housing","Housing"]);
+  tabs.push(["courts","Courts"]);
+  if(keeper) tabs.push(["city","The city"]);
   body.innerHTML='<div id="kd-msg" style="color:var(--dim);min-height:18px;margin-bottom:10px"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
-      '<button class="btn" data-kd="offices">Offices</button>'+
-      '<button class="btn" data-kd="posts">Positions</button>'+
-      '<button class="btn" data-kd="security">Tower security</button>'+
-      '<button class="btn" data-kd="housing">Housing</button>'+
-      '<button class="btn" data-kd="city">The city</button>'+
+      tabs.map(function(t){ return '<button class="btn" data-kd="'+t[0]+'">'+t[1]+'</button>'; }).join("")+
     '</div><div id="kd-pane"></div>';
   Array.prototype.forEach.call(body.querySelectorAll("[data-kd]"),function(b){
     b.onclick=function(){ deskPane(b.getAttribute("data-kd")); };
   });
-  deskPane("offices");
+  deskPane(keeper?"offices":"courts");
 }
 function kdMsg(t,bad){ var e=document.getElementById("kd-msg"); if(e){ e.textContent=t; e.style.color=bad?"#C0603A":"var(--dim)"; } }
 function deskPane(which){
@@ -16876,14 +17313,18 @@ function deskPane(which){
       deskJobs=rows||[];
       pane.innerHTML='<table style="width:100%;border-collapse:collapse">'+
         '<tr><th style="text-align:left;padding:4px 6px">Post</th><th style="text-align:left">Pay</th>'+
-        '<th style="text-align:left">Filled</th><th style="text-align:left">Positions</th><th></th></tr>'+
+        '<th style="text-align:left">Filled</th><th style="text-align:left">Positions</th><th style="text-align:left">Wage</th><th></th></tr>'+
         deskJobs.map(function(j,i){
           return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(j.title)+'</td>'+
             '<td style="border-bottom:1px solid var(--line)">'+j.rate+" gold "+(j.pay_kind==="salary"?"a week":"an hour")+'</td>'+
             '<td style="border-bottom:1px solid var(--line)">'+j.taken+'</td>'+
             '<td style="border-bottom:1px solid var(--line)"><input id="kdp-'+i+'" type="number" min="0" value="'+j.positions+
             '" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:3px"></td>'+
-            '<td style="border-bottom:1px solid var(--line)"><button class="btn" data-kdp="'+i+'" data-job="'+j.job_id+'">Set</button></td></tr>';
+            '<td style="border-bottom:1px solid var(--line)"><input id="kdw-'+i+'" type="number" min="0" value="'+j.rate+
+            '" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:3px"></td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+
+              '<button class="btn" data-kdp="'+i+'" data-job="'+j.job_id+'">Set positions</button> '+
+              '<button class="btn" data-kdw="'+i+'" data-job="'+j.job_id+'">Set wage</button></td></tr>';
         }).join("")+"</table>";
       Array.prototype.forEach.call(pane.querySelectorAll("[data-kdp]"),function(b){
         b.onclick=function(){
@@ -16893,7 +17334,87 @@ function deskPane(which){
             .catch(function(e){ kdMsg(e.message,true); });
         };
       });
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-kdw]"),function(b){
+        b.onclick=function(){
+          var i=+b.getAttribute("data-kdw"), j=deskJobs[i];
+          cityRpc("set_wage",{p_job:+b.getAttribute("data-job"),p_kind:j.pay_kind,
+            p_rate:+document.getElementById("kdw-"+i).value,p_starting:j.starting})
+            .then(function(o){ kdMsg(o==="ok"?"Wage set.":String(o),o!=="ok"); deskPane("posts"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
     });
+  }
+  else if(which==="catalogue"){
+    cityRpc("catalogue_board").then(function(rows){
+      var cat=rows||[];
+      pane.innerHTML='<p style="color:var(--dim);line-height:1.6">What everything in Somnucor sells for — the shop’s wares, and what is built out of the quarry and the stand.</p>'+
+        '<table style="width:100%;border-collapse:collapse">'+
+        '<tr><th style="text-align:left;padding:4px 6px">Thing</th><th style="text-align:left">Kind</th>'+
+        '<th style="text-align:left">Listed</th><th style="text-align:left">Price</th><th></th></tr>'+
+        cat.map(function(c,i){
+          return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(c.name)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+esc(c.kind)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)"><input id="kdcl-'+i+'" type="checkbox" '+(c.listed?"checked":"")+'></td>'+
+            '<td style="border-bottom:1px solid var(--line)"><input id="kdc-'+i+'" type="number" min="0" value="'+c.price+
+            '" style="width:76px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:3px"></td>'+
+            '<td style="border-bottom:1px solid var(--line)"><button class="btn" data-kdc="'+i+'" data-item="'+c.id+'">Set</button></td></tr>';
+        }).join("")+"</table>";
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-kdc]"),function(b){
+        b.onclick=function(){
+          var i=b.getAttribute("data-kdc");
+          cityRpc("set_price",{p_item:+b.getAttribute("data-item"),
+            p_price:+document.getElementById("kdc-"+i).value,
+            p_listed:document.getElementById("kdcl-"+i).checked})
+            .then(function(o){ kdMsg(o==="ok"?"Set.":String(o),o!=="ok"); deskPane("catalogue"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
+    }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
+  }
+  else if(which==="courts"){
+    cityRpc("prison_board").then(function(rows){
+      var held=rows||[];
+      pane.innerHTML='<p style="color:var(--dim);line-height:1.6">Who Somnucor currently holds. A sentence can be worked off, or a keeper or officer can release it outright. It touches nothing in anybody’s own dreamscape.</p>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
+          '<input id="kd-sent-user" placeholder="their account id" style="min-width:260px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
+          '<input id="kd-sent-crime" placeholder="the charge" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
+          '</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">'+
+          '<label>Held until, hours from now <input id="kd-sent-real" type="number" min="1" value="4" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px"></label>'+
+          '<label><input id="kd-sent-workable" type="checkbox" checked> can be worked off, in <input id="kd-sent-work" type="number" min="1" value="4" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px"> hours worked</label>'+
+          '<button class="btn" id="kd-sentence">Sentence</button></div>'+
+          '<p style="color:var(--dim);font-size:12px;margin:-6px 0 12px">Find an account id on the Offices pane’s picker if you keep the desk, or ask them for it. A sentence ends at either the hour it runs to, or the hours worked off, whichever comes first.</p>'+
+        '<table style="width:100%;border-collapse:collapse">'+
+        '<tr><th style="text-align:left;padding:4px 6px">Held</th><th style="text-align:left">For</th>'+
+        '<th style="text-align:left">Worked off</th><th style="text-align:left">Until</th><th></th></tr>'+
+        held.map(function(p){
+          return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(p.email||p.user)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+esc(p.crime)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+(p.work_off?((p.done||0)+" of "+p.hours):"<span style=\"color:var(--dim)\">no</span>")+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+new Date(p.until).toLocaleString()+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)"><button class="btn" data-kd-release="'+p.sentence_id+'">Release</button></td></tr>';
+        }).join("")+"</table>"+
+        (!held.length?'<p style="color:var(--dim)">Nobody is held just now.</p>':"");
+      var sb=document.getElementById("kd-sentence");
+      if(sb) sb.onclick=function(){
+        var u=(document.getElementById("kd-sent-user").value||"").trim();
+        var crime=(document.getElementById("kd-sent-crime").value||"").trim();
+        var hoursReal=+document.getElementById("kd-sent-real").value||1;
+        var workOff=document.getElementById("kd-sent-workable").checked;
+        var hoursWork=+document.getElementById("kd-sent-work").value||1;
+        if(!u||!crime) return kdMsg("An account id and a charge are both needed.",true);
+        cityRpc("sentence",{p_user:u,p_crime:crime,p_hours_real:hoursReal,p_work_off:workOff,p_work_hours:hoursWork})
+          .then(function(o){ kdMsg(o==="ok"?"Sentenced.":String(o),o!=="ok"); deskPane("courts"); })
+          .catch(function(e){ kdMsg(e.message,true); });
+      };
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-kd-release]"),function(b){
+        b.onclick=function(){
+          cityRpc("release",{p_sentence:+b.getAttribute("data-kd-release")})
+            .then(function(o){ kdMsg(o==="ok"?"Released.":String(o),o!=="ok"); deskPane("courts"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
+    }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
   }
   else if(which==="security"){
     var cur=(typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config)||{};
@@ -16940,17 +17461,47 @@ function deskPane(which){
     });
   }
   else {
-    Promise.all([cityRpc("admin_diagnose"),cityRpc("doors_standing")]).then(function(r){
-      var d=r[0]||{}, doors=r[1];
+    Promise.all([cityRpc("admin_diagnose"),cityRpc("doors_standing"),readTreasury()]).then(function(r){
+      var d=r[0]||{}, doors=r[1], tr=r[2]||{};
       pane.innerHTML='<div style="line-height:1.8">'+
         "Accounts: <b>"+d.accounts_in_auth+"</b><br>"+
         "Signed in at least once: <b>"+d.signed_in_ever+"</b><br>"+
         "Doors in the hall: <b>"+(doors||0)+"</b><br>"+
         "Devices using the Atlas: <b>"+d.devices+"</b><br>"+
         "Keepers and watchers: <b>"+d.admins+"</b> ("+d.keepers+" keeper"+(d.keepers===1?"":"s")+")<br>"+
-        "<span style='color:var(--dim)'>You are a "+esc(d.you_are||"?")+".</span></div>";
+        "<span style='color:var(--dim)'>You are a "+esc(d.you_are||"?")+".</span></div>"+
+        '<h4 style="margin:16px 0 6px;color:var(--bone);font-weight:500">The treasury</h4>'+
+        '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">'+
+          '<label style="display:block">Tax on wages, in the hundred<br><input id="kd-tax" type="number" min="0" max="100" value="'+(tr.tax==null?"":tr.tax)+
+            '" style="width:70px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px"></label>'+
+          '<button class="btn" id="kd-tax-set">Set tax</button>'+
+          '<label style="display:block">Toll on the market, in the hundred<br><input id="kd-toll" type="number" min="0" max="100" value="'+(tr.market_toll==null?"":tr.market_toll)+
+            '" style="width:70px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px"></label>'+
+          '<button class="btn" id="kd-toll-set">Set toll</button>'+
+        '</div>'+
+        (tr.gold!=null?'<p style="color:var(--dim);margin-top:10px">The treasury itself holds <b>'+tr.gold.toLocaleString()+'</b> gold.</p>':"");
+      var tb=document.getElementById("kd-tax-set");
+      if(tb) tb.onclick=function(){
+        cityRpc("set_tax",{p_per_cent:+document.getElementById("kd-tax").value})
+          .then(function(o){ kdMsg(o==="ok"?"Tax set.":String(o),o!=="ok"); deskPane("city"); })
+          .catch(function(e){ kdMsg(e.message,true); });
+      };
+      var tl=document.getElementById("kd-toll-set");
+      if(tl) tl.onclick=function(){
+        cityRpc("set_toll",{p_per_cent:+document.getElementById("kd-toll").value})
+          .then(function(o){ kdMsg(o==="ok"?"Toll set.":String(o),o!=="ok"); deskPane("city"); })
+          .catch(function(e){ kdMsg(e.message,true); });
+      };
     }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
   }
+}
+/* reads the treasury row straight (RLS admits a keeper/watcher via is_admin()) */
+function readTreasury(){
+  return freshToken().then(function(tok){
+    return fetch(DW_CONFIG.supabaseUrl.replace(/\/+$/,"")+"/rest/v1/treasury?select=tax,market_toll,gold&limit=1",{
+      headers:{apikey:DW_CONFIG.supabaseKey,Authorization:"Bearer "+(tok||DW_CONFIG.supabaseKey)}
+    }).then(function(r){ return r.ok?r.json():[]; }).then(function(rows){ return (rows&&rows[0])||{}; });
+  }).catch(function(){ return {}; });
 }
 
 /* writing a setting for everybody, from in the world */
@@ -17336,7 +17887,7 @@ function boot(){
     return;
   }
   initWorld(); initControls(); initSpeech(); wire(); wirePlot(); wireCompass(); initTouch();
-  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit(); initCity(); initShop(); initJoin(); initGround();
+  loadCloudConfig(); checkin(); initAccount(); initSync(); initDoors(); initVisit(); initCity(); initShop(); initJoin(); initGround(); initMarket(); initBusiness();
   if(load()){
     committed=store.transcript||"";
     store.streets=[];
