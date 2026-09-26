@@ -745,7 +745,6 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   <div class="row" style="gap:8px;flex-wrap:wrap">
     <button class="btn" id="city-pay" type="button">Draw my pay</button>
     <button class="btn" id="city-refresh" type="button">Refresh</button>
-    <button class="btn" id="city-code" type="button">Change my office code</button>
   </div>
   <div id="city-jobs" style="margin-top:12px;font-family:var(--sans);font-size:13px"></div>
 
@@ -1386,6 +1385,19 @@ A("bicycle","vehicle",[.5,1.1,1.8],[
   {g:"box",s:[.05,.05,1.3],p:[0,.6,0],c:"metal"},
   {g:"box",s:[.05,.5,.05],p:[0,.75,.6],c:"metal"},
   {g:"box",s:[.44,.05,.05],p:[0,1,.6],c:"metal"}
+]);
+
+/* a flat deck low to the ground, four small wheels at the corners — nothing
+   like the bicycle's own two big wheels and frame, so the Transport Yard's
+   cheapest ride finally looks like its own thing */
+A("skateboard","vehicle",[.22,.22,.9],[
+  {g:"box",s:[.22,.035,.85],p:[0,.11,0],c:"paint"},
+  {g:"box",s:[.24,.02,.14],p:[0,.085,.32],c:"dark"},
+  {g:"box",s:[.24,.02,.14],p:[0,.085,-.32],c:"dark"},
+  {g:"sph",s:[.055],p:[-.12,.055,.32],c:"metal"},
+  {g:"sph",s:[.055],p:[.12,.055,.32],c:"metal"},
+  {g:"sph",s:[.055],p:[-.12,.055,-.32],c:"metal"},
+  {g:"sph",s:[.055],p:[.12,.055,-.32],c:"metal"}
 ]);
 
 A("plane","vehicle",[26,5,28],[
@@ -6825,11 +6837,10 @@ var QUARTERS=[
   left:["cottage","house","cottage","house","shop","cottage"],
   right:["house","cottage","house","manor","cottage","house"],
   front:["fence","hedge","flowers","bench","streetlight"], extras:["well","fountain","tree","tree","cat","dog"]},
- {name:"Temple Row", at:0.70, r:360, kind:"street", len:280, lane:40, ground:"groundpad",
-  sign:"Every tradition that has ever been dreamt keeps a house on this street.",
-  left:["cathedral","mosque","pagoda","stupa"],
-  right:["mandir","ziggurat","gopuram","shrine"],
-  front:["incenseburner","prayerflags","streetlight","bench"], extras:["torii","paifang","obelisk","statue","altarseasonal"]},
+ /* "Temple Row" itself is not a generic facade street any more — it is the
+    real, 275-house district temple-row.js builds, standing at exactly this
+    bearing and ring (at:0.70, r:360) and running on outward from here. See
+    buildTempleRow() in temple-row.js, called right after this city is. */
  {name:"The Bazaar", at:1.45, r:300, kind:"street", len:170, lane:18, ground:"groundpad",
   sign:"Everything that can be carried, and a good deal that cannot.",
   left:["shop","shop","shop","marketawning"], right:["shop","marketawning","shop","shop"],
@@ -7075,6 +7086,43 @@ function buildSomnucorCity(){
     }
   });
 
+  /* three posts the city's own job board has always paid for, but never
+     actually stood a building for — a Postmaster and Letter carriers with
+     nowhere to be found, a Gazette writer and editor with no office, a
+     Gaoler and Warden with a courthouse but no gaol beside it. audited
+     against the job list in schema-update-8: every other panel already had
+     a real place in the world (docks, farm, forest, mine, school, hospital,
+     the menagerie, and so on); these three didn't. */
+  (function(){
+    /* the Post Office: between Lantern Street and Temple Row, on the same
+       ring road as both */
+    var pa=0.55, pr=460, pcx=Math.cos(pa)*pr, pcz=Math.sin(pa)*pr;
+    var pux=Math.cos(pa+Math.PI/2), puz=Math.sin(pa+Math.PI/2);
+    lay("groundpad",pcx,pcz,70,60,pa);
+    var psg=put("signboard",pcx-Math.cos(pa)*38,pcz-Math.sin(pa)*38,-pa+Math.PI/2,"The Post Office");
+    if(psg){ psg.sign="The Post Office"; psg.note="Every letter and parcel the city sends passes through here. The postmaster keeps the counter; the carriers keep the streets."; }
+    put("shop",pcx,pcz,-pa,"The Post Office");
+    put("bench",pcx+pux*10,pcz+puz*10,-pa); put("streetlight",pcx-pux*10,pcz-puz*10,0);
+    put("bicycle",pcx+pux*16,pcz+puz*16,-pa);
+
+    /* the Gazette's own press, by the Bazaar, where the paper goes first */
+    var ga=1.65, gr=340, gcx2=Math.cos(ga)*gr, gcz2=Math.sin(ga)*gr;
+    var gux2=Math.cos(ga+Math.PI/2), guz2=Math.sin(ga+Math.PI/2);
+    lay("groundpad",gcx2,gcz2,70,60,ga);
+    var gsg=put("signboard",gcx2-Math.cos(ga)*38,gcz2-Math.sin(ga)*38,-ga+Math.PI/2,"The Chronicle Press");
+    if(gsg){ gsg.sign="The Chronicle Press"; gsg.note="Where the Obsidian Chronicle & Temple Gazette is set, printed and sent out into the city, week on week."; }
+    put("shop",gcx2,gcz2,-ga,"The Chronicle Press");
+    put("crates",gcx2+gux2*11,gcz2+guz2*11,-ga); put("streetlight",gcx2-gux2*11,gcz2-guz2*11,0);
+
+    /* the Gaol, beside the New Quarter's own courthouse */
+    var ja=5.95, jr=470, jcx=Math.cos(ja)*jr, jcz=Math.sin(ja)*jr;
+    lay("groundpad",jcx,jcz,90,70,ja);
+    var jsg=put("signboard",jcx-Math.cos(ja)*46,jcz-Math.sin(ja)*46,-ja+Math.PI/2,"The Gaol");
+    if(jsg){ jsg.sign="The Gaol"; jsg.note="Where a sentence is actually served, hours worked off under the gaoler's own eye — not just a line in the city's books."; }
+    put("institution",jcx,jcz,-ja,"The Gaol");
+    put("streetlight",jcx+22,jcz+10,0); put("streetlight",jcx-22,jcz-10,0);
+  })();
+
   /* the Gardens of the Year */
   var gAt=0.35, gR=720, gcx=Math.cos(gAt)*gR, gcz=Math.sin(gAt)*gR;
   var gux=Math.cos(gAt+Math.PI/2), guz=Math.sin(gAt+Math.PI/2);
@@ -7145,18 +7193,30 @@ EFFECTS.somnucortower=function(g){
 </script>
 <script>/* js/temple-row.js */
 /* SomnuMatrix — temple-row.js
-   Temple Row, at the north of the world. A house for every deity the Atlas knows
-   — two hundred and seventy-five of them, in six-and-twenty precincts, each
-   precinct in the manner of its own tradition. Every temple has a candle stand
-   you may light, an incense burner whose wisps rise while it is lit, and an
-   offering bowl.
-   What is left in a bowl is left; nothing here asks anything of anybody, and no
-   deity is bought. The count of candles is kept because people like to see that
-   others have stood there too.
+   Temple Row, a real quarter of Somnucor itself — two hundred and seventy-five
+   houses, one for every deity the Atlas knows, in six-and-twenty precincts,
+   each precinct in the manner of its own tradition. Every temple has a candle
+   stand you may light, an incense burner whose wisps rise while it is lit,
+   and an offering bowl.
+   It stands exactly where the city's own plan already marks "Temple Row" —
+   at the bearing and ring the Somnucor Tower's QUARTERS list has always used
+   for it — and runs on outward from there along that same bearing, the way
+   the Quarry and the Long Stand run outward from theirs when a district
+   needs more room than its wedge of the ring has to spare. It is built into
+   the very same realm as the rest of Somnucor, at the city's own origin,
+   with the city's own put() pattern — not a separate world behind a portal.
+   Walk to it like anywhere else in the city; "Go there" from The Land is
+   only ever a shortcut, never the only way in.
+   What is left in a bowl is left; nothing here asks anything of anybody, and
+   no deity is bought. The count of candles is kept because people like to
+   see that others have stood there too.
    loaded as a plain script; shares scope with the other files */
 "use strict";
 
-var ROW_IN=90, ROW_GAP=36, ROW_BUILD=6;
+var ROW_GAP=36, ROW_BUILD=7;
+/* where the city's own plan has always marked this quarter: the bearing and
+   ring radius from somnucor-city.js's QUARTERS scheme (at:0.70, r:360) */
+var ROW_AT=0.70, ROW_R0=360, ROW_ENTRY=150;
 
 /* the shape a tradition builds in — from what the Atlas already knows how to make */
 var PRECINCT={
@@ -7188,11 +7248,9 @@ var PRECINCT={
   Hebrew:{house:"temple",ground:"groundpad",trim:0xC9A868,note:"The name, and the hosts about it"}
 };
 
-function templeRowRealm(){
-  var R=realms();
-  for(var i=0;i<R.length;i++) if(R[i].kind==="templerow") return R[i];
-  return null;
-}
+/* Temple Row is the Somnucor realm itself now — there is no realm of its own
+   any more to look up */
+function templeRowRealm(){ return (typeof somnucorRealm==="function")?somnucorRealm():null; }
 function candleCount(key){
   try{ return +((JSON.parse(localStorage.getItem("somnu.candles")||"{}"))[key]||0); }catch(e){ return 0; }
 }
@@ -7215,28 +7273,33 @@ function leaveOffering(key,name,howMuch){
 }
 
 function buildTempleRow(){
-  var had=templeRowRealm();
-  if(had&&(had.build||0)>=ROW_BUILD) return had;
-  if(had){
-    for(var i=store.objects.length-1;i>=0;i--){
-      var o=store.objects[i];
-      if((o.realm||0)!==had.id) continue;
-      if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
-      store.objects.splice(i,1);
-    }
-    var R0=realms(), k0=R0.indexOf(had); if(k0>-1) R0.splice(k0,1);
-    if(store.here===had.id) store.here=0;
-  }
-  if(typeof REALMS==="undefined"||!REALMS.templerow) return null;
+  var r=somnucorRealm();
+  if(!r&&typeof buildSomnucorCity==="function") r=buildSomnucorCity();
+  if(!r) return null;
+  if((r.templerow||0)>=ROW_BUILD) return r;
   var was=store.here||0, wasGrid=store.grid;
-  var r=makeRealm("templerow");
   store.here=r.id; store.grid=r.grid;
   var h=blockOrigin(r.grid.bx,r.grid.bz), made=0;
 
-  function put(arch,x,z,rot,name,attrs){
+  /* the district's own bearing, out from the city's own centre — the same
+     radial/lateral basis somnucor-city.js's QUARTERS use */
+  var vx=Math.cos(ROW_AT), vz=Math.sin(ROW_AT);           // outward, away from the centre
+  var ux=Math.cos(ROW_AT+Math.PI/2), uz=Math.sin(ROW_AT+Math.PI/2); // across the street
+  /* `along` is distance out from the city's centre along the Row's own
+     bearing (starting at the ring the quarter has always been marked at);
+     `across` is distance either side of that centreline. every call below
+     is written in these two plain numbers, exactly as the old, separate
+     Temple Row was, and only turned into real city coordinates here. */
+  function toWorld(along,across){
+    var rr=ROW_R0+along;
+    return {x:vx*rr+ux*across, z:vz*rr+uz*across};
+  }
+
+  function put(arch,across,along,rot,name,attrs){
     if(!KIT[arch]) return null;
-    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
-      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+    var w=toWorld(along,across);
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+w.x,z:h.z+w.z,rot:(rot||0)-ROW_AT,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,templerow:true,
       addr:null,name:name||null,named:name?"stated":null,peopled:true};
     store.objects.push(spec); made++;
     if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
@@ -7256,66 +7319,71 @@ function buildTempleRow(){
   });
   var trads=Object.keys(byTrad).sort(function(a,b){ return byTrad[b].length-byTrad[a].length; });
 
-  /* the Row itself: one long avenue running north, precincts either side of it */
-  /* the precincts stand four abreast, so the Row is a quarter you can walk
-     rather than a road you must travel */
-  var COLS=[-400,-135,135,400], z=ROW_IN, rowDepth=0, col=0;
-  put("signboard",0,ROW_IN-40,0,"Temple Row").note=
-    "A house for every power the Atlas knows. Light a candle, burn incense, leave what you wish in the bowl. Nothing here is asked of you.";
+  /* the gate, right where the city's own plan has always marked this
+     quarter — a sign anyone walking the ring road already passes */
+  var gsg=put("signboard",0,-40,0,"Temple Row");
+  if(gsg){ gsg.sign="Temple Row"; gsg.note="A house for every power the Atlas knows: two hundred and seventy-five of them, in six-and-twenty precincts. The street runs on from here."; }
+  for(var gr=-30;gr<ROW_ENTRY+20;gr+=11){ put("road",-40,gr,Math.PI/2); put("road",0,gr,Math.PI/2); put("road",40,gr,Math.PI/2); }
+
+  /* two precincts to a row rather than four — the Row runs on outward
+     along its own bearing instead of sideways across its neighbours, so a
+     district built for 275 houses doesn't crowd the streets either side
+     of it near the ring */
+  var COLS=[-95,95], z=ROW_ENTRY, rowDepth=0, col=0;
   trads.forEach(function(t,ti){
     var P=PRECINCT[t]||{house:"shrine",ground:"lawn",trim:0xC9A868,note:""};
     var list=byTrad[t];
     var per=4, rows=Math.ceil(list.length/per);
     var depth=rows*ROW_GAP+26, cx=COLS[col], cz=z+depth/2;
-    if(P.ground) lay(P.ground,cx,cz,150,depth);
+    if(P.ground) lay(P.ground,cx,cz,120,depth);
     var sg=put("signboard",cx,z-6,Math.PI,t);
-    if(sg){ sg.sign=t; sg.note=P.note+" \u00b7 "+list.length+(list.length===1?" house":" houses"); }
+    if(sg){ sg.sign=t; sg.note=P.note+" · "+list.length+(list.length===1?" house":" houses"); }
     rowDepth=Math.max(rowDepth,depth);
     list.forEach(function(d,i){
-      var col=i%per, row=Math.floor(i/per);
-      var x=cx+(col-(per-1)/2)*31, zz=z+18+row*ROW_GAP;
+      var col2=i%per, row=Math.floor(i/per);
+      var x=cx+(col2-(per-1)/2)*24, zz=z+18+row*ROW_GAP;
       var face=Math.PI;        /* every house faces the way you come in */
       var temple=put(P.house,x,zz,face,d.name+"'s house");
       if(temple){
         temple.deity=d.key;
         /* every house is cut to the same standing: a street, not a skyline */
-        var sz=KIT[P.house].size, want=22/Math.max(sz[0],sz[2]);
-        temple.attrs={s:Math.max(0.3,Math.min(1,want))};
+        var sz=KIT[P.house].size, want=20/Math.max(sz[0],sz[2]);
+        temple.attrs={s:Math.max(0.28,Math.min(1,want))};
         refresh(temple);
       }
       /* what stands before every house, whatever the tradition */
-      put("altarseasonal",x,zz+12,face,"The offering bowl of "+d.name).deity=d.key;
-      put("imbolccandles",x-3.8,zz+12,face,"Candles at "+d.name+"'s house").deity=d.key;
-      put("incenseburner",x+3.8,zz+12,face,"Incense at "+d.name+"'s house").deity=d.key;
+      put("altarseasonal",x,zz+11,face,"The offering bowl of "+d.name).deity=d.key;
+      put("imbolccandles",x-3.4,zz+11,face,"Candles at "+d.name+"'s house").deity=d.key;
+      put("incenseburner",x+3.4,zz+11,face,"Incense at "+d.name+"'s house").deity=d.key;
       /* incense enough to see, not enough to hide the god behind it */
-      if(i%4===0) put("wisps",x+9,zz+14,0);
-      put("streetlight",x-12,zz+4,face);
+      if(i%4===0) put("wisps",x+8,zz+13,0);
+      put("streetlight",x-11,zz+4,face);
       /* the deity is at home: the same being you would meet in a dream */
-      var was=store.here;
-      var body=(typeof placeDeity==="function")?placeDeity(d.key,{},{at:{x:h.x+x,z:h.z+zz-2}}):null;
+      var placeAt=toWorld(zz-2,x);
+      var body=(typeof placeDeity==="function")?placeDeity(d.key,{},{at:{x:h.x+placeAt.x,z:h.z+placeAt.z}}):null;
       if(body){
-        body.x=h.x+x-6; body.z=h.z+zz+15;   /* on the steps, beside the bowl, facing whoever comes */ body.realm=r.id; body.rot=face+Math.PI;
-        body.solid=true; body.detail=4; body.hub=true; body.city=true;
+        var bodyAt=toWorld(zz+14,x-5);   /* on the steps, beside the bowl, facing whoever comes */
+        body.x=h.x+bodyAt.x; body.z=h.z+bodyAt.z; body.realm=r.id; body.rot=face+Math.PI-ROW_AT;
+        body.solid=true; body.detail=4; body.hub=true; body.city=true; body.templerow=true;
         var ch=charOf(body);
         if(ch){ ch.x=body.x; ch.z=body.z; ch.awake=true; ch.atId=temple?temple.id:null;
                 ch.home=temple?temple.id:null; ch.routine=null; ch.anchor={x:body.x,z:body.z}; }
         refresh(body);
       }
-      store.here=was;
     });
-    /* four precincts to a row, then the next row of them */
+    /* two precincts to a row, then the next row of them, further out */
     col++;
     if(col>=COLS.length||ti===trads.length-1){
-      for(var av=z-14;av<z+rowDepth+14;av+=11){ put("road",-268,av,Math.PI/2); put("road",0,av,Math.PI/2); put("road",268,av,Math.PI/2); }
+      for(var av=z-14;av<z+rowDepth+14;av+=11){ put("road",-190,av,Math.PI/2); put("road",0,av,Math.PI/2); put("road",190,av,Math.PI/2); }
       z+=rowDepth+34; rowDepth=0; col=0;
-      for(var cr=-470;cr<480;cr+=11) put("road",cr,z-17,0);
+      for(var cr=-200;cr<210;cr+=11) put("road",cr,z-17,0);
     }
   });
   /* the far end: the pole itself */
   put("obelisk",0,z+34,0,"The North Pole");
   put("signboard",0,z+16,Math.PI,"The end of the Row").note="Two hundred and seventy-five houses stand behind you, and every one of them is somebody's.";
 
-  r.dressed=true; r.build=ROW_BUILD; store.templerow=r.id;
+  r.templerow=ROW_BUILD; store.templerow=r.id;
   store.here=was; store.grid=wasGrid;
   if(typeof save==="function") save();
   return r;
@@ -7325,7 +7393,9 @@ function toTempleRow(){
   if(!r) return;
   if(typeof beHere==="function") beHere(r.id);
   var h=blockOrigin(r.grid.bx,r.grid.bz);
-  if(walkMode) camera.position.set(h.x,1.72,h.z+ROW_IN-60);
+  var vx=Math.cos(ROW_AT), vz=Math.sin(ROW_AT);
+  var gateX=h.x+vx*(ROW_R0-20), gateZ=h.z+vz*(ROW_R0-20);
+  if(walkMode) camera.position.set(gateX,1.72,gateZ);
   else if(typeof visitRealm==="function") visitRealm(r.id);
   setStatus("<b>Temple Row.</b> A house for every power the Atlas knows. Light a candle, or leave what you wish.");
 }
@@ -7346,7 +7416,7 @@ function templeTick(dt){
     rowNear=found;
     var d=DEITY[found.deity]||{name:found.deity};
     var lit=candleCount(found.deity);
-    setStatus("<b>"+esc(d.name)+"</b>"+(d.domains?" \u2014 "+esc(d.domains):"")+
+    setStatus("<b>"+esc(d.name)+"</b>"+(d.domains?" — "+esc(d.domains):"")+
       ". Press <b>C</b> to light a candle"+(lit?(" ("+lit+" so far)"):"")+
       ", <b>O</b> to leave something in the bowl, <b>T</b> to see what the bowl holds.");
   } else if(!found&&rowNear) rowNear=null;
@@ -7354,7 +7424,7 @@ function templeTick(dt){
 function templeStanding(key,name){
   return cityRpc("temple_standing",{p_deity:key}).then(function(s){
     if(!s||!s.offerings) return setStatus("Nothing left at "+esc(name)+"'s house yet.");
-    setStatus("<b>"+esc(name)+"</b> \u2014 "+s.offerings+" offering"+(s.offerings===1?"":"s")+
+    setStatus("<b>"+esc(name)+"</b> — "+s.offerings+" offering"+(s.offerings===1?"":"s")+
       " left over time, "+gold(s.gold||0)+" in all"+
       (s.waiting?(", "+gold(s.waiting)+" still waiting in the bowl"):"")+".");
   }).catch(function(e){ setStatus(esc(e.message)); });
@@ -7506,6 +7576,86 @@ function buildHousing(){
   return made;
 }
 
+/* ---------------------------------------------------- the Employee & Backer District */
+/* a neighbourhood like any other to walk through and see — real houses,
+   real addressed plots, signboards the same as everywhere else — except
+   that nobody buys or leases one on the open market. Who lives here is a
+   power the penthouse holds (see schema-update-17): a keeper, or whoever
+   currently holds the penthouse, assigns a dreamer to a numbered plot, the
+   same way an office is assigned rather than sold. */
+var DISTRICT_AT=5.05, DISTRICT_R=1100, DISTRICT_BUILD=1;
+var DISTRICT_HOMES=["house","cottage","house","cottage","apartment","house","cottage","apartment",
+  "house","cottage","house","apartment","cottage","house","apartment","house","cottage","house","apartment","cottage"];
+function buildEmployeeDistrict(){
+  var r=somnucorRealm(); if(!r) return 0;
+  if(r.district>=DISTRICT_BUILD) return 0;
+  var was=store.here, wasGrid=store.grid;
+  store.here=r.id; store.grid=r.grid;
+  var h=blockOrigin(r.grid.bx,r.grid.bz), made=0, plots=[];
+  function put(arch,x,z,rot,name,attrs){
+    if(!KIT[arch]) return null;
+    var spec={id:uid(),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+      solid:KIT[arch].cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
+      addr:null,name:name||null,named:name?"stated":null,peopled:true};
+    store.objects.push(spec); made++;
+    if(typeof addMesh==="function"&&typeof scene!=="undefined"&&scene) addMesh(spec);
+    return spec;
+  }
+  function lay(kind,cx,cz,w,d){ if(!KIT[kind]) return; var sz=KIT[kind].size; put(kind,cx,cz,0,null,{w:w/sz[0],d:d/sz[2]}); }
+  var cx=Math.cos(DISTRICT_AT)*DISTRICT_R, cz=Math.sin(DISTRICT_AT)*DISTRICT_R;
+  var ux=Math.cos(DISTRICT_AT+Math.PI/2), uz=Math.sin(DISTRICT_AT+Math.PI/2);
+  var vx=Math.cos(DISTRICT_AT), vz=Math.sin(DISTRICT_AT), face=-DISTRICT_AT;
+  var per=DISTRICT_HOMES.length, step=48, span=per*step;
+  lay("lawn",cx,cz,span+70,150);
+  var sg=put("signboard",cx-vx*(span/2+50),cz-vz*(span/2+50),-DISTRICT_AT+Math.PI/2,"The Somnucor Employee & Backer District");
+  if(sg){ sg.sign="The Somnucor Employee & Backer District";
+    sg.note="Kept for Somnucor's own people, and for the backers who made the city possible. Who lives here is not bought — it is the penthouse's own say."; }
+  for(var s=-span/2;s<span/2;s+=11) put("road",cx+ux*s,cz+uz*s,-DISTRICT_AT+Math.PI/2);
+  DISTRICT_HOMES.forEach(function(arch,i){
+    if(!KIT[arch]) return;
+    var along=(i-(per-1)/2)*step;
+    var d=KIT[arch].size, depth=Math.max(d[2],d[0])*0.55+18;
+    var x=cx+ux*along+vx*depth, z=cz+uz*along+vz*depth;
+    var home=put(arch,x,z,face);
+    if(!home) return;
+    var board=put("signboard",x-ux*13,z-uz*13,face,"Somnucor Row "+(i+1));
+    if(board){
+      board.plot={name:"Somnucor Row "+(i+1),quarter:"The Somnucor Employee & Backer District",kind:"district",
+                  price:0,rent:0,x:home.x,z:home.z,homeId:home.id,archetype:arch};
+      board.sign="Somnucor Row "+(i+1);
+      plots.push(board.plot);
+    }
+    put("streetlight",x+ux*7,z+uz*7,face);
+    put("fence",x,z-uz*2,face);
+  });
+  r.district=DISTRICT_BUILD;
+  store.districtPlots=plots;
+  store.here=was; store.grid=wasGrid;
+  if(typeof save==="function") save();
+  return made;
+}
+/* entering the District's own plots in the books — never for sale, never
+   to let, exactly like an office: assigned, not bought */
+function sectionDistrict(){
+  if(!signedIn()) return Promise.reject(new Error("Sign in first."));
+  var plots=(store.districtPlots||[]);
+  if(!plots.length) return Promise.reject(new Error("There is no District laid out yet."));
+  var done=0, failed=0;
+  function one(i){
+    if(i>=plots.length){
+      setStatus("<b>"+done+" District plots entered in the books.</b>"+(failed?(" "+failed+" were refused."):""));
+      return loadLots();
+    }
+    var p=plots[i];
+    return cityRpc("section_lot",{p_name:p.name,p_quarter:p.quarter,p_kind:"district",p_x:p.x,p_z:p.z,p_w:30,p_d:30})
+      .then(function(id){ done++; return cityRpc("price_lot",{p_lot:id,p_price:0,p_rent:0,p_sale:false,p_let:false}); })
+      .catch(function(){ failed++; })
+      .then(function(){ return one(i+1); });
+  }
+  setStatus("Entering the District's plots in the books…");
+  return one(0);
+}
+
 /* the realtor's work: entering these plots in the city's books, once */
 function sectionHousing(){
   if(!signedIn()) return Promise.reject(new Error("Sign in first."));
@@ -7536,12 +7686,30 @@ var cityLots=[], lotsAt=0;
 function loadLots(){
   if(!signedIn()) return Promise.resolve([]);
   if(Date.now()-lotsAt<20000&&cityLots.length) return Promise.resolve(cityLots);
-  return cityRpc("lot_board").then(function(rows){ cityLots=rows||[]; lotsAt=Date.now(); return cityLots; })
+  return cityRpc("lot_board").then(function(rows){ cityLots=rows||[]; lotsAt=Date.now(); applyLotDecor(); return cityLots; })
     .catch(function(){ return []; });
 }
 function lotByName(name){
   for(var i=0;i<cityLots.length;i++) if(cityLots[i].name===name) return cityLots[i];
   return null;
+}
+/* the same city for everyone: what somebody has actually raised on their
+   own ground is read here and redrawn on the actual building, for every
+   dreamer who walks past it — not only the one who built it. raise_
+   building() and dress_lot() already check server-side that only a lot's
+   own owner or tenant can change it (schema-update-12 and schema-update-7);
+   this is the other half, reading what they changed back out again. */
+function applyLotDecor(){
+  var plots=(store.plots||[]).concat(store.districtPlots||[]);
+  if(!plots.length||!cityLots.length) return;
+  plots.forEach(function(p){
+    var rec=lotByName(p.name); if(!rec||!rec.decor) return;
+    var built=rec.decor.built;
+    if(built&&KIT[built]&&built!==p.archetype&&p.homeId){
+      var home=store.objects.filter(function(o){ return o.id===p.homeId; })[0];
+      if(home){ home.archetype=built; p.archetype=built; if(typeof refresh==="function") refresh(home); }
+    }
+  });
 }
 /* lot_board() doesn't say who holds a lot, only that it is held — "yours" is
    read off my_standing()'s own lots list, which city.js keeps in `standing` */
@@ -7677,7 +7845,7 @@ function buildYard(){
 
   /* what stands in the yard, in the order the catalogue lists it */
   var rows=[
-    ["bicycle","Skateboard"],["bicycle","Bicycle"],["horse","Horse"],["car","Motor car"],
+    ["skateboard","Skateboard"],["bicycle","Bicycle"],["horse","Horse"],["car","Motor car"],
     ["truck","Truck"],["bus","Omnibus"],["broomstick","Broomstick"],["flyingcarpet","Flying carpet"],
     ["sleigh","Sleigh"],["firechariot","Chariot of fire"],["hovercar","Hovercar"],["shuttle","Shuttle"],
     ["saucer","Flying saucer"],["unicorn","Unicorn"],["pegasus","Pegasus"],["griffin","Griffin"],
@@ -7832,8 +8000,13 @@ function joinSomnucor(){
     if(typeof buildHall==="function") buildHall();
     if(typeof buildTempleRow==="function") buildTempleRow();
     if(typeof buildHousing==="function") buildHousing();
+    if(typeof buildEmployeeDistrict==="function") buildEmployeeDistrict();
     if(typeof buildYard==="function") buildYard();
     if(typeof buildGroundWorks==="function") buildGroundWorks();
+    /* whatever anybody else has already raised or dressed on their own
+       ground, read back and redrawn now — not only once you happen to
+       walk up to that one plot's own board */
+    if(typeof loadLots==="function"&&typeof signedIn==="function"&&signedIn()) loadLots();
     if(typeof renderRealmList==="function") renderRealmList();
     if(typeof paintJoin==="function") paintJoin();
     save();
@@ -7843,7 +8016,9 @@ function joinSomnucor(){
 /* leaving takes the city down. it does not touch the dreamer's own world, their
    account, their gold or their door — those are theirs whether they visit or not. */
 function leaveSomnucor(){
-  var kinds={somnucor:1,hall:1,templerow:1};
+  /* Temple Row is not its own realm kind any more — its houses live under
+     the "somnucor" realm itself, so taking that down takes them with it */
+  var kinds={somnucor:1,hall:1};
   var ids={};
   realms().forEach(function(r){ if(kinds[r.kind]) ids[r.id]=1; });
   for(var i=store.objects.length-1;i>=0;i--){
@@ -10503,6 +10678,7 @@ function animate(){
   if(store.dressLater){ store.dressLater=false; realms().forEach(function(r){ realmScenery(r); }); }
   if(store.peopleLater){ store.peopleLater=false; peopleEverything(); }
   navTick(); interiorTick(dt); padTick(); realmSkyTick(dt); magicTick(dt); armsTick(dt); hubTick(dt);
+  if(typeof presenceTick==="function") presenceTick(dt);
   doorsTick(dt); visitTick(dt); deskTick(dt); templeTick(dt); housingTick(dt); yardTick(dt);
   nightTick(dt); nightFades(dt);
   avatarTick(dt);
@@ -13587,9 +13763,13 @@ function openPanel(){
 function savePanel(){
   var $=function(i){return document.getElementById(i);};
   var was=cfg().counted!==false;
-  var c={mode:$("mode").value,key:$("key").value.trim(),proxy:$("proxy").value.trim(),
+  /* start from the saved config and only change what this panel owns —
+     building a bare object here once silently wiped out flags this panel
+     never shows (somnucor membership, sync on/off), un-joining Somnucor
+     the moment anybody opened Settings and hit Save for an unrelated reason */
+  var c=Object.assign({},cfg(),{mode:$("mode").value,key:$("key").value.trim(),proxy:$("proxy").value.trim(),
          model:$("model").value.trim()||LLM_MODEL,density:parseInt($("density").value,10),
-         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value,skies:$("skies").value!=="off",solidAll:$("solidall").value!=="half"};
+         counted:$("counted").checked,nightmares:$("nm-on").value!=="off",nightmareCatch:$("nm-catch").value,pad:$("padmode").value,skies:$("skies").value!=="off",solidAll:$("solidall").value!=="half"});
   if(was&&!c.counted) forgetDevice();
   if(!was&&c.counted) setTimeout(checkin,50);
   if(c.mode==="direct"&&!c.key){ $("err").textContent="Direct mode needs a key."; return; }
@@ -15010,10 +15190,17 @@ function rebuildMe(){
   if(typeof showCarried==="function") setTimeout(showCarried,0);
   if(scene) scene.add(meG);
   meG.visible=false;
+  /* how you look just changed — whoever else is in Somnucor should see it
+     too, next time their own client asks */
+  if(typeof publishMyLook==="function") publishMyLook();
 }
 
-/* the one floor the tower's real view is offered from */
-function onPenthouse(){ return !!(INT&&INT.locked&&(INT.level||0)===INT.locked.level); }
+/* any floor of the tower with windows to look out of — not the penthouse
+   alone. INT.locked only ever gets set on the Somnucor Tower's own plan, so
+   this still can't be triggered from some random cottage; level 0 is the
+   lobby (no real view to speak of down there), so the lookout starts at the
+   first office floor and runs all the way up through the penthouse. */
+function onLookoutFloor(){ return !!(INT&&INT.locked&&(INT.level||0)>0); }
 
 /* ---- the buttons: shown only while walking ---- */
 function meButtons(){
@@ -15028,7 +15215,7 @@ function meButtons(){
   document.getElementById("me-view").onclick=cycleView;
   document.getElementById("me-dress").onclick=openWardrobe;
   var cvBtn=document.getElementById("me-cityview");
-  var press=function(e){ e.preventDefault&&e.preventDefault(); if(onPenthouse()) cityView=true; };
+  var press=function(e){ e.preventDefault&&e.preventDefault(); if(onLookoutFloor()) cityView=true; };
   var release=function(){ cityView=false; };
   cvBtn.onmousedown=press; cvBtn.onmouseup=release; cvBtn.onmouseleave=release;
   cvBtn.ontouchstart=press; cvBtn.ontouchend=release; cvBtn.ontouchcancel=release;
@@ -15036,7 +15223,7 @@ function meButtons(){
     if(!walkMode||/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
     if(e.code==="KeyV") cycleView();
     if(e.code==="KeyB") openWardrobe();
-    if(e.code==="KeyL"&&onPenthouse()) cityView=true;
+    if(e.code==="KeyL"&&onLookoutFloor()) cityView=true;
   });
   addEventListener("keyup",function(e){ if(e.code==="KeyL") cityView=false; });
 }
@@ -15091,8 +15278,8 @@ function avatarTick(dt){
   meButtons();
   if(meBar) meBar.style.display=walkMode?"flex":"none";
   var cvBtn=document.getElementById("me-cityview");
-  if(cvBtn) cvBtn.style.display=(walkMode&&onPenthouse())?"block":"none";
-  if(!walkMode||!onPenthouse()) cityView=false;
+  if(cvBtn) cvBtn.style.display=(walkMode&&onLookoutFloor())?"block":"none";
+  if(!walkMode||!onLookoutFloor()) cityView=false;
   if(!walkMode){ if(meG) meG.visible=false; closeWardrobeIfOpen(); return; }
   if(!meG) rebuildMe();
   var P=camera.position, feet=P.y-1.72;
@@ -15119,7 +15306,7 @@ function renderView(){
      coordinates the tower stands at shows the real, live city below.
      one render pass, then straight back to the ordinary view, exactly like
      the over-the-shoulder trick below does for a single frame. */
-  if(walkMode&&cityView&&onPenthouse()&&INT){
+  if(walkMode&&cityView&&onLookoutFloor()&&INT){
     var spec=INT.spec, P0=camera.position, px0=P0.x, py0=P0.y, pz0=P0.z;
     var def=(typeof KIT!=="undefined")?KIT[spec.archetype]:null;
     var sc=(spec.attrs&&spec.attrs.s)||1;
@@ -15705,8 +15892,29 @@ function makeInterior(spec){
       if(c!==null){ var lint=P(box(horiz?gw:.2,H-2.3,horiz?.2:gw),wallMat,horiz?c:x1,yOff+2.3+(H-2.3)/2,horiz?z1:c); root.add(lint); at=c+gw/2; }
     });
   }
+  /* where a stairwell will stand on a given floor, worked out before any
+     furniture is placed on that floor — a desk (or a lobby's front till)
+     landing in this rectangle is nudged clear of it instead of sitting on
+     the steps, which used to happen because furniture went down first and
+     the stairs were only laid afterward */
+  var keepouts=[];
+  function keepoutAt(k,x,z){
+    if(k==="stairs") return null;
+    for(var i=0;i<keepouts.length;i++){
+      var o=keepouts[i]; if(o.level!==lvl) continue;
+      if(Math.abs(x-o.x)<o.hw&&Math.abs(z-o.z)<o.hd) return o;
+    }
+    return null;
+  }
   function put(k,x,z,rot){
-    if(!FURN[k]) return; var it=FURN[k](); it.userData.furn=k; it.position.set(x,yOff,z); it.rotation.y=rot||0; root.add(it);
+    if(!FURN[k]) return;
+    var block=keepoutAt(k,x,z);
+    if(block){
+      /* pushed straight out along whichever side of the stairwell it landed
+         on, clear of the tread and the hole above it */
+      z=(z<=block.z)?(block.z-block.hd-1.1):(block.z+block.hd+1.1);
+    }
+    var it=FURN[k](); it.userData.furn=k; it.position.set(x,yOff,z); it.rotation.y=rot||0; root.add(it);
     if(SOLIDFURN[k]){ var bb=furnBox(k); var c=Math.abs(Math.cos(rot||0)), s=Math.abs(Math.sin(rot||0));
       walls.push({x:ox+x,z:oz+z,rot:0,hw:(c*bb[0]+s*bb[1])/2,hd:(s*bb[0]+c*bb[1])/2,h:1.2,level:lvl}); }
     items.push(it);
@@ -15775,7 +15983,7 @@ function makeInterior(spec){
         spots.push({x:xc,z:zc+rd*.2,room:r,level:L});
         spots.push({x:xc+sd*1.2,z:zc-rd*.25,room:r,level:L});
         lights.push({x:xc,z:zc,y:yOff});
-        windows.push({x:sd*(Wf/2-.12),z:zc,ry:sd>0?-Math.PI/2:Math.PI/2,y:yOff});
+        windows.push({x:sd*(Wf/2-.12),z:zc,ry:sd>0?-Math.PI/2:Math.PI/2,y:yOff,big:(r==="office"||r==="techoffice")});
       });
       if(list.length) wallLine(sd*hall/2,zTop+list.length*rd,sd*Wf/2,zTop+list.length*rd);
       wallLine(sd*hall/2,zTop,sd*hall/2,zTop+list.length*rd,gaps);
@@ -15847,6 +16055,11 @@ function makeInterior(spec){
       lvl=0; yOff=0;
       wallLine(-W/2,zFront0,W/2,zFront0,[0],2.2);
       wallLine(-W/2,zTop0,W/2,zTop0); wallLine(-W/2,zTop0,-W/2,zFront0); wallLine(W/2,zTop0,W/2,zFront0);
+      /* the ground floor's own stairs (SL=0 always lands at the back of the
+         corridor, x=0) are worked out now, before the lobby is furnished,
+         so the front desk doesn't get set down on the steps */
+      (function(){ fitStairs(); var khw=1.8/2,khd=STAIR_RUN/2,zh=-D/2+2.2;
+        keepouts.push({level:0,x:0,z:zh+khd,hw:khw+0.6,hd:khd+0.6}); })();
       fillHall(plan.ground||"lobby",W,D,put,spots);
       spots.forEach(function(q){ if(q.level===undefined) q.level=0; });
       for(var glz=-D/2+4;glz<D/2-2;glz+=7) for(var glx=-W/2+4;glx<W/2-2;glx+=8) lights.push({x:glx,z:glz,y:0});
@@ -15861,8 +16074,8 @@ function makeInterior(spec){
           spots.forEach(function(q){ if(q.level===undefined) q.level=L2; });
           for(var pz=-D/2+4;pz<D/2-2;pz+=6) lights.push({x:0,z:pz,y:yOff});
           for(var pw=-D/2+3;pw<D/2-2;pw+=4){
-            windows.push({x:-W/2+.12,z:pw,ry:Math.PI/2,y:yOff});
-            windows.push({x:W/2-.12,z:pw,ry:-Math.PI/2,y:yOff});
+            windows.push({x:-W/2+.12,z:pw,ry:Math.PI/2,y:yOff,big:true});
+            windows.push({x:W/2-.12,z:pw,ry:-Math.PI/2,y:yOff,big:true});
           }
           planSlab(L2,W,D,yOff-0.06);
         } else roomFloor(L2,rooms,W,D,rw,rd,hall,false);
@@ -15894,10 +16107,20 @@ function makeInterior(spec){
       lvl=HL; yOff=HL*FLOOR;
       if(HL===0) wallLine(-W/2,D/2,W/2,D/2,[0],2.2); else wallLine(-W/2,D/2,W/2,D/2);
       wallLine(-W/2,-D/2,W/2,-D/2); wallLine(-W/2,-D/2,-W/2,D/2); wallLine(W/2,-D/2,W/2,D/2);
+      /* this floor's own stairs up, worked out before the floor is furnished
+         (see the matching flight() call below, once it's known this floor
+         has one) so nothing gets furnished on top of the steps */
+      if(HL<levels-1){
+        fitStairs();
+        var khw2=1.8/2,khd2=STAIR_RUN/2,farCornerK=HL%2===0;
+        var kx=farCornerK?(W/2-2.4):(-W/2+2.4), kzh=farCornerK?(-D/2+2.4):(D/2-2.4-STAIR_RUN);
+        keepouts.push({level:HL,x:kx,z:kzh+khd2,hw:khw2+0.6,hd:khd2+0.6});
+      }
       fillHall(HL===0?plan.fill:(plan.fill==="church"||plan.fill==="castle"?plan.fill:"office"),W,D,put,spots);
       spots.forEach(function(q){ if(q.level===undefined) q.level=HL; });
       for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz,y:yOff});
-      for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff}); }
+      var officeFloor=HL>0&&plan.fill!=="church"&&plan.fill!=="castle";
+      for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff,big:officeFloor}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff,big:officeFloor}); }
       if(HL<levels-1){
         fitStairs();
         var farCorner=HL%2===0;
@@ -15930,17 +16153,21 @@ function makeInterior(spec){
      no ground reaches. without this you stand on nothing and see under everything. */
   root.add(P(box(W+2.4,.4,D+2.4),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,-0.2,0));
   windows.forEach(function(w){
+    /* windows read as bigger, grander panes generally now — taller than a
+       person, not a porthole — and an office or the penthouse gets a still
+       grander one again: floor-to-near-ceiling glass befitting the room. */
+    var big=!!w.big, pw=big?2.6:1.9, ph=big?3.0:2.0, midY=big?1.9:1.75;
     /* the glass itself: a little shininess so the room's own lights catch it,
        instead of a flat painted-on tint */
     var wm=new THREE.MeshPhongMaterial({color:0xCFE0F0,shininess:70,specular:0x889AB0});
     winMats.push(wm);
-    var wp=P(new THREE.PlaneGeometry(1.4,1.4),wm,w.x,(w.y||0)+1.7,w.z); wp.rotation.y=w.ry; root.add(wp);
+    var wp=P(new THREE.PlaneGeometry(pw,ph),wm,w.x,(w.y||0)+midY,w.z); wp.rotation.y=w.ry; root.add(wp);
     /* a bright strip near the top of the pane that flares warm at dawn and
        dusk and fades at night and at noon — the "catching the outdoor light"
        cue, cheap and without any texture work */
     var gm=new THREE.MeshBasicMaterial({color:0xFFC98A,transparent:true,opacity:0});
     winGlints.push(gm);
-    var gp=P(new THREE.PlaneGeometry(1.4,.3),gm,w.x+Math.sin(w.ry)*0.01,(w.y||0)+2.25,w.z+Math.cos(w.ry)*0.01);
+    var gp=P(new THREE.PlaneGeometry(pw,ph*0.22),gm,w.x+Math.sin(w.ry)*0.01,(w.y||0)+midY+ph*0.42,w.z+Math.cos(w.ry)*0.01);
     gp.rotation.y=w.ry; root.add(gp);
   });
   lights.slice(0,18).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.62,15,1.7); pl.position.set(l.x,(l.y||0)+H-.3,l.z); root.add(pl);
@@ -15954,9 +16181,26 @@ function makeInterior(spec){
      is actually open — the stairwells and lift shafts, the only legitimate
      ways through a solid floor */
   var holesOut=holes.map(function(h){ return {level:h.level,x:ox+h.x,z:oz+h.z,hw:h.hw,hd:h.hd}; });
+  /* what to call each floor on the lift's own floor picker — named from the
+     plan itself, so the numbers on the panel mean something instead of just
+     counting up blind */
+  var floorNames=[];
+  (function(){
+    function cap(s){ return s?(s.charAt(0).toUpperCase()+s.slice(1)):s; }
+    for(var L=0;L<levels;L++){
+      if(plan.locked&&L===plan.locked.level){ floorNames[L]=cap((plan.locked.what||"the penthouse").replace(/^the /,"")); continue; }
+      if(L===0){
+        var g=(plan.mode==="mixed")?(plan.ground||"lobby"):(plan.mode==="hall"?plan.fill:null);
+        floorNames[L]=g?cap(ROOMNAME[g]||g):"Ground floor"; continue;
+      }
+      if(plan.mode==="mixed"){ floorNames[L]="Offices"; continue; }
+      if(plan.mode==="hall"){ floorNames[L]=(plan.fill==="church"||plan.fill==="castle")?cap(ROOMNAME[plan.fill]||plan.fill):"Offices"; continue; }
+      floorNames[L]="Floor "+(L+1);
+    }
+  })();
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
     winMats:winMats,winGlints:winGlints,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,holes:holesOut,
-    locked:plan.locked||null,unlocked:false};
+    locked:plan.locked||null,unlocked:false,floorNames:floorNames};
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
   fireplace:[2,.6],stove:[.8,.7],fridge:[.75,.7],bathtub:[1.7,.8],desk:[1.4,.7],pew:[3.4,.6],altarinside:[2.3,1],throneseat:[1.4,1.4],shelfgoods:[2.4,.5],till:[2,.7],
@@ -16128,6 +16372,54 @@ function liftMove(dir){
   setStatus("<b>Floor "+(to+1)+" of "+INT.levels+".</b>");
   return true;
 }
+/* pick a floor directly, from the panel, instead of stepping to it one press
+   at a time — the same rules (a locked floor still asks, a shut tower still
+   refuses) apply exactly as they do to Space/Control */
+function liftGoTo(to){
+  if(!INT||liftCool>0||!inLift()) return false;
+  to=Math.max(0,Math.min(INT.levels-1,to|0));
+  if(to===(INT.level||0)) return true;
+  if(!levelAllowed(to)){ liftCool=1.2; return false; }
+  INT.level=to; camera.position.y=1.72+to*INT.floor; liftCool=0.7; wallsAt=-1;
+  setStatus("<b>Floor "+(to+1)+" of "+INT.levels+".</b>");
+  return true;
+}
+/* the floor picker: shown only while standing in a lift, one button per
+   floor, named the way the plan itself names that floor */
+var liftPanel=null;
+function liftButtons(){
+  if(liftPanel||typeof document==="undefined"||!document.body) return;
+  liftPanel=document.createElement("div");
+  liftPanel.id="lift-panel";
+  liftPanel.style.cssText="position:fixed;bottom:96px;left:12px;z-index:30;display:none;flex-direction:column-reverse;gap:4px;max-height:56vh;overflow-y:auto;padding:6px;background:rgba(11,13,19,.7);border-radius:4px";
+  document.body.appendChild(liftPanel);
+}
+function paintLiftPanel(){
+  liftButtons();
+  if(!liftPanel) return;
+  var show=walkMode&&!!INT&&!!inLift();
+  liftPanel.style.display=show?"flex":"none";
+  if(!show) return;
+  var key=INT.spec.id+":"+INT.levels;
+  if(liftPanel.dataset.key!==key){
+    var h="";
+    for(var L=0;L<INT.levels;L++){
+      var nm=(INT.floorNames&&INT.floorNames[L])||("Floor "+(L+1));
+      h+='<button class="btn" data-floor="'+L+'" style="text-align:left;white-space:nowrap">'+(L+1)+" — "+esc(nm)+"</button>";
+    }
+    liftPanel.innerHTML=h;
+    Array.prototype.forEach.call(liftPanel.querySelectorAll("[data-floor]"),function(b){
+      b.onclick=function(){ liftGoTo(parseInt(b.getAttribute("data-floor"),10)); };
+    });
+    liftPanel.dataset.key=key;
+  }
+  var here=INT.level||0;
+  Array.prototype.forEach.call(liftPanel.querySelectorAll("[data-floor]"),function(b){
+    var mine=parseInt(b.getAttribute("data-floor"),10)===here;
+    b.style.fontWeight=mine?"700":"400";
+    b.style.opacity=mine?"1":".82";
+  });
+}
 
 /* the people whose hour has them in this building are in here with you */
 var ROLE_ROOM={cartographer:"techoffice",archivist:"archive",engineer:"kitchenette",gatekeeper:"lobby",
@@ -16161,6 +16453,7 @@ function bringOccupants(){
 function interiorTick(dt){
   if(intCool>0) intCool-=dt;
   if(liftCool>0) liftCool-=dt;
+  paintLiftPanel();
   if(!walkMode){ if(INT) exitInterior(true); return; }
   var P=camera.position;
   if(INT){
@@ -16171,7 +16464,7 @@ function interiorTick(dt){
     /* the lift: a status line the first time you step near it, the same way
        the keeper's desk announces itself, so nobody has to guess it exists */
     var near=inLift();
-    if(near&&!liftNear){ liftNear=true; setStatus("<b>The lift.</b> Press <b>Space</b> to rise, <b>C</b> to descend."); }
+    if(near&&!liftNear){ liftNear=true; setStatus("<b>The lift.</b> Pick a floor from the panel, or press <b>Space</b> to rise and <b>C</b> to descend one at a time."); }
     else if(!near&&liftNear) liftNear=false;
     /* the stairs are walked up, not stepped through: ground.js carries you */
     if(intCool<=0&&(INT.level||0)===0&&Math.hypot(P.x-INT.exit.x,P.z-INT.exit.z)<0.9) exitInterior(false);
@@ -16903,11 +17196,12 @@ function loadOffice(){
   if(!signedIn()) { myOffice=null; return Promise.resolve(null); }
   return cityRpc("my_office").then(function(o){ myOffice=o; paintCity(); return o; }).catch(function(){ return null; });
 }
+/* an office's code is a keeper's to set now, not the occupant's own — see
+   schema-update-16. this stays only so a saved link to the old button
+   doesn't error; it just explains where the control actually lives. */
 function setMyKeycode(code){
-  return cityRpc("set_my_keycode",{p_code:code}).then(function(out){
-    setStatus(out==="ok"?"<b>Your code is changed.</b> Only you and a keeper know it.":esc(String(out)));
-    return loadOffice();
-  }).catch(function(e){ setStatus(esc(e.message)); });
+  setStatus("A keeper sets your office's code, from the Keeper's Desk — ask whoever holds it.");
+  return Promise.resolve();
 }
 /* a door in the tower asks the server, never the browser, whether a code fits */
 function tryOfficeDoor(officeId){
@@ -16946,7 +17240,8 @@ function paintCity(){
       (!l.own&&l.rent&&l.lot_id?(" <button class='btn' data-rent='"+l.lot_id+"'>pay rent</button>"):""));
   });
   if(myOffice) L.push("<b>Office "+esc(myOffice.number)+"</b>, floor "+(myOffice.floor+1)+
-    (myOffice.name?" \u2014 "+esc(myOffice.name):"")+" \u00b7 code <b>"+esc(myOffice.keycode||"\u2014")+"</b>");
+    (myOffice.name?" \u2014 "+esc(myOffice.name):"")+" \u00b7 "+
+    (myOffice.keycode?("code <b>"+esc(myOffice.keycode)+"</b>"):"<span style='color:var(--dim)'>locked \u2014 a keeper hasn't set a code for it yet</span>"));
   if(standing.prison) L.push("<span style='color:#C0603A'><b>Held by Somnucor</b> for "+esc(standing.prison.crime)+
     (standing.prison.work_off?(" \u2014 "+(standing.prison.done||0)+" of "+standing.prison.hours+" hours worked off"+
       " <button class='btn' id='city-work-off'>work an hour off</button>"):"")+
@@ -17006,10 +17301,8 @@ function initCity(){
   var b;
   if((b=document.getElementById("city-pay"))) b.onclick=drawPay;
   if((b=document.getElementById("city-refresh"))) b.onclick=function(){ refreshStanding(); loadOffice(); showJobBoard(); };
-  if((b=document.getElementById("city-code"))) b.onclick=function(){
-    var c=prompt("A new code for your office door (four to twelve characters):");
-    if(c) setMyKeycode(c.trim());
-  };
+  /* the "city-code" self-service button is gone — an office's code is a
+     keeper's to set now, from the Keeper's Desk (schema-update-16) */
   if(signedIn()){ refreshStanding(); loadOffice(); }
   setTimeout(showJobBoard,1200);
 }
@@ -17350,8 +17643,8 @@ function checkKeeper(){
 
 /* ---- the desk itself, in the penthouse ---- */
 function deskTick(dt){
-  if(!walkMode||!store.inside||!INT||!INT.locked) { deskNear=false; return; }
-  if((INT.level||0)!==INT.locked.level) { deskNear=false; return; }
+  if(!walkMode||!store.inside||!INT||!INT.locked) { deskNear=false; officeDeskTick(); return; }
+  if((INT.level||0)!==INT.locked.level) { deskNear=false; officeDeskTick(); return; }
   /* the desk stands at the far end of the office */
   var P=camera.position, dx=P.x-INT.ox, dz=P.z-(INT.oz-INT.D/2+3);
   var near=Math.hypot(dx,dz)<3.2;
@@ -17359,6 +17652,67 @@ function deskTick(dt){
     deskNear=true;
     setStatus("<b>The Keeper's Desk.</b> Press <b>K</b> to open the city's books.");
   } else if(!near&&deskNear) deskNear=false;
+  if(near) officeDeskNear=false; else officeDeskTick();
+}
+/* ---- every other desk in the tower: not the Keeper's own, but not a
+   decoration either. any office room's desk is a way for whoever works
+   there to reach their own job — draw their pay, see the post they hold,
+   send someone home or call them back to work — without walking back out
+   to the panel outside. */
+var officeDeskNear=false;
+function officeDeskTick(){
+  if(!walkMode||!store.inside||!INT||!INT.locked){ officeDeskNear=false; return; }
+  var P=camera.position, near=null;
+  (INT.spots||[]).forEach(function(sp){
+    if(near) return;
+    if(sp.room!=="office"&&sp.room!=="techoffice") return;
+    var wx=INT.ox+sp.x, wz=INT.oz+sp.z;
+    if(Math.hypot(P.x-wx,P.z-wz)<3.4) near=sp;
+  });
+  if(near&&!officeDeskNear){
+    officeDeskNear=true;
+    setStatus(signedIn()?"<b>A desk.</b> Press <b>K</b> for your own work here.":"<b>A desk.</b> Sign in to use it.");
+  } else if(!near&&officeDeskNear) officeDeskNear=false;
+}
+function openOfficeDesk(){
+  if(deskOpen) return closeDesk();
+  if(!signedIn()) return setStatus("Sign in first — a desk knows whose work it shows by account.");
+  deskOpen=true;
+  var p=document.getElementById("keeper-desk");
+  if(!p){
+    p=document.createElement("div"); p.id="keeper-desk";
+    p.style.cssText="position:fixed;inset:6% 8%;z-index:60;overflow-y:auto;background:rgba(8,10,16,.97);"+
+      "border:1px solid var(--gold,#C9A868);border-radius:4px;padding:22px 26px;font-family:var(--sans);font-size:14px";
+    document.body.appendChild(p);
+  }
+  p.style.display="block";
+  p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+    '<b style="font-family:var(--serif);font-size:20px;color:var(--gold)">Your desk</b>'+
+    '<button class="btn" id="od-close">Leave the desk</button></div>'+
+    '<div id="od-body">Looking…</div>';
+  document.getElementById("od-close").onclick=closeDesk;
+  (standing?Promise.resolve(standing):refreshStanding()).then(function(s){
+    var body=document.getElementById("od-body"); if(!body) return;
+    var jobs=(s&&s.jobs)||[];
+    if(!jobs.length){
+      body.innerHTML="<p>Nobody's own work sits at this desk yet. Take a post from the job board and it's yours.</p>";
+      return;
+    }
+    body.innerHTML='<p style="color:var(--dim);margin:0 0 10px">What you hold with Somnucor, and the wages waiting on it.</p>'+
+      jobs.map(function(j,i){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">'+
+          '<span><b>'+esc(j.job)+'</b> at '+esc(j.employer)+' — '+j.rate+' gold '+(j.kind==="salary"?"a week":"an hour")+
+          (j.offline?" <span style='color:var(--dim)'>· at work while you sleep</span>":"")+'</span>'+
+          '<span>'+(j.job_id?('<button class="btn" data-odoff="'+j.job_id+'" data-on="'+(j.offline?"0":"1")+'">'+
+            (j.offline?"call home":"leave at work")+'</button>'):"")+'</span></div>';
+      }).join("")+
+      '<div style="margin-top:14px"><button class="btn" id="od-pay">Draw my pay</button></div>';
+    Array.prototype.forEach.call(body.querySelectorAll("[data-odoff]"),function(b){
+      b.onclick=function(){ workOffline(+b.getAttribute("data-off")||+b.getAttribute("data-odoff"),b.getAttribute("data-on")==="1").then(function(){ openOfficeDesk(); }); };
+    });
+    var pb=document.getElementById("od-pay");
+    if(pb) pb.onclick=function(){ if(typeof drawPay==="function") drawPay().then(function(){ openOfficeDesk(); }); };
+  });
 }
 function openDesk(){
   if(deskOpen) return closeDesk();
@@ -17422,22 +17776,42 @@ function deskPane(which){
         '<select id="kd-who"><option value="">— nobody —</option>'+who+'</select>'+
         '<input id="kd-name" placeholder="what it is called" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
         '<button class="btn" id="kd-assign">Assign</button></div>'+
+        '<p style="color:var(--dim);font-size:12px;margin:-4px 0 10px">Offices are for our backers and our actual city workers. Assigning one only ties it to them on the books — it stays locked, no working code, until you set one below.</p>'+
         '<table style="width:100%;border-collapse:collapse">'+
-        deskOffices.map(function(o){
+        deskOffices.map(function(o,i){
           return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">Floor '+(o.floor+1)+'</td>'+
             '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(o.number)+'</td>'+
             '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(o.name||"")+'</td>'+
-            '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+(o.occupant?esc(o.occupant):'<span style="color:var(--dim)">empty</span>')+"</td></tr>";
+            '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+(o.occupant?esc(o.occupant):'<span style="color:var(--dim)">empty</span>')+'</td>'+
+            '<td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+
+              (o.occupant?('<input id="kd-code-'+i+'" placeholder="4–12 chars" style="width:100px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:3px 6px">'+
+              ' <button class="btn" data-setcode="'+o.office_id+'" data-i="'+i+'">Set code</button>'+
+              ' <button class="btn" data-lock="'+o.office_id+'">Lock</button>')
+              :'<span style="color:var(--dim)">—</span>')+
+            "</td></tr>";
         }).join("")+"</table>";
       document.getElementById("kd-assign").onclick=function(){
         var u=document.getElementById("kd-who").value||null;
         cityRpc("assign_office",{p_office:+document.getElementById("kd-off").value,p_user:u,
           p_name:(document.getElementById("kd-name").value||"").trim()||null,p_panel:null})
-          .then(function(out){
-            kdMsg(/^\d+$/.test(String(out))?("Assigned. Their door code is "+out+".") : String(out));
-            deskPane("offices");
-          }).catch(function(e){ kdMsg(e.message,true); });
+          .then(function(out){ kdMsg(String(out)); deskPane("offices"); })
+          .catch(function(e){ kdMsg(e.message,true); });
       };
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-setcode]"),function(b){
+        b.onclick=function(){
+          var code=(document.getElementById("kd-code-"+b.getAttribute("data-i")).value||"").trim();
+          cityRpc("set_office_code",{p_office:+b.getAttribute("data-setcode"),p_code:code})
+            .then(function(out){ kdMsg(out==="ok"?"Code set. That office is unlocked now.":String(out)); deskPane("offices"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-lock]"),function(b){
+        b.onclick=function(){
+          cityRpc("lock_office",{p_office:+b.getAttribute("data-lock")})
+            .then(function(out){ kdMsg(out==="ok"?"Locked. No code opens it now, except the occupant themself or a keeper.":String(out)); deskPane("offices"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
     }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
   }
   else if(which==="posts"){
@@ -17550,29 +17924,47 @@ function deskPane(which){
   }
   else if(which==="security"){
     var cur=(typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config)||{};
-    pane.innerHTML='<p style="color:var(--dim);line-height:1.6">The code on this office, who it admits, and whether the tower opens above the lobby. A code is a door, not a vault \u2014 nobody\u2019s dreams are behind it.</p>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-      '<input id="kd-code" placeholder="penthouse code" value="'+esc(cur.penthouseCode||"")+'" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
-      '<select id="kd-who2"><option value="code">Anyone with the code</option><option value="keepers">Keepers only</option><option value="shut">Sealed</option></select>'+
-      '<select id="kd-tower"><option value="open">Tower open</option><option value="lobby">Lobby only</option></select>'+
-      '<button class="btn" id="kd-sec">Set</button></div>';
-    document.getElementById("kd-who2").value=cur.penthouseWho||"code";
-    document.getElementById("kd-tower").value=cur.towerOpen==="lobby"?"lobby":"open";
-    document.getElementById("kd-sec").onclick=function(){
-      var code=(document.getElementById("kd-code").value||"").trim();
-      if(code&&(code.length<4||code.length>12)) return kdMsg("A code wants between four and twelve characters.",true);
-      Promise.all([
-        putCloudConfig("penthouseCode",code||null),
-        putCloudConfig("penthouseWho",document.getElementById("kd-who2").value),
-        putCloudConfig("towerOpen",document.getElementById("kd-tower").value)
-      ]).then(function(){ kdMsg("Set. The tower obeys at once."); loadCloudConfig(); })
-        .catch(function(e){ kdMsg(e.message,true); });
-    };
+    Promise.all([cityRpc("penthouse_holder").catch(function(){ return null; }),cityRpc("admin_list_dreamers").catch(function(){ return []; })])
+      .then(function(pr){
+        var holder=pr[0], who=(pr[1]||[]).map(function(d){ return '<option value="'+d.id+'"'+(d.id===holder?" selected":"")+'>'+esc(d.email||d.id)+"</option>"; }).join("");
+        pane.innerHTML='<p style="color:var(--dim);line-height:1.6">The code on this office, who it admits, and whether the tower opens above the lobby. A code is a door, not a vault \u2014 nobody\u2019s dreams are behind it.</p>'+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+          '<input id="kd-code" placeholder="penthouse code" value="'+esc(cur.penthouseCode||"")+'" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
+          '<select id="kd-who2"><option value="code">Anyone with the code</option><option value="keepers">Keepers only</option><option value="shut">Sealed</option></select>'+
+          '<select id="kd-tower"><option value="open">Tower open</option><option value="lobby">Lobby only</option></select>'+
+          '<button class="btn" id="kd-sec">Set</button></div>'+
+          '<h4 style="margin:16px 0 6px;font-weight:500">Who holds the penthouse</h4>'+
+          '<p style="color:var(--dim);font-size:12px;margin:0 0 8px">Whoever holds it may also assign the Somnucor Employee &amp; Backer District\u2019s plots, the same as a keeper can.</p>'+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+          '<select id="kd-holder"><option value="">\u2014 nobody \u2014</option>'+who+'</select>'+
+          '<button class="btn" id="kd-holder-set">Set</button></div>';
+        document.getElementById("kd-who2").value=cur.penthouseWho||"code";
+        document.getElementById("kd-tower").value=cur.towerOpen==="lobby"?"lobby":"open";
+        document.getElementById("kd-sec").onclick=function(){
+          var code=(document.getElementById("kd-code").value||"").trim();
+          if(code&&(code.length<4||code.length>12)) return kdMsg("A code wants between four and twelve characters.",true);
+          Promise.all([
+            putCloudConfig("penthouseCode",code||null),
+            putCloudConfig("penthouseWho",document.getElementById("kd-who2").value),
+            putCloudConfig("towerOpen",document.getElementById("kd-tower").value)
+          ]).then(function(){ kdMsg("Set. The tower obeys at once."); loadCloudConfig(); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+        document.getElementById("kd-holder-set").onclick=function(){
+          var u=document.getElementById("kd-holder").value||null;
+          cityRpc("set_penthouse_holder",{p_user:u})
+            .then(function(o){ kdMsg(o==="ok"?"Set.":String(o),o!=="ok"); deskPane("security"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
   }
   else if(which==="housing"){
-    loadLots().then(function(rows){
+    Promise.all([loadLots(),cityRpc("admin_list_dreamers").catch(function(){ return []; })]).then(function(r){
+      var rows=r[0]||[], who=(r[1]||[]).map(function(d){ return '<option value="'+d.id+'">'+esc(d.email||d.id)+"</option>"; }).join("");
       var laid=(store.plots||[]).length, inBooks=(rows||[]).length;
       var held=(rows||[]).filter(function(l){ return l.held; }).length;
+      var district=rows.filter(function(l){ return l.quarter==="The Somnucor Employee & Backer District"; });
+      var districtLaid=(store.districtPlots||[]).length;
       pane.innerHTML='<p style="line-height:1.7">Plots laid out in the world: <b>'+laid+'</b><br>'+
         'Entered in the books: <b>'+inBooks+'</b> \u00b7 held by somebody: <b>'+held+'</b></p>'+
         '<p style="color:var(--dim);line-height:1.6">A plot has to be entered in the books before anybody can take it. '+
@@ -17585,11 +17977,36 @@ function deskPane(which){
             '<td style="border-bottom:1px solid var(--line)">'+(l.price?l.price.toLocaleString()+" gold":"")+'</td>'+
             '<td style="border-bottom:1px solid var(--line)">'+(l.rent?l.rent.toLocaleString()+" a week":"")+'</td>'+
             '<td style="border-bottom:1px solid var(--line)">'+(l.held?"held":"free")+'</td></tr>';
+        }).join("")+'</table></div>'+
+        '<h4 style="margin:18px 0 6px;font-weight:500">The Somnucor Employee &amp; Backer District</h4>'+
+        '<p style="color:var(--dim);font-size:12px;margin:0 0 8px">Never bought or leased \u2014 assigned, by a keeper or by whoever presently holds the penthouse (set that on the Tower security pane). '+
+        (districtLaid?("Laid out in the world: "+districtLaid+" plots."):"Not laid out in the world yet \u2014 join Somnucor once more to build it.")+'</p>'+
+        (districtLaid?'<button class="btn" id="kd-district-section">Enter the District\u2019s plots in the books</button>':"")+
+        '<div style="margin-top:10px;max-height:220px;overflow-y:auto"><table style="width:100%;border-collapse:collapse">'+
+        district.map(function(l){
+          return '<tr><td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+esc(l.name)+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)">'+(l.held?"held":"<span style=\"color:var(--dim)\">empty</span>")+'</td>'+
+            '<td style="border-bottom:1px solid var(--line)"><select data-dwho="'+l.lot_id+'"><option value="">\u2014 nobody \u2014</option>'+who+'</select> '+
+            '<button class="btn" data-dassign="'+l.lot_id+'">Assign</button></td></tr>';
         }).join("")+'</table></div>';
       document.getElementById("kd-section").onclick=function(){
         kdMsg("Entering them\u2026");
         sectionHousing().then(function(){ deskPane("housing"); }).catch(function(e){ kdMsg(e.message,true); });
       };
+      var ds=document.getElementById("kd-district-section");
+      if(ds) ds.onclick=function(){
+        kdMsg("Entering the District's plots\u2026");
+        sectionDistrict().then(function(){ deskPane("housing"); }).catch(function(e){ kdMsg(e.message,true); });
+      };
+      Array.prototype.forEach.call(pane.querySelectorAll("[data-dassign]"),function(b){
+        b.onclick=function(){
+          var lot=b.getAttribute("data-dassign");
+          var u=document.querySelector('[data-dwho="'+lot+'"]').value||null;
+          cityRpc("assign_district_plot",{p_lot:+lot,p_user:u})
+            .then(function(o){ kdMsg(o==="ok"?"Assigned.":String(o),o!=="ok"); deskPane("housing"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+      });
     });
   }
   else {
@@ -17651,8 +18068,124 @@ function putCloudConfig(key,value){
 if(typeof addEventListener==="function") addEventListener("keydown",function(e){
   if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
   if(e.code==="KeyK"&&(deskNear||deskOpen)) openDesk();
+  else if(e.code==="KeyK"&&officeDeskNear) openOfficeDesk();
   if(e.code==="Escape"&&deskOpen) closeDesk();
 });
+
+</script>
+<script>/* js/presence.js */
+/* SomnuMatrix — presence.js
+   Other dreamers, actually walking Somnucor with you.
+   There is no websocket or realtime client anywhere in this codebase — only
+   plain REST calls through cityRpc(), the same as everything else — so this
+   is built the same way, on purpose, rather than pulling in a new dependency:
+   while you are signed in, joined, and actually standing in Somnucor, your
+   own position is upserted to the server every few seconds, and everybody
+   else's recent positions are polled on the same interval. Each other
+   dreamer is drawn with the very same body-building code your own figure
+   uses (buildFigure/dressFolk), in their own actual chosen look where
+   they've shared one, and smoothly eased toward each new position report
+   rather than snapped to it.
+   Said plainly, so nobody mistakes this for more than it is: this polls
+   roughly every three seconds. It is not low-latency realtime, and someone
+   else's movement will look a little stepped rather than perfectly smooth
+   — eased between reports, but the reports themselves are a few seconds
+   apart. Height isn't tracked either: presence only follows x, z and
+   heading in the outdoor city, so another dreamer up in the tower or inside
+   a building won't be shown at the right floor — for now they simply don't
+   appear until they're back outside. That's the honest shape of what a
+   polling-only presence system can do; a real low-latency version would
+   need a websocket connection this codebase doesn't have.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var PRESENCE_INTERVAL=3.2, PRESENCE_STALE=20000;
+var presenceCool=0, presenceOthers={}, presencePublished=false;
+
+function inSomnucorRealm(){
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  return !!(r&&store.here===r.id);
+}
+/* what the rest of the city may see of how you look — never your journal,
+   never your notes, only the same look the wardrobe already shows you */
+function publishMyLook(){
+  if(!(typeof signedIn==="function"&&signedIn())||!(typeof joinedSomnucor==="function"&&joinedSomnucor())) return;
+  presencePublished=false;
+  cityRpc("set_public_look",{p_look:meLook()}).then(function(){ presencePublished=true; }).catch(function(){});
+}
+
+function presenceGroupFor(row){
+  var sp=row.look&&row.look.species, o=sp&&SPECIES_FEATS[sp];
+  var spec={id:"presence_"+row.user_id,archetype:"human",attrs:{},look:row.look||blankLook("human"),
+    solid:false,detail:2,nights:[]};
+  var g=buildFigure(spec,0.7);
+  if(o){ dressFolk(g,spec,0.7,o); if(o.hover) g.children[0].position.y+=o.hover; }
+  g.userData.presence=row.user_id;
+  return g;
+}
+function removePresence(id){
+  var p=presenceOthers[id]; if(!p) return;
+  if(p.group&&scene) scene.remove(p.group);
+  delete presenceOthers[id];
+}
+function clearAllPresence(){
+  Object.keys(presenceOthers).forEach(removePresence);
+}
+
+function pollPresence(){
+  cityRpc("upsert_presence",{p_x:camera.position.x,p_z:camera.position.z,p_rot:yaw,p_realm:"somnucor"}).catch(function(){});
+  if(!presencePublished) publishMyLook();
+  cityRpc("list_presence",{p_realm:"somnucor"}).then(function(rows){
+    var seen={};
+    (rows||[]).forEach(function(row){
+      seen[row.user_id]=1;
+      var p=presenceOthers[row.user_id];
+      if(!p){
+        var g=presenceGroupFor(row);
+        g.position.set(row.x,0,row.z); g.rotation.y=row.rot||0;
+        if(scene) scene.add(g);
+        p=presenceOthers[row.user_id]={group:g,target:{x:row.x,z:row.z,rot:row.rot||0},lastLook:JSON.stringify(row.look||{})};
+      } else {
+        p.target.x=row.x; p.target.z=row.z; p.target.rot=row.rot||0;
+        /* their look changed since we last drew them — rebuild the figure,
+           not just its position */
+        var lk=JSON.stringify(row.look||{});
+        if(lk!==p.lastLook){
+          if(p.group&&scene) scene.remove(p.group);
+          var g2=presenceGroupFor(row); g2.position.set(row.x,0,row.z); g2.rotation.y=row.rot||0;
+          if(scene) scene.add(g2); p.group=g2; p.lastLook=lk;
+        }
+      }
+    });
+    Object.keys(presenceOthers).forEach(function(id){ if(!seen[id]) removePresence(id); });
+  }).catch(function(){});
+}
+
+function presenceTick(dt){
+  var active=walkMode&&(typeof signedIn==="function"&&signedIn())&&(typeof joinedSomnucor==="function"&&joinedSomnucor())&&inSomnucorRealm();
+  if(!active){
+    if(Object.keys(presenceOthers).length) clearAllPresence();
+    if(presenceCool!==-1){
+      /* leaving Somnucor: take our own dot off the map at once, rather than
+         leaving a stale one standing there for up to twenty seconds */
+      if(typeof signedIn==="function"&&signedIn()) cityRpc("clear_presence").catch(function(){});
+      presenceCool=-1;
+    }
+    return;
+  }
+  if(presenceCool<=0){ presenceCool=PRESENCE_INTERVAL; pollPresence(); }
+  else presenceCool-=dt;
+  /* eased toward the latest reported position every frame, so a report a
+     few seconds old still reads as walking rather than teleporting */
+  var ease=Math.min(1,dt*2.2);
+  Object.keys(presenceOthers).forEach(function(id){
+    var p=presenceOthers[id]; if(!p.group) return;
+    p.group.position.x+=(p.target.x-p.group.position.x)*ease;
+    p.group.position.z+=(p.target.z-p.group.position.z)*ease;
+    var dr=((p.target.rot-p.group.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
+    p.group.rotation.y+=dr*ease;
+  });
+}
 
 </script>
 <script>/* js/touch.js */
