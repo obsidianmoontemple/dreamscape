@@ -10076,21 +10076,37 @@ function supportAt(x,z,feet){
 }
 
 /* inside a building, the floor you are on is the floor that holds you */
-function insideSupport(P,feet){
-  if(!INT) return 0;
-  var base=(INT.level||0)*INT.floor;
-  /* the stairs: a slope you walk up, not a step you fall through */
+/* If you are standing on a flight, the height of the step under you.
+   Deliberately asks nothing about which floor you are "on": the floor you are on
+   is worked out from where you are, not the other way round. Letting the two
+   decide each other is what made the stairs throw you back upstairs at the bottom. */
+function flightAt(P,feet){
+  if(!INT) return null;
+  var best=null;
   for(var i=0;i<(INT.stairs||[]).length;i++){
     var st=INT.stairs[i];
-    if(st.from!==(INT.level||0)&&st.from!==(INT.level||0)-1) continue;
-    var dx=P.x-st.x, dz=P.z-st.z, d=Math.hypot(dx,dz);
-    if(d>3.4) continue;
-    var t=Math.max(0,Math.min(1,(3.4-d)/3.4));
-    var bottom=st.from*INT.floor;
-    var h=bottom+t*INT.floor;
-    if(h>base-0.05&&h<=feet+STEP_UP+0.3) base=Math.max(base,h);
+    var dx=P.x-st.x, dz=P.z-st.z;
+    var c=Math.cos(-(st.rot||0)), sn=Math.sin(-(st.rot||0));
+    var lx=dx*c+dz*sn, lz=-dx*sn+dz*c;
+    if(Math.abs(lx)>st.hw||Math.abs(lz)>st.hd) continue;   /* not on the steps at all */
+    var t=Math.max(0,Math.min(1,(lz+st.hd)/(2*st.hd)));    /* 0 at the foot, 1 at the head */
+    var h=st.from*INT.floor+t*INT.floor;
+    if(h>feet+STEP_UP+0.3) continue;                       /* too tall a step from where you stand */
+    if(best===null||Math.abs(h-feet)<Math.abs(best-feet)) best=h;
   }
-  return base;
+  return best;
+}
+
+/* which floor you are on, judged by how high you are standing */
+function levelFor(feet){
+  if(!INT) return 0;
+  return Math.max(0,Math.min(INT.levels-1,Math.round(feet/INT.floor)));
+}
+
+function insideSupport(P,feet){
+  if(!INT) return 0;
+  var f=flightAt(P,feet);
+  return f===null?levelFor(feet)*INT.floor:f;
 }
 
 /* each frame: stand, step up, or fall */
@@ -10107,8 +10123,10 @@ function groundTick(dt){
   P.y=1.72+feet;
   /* going up or down a floor inside: the walls change with you */
   if(store.inside&&INT){
-    var lvl=Math.round(feet/INT.floor);
-    lvl=Math.max(0,Math.min(INT.levels-1,lvl));
+    var lvl=levelFor(feet);
+    /* halfway up a flight you are between floors, and still on the one you left,
+       so the walls do not flicker as you climb. */
+    if(flightAt(P,feet)!==null&&Math.abs(feet-lvl*INT.floor)>INT.floor*0.12) lvl=INT.level;
     if(lvl!==INT.level&&typeof levelAllowed==="function"&&!levelAllowed(lvl)){
       /* held at the locked floor until the code is given */
       feet=Math.min(feet,(INT.level||0)*INT.floor);
@@ -10238,8 +10256,12 @@ function animate(){
       if(keys["Space"]) flyY+=sp*dt;
       if(keys["KeyC"]||keys["ControlLeft"]) flyY-=sp*dt;
       flyY=Math.max(0,Math.min(420,flyY));
-      camera.position.y=1.72+flyY;
-    } else camera.position.y=1.72;
+    }
+    /* what you're standing on decides your height: the ground, a ship's deck,
+       a stair, a floor upstairs. groundTick is the whole reason any of that
+       holds you up; it has to run every frame you're walking, not just when
+       flying. */
+    groundTick(dt);
     camera.rotation.order="YXZ";
     camera.rotation.set(pitch,yaw,0);
     stepThrough();
@@ -15103,6 +15125,9 @@ function navTick(){
 "use strict";
 
 var INT_X0=-40000, INT=null, intCool=0, INT_H=3.2;
+/* how far a flight of stairs climbs, and how far it travels doing it.
+   set from the building's own floor height before any flight is laid. */
+var STAIR_RISE=3.7, STAIR_RUN=4.2;
 
 /* ---- furniture ---- */
 var WOOD=0x6B4A32, DARKWOOD=0x3A2A1E, CLOTH=0x7A2A2A, WHITEISH=0xE8E4DA, METAL=0x8A8C92;
@@ -15162,7 +15187,16 @@ var FURN={
   cage:function(){ var g=new THREE.Group(); for(var i=0;i<12;i++){ var a=i*.523; g.add(P(cyl(.015,.015,1.4,4),mL(METAL),Math.cos(a)*.5,.7,Math.sin(a)*.5)); }
     g.add(P(cyl(.52,.52,.05,16),mL(METAL),0,1.4,0)); g.add(P(cyl(.52,.52,.05,16),mL(METAL),0,.02,0)); return g; },
   sarcophagus:function(){ return F([P(box(1,.9,2.3),mL(0x8A8478),0,.45,0),P(box(1.1,.15,2.4),mL(0x9A9488),0,.95,0)]); },
-  stairs:function(){ var g=new THREE.Group(); for(var i=0;i<12;i++) g.add(P(box(1.2,.2,.3),mL(WOOD),0,.1+i*.25,-i*.3)); g.add(P(box(.05,.9,3.8),mL(DARKWOOD),.62,2,-1.7,-.7)); return g; },
+  /* A flight that climbs a whole floor, however tall this building's floors are,
+     running toward -z from its own origin, which sits at the bottom step.
+     STAIR_RISE and STAIR_RUN are set before any flight is laid, so the steps you
+     see and the slope you stand on are the same slope. */
+  stairs:function(){ var g=new THREE.Group(), n=14, r=STAIR_RISE/n, run=STAIR_RUN/n,
+    ang=Math.atan2(STAIR_RISE,STAIR_RUN), len=Math.hypot(STAIR_RUN,STAIR_RISE);
+    for(var i=0;i<n;i++) g.add(P(box(1.3,r,run*1.08),mL(WOOD),0,(i+.5)*r,-i*run));
+    g.add(P(box(.06,.06,len),mL(DARKWOOD),.68,STAIR_RISE/2+.95,-STAIR_RUN/2,ang));
+    g.add(P(box(.06,.06,len),mL(DARKWOOD),-.68,STAIR_RISE/2+.95,-STAIR_RUN/2,ang));
+    return g; },
   spiralstair:function(){ var g=F([P(cyl(.15,.15,INT_H*2.5,8),mL(METAL),0,INT_H*1.25,0)]);
     for(var i=0;i<22;i++){ var a=i*.42, st=P(box(1.2,.08,.35),mL(WOOD),Math.cos(a)*.7,.2+i*.33,Math.sin(a)*.7); st.rotation.y=-a; g.add(st); } return g; },
   counterbank:function(){ var g=F([P(box(5,1.1,.7),mL(DARKWOOD),0,.55,0)]); for(var i=0;i<6;i++) g.add(P(box(.03,.9,.03),mL(GOLD),-2.3+i*.9,1.55,0)); g.add(P(box(5,.05,.1),mL(GOLD),0,2,0)); return g; },
@@ -15383,7 +15417,51 @@ function makeInterior(spec){
     items.push(it);
   }
   var W,D, exitZ, levels=levelsOf(spec), FLOOR=H+0.5, stairsAt=[];
-  var lifts=[];
+  var lifts=[], holes=[], slabs=[];
+  STAIR_RISE=FLOOR; STAIR_RUN=FLOOR*1.15;
+
+  /* A flight has to climb a whole floor and still fit in the room. In a tall,
+     narrow place - a tower with an eight-metre ceiling - a gentle stair would be
+     longer than the floor is wide, so it steepens instead of overrunning the wall. */
+  function fitStairs(){
+    var room=Math.min(W||99,D||99);
+    STAIR_RISE=FLOOR;
+    STAIR_RUN=Math.max(2.8,Math.min(FLOOR*1.15,room*0.72));
+  }
+
+  /* Lay one flight, from the floor `from` to the floor above it.
+     (xc,zHead) is where the top of the flight lands. It climbs toward -z. Three
+     things have to agree with each other or the stairs misbehave: the mesh you
+     see, the sloped surface that carries you, and the hole it needs in the floor
+     above so that you have somewhere to arrive. */
+  function flight(xc,zHead,from,wide){
+    fitStairs();
+    var hw=(wide||1.5)/2, hd=STAIR_RUN/2, zc=zHead+hd;
+    lvl=from; yOff=from*FLOOR;
+    put("stairs",xc,zc+hd,0);                      /* the mesh begins at the bottom step */
+    stairsAt.push({x:ox+xc,z:oz+zc,from:from,rot:Math.PI,hw:hw+0.35,hd:hd});
+    holes.push({level:from+1,x:xc,z:zc,hw:hw+0.35,hd:hd+0.25});
+  }
+
+  /* Floors are asked for while the plan is being laid but built at the very end,
+     once every flight is known and the holes can be cut in the right places. */
+  function planSlab(L,Wf,Df,y){ slabs.push({L:L,W:Wf,D:Df,y:y}); }
+  function buildSlabs(){ slabs.forEach(function(s){ slab(s.L,s.W,s.D,s.y); }); }
+
+  /* A floor slab with the stairwells cut out of it, so you can climb up through
+     it and walk back down again instead of meeting its underside. */
+  function slab(L,Wf,Df,y){
+    var mat=new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634});
+    var cut=holes.filter(function(h){ return h.level===L; });
+    if(!cut.length){ root.add(P(box(Wf,.12,Df),mat,0,y,0)); return; }
+    var h=cut[0];
+    var z0=Math.max(-Df/2,h.z-h.hd), z1=Math.min(Df/2,h.z+h.hd);
+    if(z0+Df/2>0.05) root.add(P(box(Wf,.12,z0+Df/2),mat,0,y,(-Df/2+z0)/2));
+    if(Df/2-z1>0.05) root.add(P(box(Wf,.12,Df/2-z1),mat,0,y,(z1+Df/2)/2));
+    var xL=h.x-h.hw, xR=h.x+h.hw, band=z1-z0, bz=(z0+z1)/2;
+    if(xL+Wf/2>0.05) root.add(P(box(xL+Wf/2,.12,band),mat,(-Wf/2+xL)/2,y,bz));
+    if(Wf/2-xR>0.05) root.add(P(box(Wf/2-xR,.12,band),mat,(xR+Wf/2)/2,y,bz));
+  }
   /* one floor of rooms either side of a corridor — used by houses, and by the
      upper floors of anything with a lobby underneath */
   function roomFloor(L,here,Wf,Df,rw,rd,hall,wayOut){
@@ -15409,7 +15487,7 @@ function makeInterior(spec){
     });
     for(var hz=zTop+3;hz<zFront-3;hz+=6) lights.push({x:0,z:hz,y:yOff});
     spots.push({x:0,z:zFront-4,room:"hallway",level:L});
-    if(L>0) root.add(P(box(Wf,.12,Df),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+    if(L>0) planSlab(L,Wf,Df,yOff-0.06);
     return {zTop:zTop,zFront:zFront};
   }
   /* small rooms opening off a great hall: side chapels, a vestry, a kitchen */
@@ -15477,7 +15555,7 @@ function makeInterior(spec){
             windows.push({x:-W/2+.12,z:pw,ry:Math.PI/2,y:yOff});
             windows.push({x:W/2-.12,z:pw,ry:-Math.PI/2,y:yOff});
           }
-          root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+          planSlab(L2,W,D,yOff-0.06);
         } else roomFloor(L2,rooms,W,D,rw,rd,hall,false);
       }
       exitZ=zFront0;
@@ -15493,9 +15571,7 @@ function makeInterior(spec){
     /* the way between floors */
     for(var SL=0;SL<levels-1;SL++){
       lvl=SL; yOff=SL*FLOOR;
-      put("stairs",0,-D/2+2.2,Math.PI);
-      stairsAt.push({x:ox+0,z:oz-D/2+2.6,from:SL});
-      root.add(P(box(1.6,.06,2.6),new THREE.MeshLambertMaterial({color:shade(wallCol,-.25)}),0,yOff+FLOOR-0.03,-D/2+2.4));
+      flight(0,-D/2+2.2,SL,1.8);
     }
     if(plan.lift&&levels>2) liftShaft(W,D,levels);
     lvl=0; yOff=0;
@@ -15511,11 +15587,10 @@ function makeInterior(spec){
       for(var lz=-D/2+4;lz<D/2-2;lz+=7) for(var lx=-W/2+4;lx<W/2-2;lx+=8) lights.push({x:lx,z:lz,y:yOff});
       for(var wz=-D/2+3;wz<D/2-2;wz+=5){ windows.push({x:-W/2+.12,z:wz,ry:Math.PI/2,y:yOff}); windows.push({x:W/2-.12,z:wz,ry:-Math.PI/2,y:yOff}); }
       if(HL<levels-1){
-        put("spiralstair",W/2-2,-D/2+2.4,0);
-        stairsAt.push({x:ox+W/2-2,z:oz-D/2+2.4,from:HL});
-        root.add(P(box(2.6,.06,2.6),new THREE.MeshLambertMaterial({color:shade(wallCol,-.25)}),W/2-2,yOff+FLOOR-0.03,-D/2+2.4));
+        flight(W/2-2.4,-D/2+2.4,HL,1.8);
       }
-      if(HL>0) root.add(P(box(W,.12,D),new THREE.MeshLambertMaterial({color:FLOORCOL[floorKind]||0x7A5634}),0,yOff-0.06,0));
+      lvl=HL; yOff=HL*FLOOR;
+      if(HL>0) planSlab(HL,W,D,yOff-0.06);
     }
     sideRooms(plan.side,W,D,0);
     if(plan.lift&&levels>2) liftShaft(W,D,levels);
@@ -15546,6 +15621,8 @@ function makeInterior(spec){
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
   var amb=new THREE.HemisphereLight(0xFFF0D8,0x2A2018,.3); amb.position.set(0,H,0); root.add(amb);
+  buildSlabs();                                   /* floors last, with the stairwells cut out */
+  lvl=0; yOff=0;
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
     winMats:winMats,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,
     locked:plan.locked||null,unlocked:false};
