@@ -300,7 +300,7 @@ td select,td input{padding:5px 7px;font-size:12.5px}
         <label for="s-who" style="margin-top:12px">Who the office admits</label>
         <select id="s-who">
           <option value="code">Anyone with the code</option>
-          <option value="keepers">Keepers of this desk only &mdash; the code is refused to everyone else</option>
+          <option value="keepers">Keepers and the penthouse holder only &mdash; the code is refused to everyone else</option>
           <option value="shut">Nobody at all &mdash; the floor is sealed</option>
         </select>
         <label for="s-tower" style="margin-top:12px">The tower itself</label>
@@ -426,7 +426,11 @@ function putConfig(key,value){
   return sb.from("app_config").upsert({key:key,value:value,updated_at:new Date().toISOString()});
 }
 function showSettings(){
-  $("s-code").value=(typeof cfg.penthouseCode==="string"?cfg.penthouseCode:"") || "";
+  /* the penthouse code lives on the server now (schema-update-18), where the
+     public settings can't show it to anyone — read it back through the one
+     function that answers only a keeper or the holder */
+  $("s-code").value="";
+  sb.rpc("penthouse_code_now").then(function(r){ if(r&&!r.error&&typeof r.data==="string") $("s-code").value=r.data; });
   $("s-who").value=cfg.penthouseWho||"code";
   $("s-tower").value=cfg.towerOpen==="lobby"?"lobby":"open";
   $("s-ann").value=typeof cfg.announcement==="string"?cfg.announcement:"";
@@ -443,13 +447,16 @@ if($("s-code-save")) $("s-code-save").onclick=function(){
   var code=$("s-code").value.trim();
   if(code&&(code.length<4||code.length>12)) return say("A code wants between four and twelve characters.",true);
   Promise.all([
-    putConfig("penthouseCode",code||null),
+    sb.rpc("set_penthouse_code",{p_code:code||null}),
     putConfig("penthouseWho",$("s-who").value),
     putConfig("towerOpen",$("s-tower").value)
-  ]).then(function(){
+  ]).then(function(rs){
+    var r0=rs[0]||{};
+    if(r0.error) return say("The code didn't take: "+r0.error.message+" — has schema-update-18 been run?",true);
+    if(r0.data!=="ok") return say(String(r0.data),true);
     $("s-code-msg").textContent=code
       ? "Set. The penthouse door now asks for "+code+"."
-      : "Cleared. The penthouse falls back to the code kept on your own device.";
+      : "Cleared. Only keepers and whoever holds the penthouse can go up now.";
     loadConfig();
   }).catch(fail);
 };
