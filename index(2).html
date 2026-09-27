@@ -16639,36 +16639,72 @@ function inLift(){
   }
   return null;
 }
-/* the code on the penthouse door. set by the keeper; kept on the device until then */
-function penthouseCode(){
-  var c=(typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config&&DW_CLOUD.config.penthouseCode)||null;
-  if(c) return String(c);
-  try{ return localStorage.getItem("somnucor.code")||"1987"; }catch(e){ return "1987"; }
-}
-function askForCode(what){
-  var tries=(typeof prompt==="function")?prompt("The way to "+what+" is locked.\nCode:"):null;
-  if(tries===null) return false;
-  if(String(tries).trim()===penthouseCode()){ INT.unlocked=true; setStatus("<b>The door opens.</b> Somnucor, "+esc(what)+"."); return true; }
-  setStatus("That code is not the one.");
-  return false;
-}
+/* the penthouse door. the code lives on the server, where nobody can read it,
+   and the server alone decides who goes up (schema-update-18): a keeper and
+   whoever holds the penthouse walk straight in; anyone else is asked for the
+   code if the keeper has left the door on "anyone with the code".
+   the answer takes a moment to come back, so the lift or the stair holds you
+   at the floor below until it does, then carries you up. */
+var penthouseCleared=null;      // the account the server has already let in, this sitting
+var penthouseAsking=false, penthouseRefusedAt=0;
 function towerRule(k){ return (typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config&&DW_CLOUD.config[k])||null; }
+function penthouseLetIn(I,to){
+  if(!INT||INT!==I) return;            // walked out of the tower while the door was thinking
+  INT.unlocked=true;
+  penthouseCleared=(typeof session!=="undefined"&&session&&session.user)?session.user.id:null;
+  setStatus("<b>The door opens.</b> Somnucor, "+esc(INT.locked.what)+".");
+  if(inLift()){
+    INT.level=to; camera.position.y=1.72+to*INT.floor; liftCool=0.7; wallsAt=-1;
+    setStatus("<b>The door opens.</b> Floor "+(to+1)+" of "+INT.levels+" — "+esc(INT.locked.what)+".");
+  }
+}
+function askPenthouse(to){
+  var I=INT;
+  if(penthouseAsking||!I) return;
+  if(Date.now()-penthouseRefusedAt<4000) return;       // pressing against a shut door doesn't knock a hundred times
+  if(!(typeof signedIn==="function"&&signedIn())){
+    penthouseRefusedAt=Date.now();
+    setStatus("<b>The door does not know you.</b> Sign in first — the penthouse admits people by account.");
+    return;
+  }
+  penthouseAsking=true;
+  setStatus("<b>The door is looking at you…</b>");
+  /* first, without a code: a keeper or the holder needs none */
+  cityRpc("enter_penthouse",{p_code:null}).then(function(r){
+    if(r&&r.ok){ penthouseAsking=false; penthouseLetIn(I,to); return; }
+    var why=(r&&r.why)||"";
+    if(!/not the one/i.test(why)){          // sealed, keepers only, no code set, too many tries
+      penthouseAsking=false; penthouseRefusedAt=Date.now();
+      setStatus("<b>"+esc(why||"The door will not open.")+"</b>");
+      return;
+    }
+    var tries=(typeof prompt==="function")?prompt("The way to "+I.locked.what+" is locked.\nCode:"):null;
+    if(tries===null||!String(tries).trim()){ penthouseAsking=false; penthouseRefusedAt=Date.now(); setStatus("You step back from the door."); return; }
+    return cityRpc("enter_penthouse",{p_code:String(tries).trim()}).then(function(r2){
+      penthouseAsking=false;
+      if(r2&&r2.ok) penthouseLetIn(I,to);
+      else { penthouseRefusedAt=Date.now(); setStatus(esc((r2&&r2.why)||"That code is not the one.")); }
+    });
+  }).catch(function(){
+    penthouseAsking=false; penthouseRefusedAt=Date.now();
+    setStatus("The penthouse door does not answer just now. Run schema-update-18 if you have not yet.");
+  });
+}
 function levelAllowed(to){
   if(!INT) return true;
   /* the keeper can shut the whole tower above the lobby */
-  if(INT.locked&&to>0&&towerRule("towerOpen")==="lobby"){
+  if(INT.locked&&to>0&&towerRule("towerOpen")==="lobby"&&!(typeof amKeeper==="function"&&amKeeper())){
     setStatus("<b>The lift will not go up.</b> Somnucor has the upper floors closed today.");
     return false;
   }
-  if(!INT.locked||INT.unlocked) return true;
+  if(!INT.locked) return true;
   if(to!==INT.locked.level) return true;
-  var who=towerRule("penthouseWho")||"code";
-  if(who==="shut"){ setStatus("<b>Sealed.</b> Nobody is admitted to "+esc(INT.locked.what)+" today."); return false; }
-  if(who==="keepers"&&!(typeof signedIn==="function"&&signedIn())){
-    setStatus("<b>The door does not know you.</b> Only a keeper of the desk is admitted today.");
-    return false;
-  }
-  return askForCode(INT.locked.what);
+  var me=(typeof session!=="undefined"&&session&&session.user)?session.user.id:null;
+  if(INT.unlocked&&me&&penthouseCleared===me) return true;
+  if(me&&penthouseCleared===me){ INT.unlocked=true; return true; }
+  INT.unlocked=false;
+  askPenthouse(to);
+  return false;
 }
 
 function liftMove(dir){
@@ -16955,6 +16991,9 @@ function authWords(e){
 function showAccount(){
   if(typeof syncStatus==="function") setTimeout(syncStatus,0);
   if(typeof refreshStanding==="function") setTimeout(function(){ refreshStanding(); loadOffice(); },50);
+  /* who you are to the tower and its desk: a keeper walks past a closed tower
+     and a sealed penthouse; asked once at sign-in, again whenever the desk opens */
+  if(typeof checkKeeper==="function") setTimeout(function(){ if(signedIn()) checkKeeper(); else deskStanding=null; },200);
   var out=document.getElementById("acc-out"), inn=document.getElementById("acc-in");
   if(!out||!inn) return;
   var on=signedIn();
@@ -17935,18 +17974,29 @@ function initBusiness(){
 var deskOpen=false, deskNear=false, deskOffices=[], deskJobs=[];
 
 function amKeeper(){ return !!(deskStanding&&deskStanding.keeper); }
-function amDeskOfficer(){ return !!(deskStanding&&(deskStanding.keeper||deskStanding.officer)); }
+function amHolder(){ return !!(deskStanding&&deskStanding.holder); }
+function amDeskOfficer(){ return !!(deskStanding&&(deskStanding.keeper||deskStanding.officer||deskStanding.holder)); }
 var deskStanding=null;
+/* who you are to the desk comes from the server in one answer
+   (penthouse_access, schema-update-18): keeper, officer, and whether you
+   presently hold the penthouse. admin_diagnose is still asked as a fallback
+   so a database that hasn't had update 18 yet keeps working for keepers. */
 function checkKeeper(){
   if(!signedIn()) { deskStanding=null; return Promise.resolve(deskStanding); }
   return Promise.all([
+    cityRpc("penthouse_access").catch(function(){ return null; }),
     cityRpc("admin_diagnose").catch(function(){ return null; }),
-    (standing?Promise.resolve(standing):refreshStanding())
+    (standing?Promise.resolve(standing):refreshStanding().catch(function(){ return null; }))
   ]).then(function(r){
-    var d=r[0];
-    deskStanding={keeper:!!(d&&d.you_are==="keeper"), officer:(typeof amOfficer==="function"&&amOfficer())};
+    var a=r[0]||{}, d=r[1];
+    deskStanding={
+      keeper:!!(a.keeper||(d&&d.you_are==="keeper")),
+      officer:!!(a.officer||(typeof amOfficer==="function"&&amOfficer())),
+      holder:!!a.holder,
+      who:a.who||"code", hasCode:!!a.has_code
+    };
     return deskStanding;
-  }).catch(function(){ deskStanding={keeper:false,officer:false}; return deskStanding; });
+  }).catch(function(){ deskStanding={keeper:false,officer:false,holder:false}; return deskStanding; });
 }
 
 /* ---- the desk itself, in the penthouse ---- */
@@ -18042,8 +18092,9 @@ function openDesk(){
   checkKeeper().then(function(){
     var body=document.getElementById("kd-body");
     if(!amDeskOfficer()){
-      body.innerHTML="<p>This desk answers only to a keeper, or to Somnucor's own police and courts. You may sit at it, but it will tell you nothing.</p>"+
-        "<p style='color:var(--dim)'>If that is wrong, a keeper can add you at the Keeper\u2019s Desk in the admin page.</p>";
+      body.innerHTML="<p>This desk answers only to a keeper, to whoever holds the penthouse, or to Somnucor's own police and courts. You may sit at it, but it will tell you nothing.</p>"+
+        "<p style='color:var(--dim)'>Signed in as <b>"+esc(myEmail()||"?")+"</b>. If that is wrong, a keeper can add you on the admin page, "+
+        "or run schema-update-18, which makes the Temple's own account a keeper.</p>";
       return;
     }
     drawDesk(body);
@@ -18055,11 +18106,12 @@ function closeDesk(){
 }
 
 function drawDesk(body){
-  var keeper=amKeeper();
+  var keeper=amKeeper(), holder=amHolder(), officer=!!(deskStanding&&deskStanding.officer);
   var tabs=[];
-  if(keeper) tabs.push(["offices","Offices"],["posts","Positions & wages"],["catalogue","Catalogue"],
-                        ["security","Tower security"],["housing","Housing"]);
-  tabs.push(["courts","Courts"]);
+  if(keeper) tabs.push(["offices","Offices"],["posts","Positions & wages"],["catalogue","Catalogue"]);
+  if(keeper||holder) tabs.push(["security","Tower security"],["housing","Housing"]);
+  if(keeper||officer) tabs.push(["courts","Courts"]);
+  tabs.push(["people","Who is in the city"]);
   if(keeper) tabs.push(["city","The city"]);
   body.innerHTML='<div id="kd-msg" style="color:var(--dim);min-height:18px;margin-bottom:10px"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
@@ -18068,7 +18120,9 @@ function drawDesk(body){
   Array.prototype.forEach.call(body.querySelectorAll("[data-kd]"),function(b){
     b.onclick=function(){ deskPane(b.getAttribute("data-kd")); };
   });
-  deskPane(keeper?"offices":"courts");
+  body.insertAdjacentHTML("afterbegin",'<div style="color:var(--dim);font-size:12px;margin-bottom:6px">You sit here as <b style="color:var(--bone)">'+
+    (keeper?"a keeper":holder?"the holder of the penthouse":"an officer of Somnucor")+'</b>.</div>');
+  deskPane(keeper?"offices":holder?"security":"courts");
 }
 function kdMsg(t,bad){ var e=document.getElementById("kd-msg"); if(e){ e.textContent=t; e.style.color=bad?"#C0603A":"var(--dim)"; } }
 function deskPane(which){
@@ -18231,28 +18285,58 @@ function deskPane(which){
     }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
   }
   else if(which==="security"){
+    /* the code itself is kept on the server (schema-update-18): it is read
+       back only for a keeper or the holder, and set through set_penthouse_code.
+       who the door admits and whether the tower opens are settings for
+       everybody, so only a keeper writes those. */
     var cur=(typeof DW_CLOUD!=="undefined"&&DW_CLOUD.config)||{};
-    Promise.all([cityRpc("penthouse_holder").catch(function(){ return null; }),cityRpc("admin_list_dreamers").catch(function(){ return []; })])
-      .then(function(pr){
-        var holder=pr[0], who=(pr[1]||[]).map(function(d){ return '<option value="'+d.id+'"'+(d.id===holder?" selected":"")+'>'+esc(d.email||d.id)+"</option>"; }).join("");
-        pane.innerHTML='<p style="color:var(--dim);line-height:1.6">The code on this office, who it admits, and whether the tower opens above the lobby. A code is a door, not a vault \u2014 nobody\u2019s dreams are behind it.</p>'+
+    var keeperHere=amKeeper();
+    Promise.all([
+      cityRpc("penthouse_holder").catch(function(){ return null; }),
+      keeperHere?cityRpc("admin_list_dreamers").catch(function(){ return []; }):Promise.resolve([]),
+      cityRpc("penthouse_code_now").catch(function(){ return null; })
+    ]).then(function(pr){
+        var holder=pr[0], code=pr[2]||"";
+        var who=(pr[1]||[]).map(function(d){ return '<option value="'+d.id+'"'+(d.id===holder?" selected":"")+'>'+esc(d.email||d.id)+"</option>"; }).join("");
+        var inp='style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px"';
+        pane.innerHTML='<p style="color:var(--dim);line-height:1.6">The code on this office, who it admits, and whether the tower opens above the lobby. A code is a door, not a vault — nobody’s dreams are behind it. '+
+          'The code is kept on the server: nobody can read it from the page, and a keeper or whoever holds the penthouse always walks straight in.</p>'+
+          '<h4 style="margin:12px 0 6px;font-weight:500">The code on the door</h4>'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-          '<input id="kd-code" placeholder="penthouse code" value="'+esc(cur.penthouseCode||"")+'" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px">'+
-          '<select id="kd-who2"><option value="code">Anyone with the code</option><option value="keepers">Keepers only</option><option value="shut">Sealed</option></select>'+
-          '<select id="kd-tower"><option value="open">Tower open</option><option value="lobby">Lobby only</option></select>'+
-          '<button class="btn" id="kd-sec">Set</button></div>'+
-          '<h4 style="margin:16px 0 6px;font-weight:500">Who holds the penthouse</h4>'+
-          '<p style="color:var(--dim);font-size:12px;margin:0 0 8px">Whoever holds it may also assign the Somnucor Employee &amp; Backer District\u2019s plots, the same as a keeper can.</p>'+
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-          '<select id="kd-holder"><option value="">\u2014 nobody \u2014</option>'+who+'</select>'+
-          '<button class="btn" id="kd-holder-set">Set</button></div>';
+          '<input id="kd-code" maxlength="12" placeholder="4 to 12 characters" value="'+esc(code)+'" '+inp+'>'+
+          '<button class="btn" id="kd-code-roll">New random code</button>'+
+          '<button class="btn" id="kd-code-set">Set the code</button>'+
+          '<button class="btn" id="kd-code-clear">Clear it</button></div>'+
+          '<p style="color:var(--dim);font-size:12px;margin:6px 0 0">'+(code?"The door asks for <b style=\"color:var(--bone)\">"+esc(code)+"</b> now.":"No code is set — only a keeper or the holder can go up.")+'</p>'+
+          (keeperHere?(
+            '<h4 style="margin:16px 0 6px;font-weight:500">Who the door admits, and the tower</h4>'+
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+            '<select id="kd-who2"><option value="code">Anyone with the code</option><option value="keepers">Keepers and the holder only</option><option value="shut">Sealed</option></select>'+
+            '<select id="kd-tower"><option value="open">Tower open</option><option value="lobby">Lobby only</option></select>'+
+            '<button class="btn" id="kd-sec">Set</button></div>'+
+            '<h4 style="margin:16px 0 6px;font-weight:500">Who holds the penthouse</h4>'+
+            '<p style="color:var(--dim);font-size:12px;margin:0 0 8px">Whoever holds it walks in without a code, sits at this desk, may change the door’s code, and may assign the Somnucor Employee &amp; Backer District’s plots, the same as a keeper can.</p>'+
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+            '<select id="kd-holder"><option value="">— nobody —</option>'+who+'</select>'+
+            '<button class="btn" id="kd-holder-set">Set</button></div>')
+          :'<p style="color:var(--dim);font-size:12px;margin-top:14px">Who the door admits, whether the tower opens, and who holds the penthouse are a keeper’s to set.</p>');
+        var setCode=function(c){
+          if(c&&(c.length<4||c.length>12)) return kdMsg("A code wants between four and twelve characters.",true);
+          cityRpc("set_penthouse_code",{p_code:c||null})
+            .then(function(o){ kdMsg(o==="ok"?(c?"Set. The penthouse door asks for "+c+" now.":"Cleared. Only a keeper or the holder goes up now."):String(o),o!=="ok"); deskPane("security"); })
+            .catch(function(e){ kdMsg(e.message,true); });
+        };
+        document.getElementById("kd-code-roll").onclick=function(){
+          var n=""; for(var i=0;i<6;i++) n+="0123456789"[Math.floor(Math.random()*10)];
+          document.getElementById("kd-code").value=n; kdMsg("A new code. Press Set the code to make it so.");
+        };
+        document.getElementById("kd-code-set").onclick=function(){ setCode((document.getElementById("kd-code").value||"").trim()); };
+        document.getElementById("kd-code-clear").onclick=function(){ setCode(""); };
+        if(!keeperHere) return;
         document.getElementById("kd-who2").value=cur.penthouseWho||"code";
         document.getElementById("kd-tower").value=cur.towerOpen==="lobby"?"lobby":"open";
         document.getElementById("kd-sec").onclick=function(){
-          var code=(document.getElementById("kd-code").value||"").trim();
-          if(code&&(code.length<4||code.length>12)) return kdMsg("A code wants between four and twelve characters.",true);
           Promise.all([
-            putCloudConfig("penthouseCode",code||null),
             putCloudConfig("penthouseWho",document.getElementById("kd-who2").value),
             putCloudConfig("towerOpen",document.getElementById("kd-tower").value)
           ]).then(function(){ kdMsg("Set. The tower obeys at once."); loadCloudConfig(); })
@@ -18264,10 +18348,23 @@ function deskPane(which){
             .then(function(o){ kdMsg(o==="ok"?"Set.":String(o),o!=="ok"); deskPane("security"); })
             .catch(function(e){ kdMsg(e.message,true); });
         };
-      });
+      }).catch(function(e){ pane.innerHTML="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; });
+  }
+  else if(which==="people"){
+    /* everybody walking Somnucor this minute — the same list the city panel
+       draws from, set out for whoever keeps the desk */
+    var rows=(typeof presenceList==="function")?presenceList():[];
+    pane.innerHTML='<p style="color:var(--dim);line-height:1.6">Dreamers walking Somnucor right now. You see them only while you are in the city yourself, and only while they are too.</p>'+
+      (rows.length?'<table style="width:100%;border-collapse:collapse">'+rows.map(function(p){
+        return '<tr><td style="padding:4px 6px;border-bottom:1px solid var(--line)">'+esc(p.name)+'</td>'+
+          '<td style="border-bottom:1px solid var(--line);color:var(--dim)">'+Math.round(p.dist)+' m away</td>'+
+          '<td style="border-bottom:1px solid var(--line);font-size:11px;color:var(--dim)">'+esc(p.id)+'</td></tr>';
+      }).join("")+'</table>':'<p>Nobody else is in the city just now.</p>');
   }
   else if(which==="housing"){
-    Promise.all([loadLots(),cityRpc("admin_list_dreamers").catch(function(){ return []; })]).then(function(r){
+    /* a keeper picks from every account; the holder picks from dreamers who
+       have taken a door, by the name on it (district_candidates) */
+    Promise.all([loadLots(),cityRpc(amKeeper()?"admin_list_dreamers":"district_candidates").catch(function(){ return []; })]).then(function(r){
       var rows=r[0]||[], who=(r[1]||[]).map(function(d){ return '<option value="'+d.id+'">'+esc(d.email||d.id)+"</option>"; }).join("");
       var laid=(store.plots||[]).length, inBooks=(rows||[]).length;
       var held=(rows||[]).filter(function(l){ return l.held; }).length;
@@ -18277,7 +18374,7 @@ function deskPane(which){
         'Entered in the books: <b>'+inBooks+'</b> \u00b7 held by somebody: <b>'+held+'</b></p>'+
         '<p style="color:var(--dim);line-height:1.6">A plot has to be entered in the books before anybody can take it. '+
         'The realtor does this, or you.</p>'+
-        '<button class="btn" id="kd-section">Enter the plots in the books</button>'+
+        (amKeeper()?'<button class="btn" id="kd-section">Enter the plots in the books</button>':'')+
         '<div style="margin-top:12px;max-height:280px;overflow-y:auto"><table style="width:100%;border-collapse:collapse">'+
         (rows||[]).slice(0,200).map(function(l){
           return '<tr><td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+esc(l.name)+'</td>'+
@@ -18289,7 +18386,7 @@ function deskPane(which){
         '<h4 style="margin:18px 0 6px;font-weight:500">The Somnucor Employee &amp; Backer District</h4>'+
         '<p style="color:var(--dim);font-size:12px;margin:0 0 8px">Never bought or leased \u2014 assigned, by a keeper or by whoever presently holds the penthouse (set that on the Tower security pane). '+
         (districtLaid?("Laid out in the world: "+districtLaid+" plots."):"Not laid out in the world yet \u2014 join Somnucor once more to build it.")+'</p>'+
-        (districtLaid?'<button class="btn" id="kd-district-section">Enter the District\u2019s plots in the books</button>':"")+
+        (districtLaid&&amKeeper()?'<button class="btn" id="kd-district-section">Enter the District\u2019s plots in the books</button>':"")+
         '<div style="margin-top:10px;max-height:220px;overflow-y:auto"><table style="width:100%;border-collapse:collapse">'+
         district.map(function(l){
           return '<tr><td style="padding:3px 6px;border-bottom:1px solid var(--line)">'+esc(l.name)+'</td>'+
@@ -18297,7 +18394,8 @@ function deskPane(which){
             '<td style="border-bottom:1px solid var(--line)"><select data-dwho="'+l.lot_id+'"><option value="">\u2014 nobody \u2014</option>'+who+'</select> '+
             '<button class="btn" data-dassign="'+l.lot_id+'">Assign</button></td></tr>';
         }).join("")+'</table></div>';
-      document.getElementById("kd-section").onclick=function(){
+      var kdsec=document.getElementById("kd-section");
+      if(kdsec) kdsec.onclick=function(){
         kdMsg("Entering them\u2026");
         sectionHousing().then(function(){ deskPane("housing"); }).catch(function(e){ kdMsg(e.message,true); });
       };
@@ -18383,43 +18481,121 @@ if(typeof addEventListener==="function") addEventListener("keydown",function(e){
 </script>
 <script>/* js/presence.js */
 /* SomnuMatrix — presence.js
-   Other dreamers, actually walking Somnucor with you.
-   There is no websocket or realtime client anywhere in this codebase — only
-   plain REST calls through cityRpc(), the same as everything else — so this
-   is built the same way, on purpose, rather than pulling in a new dependency:
-   while you are signed in, joined, and actually standing in Somnucor, your
-   own position is upserted to the server every few seconds, and everybody
-   else's recent positions are polled on the same interval. Each other
-   dreamer is drawn with the very same body-building code your own figure
-   uses (buildFigure/dressFolk), in their own actual chosen look where
-   they've shared one, and smoothly eased toward each new position report
-   rather than snapped to it.
-   Said plainly, so nobody mistakes this for more than it is: this polls
-   roughly every three seconds. It is not low-latency realtime, and someone
-   else's movement will look a little stepped rather than perfectly smooth
-   — eased between reports, but the reports themselves are a few seconds
-   apart. Height isn't tracked either: presence only follows x, z and
-   heading in the outdoor city, so another dreamer up in the tower or inside
-   a building won't be shown at the right floor — for now they simply don't
-   appear until they're back outside. That's the honest shape of what a
-   polling-only presence system can do; a real low-latency version would
-   need a websocket connection this codebase doesn't have.
+   Other dreamers, actually walking Somnucor with you — and the street life
+   that goes with them: a name over every head, words that rise over the head
+   of whoever said them, talk with whoever is near or with the whole city,
+   and trades from hand to hand.
+
+   How it moves: plain REST calls through cityRpc(), the same as everything
+   else — there is no websocket client in this codebase. While you are signed
+   in, joined, and standing in Somnucor, your own position is sent every few
+   seconds and everybody else's is fetched on the same beat, then eased toward
+   smoothly so walking reads as walking. It is a few seconds behind, not
+   instant.
+
+   Indoors too: inside a building your position is sent relative to the
+   building itself, with which building and which floor (schema-update-18),
+   so two dreamers in the same room — the penthouse, an office, the lobby —
+   see each other there, on the right floor, whoever's device drew it.
+
+   Nothing here moves gold or goods. A trade is an offer the server holds;
+   it moves everything at once, or nothing, when the other dreamer accepts.
    loaded as a plain script; shares scope with the other files */
 "use strict";
 
-var PRESENCE_INTERVAL=3.2, PRESENCE_STALE=20000;
-var presenceCool=0, presenceOthers={}, presencePublished=false;
+var PRESENCE_INTERVAL=3.0, PRESENCE_STALE=20000;
+var presenceCool=0, presenceOthers={}, presencePublished=false, presenceNew=true;
 
 function inSomnucorRealm(){
   var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
   return !!(r&&store.here===r.id);
 }
+function myUserId(){ return (typeof session!=="undefined"&&session&&session.user)?session.user.id:null; }
+
+/* where you are standing, as the server should hear it: out in the city, or
+   inside one building, on one floor, relative to that building's own ground */
+function myPlace(){
+  if(store.inside&&INT&&INT.spec){
+    var s=INT.spec;
+    return {place:String(s.archetype||"building")+":"+String(s.label||s.name||""),
+            level:INT.level||0, x:camera.position.x-INT.ox, z:camera.position.z-INT.oz};
+  }
+  return {place:"out",level:0,x:camera.position.x,z:camera.position.z};
+}
+/* where somebody else's report lands in this device's world, or null if they
+   are somewhere this device isn't drawing right now */
+function placeToWorld(row){
+  var here=myPlace();
+  var pl=row.place||"out", lv=row.level||0;
+  if(pl!==here.place) return null;
+  if(pl==="out") return {x:row.x,y:0,z:row.z};
+  if(!INT) return null;
+  return {x:INT.ox+row.x,y:lv*INT.floor,z:INT.oz+row.z,level:lv};
+}
+
 /* what the rest of the city may see of how you look — never your journal,
    never your notes, only the same look the wardrobe already shows you */
 function publishMyLook(){
   if(!(typeof signedIn==="function"&&signedIn())||!(typeof joinedSomnucor==="function"&&joinedSomnucor())) return;
   presencePublished=false;
   cityRpc("set_public_look",{p_look:meLook()}).then(function(){ presencePublished=true; }).catch(function(){});
+}
+
+/* ---- a name over a head, and words that rise above it ---- */
+function tagCanvas(text,bubble){
+  var c=document.createElement("canvas"), x=c.getContext("2d");
+  var W=bubble?640:512, lines=[text];
+  x.font=(bubble?"30px ":"bold 34px ")+"ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif";
+  if(bubble){
+    /* wrap the words to the width of the bubble */
+    lines=[]; var line="";
+    String(text).split(/\s+/).forEach(function(w){
+      var t=line?line+" "+w:w;
+      if(x.measureText(t).width>W-48&&line){ lines.push(line); line=w; } else line=t;
+    });
+    if(line) lines.push(line);
+    if(lines.length>4){ lines=lines.slice(0,4); lines[3]=lines[3].replace(/.{0,2}$/,"…"); }
+  }
+  var lh=bubble?38:44, H=bubble?(lines.length*lh+34):64;
+  c.width=W; c.height=H;
+  x=c.getContext("2d");
+  x.font=(bubble?"30px ":"bold 34px ")+"ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif";
+  x.textAlign="center"; x.textBaseline="middle";
+  var tw=bubble?W-8:Math.min(W-8,x.measureText(text).width+40);
+  x.fillStyle=bubble?"rgba(236,228,210,0.95)":"rgba(10,12,18,0.72)";
+  var bx=(W-tw)/2, r=bubble?18:26;
+  x.beginPath();
+  x.moveTo(bx+r,4); x.lineTo(bx+tw-r,4); x.quadraticCurveTo(bx+tw,4,bx+tw,4+r);
+  x.lineTo(bx+tw,H-4-r); x.quadraticCurveTo(bx+tw,H-4,bx+tw-r,H-4);
+  x.lineTo(bx+r,H-4); x.quadraticCurveTo(bx,H-4,bx,H-4-r);
+  x.lineTo(bx,4+r); x.quadraticCurveTo(bx,4,bx+r,4); x.closePath(); x.fill();
+  if(!bubble){ x.strokeStyle="rgba(201,168,104,0.8)"; x.lineWidth=2; x.stroke(); }
+  x.fillStyle=bubble?"#1A1712":"#E8DFC8";
+  lines.forEach(function(l,i){ x.fillText(l,W/2,bubble?(17+lh/2+i*lh):H/2+1); });
+  return c;
+}
+function makeTag(text,bubble){
+  var c=tagCanvas(text,bubble);
+  var tex=new THREE.CanvasTexture(c);
+  var mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
+  var sp=new THREE.Sprite(mat);
+  var w=bubble?2.6:2.0;
+  sp.scale.set(w,w*c.height/c.width,1);
+  sp.renderOrder=10;
+  return sp;
+}
+function dropTag(sp){
+  if(!sp) return;
+  if(sp.parent) sp.parent.remove(sp);
+  if(sp.material){ if(sp.material.map) sp.material.map.dispose(); sp.material.dispose(); }
+}
+function sayOver(id,text){
+  var p=presenceOthers[id]; if(!p||!p.group) return;
+  dropTag(p.bubble);
+  p.bubble=makeTag(text,true);
+  p.bubble.position.y=2.02+p.bubble.scale.y/2+0.28;
+  p.group.add(p.bubble);
+  p.bubbleLeft=7;
 }
 
 function presenceGroupFor(row){
@@ -18429,57 +18605,94 @@ function presenceGroupFor(row){
   var g=buildFigure(spec,0.7);
   if(o){ dressFolk(g,spec,0.7,o); if(o.hover) g.children[0].position.y+=o.hover; }
   g.userData.presence=row.user_id;
+  var tag=makeTag(row.name||"a dreamer",false);
+  tag.position.y=2.02; g.add(tag);
+  g.userData.tag=tag;
   return g;
 }
 function removePresence(id){
   var p=presenceOthers[id]; if(!p) return;
-  if(p.group&&scene) scene.remove(p.group);
+  dropTag(p.bubble);
+  if(p.group){ dropTag(p.group.userData.tag); if(scene) scene.remove(p.group); }
   delete presenceOthers[id];
 }
 function clearAllPresence(){
   Object.keys(presenceOthers).forEach(removePresence);
 }
+/* everybody drawn right now, nearest first — the desk and the panel use this */
+function presenceList(){
+  var P=camera.position;
+  return Object.keys(presenceOthers).map(function(id){
+    var p=presenceOthers[id], g=p.group;
+    return {id:id,name:p.name||"a dreamer",dist:g?Math.hypot(g.position.x-P.x,g.position.z-P.z):0};
+  }).sort(function(a,b){ return a.dist-b.dist; });
+}
 
 function pollPresence(){
-  cityRpc("upsert_presence",{p_x:camera.position.x,p_z:camera.position.z,p_rot:yaw,p_realm:"somnucor"}).catch(function(){});
+  var at=myPlace();
+  cityRpc("upsert_presence_at",{p_x:at.x,p_z:at.z,p_rot:yaw,p_realm:"somnucor",p_place:at.place,p_level:at.level})
+    .catch(function(){
+      /* a database without schema-update-18 still has the older call */
+      if(at.place==="out") cityRpc("upsert_presence",{p_x:at.x,p_z:at.z,p_rot:yaw,p_realm:"somnucor"}).catch(function(){});
+    });
   if(!presencePublished) publishMyLook();
   cityRpc("list_presence",{p_realm:"somnucor"}).then(function(rows){
-    var seen={};
+    var seen={}, me=myUserId(), arrived=[];
     (rows||[]).forEach(function(row){
+      if(!row||row.user_id===me) return;
+      var w=placeToWorld(row);
+      if(!w) return;                         // somewhere this device isn't drawing
       seen[row.user_id]=1;
       var p=presenceOthers[row.user_id];
+      var lk=JSON.stringify(row.look||{}), nm=row.name||"a dreamer";
       if(!p){
         var g=presenceGroupFor(row);
-        g.position.set(row.x,0,row.z); g.rotation.y=row.rot||0;
+        g.position.set(w.x,w.y,w.z); g.rotation.y=row.rot||0;
         if(scene) scene.add(g);
-        p=presenceOthers[row.user_id]={group:g,target:{x:row.x,z:row.z,rot:row.rot||0},lastLook:JSON.stringify(row.look||{})};
+        p=presenceOthers[row.user_id]={group:g,target:{x:w.x,y:w.y,z:w.z,rot:row.rot||0},lastLook:lk,name:nm};
+        arrived.push(nm);
       } else {
-        p.target.x=row.x; p.target.z=row.z; p.target.rot=row.rot||0;
-        /* their look changed since we last drew them — rebuild the figure,
-           not just its position */
-        var lk=JSON.stringify(row.look||{});
-        if(lk!==p.lastLook){
-          if(p.group&&scene) scene.remove(p.group);
-          var g2=presenceGroupFor(row); g2.position.set(row.x,0,row.z); g2.rotation.y=row.rot||0;
-          if(scene) scene.add(g2); p.group=g2; p.lastLook=lk;
+        p.target.x=w.x; p.target.y=w.y; p.target.z=w.z; p.target.rot=row.rot||0;
+        /* their look or their name changed since we last drew them — rebuild
+           the figure, not just its position */
+        if(lk!==p.lastLook||nm!==p.name){
+          var bub=p.bubble; p.bubble=null;
+          if(p.group){ dropTag(p.group.userData.tag); if(scene) scene.remove(p.group); }
+          var g2=presenceGroupFor(row); g2.position.set(w.x,w.y,w.z); g2.rotation.y=row.rot||0;
+          if(scene) scene.add(g2); p.group=g2; p.lastLook=lk; p.name=nm;
+          if(bub){ g2.add(bub); p.bubble=bub; }
         }
       }
     });
     Object.keys(presenceOthers).forEach(function(id){ if(!seen[id]) removePresence(id); });
+    if(arrived.length&&!presenceNew)
+      streetNote(arrived.length===1?("<b>"+esc(arrived[0])+"</b> is here."):("<b>"+arrived.length+" dreamers</b> are here now."));
+    presenceNew=false;
+    paintStreetButton();
+    if(streetOpen&&streetTab==="people") paintStreet();
   }).catch(function(){});
 }
 
+var presenceActive=false;
 function presenceTick(dt){
-  var active=walkMode&&(typeof signedIn==="function"&&signedIn())&&(typeof joinedSomnucor==="function"&&joinedSomnucor())&&inSomnucorRealm();
+  var active=walkMode&&(typeof signedIn==="function"&&signedIn())&&(typeof joinedSomnucor==="function"&&joinedSomnucor())&&inSomnucorRealm()&&!(typeof amVisiting==="function"&&amVisiting());
   if(!active){
     if(Object.keys(presenceOthers).length) clearAllPresence();
-    if(presenceCool!==-1){
-      /* leaving Somnucor: take our own dot off the map at once, rather than
-         leaving a stale one standing there for up to twenty seconds */
+    if(presenceActive){
+      /* leaving Somnucor: take our own figure off the map at once, rather
+         than leaving a stale one standing there for twenty seconds */
       if(typeof signedIn==="function"&&signedIn()) cityRpc("clear_presence").catch(function(){});
-      presenceCool=-1;
+      presenceActive=false; presenceNew=true;
     }
+    showStreet(false);
+    updateDeskButton();
     return;
+  }
+  if(!presenceActive){ presenceActive=true; presenceCool=0; showStreet(true); }
+  /* stepping into or out of a building changes who you can see: ask at once */
+  var pk=myPlace(); pk=pk.place+"#"+pk.level;
+  if(pk!==presenceTick.lastPlace){
+    presenceTick.lastPlace=pk; clearAllPresence(); presenceCool=Math.min(presenceCool,0.25); presenceNew=true;
   }
   if(presenceCool<=0){ presenceCool=PRESENCE_INTERVAL; pollPresence(); }
   else presenceCool-=dt;
@@ -18490,10 +18703,338 @@ function presenceTick(dt){
     var p=presenceOthers[id]; if(!p.group) return;
     p.group.position.x+=(p.target.x-p.group.position.x)*ease;
     p.group.position.z+=(p.target.z-p.group.position.z)*ease;
+    p.group.position.y=p.target.y||0;
     var dr=((p.target.rot-p.group.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
     p.group.rotation.y+=dr*ease;
+    if(p.bubble){ p.bubbleLeft-=dt; if(p.bubbleLeft<=0){ dropTag(p.bubble); p.bubble=null; } }
+  });
+  streetTick(dt);
+  updateDeskButton();
+}
+
+/* ======================================================================
+   The street: talking and trading with whoever is in the city
+   ====================================================================== */
+var streetOpen=false, streetTab="talk", streetChan="near";
+var chatAfter=0, chatLines=[], chatCool=0, tradeCool=0, myTradeRows=[], seenTrades={};
+var besideId=null, streetMaterials=null;
+
+function streetEl(){
+  var el=document.getElementById("street");
+  if(el||!document.body) return el;
+  var css=document.createElement("style");
+  css.textContent=
+    "#street-btn{position:fixed;right:12px;top:calc(96px + env(safe-area-inset-top,0px));z-index:45;display:none;"+
+      "background:rgba(10,12,18,.92);color:var(--bone);border:1px solid var(--gold,#C9A868);border-radius:3px;"+
+      "padding:8px 12px;font:13px var(--sans);cursor:pointer}"+
+    "#street-btn .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:#B8724A;color:#fff;font-size:11px;text-align:center}"+
+    "#street{position:fixed;right:12px;top:calc(136px + env(safe-area-inset-top,0px));z-index:46;display:none;"+
+      "width:min(380px,calc(100vw - 24px));max-height:min(62vh,560px);flex-direction:column;"+
+      "background:rgba(8,10,16,.96);border:1px solid var(--gold,#C9A868);border-radius:4px;font:13px var(--sans);color:var(--bone)}"+
+    "#street .st-tabs{display:flex;border-bottom:1px solid var(--line)}"+
+    "#street .st-tabs button{flex:1;background:none;border:0;color:var(--dim);padding:9px 4px;font:13px var(--sans);cursor:pointer}"+
+    "#street .st-tabs button.on{color:var(--bone);box-shadow:inset 0 -2px 0 var(--gold,#C9A868)}"+
+    "#street .st-body{overflow-y:auto;padding:10px 12px;flex:1;min-height:120px}"+
+    "#street .st-foot{border-top:1px solid var(--line);padding:8px;display:flex;gap:6px}"+
+    "#street input,#street select,#street textarea{background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px;font:13px var(--sans);border-radius:2px}"+
+    "#street .st-line{margin:0 0 6px;line-height:1.45;word-wrap:break-word}"+
+    "#street .st-who{color:var(--gold,#C9A868)}"+
+    "#street .st-city{color:#7C93B8;font-size:11px;margin-right:4px}"+
+    "#street .st-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}"+
+    "#street .st-dim{color:var(--dim)}"+
+    "#street .btn{padding:4px 9px;font-size:12px}"+
+    "#desk-btn{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:44;display:none;"+
+      "background:rgba(10,12,18,.94);color:var(--gold,#C9A868);border:1px solid var(--gold,#C9A868);border-radius:3px;"+
+      "padding:10px 18px;font:15px var(--serif);cursor:pointer;letter-spacing:.02em}";
+  document.head.appendChild(css);
+
+  var b=document.createElement("button"); b.id="street-btn"; b.type="button";
+  b.onclick=function(){ streetOpen=!streetOpen; paintStreetButton(); paintStreet(); };
+  document.body.appendChild(b);
+
+  el=document.createElement("div"); el.id="street";
+  el.innerHTML='<div class="st-tabs"><button data-st="talk">Talk</button><button data-st="people">People</button><button data-st="trades">Trades</button></div>'+
+    '<div class="st-body" id="st-body"></div>'+
+    '<div class="st-foot" id="st-foot">'+
+      '<select id="st-chan" title="who hears you"><option value="near">Nearby</option><option value="city">Whole city</option></select>'+
+      '<input id="st-say" maxlength="240" placeholder="Say something…" style="flex:1;min-width:0" autocomplete="off">'+
+      '<button class="btn" id="st-send">Say</button></div>';
+  document.body.appendChild(el);
+  Array.prototype.forEach.call(el.querySelectorAll("[data-st]"),function(t){
+    t.onclick=function(){ streetTab=t.getAttribute("data-st"); if(streetTab==="trades") loadTrades(); paintStreet(); };
+  });
+  /* typing here must not walk you about the city */
+  ["keydown","keyup","keypress"].forEach(function(k){
+    el.addEventListener(k,function(e){
+      if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){
+        e.stopPropagation();
+        if(k==="keydown"&&e.key==="Enter"&&e.target.id==="st-say"){ e.preventDefault(); sendSay(); }
+        if(k==="keydown"&&e.key==="Escape"){ e.target.blur(); }
+      }
+    });
+  });
+  document.getElementById("st-send").onclick=sendSay;
+  document.getElementById("st-chan").onchange=function(){ streetChan=this.value; };
+
+  var d=document.createElement("button"); d.id="desk-btn"; d.type="button";
+  d.onclick=function(){
+    if(typeof deskNear!=="undefined"&&deskNear) openDesk();
+    else if(typeof officeDeskNear!=="undefined"&&officeDeskNear) openOfficeDesk();
+  };
+  document.body.appendChild(d);
+  return el;
+}
+function showStreet(on){
+  var el=streetEl(); if(!el) return;
+  var b=document.getElementById("street-btn");
+  if(b) b.style.display=on?"block":"none";
+  el.style.display=(on&&streetOpen)?"flex":"none";
+  if(on) paintStreetButton();
+}
+function incomingOpen(){ return myTradeRows.filter(function(t){ return t.incoming&&t.state==="open"; }).length; }
+function paintStreetButton(){
+  var b=document.getElementById("street-btn"); if(!b) return;
+  var n=Object.keys(presenceOthers).length, inc=incomingOpen();
+  b.innerHTML=(streetOpen?"Close":"The street")+" <span class='st-dim'>· "+n+" here</span>"+(inc?"<span class='badge'>"+inc+"</span>":"");
+  var el=document.getElementById("street");
+  if(el) el.style.display=(presenceActive&&streetOpen)?"flex":"none";
+}
+/* the desk, reachable by a button too — not every dreamer has a K key */
+function updateDeskButton(){
+  var d=document.getElementById("desk-btn");
+  if(!d){ if(!((typeof deskNear!=="undefined"&&deskNear)||(typeof officeDeskNear!=="undefined"&&officeDeskNear))) return; streetEl(); d=document.getElementById("desk-btn"); if(!d) return; }
+  var dn=typeof deskNear!=="undefined"&&deskNear, on=typeof officeDeskNear!=="undefined"&&officeDeskNear;
+  var open=typeof deskOpen!=="undefined"&&deskOpen;
+  var show=walkMode&&(dn||on)&&!open;
+  d.style.display=show?"block":"none";
+  if(show){
+    var want=dn?"Sit at the Keeper’s Desk":"Sit at the desk";
+    if(d.textContent!==want) d.textContent=want;
+  }
+}
+function streetNote(html){
+  chatLines.push({sys:true,html:html});
+  if(chatLines.length>80) chatLines.shift();
+  if(streetOpen&&streetTab==="talk") paintStreet();
+}
+
+function paintStreet(){
+  var el=streetEl(); if(!el) return;
+  el.style.display=(presenceActive&&streetOpen)?"flex":"none";
+  if(!streetOpen) return;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-st]"),function(t){
+    var k=t.getAttribute("data-st"), inc=incomingOpen();
+    t.className=k===streetTab?"on":"";
+    if(k==="trades") t.innerHTML="Trades"+(inc?" <span class='badge' style='display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:#B8724A;color:#fff;font-size:11px'>"+inc+"</span>":"");
+    if(k==="people") t.textContent="People ("+Object.keys(presenceOthers).length+")";
+  });
+  document.getElementById("st-foot").style.display=streetTab==="talk"?"flex":"none";
+  var body=document.getElementById("st-body");
+  if(streetTab==="talk"){
+    var atEnd=body.scrollTop+body.clientHeight>=body.scrollHeight-20;
+    body.innerHTML=chatLines.length?chatLines.map(function(l){
+      if(l.sys) return '<div class="st-line st-dim">'+l.html+'</div>';
+      return '<div class="st-line">'+(l.channel==="city"?'<span class="st-city">CITY</span>':'')+
+        '<span class="st-who">'+esc(l.mine?"You":l.name)+'</span> '+esc(l.body)+'</div>';
+    }).join(""):'<div class="st-dim">Nobody has said anything yet. <b>Nearby</b> is heard by whoever stands within forty paces of you, in the same room; <b>Whole city</b> by everyone walking Somnucor.</div>';
+    if(atEnd) body.scrollTop=body.scrollHeight;
+  }
+  else if(streetTab==="people"){
+    var rows=presenceList();
+    body.innerHTML=rows.length?rows.map(function(p){
+      return '<div class="st-row"><span><b>'+esc(p.name)+'</b> <span class="st-dim">· '+(p.dist<3?"beside you":Math.round(p.dist)+" m")+'</span></span>'+
+        '<span style="white-space:nowrap"><button class="btn" data-trade="'+p.id+'">Trade</button> '+
+        '<button class="btn" data-pay="'+p.id+'">Pay</button></span></div>';
+    }).join(""):'<div class="st-dim">Nobody else is here just now. When another dreamer walks the city, or the same room as you, they appear here and in the street itself.</div>';
+    Array.prototype.forEach.call(body.querySelectorAll("[data-trade]"),function(b){ b.onclick=function(){ tradeForm(b.getAttribute("data-trade")); }; });
+    Array.prototype.forEach.call(body.querySelectorAll("[data-pay]"),function(b){
+      b.onclick=function(){
+        var id=b.getAttribute("data-pay"), nm=(presenceOthers[id]&&presenceOthers[id].name)||"them";
+        var n=Math.floor(+(prompt("How much gold to give "+nm+"?")||0));
+        if(n>0&&typeof payDreamer==="function") payDreamer(id,n,"given in the street");
+      };
+    });
+  }
+  else if(streetTab==="trades"){
+    var open=myTradeRows.filter(function(t){ return t.state==="open"; });
+    var done=myTradeRows.filter(function(t){ return t.state!=="open"; });
+    body.innerHTML=(open.length?open.map(function(t){
+      return '<div class="st-row" style="display:block">'+
+        '<div>'+(t.incoming?'<b>'+esc(t.other_name)+'</b> offers you ':'You offer <b>'+esc(t.other_name)+'</b> ')+tradeWords(t,true)+'</div>'+
+        ((t.want_gold||t.want_amount)?'<div class="st-dim">'+(t.incoming?"for ":"for ")+tradeWords(t,false)+'</div>':'<div class="st-dim">as a gift</div>')+
+        (t.note?'<div class="st-dim"><i>“'+esc(t.note)+'”</i></div>':'')+
+        '<div style="margin-top:6px">'+(t.incoming
+          ?'<button class="btn" data-accept="'+t.trade_id+'">Accept</button> <button class="btn" data-decline="'+t.trade_id+'">Decline</button>'
+          :'<button class="btn" data-cancel="'+t.trade_id+'">Take it back</button> <span class="st-dim">waiting on them</span>')+'</div></div>';
+    }).join(""):'<div class="st-dim" style="margin-bottom:8px">No offers waiting. Open <b>People</b> and press <b>Trade</b> beside somebody to make one. An offer lasts fifteen minutes.</div>')+
+    (done.length?'<div class="st-dim" style="margin-top:10px">Just now</div>'+done.map(function(t){
+      var w={done:"settled",declined:"declined",cancelled:"taken back",expired:"ran out"}[t.state]||t.state;
+      return '<div class="st-line st-dim">'+(t.incoming?"From ":"To ")+esc(t.other_name)+' — '+w+'</div>';
+    }).join(""):"");
+    Array.prototype.forEach.call(body.querySelectorAll("[data-accept]"),function(b){ b.onclick=function(){ answerTrade("accept_trade",+b.getAttribute("data-accept")); }; });
+    Array.prototype.forEach.call(body.querySelectorAll("[data-decline]"),function(b){ b.onclick=function(){ answerTrade("decline_trade",+b.getAttribute("data-decline")); }; });
+    Array.prototype.forEach.call(body.querySelectorAll("[data-cancel]"),function(b){ b.onclick=function(){ answerTrade("cancel_trade",+b.getAttribute("data-cancel")); }; });
+  }
+  paintStreetButton();
+}
+function tradeWords(t,giving){
+  var bits=[];
+  if(giving){
+    if(t.give_gold) bits.push("<b>"+gold(t.give_gold)+"</b>");
+    if(t.give_amount) bits.push("<b>"+t.give_amount+"</b> "+esc(t.give_name||t.give_kind));
+    if(t.give_item) bits.push("the <b>"+esc(t.give_item_name||"thing")+"</b>");
+  } else {
+    if(t.want_gold) bits.push("<b>"+gold(t.want_gold)+"</b>");
+    if(t.want_amount) bits.push("<b>"+t.want_amount+"</b> "+esc(t.want_name||t.want_kind));
+  }
+  return bits.length?bits.join(" and "):"nothing";
+}
+
+/* ---- talking ---- */
+function sendSay(){
+  var inp=document.getElementById("st-say"); if(!inp) return;
+  var t=(inp.value||"").trim(); if(!t) return;
+  inp.value="";
+  cityRpc("say_in_city",{p_body:t,p_channel:streetChan}).then(function(o){
+    if(o!=="ok") streetNote(esc(String(o)));
+    chatCool=0.15;                                     // fetch it straight back
+  }).catch(function(e){ streetNote("That wasn't heard: "+esc(e.message||"")); });
+}
+function pollChat(){
+  cityRpc("city_chat_since",{p_after:chatAfter}).then(function(rows){
+    (rows||[]).forEach(function(r){
+      chatAfter=Math.max(chatAfter,+r.id||0);
+      chatLines.push({id:r.id,name:r.name||"a dreamer",body:r.body,channel:r.channel,mine:!!r.mine});
+      if(!r.mine&&presenceOthers[r.user_id]) sayOver(r.user_id,r.body);
+      if(!r.mine&&!streetOpen) streetUnread++;
+    });
+    if(chatLines.length>80) chatLines.splice(0,chatLines.length-80);
+    if((rows||[]).length&&streetOpen&&streetTab==="talk") paintStreet();
+    if((rows||[]).length&&!streetOpen){
+      var last=rows[rows.length-1];
+      if(!last.mine) setStatus("<b>"+esc(last.name||"Somebody")+"</b>"+(last.channel==="city"?" (to the city)":"")+": "+esc(last.body));
+    }
+  }).catch(function(){});
+}
+var streetUnread=0;
+
+/* ---- trading ---- */
+function loadTrades(){
+  return cityRpc("my_trades").then(function(rows){
+    myTradeRows=rows||[];
+    myTradeRows.forEach(function(t){
+      if(t.incoming&&t.state==="open"&&!seenTrades[t.trade_id]){
+        seenTrades[t.trade_id]=1;
+        setStatus("<b>"+esc(t.other_name)+"</b> offers you "+tradeWords(t,true)+". Open <b>The street</b> → Trades to answer.");
+      }
+      if(!t.incoming&&t.state!=="open"&&!seenTrades["s"+t.trade_id]){
+        seenTrades["s"+t.trade_id]=1;
+        if(t.state==="done"){
+          setStatus("<b>"+esc(t.other_name)+" accepted your trade.</b>");
+          if(typeof refreshStanding==="function") refreshStanding();
+          if(typeof loadStock==="function") loadStock();
+          if(typeof loadThings==="function") loadThings();
+        }
+        else if(t.state==="declined") setStatus(esc(t.other_name)+" turned your offer down.");
+      }
+    });
+    paintStreetButton();
+    if(streetOpen&&streetTab==="trades") paintStreet();
+    return myTradeRows;
+  }).catch(function(){ return myTradeRows; });
+}
+function answerTrade(fn,id){
+  cityRpc(fn,{p_trade:id}).then(function(o){
+    if(o==="ok"){
+      setStatus(fn==="accept_trade"?"<b>Done.</b> The trade has gone through, both ways at once."
+               :fn==="decline_trade"?"Declined.":"Taken back.");
+      if(fn==="accept_trade"){
+        if(typeof refreshStanding==="function") refreshStanding();
+        if(typeof loadStock==="function") loadStock();
+        if(typeof loadThings==="function") loadThings();
+      }
+    } else setStatus(esc(String(o)));
+    loadTrades();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+function loadMaterials(){
+  if(streetMaterials) return Promise.resolve(streetMaterials);
+  return restGet("materials?select=kind,name&order=name").then(function(rows){ streetMaterials=rows||[]; return streetMaterials; })
+    .catch(function(){ return []; });
+}
+function tradeForm(toId){
+  var who=(presenceOthers[toId]&&presenceOthers[toId].name)||"them";
+  var body=document.getElementById("st-body"); if(!body) return;
+  document.getElementById("st-foot").style.display="none";
+  body.innerHTML="Looking at what you have…";
+  Promise.all([
+    (typeof loadStock==="function"?loadStock():Promise.resolve([])),
+    (typeof loadThings==="function"?loadThings():Promise.resolve([])),
+    loadMaterials(),
+    (typeof refreshStanding==="function"?refreshStanding():Promise.resolve(null))
+  ]).then(function(r){
+    var stockRows=(r[0]||[]).filter(function(s){ return s.amount>0; }), things=r[1]||[], mats=r[2]||[], st=r[3]||standing;
+    var num='type="number" min="0" step="1" style="width:90px"';
+    body.innerHTML='<div style="margin-bottom:8px">A trade with <b>'+esc(who)+'</b>. Nothing moves until they accept, and then all of it moves at once.</div>'+
+      '<div class="st-dim" style="margin:8px 0 4px">You give</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
+        '<input id="tf-gg" '+num+' placeholder="gold"> <span class="st-dim">gold'+(st?" (you have "+(st.gold||0).toLocaleString()+")":"")+'</span></div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">'+
+        '<input id="tf-ga" '+num+' placeholder="how many"> <select id="tf-gk"><option value="">— stock —</option>'+
+        stockRows.map(function(s){ return '<option value="'+esc(s.kind)+'">'+esc(s.name)+' ('+s.amount+')</option>'; }).join("")+'</select></div>'+
+      '<div style="margin-top:6px"><select id="tf-gi" style="max-width:100%"><option value="">— nothing of your own —</option>'+
+        things.map(function(t){ return '<option value="'+t.id+'">'+esc(t.name)+'</option>'; }).join("")+'</select></div>'+
+      '<div class="st-dim" style="margin:12px 0 4px">You ask for</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
+        '<input id="tf-wg" '+num+' placeholder="gold"> <span class="st-dim">gold</span></div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">'+
+        '<input id="tf-wa" '+num+' placeholder="how many"> <select id="tf-wk"><option value="">— stock —</option>'+
+        mats.map(function(m){ return '<option value="'+esc(m.kind)+'">'+esc(m.name||m.kind)+'</option>'; }).join("")+'</select></div>'+
+      '<input id="tf-note" maxlength="140" placeholder="a word with it (optional)" style="width:100%;margin-top:10px">'+
+      '<div style="margin-top:10px;display:flex;gap:8px"><button class="btn" id="tf-send">Offer it</button><button class="btn" id="tf-back">Never mind</button></div>'+
+      '<div id="tf-msg" class="st-dim" style="margin-top:6px"></div>';
+    document.getElementById("tf-back").onclick=function(){ streetTab="people"; paintStreet(); };
+    document.getElementById("tf-send").onclick=function(){
+      var v=function(id){ return Math.max(0,Math.floor(+(document.getElementById(id).value||0))); };
+      var gk=document.getElementById("tf-gk").value||null, wk=document.getElementById("tf-wk").value||null;
+      var gi=document.getElementById("tf-gi").value;
+      var args={p_to:toId,p_give_gold:v("tf-gg"),p_give_kind:gk,p_give_amount:gk?v("tf-ga"):0,p_give_item:gi?+gi:null,
+        p_want_gold:v("tf-wg"),p_want_kind:wk,p_want_amount:wk?v("tf-wa"):0,
+        p_note:(document.getElementById("tf-note").value||"").trim()||null};
+      document.getElementById("tf-msg").textContent="Sending…";
+      cityRpc("offer_trade",args).then(function(o){
+        if(o==="ok"){ setStatus("<b>Offered.</b> "+esc(who)+" has fifteen minutes to answer."); streetTab="trades"; loadTrades(); paintStreet(); }
+        else document.getElementById("tf-msg").textContent=String(o);
+      }).catch(function(e){ document.getElementById("tf-msg").textContent=e.message||"That didn't go."; });
+    };
   });
 }
+
+/* ---- the beat of the street ---- */
+function streetTick(dt){
+  chatCool-=dt; tradeCool-=dt;
+  if(chatCool<=0){ chatCool=2.5; pollChat(); }
+  if(tradeCool<=0){ tradeCool=6; loadTrades(); }
+  /* walking up beside somebody says so, once */
+  var near=presenceList()[0];
+  if(near&&near.dist<3.2){
+    if(besideId!==near.id){
+      besideId=near.id;
+      if(!streetOpen) setStatus("<b>"+esc(near.name)+"</b> is beside you. Open <b>The street</b> to talk or trade.");
+    }
+  } else besideId=null;
+}
+
+/* Enter opens the street and puts you in the talking box */
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(e.key!=="Enter"||!presenceActive) return;
+  var t=(e.target&&e.target.tagName)||"";
+  if(/INPUT|TEXTAREA|SELECT|BUTTON/.test(t)) return;
+  if(typeof deskOpen!=="undefined"&&deskOpen) return;
+  e.preventDefault();
+  streetOpen=true; streetTab="talk"; paintStreet();
+  var inp=document.getElementById("st-say"); if(inp) setTimeout(function(){ inp.focus(); },0);
+});
 
 </script>
 <script>/* js/touch.js */
