@@ -16214,7 +16214,22 @@ function makeInterior(spec){
     }
     return null;
   }
+  /* a workplace keeps its own furnishing on the server (workplace.js): the
+     plan still lays the walls, stairs and lifts, but the furniture it would
+     have put down is only noted — as the "as built" layout the workers can
+     go back to — and the saved layout is put down instead */
+  var wpKey=(typeof workplaceKeyOf==="function")?workplaceKeyOf(spec):null;
+  var wpSaved=(wpKey&&typeof workplaceDecor==="function")?workplaceDecor(wpKey):null;
+  var asBuilt=[];
   function put(k,x,z,rot){
+    if(!FURN[k]) return;
+    if(k!=="stairs"){
+      asBuilt.push({k:k,x:+x.toFixed(2),z:+z.toFixed(2),r:+(rot||0).toFixed(3),l:lvl});
+      if(wpSaved) return;
+    }
+    realPut(k,x,z,rot);
+  }
+  function realPut(k,x,z,rot){
     if(!FURN[k]) return;
     var block=keepoutAt(k,x,z);
     if(block){
@@ -16442,6 +16457,17 @@ function makeInterior(spec){
     if(plan.lift&&levels>2) liftShaft(W,D,levels);
     lvl=0; yOff=0;
     exitZ=D/2;
+  }
+  /* a workplace's own saved layout, floor by floor, where the plan's furniture would have gone */
+  if(wpSaved){
+    var keepL=lvl, keepY=yOff;
+    wpSaved.forEach(function(p){
+      if(!p||!FURN[p.k]||p.k==="stairs") return;
+      var L=Math.max(0,Math.min(levels-1,p.l|0));
+      lvl=L; yOff=L*FLOOR;
+      realPut(p.k,+p.x||0,+p.z||0,+p.r||0);
+    });
+    lvl=keepL; yOff=keepY;
   }
   /* things dreamt inside that aren't in the plan: set about the room they were dreamt in, or the first */
   (I.items||[]).forEach(function(it,i){
