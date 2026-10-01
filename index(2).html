@@ -719,6 +719,12 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
     <p>These readings from the 1901 text use a people as an omen, or are entries about a people outright. They are held back from interpretations until you decide. Nothing has been deleted.</p>
     <div id="held-list"></div>
   </details>
+  <label for="gfx">Graphics</label>
+  <select id="gfx" onchange="var c=cfg(); c.gfx=this.value; setCfg(c);">
+    <option value="auto">Best for this device</option>
+    <option value="high">High &mdash; glowing lights</option>
+    <option value="standard">Standard &mdash; fastest</option>
+  </select>
   <label for="density">Fog &mdash; how far you can see</label>
   <input id="density" type="range" min="4" max="60" step="1" value="26">
   <h3 style="font-weight:500;margin:18px 0 6px;color:var(--bone)">Your account</h3>
@@ -2659,6 +2665,8 @@ function contactShadow(r){
 
 function buildFigure(spec,f){
   var L=lookOf(spec), filler=!!spec.filler;
+  /* the city's own people are dressed, every one differently — never a grey statue */
+  if((spec.city||spec.hub)&&typeof fillLook==="function") fillLook(L,spec.id);
   var child=spec.archetype==="child"||L.age==="child";
   var sex=L.sex;
   function pick(v,fallback){ return v!==null&&v!==undefined?v:fallback; }
@@ -3193,18 +3201,61 @@ function fidelity(spec){
   return Math.min(d/5,1);
 }
 
+/* lettering that fits: the whole name, shrunk or wrapped onto two lines
+   as it needs, never cut short */
+function fitLines(x,text,maxW,maxLines,big,small,weight,face){
+  var size=big, lines=[text];
+  for(;size>=small;size-=2){
+    x.font=weight+" "+size+"px "+face;
+    lines=[]; var line="";
+    String(text).split(/\s+/).forEach(function(w){
+      var t=line?line+" "+w:w;
+      if(x.measureText(t).width>maxW&&line){ lines.push(line); line=w; } else line=t;
+    });
+    if(line) lines.push(line);
+    if(lines.length<=maxLines&&lines.every(function(l){ return x.measureText(l).width<=maxW; })) break;
+  }
+  if(lines.length>maxLines){ lines=lines.slice(0,maxLines); lines[maxLines-1]=lines[maxLines-1].replace(/.{0,2}$/,"…"); }
+  return {size:Math.max(size,small),lines:lines};
+}
+var SIGN_TEX={};
 function signTexture(text){
+  var key="s|"+text; if(SIGN_TEX[key]) return SIGN_TEX[key];
   var c=document.createElement("canvas"); c.width=512; c.height=128;
   var x=c.getContext("2d");
   x.fillStyle="#15161B"; x.fillRect(0,0,512,128);
   x.strokeStyle="#4A463C"; x.lineWidth=6; x.strokeRect(3,3,506,122);
-  x.fillStyle="#C9BEA8";
-  var t=String(text).slice(0,20);
-  var size=t.length>12?46:64;
-  x.font="400 "+size+"px Georgia, serif";
+  x.fillStyle="#E2D6BC";
+  var F=fitLines(x,String(text),480,2,64,24,"400","Georgia, serif");
+  x.font="400 "+F.size+"px Georgia, serif";
   x.textAlign="center"; x.textBaseline="middle";
-  x.fillText(t,256,68);
-  var tex=new THREE.CanvasTexture(c); tex.anisotropy=4; return tex;
+  var lh=F.size*1.08, y0=66-(F.lines.length-1)*lh/2;
+  F.lines.forEach(function(l,i){ x.fillText(l,256,y0+i*lh); });
+  var tex=new THREE.CanvasTexture(c); tex.anisotropy=4; SIGN_TEX[key]=tex; return tex;
+}
+/* a painted notice board: the title, and beneath it what the board says */
+function boardTexture(title,note){
+  var key="b|"+title+"|"+(note||""); if(SIGN_TEX[key]) return SIGN_TEX[key];
+  var c=document.createElement("canvas"); c.width=384; c.height=160;
+  var x=c.getContext("2d");
+  x.fillStyle="#EAE2CC"; x.fillRect(0,0,384,160);
+  x.strokeStyle="#6A5A40"; x.lineWidth=5; x.strokeRect(4,4,376,152);
+  x.fillStyle="#2A2018"; x.textAlign="center"; x.textBaseline="middle";
+  var hasNote=!!(note&&String(note).trim());
+  var T=fitLines(x,String(title),350,hasNote?1:3,hasNote?40:48,hasNote?16:18,"700","Georgia, serif");
+  if(hasNote&&T.lines[0].slice(-1)==="\u2026") T=fitLines(x,String(title),350,2,30,16,"700","Georgia, serif");
+  x.font="700 "+T.size+"px Georgia, serif";
+  var lh=T.size*1.1, top=hasNote?14+lh/2:80-(T.lines.length-1)*lh/2;
+  T.lines.forEach(function(l,i){ x.fillText(l,192,top+i*lh); });
+  if(hasNote){
+    var y=top+T.lines.length*lh+2;
+    x.fillStyle="#7A6A50"; x.fillRect(60,y-4,264,2);
+    var room=Math.max(1,Math.floor((150-y)/17));
+    var N=fitLines(x,String(note),356,room,17,11,"400","Georgia, serif");
+    x.font="400 "+N.size+"px Georgia, serif"; x.fillStyle="#3A3024";
+    N.lines.forEach(function(l,i){ x.fillText(l,192,y+8+N.size/2+i*N.size*1.2); });
+  }
+  var tex=new THREE.CanvasTexture(c); tex.anisotropy=4; SIGN_TEX[key]=tex; return tex;
 }
 
 /* how many floors each kind of building has before the dream says otherwise */
@@ -3316,10 +3367,23 @@ function build(spec){
 
   if(B&&!isHidden(spec)) addOpenings(g,spec,def,parts,f,opa);
 
+  /* a notice board reads from both sides: its name, and what it says */
+  if(spec.archetype==="signboard"){
+    var bt=spec.sign||spec.name||spec.label;
+    if(bt){
+      var btex=boardTexture(bt,spec.note);
+      [1,-1].forEach(function(side){
+        var bp=new THREE.Mesh(new THREE.PlaneGeometry(2.9,1.2),
+          new THREE.MeshLambertMaterial({map:btex,transparent:opa<1,opacity:opa,emissive:0x111111}));
+        bp.position.set(0,2.1,side*0.13); if(side<0) bp.rotation.y=Math.PI;
+        g.add(bp);
+      });
+    }
+  }
   if(spec.sign && def.sign){
     var sg=def.sign; // [x,y,z,w,h]
     var board=new THREE.Mesh(new THREE.PlaneGeometry(sg[3],sg[4]),
-      new THREE.MeshBasicMaterial({map:signTexture(spec.sign),transparent:true,opacity:opa,side:THREE.DoubleSide}));
+      new THREE.MeshLambertMaterial({map:signTexture(spec.sign),transparent:true,opacity:opa,side:THREE.DoubleSide,emissive:0x222222}));
     board.position.set(sg[0],sg[1],sg[2]);
     g.add(board);
   }
@@ -3347,6 +3411,10 @@ function lampsForNight(night){
     var m=meshes[id];
     if(m.userData.lamps) m.userData.lamps.forEach(function(mat){ mat.opacity=0.08+night*0.92; });
     if(m.userData.pool) m.userData.pool.material.opacity=night*0.34;
+  }
+  if(typeof BAKE!=="undefined"){
+    BAKE.lamps.forEach(function(mat){ mat.opacity=0.08+night*0.92; });
+    BAKE.pools.forEach(function(mat){ mat.opacity=night*0.34; });
   }
 }
 
@@ -5403,7 +5471,7 @@ function extendRealms(){
   REALMS.hall={name:"The Hall of Doors",ground:0x1A1A24,tex:"marble",path:0x2A2A38,skyTop:0x05060E,skyLow:0x1E1840,
     dens:.05,light:0xD8DCFF,amb:1.2,sun:.5,stars:1,mix:[]};
   REALMS.somnucor={name:"Somnucor",ground:0x55684A,tex:"grass",amp:7,path:0x5A6070,skyTop:0x24306A,skyLow:0x8A6AB8,
-    dens:.04,light:0xF0ECFF,amb:0.95,sun:0.9,stars:.45,mix:["human","human","child"]};
+    dens:.04,light:0xF0ECFF,amb:0.95,sun:0.9,stars:.45,daynight:true,mix:["human","human","child"]};
   REALMS.fire={name:"The Burning Lands",ground:0x2A1A14,tex:"earth",path:0x4A2A1C,skyTop:0x1A0604,skyLow:0xC24A14,dens:1.8,light:0xFF9A5A,amb:.5,sun:.5,stars:0};
   REALMS.stars={name:"Among the Stars",ground:0x7E7E84,tex:"sand",path:0x9A9AA0,skyTop:0x000002,skyLow:0x06060E,dens:.55,light:0xE8ECFF,amb:.6,sun:.8,stars:1};
   REALMS.fire.mix=["fireelemental","imp","demon","fireelemental"];
@@ -9350,7 +9418,7 @@ function moveEveryone(h,dl){
     c.x=w.x; c.z=w.z; c.doing=w.doing; c.atId=w.at?w.at.id:null; c.visible=w.visible;
     var g=meshes[c.objId];
     if(g){
-      g.visible=w.visible;
+      g.visible=w.visible&&g.userData.culled!==true;     // and never drawn across the city
       if(c.archetype==="bicycle"&&!c.rider){
         /* a bicycle goes nowhere on its own: it waits for somebody to get on */
         g.userData.target={x:g.position.x,z:g.position.z}; g.userData.path=null;
@@ -10149,6 +10217,8 @@ function groundTick(dt){
   if(!walkMode) return;
   var P=camera.position, feet=P.y-1.72;
   var sup=store.inside?insideSupport(P,feet):supportAt(P.x,P.z,feet);
+  /* sitting on what you ride: a saddle, a bicycle seat, a car's seat */
+  if(!store.inside&&typeof rideSeatNow==="function") sup+=rideSeatNow();
   var flying=canFly&&flyY>sup+0.05, flyLevel=null;
   if(flying){
     /* flying can cross any height in one frame; a solid pad in between has to
@@ -10235,9 +10305,11 @@ function initControls(){
       if(document.getElementById("self").classList.contains("open")){ closeSelf(); return; }
       if(greetOpen){ closeGreet(); return; }
       if(talkOpen){ closeTalk(); return; }
-      document.getElementById("roster").classList.remove("open");
+      /* Back goes back ONE step: the top panel first, then out of the
+         building you are in, and only then out of walking — never all
+         the way to the start of the world */
+      if(backOneStep()) return;
       if(walkMode) setWalk(false);
-      closeInspect();
     }
     if(walkMode && ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].indexOf(e.code)>-1) e.preventDefault();
   });
@@ -10304,7 +10376,8 @@ function animate(){
   var dt=Math.min(clock.getDelta(),0.1);
 
   if(walkMode){
-    var sp=(keys["ShiftLeft"]||keys["ShiftRight"])?20:7;
+    /* a brisk walk and a real run — the city is wide */
+    var sp=(keys["ShiftLeft"]||keys["ShiftRight"])?26:9;
     var f=0,s=0;
     if(keys["KeyW"]||keys["ArrowUp"]) f+=1;
     if(keys["KeyS"]||keys["ArrowDown"]) f-=1;
@@ -10312,7 +10385,7 @@ function animate(){
     if(keys["KeyD"]||keys["ArrowRight"]) s+=1;
     /* the phone's joystick: how far you push is how fast you go */
     var jv=joyInput()||padInput(), pace=1;
-    if(jv&&!f&&!s){ f=jv.f; s=jv.s; pace=jv.mag; if(jv.run) sp=20; }
+    if(jv&&!f&&!s){ f=jv.f; s=jv.s; pace=jv.mag; if(jv.run) sp=26; }
     /* what you are riding carries you faster; pushing the pad gently still means gently */
     if(typeof rideSpeed!=="undefined"&&rideSpeed>1) sp*=rideSpeed;
     if(f||s){
@@ -10369,6 +10442,12 @@ function animate(){
   nightTick(dt); nightFades(dt);
   if(typeof atlTick==="function") atlTick(dt);
   if(typeof cityLifeTick==="function") cityLifeTick(dt);
+  if(typeof bakeTick==="function") bakeTick(dt);
+  if(typeof lotTick==="function") lotTick(dt);
+  if(typeof transitTick==="function") transitTick(dt);
+  if(typeof workTick==="function") workTick(dt);
+  if(typeof mallTick==="function") mallTick(dt);
+  if(typeof gfxApply==="function") gfxApply();
   if(typeof atlLifeTick==="function") atlLifeTick(dt);
   avatarTick(dt);
   renderView();
@@ -10442,7 +10521,29 @@ function proximity(dt){
   }
 }
 
+/* closes the top-most thing that is open; true if it closed something */
+function backOneStep(){
+  function isOpen(id){ var el=document.getElementById(id); if(!el) return false;
+    if(el.classList.contains("open")) return true;
+    return !!el.style.display&&el.style.display!=="none"; }
+  if(typeof nmOpen!=="undefined"&&nmOpen) return true;            // a nightmare encounter must be answered
+  if(typeof deskOpen!=="undefined"&&deskOpen){ closeDesk(); return true; }
+  if(typeof wpEditing!=="undefined"&&wpEditing){ var c=document.getElementById("wp-cancel"); if(c){ c.click(); return true; } }
+  if(isOpen("me-ward")){ closeWardrobe(); return true; }
+  if(typeof streetOpen!=="undefined"&&streetOpen){ streetOpen=false; if(typeof paintStreetButton==="function") paintStreetButton(); if(typeof paintStreet==="function") paintStreet(); return true; }
+  if(isOpen("inspect")){ closeInspect(); return true; }
+  if(document.getElementById("roster").classList.contains("open")){ document.getElementById("roster").classList.remove("open"); return true; }
+  if(document.getElementById("land").classList.contains("open")){ closeLand(); return true; }
+  if(document.getElementById("panel").classList.contains("open")){ document.getElementById("panel").classList.remove("open"); return true; }
+  if(walkMode&&store.inside&&typeof INT!=="undefined"&&INT){ exitInterior(); return true; }
+  return false;
+}
+
+/* where you were standing when you stepped out of walking, so "Walk it"
+   puts you back on the same spot instead of at the start of the world */
+var walkResume=null;
 function setWalk(on){
+  if(!on&&walkMode&&camera) walkResume={here:store.here||0,inside:!!store.inside,x:camera.position.x,y:camera.position.y,z:camera.position.z,yaw:yaw,pitch:pitch,flyY:flyY};
   walkMode=on;
   document.getElementById("scrim").classList.toggle("hidden",on);
   document.getElementById("walkhint").classList.toggle("gone",!on);
@@ -10458,7 +10559,12 @@ function setWalk(on){
       : "click to look &middot; wasd move &middot; shift run"+
         (canFly?" &middot; space/c to rise and fall":"")+
         " &middot; click a form to inspect &middot; e to speak &middot; esc back";
-    camera.position.set(t.x, 1.72, t.z+70);
+    var R=walkResume;
+    if(R&&!R.inside&&!store.inside&&(!R.here||realmById(R.here))){
+      if((store.here||0)!==R.here) beHere(R.here);
+      camera.position.set(R.x,R.y,R.z); yaw=R.yaw; pitch=R.pitch; flyY=R.flyY||0;
+    } else camera.position.set(t.x, 1.72, t.z+70);
+    walkResume=null;
   }
 }
 
@@ -10506,7 +10612,32 @@ function openInspect(id){
   document.getElementById("i-scale").value=picked.attrs.s||1;
   document.getElementById("i-height").value=picked.attrs.h||1;
   renderLookEditor();
+  inspectLock(picked);
   document.getElementById("inspect").classList.add("open");
+}
+/* Somnucor is one city for everyone: its buildings and fittings can be looked
+   at, not changed, by anyone but those whose work it is */
+function cityThing(o){
+  if(!o) return false;
+  if(o.city||o.hub) return true;
+  var r=o.realm?realmById(o.realm):null;
+  return !!(r&&(r.kind==="somnucor"||r.kind==="hall"));
+}
+function inspectLock(o){
+  /* even the keeper changes the city through "Shape the city", which changes
+     it for everyone — never a private copy through this panel */
+  var lock=cityThing(o), shaper=typeof mayShape==="function"&&mayShape();
+  var box=document.getElementById("inspect");
+  Array.prototype.forEach.call(box.querySelectorAll("input,select,textarea,button"),function(el){
+    if(/close/i.test(el.id||"")||/close|done|back/i.test(el.textContent||"")) return;
+    el.disabled=lock;
+  });
+  var note=document.getElementById("i-citynote");
+  if(!note){ note=document.createElement("div"); note.id="i-citynote";
+    note.style.cssText="font:12px var(--sans);color:var(--dim);margin:6px 0 10px;line-height:1.5";
+    var h=document.getElementById("i-name"); if(h&&h.parentNode) h.parentNode.insertBefore(note,h.nextSibling); }
+  note.innerHTML=!lock?"":shaper?"Part of Somnucor. Use <b>Shape the city</b> to change it \u2014 that changes it for every dreamer.":"Part of Somnucor \u2014 the one city every dreamer shares. Only the keeper and the City planner change it; what you may shape here is your own look and the lots you hold.";
+  note.style.display=lock?"block":"none";
 }
 function closeInspect(){ picked=null; document.getElementById("inspect").classList.remove("open"); }
 function touchPicked(){
@@ -10591,6 +10722,14 @@ function blockedAt(x,z,feet){
     var c=Math.cos(-w.rot), sn=Math.sin(-w.rot);
     var lx=dx*c+dz*sn, lz=-dx*sn+dz*c;
     if(w.door&&Math.abs(x-w.door.x)<1.5&&Math.abs(z-w.door.z)<1.5) continue;   /* the way in */
+    /* and the path up to it: a porch, front steps or a portico can stand
+       proud of the door, so keep a doorway-wide lane open from the door
+       straight out through whatever is in front of it */
+    if(w.door&&w.door.out){
+      var ddx=x-w.door.x, ddz=z-w.door.z;
+      var along=ddx*w.door.out.x+ddz*w.door.out.z, side=ddx*w.door.out.z-ddz*w.door.out.x;
+      if(along>-1.5&&along<w.hw+w.hd&&Math.abs(side)<1.4) continue;
+    }
     if(Math.abs(lx)<w.hw+R&&Math.abs(lz)<w.hd+R){
       /* something you can stand on stops blocking once you are level with its top */
       if(w.walkTop!==undefined&&feet-(w.b||0)>=w.walkTop-0.35) continue;
@@ -13074,6 +13213,7 @@ function saveSelf(){
   d.practice=document.getElementById("self-practice").value.trim();
   d.notes=document.getElementById("self-notes").value.trim();
   save(); closeSelf();
+  if(typeof publishMyLook==="function") publishMyLook();     // the city learns your new name at once
   setStatus("Saved.");
 }
 
@@ -13484,7 +13624,7 @@ function openPanel(){
   $("padmode").value=c.pad||"automatic"; $("skies").value=c.skies===false?"off":"on";
   $("solidall").value=c.solidAll===false?"half":"solid";
   renderHeld();
-  $("panel").classList.add("open");
+  $("panel").classList.add("open"); var gsel=document.getElementById("gfx"); if(gsel) gsel.value=cfg().gfx||"auto";
 }
 function savePanel(){
   var $=function(i){return document.getElementById(i);};
@@ -14079,12 +14219,20 @@ function applyRealmLight(dl){
   if(sunDisc) sunDisc.visible=sunDisc.visible&&!t;
   if(moonDisc) moonDisc.visible=moonDisc.visible&&!t;
   if(!t) return;
-  var top=blend(t.skyTop,0x000000,(1-dl)*0.35), low=blend(t.skyLow,0x000000,(1-dl)*0.3);
+  /* Somnucor keeps real days and real nights: dark enough after sundown that
+     its lamps, its windows and the Tower's lights mean something */
+  var nd=t.daynight?0.82:0.35;
+  var top=blend(t.skyTop,0x000000,(1-dl)*nd), low=blend(t.skyLow,t.daynight?0x0A0C1A:0x000000,(1-dl)*(t.daynight?0.85:0.3));
   if(sky){ sky.material.uniforms.top.value.setHex(top); sky.material.uniforms.low.value.setHex(low); }
   scene.background.setHex(low);
   if(scene.fog){ scene.fog.color.setHex(low); if(scene.fog.density!==undefined) scene.fog.density*=t.dens; }
-  if(hemi){ hemi.color.setHex(t.light); hemi.groundColor.setHex(blend(t.ground,0x000000,0.6)); hemi.intensity=t.amb*(0.75+0.25*dl); }
-  if(sun){ sun.color.setHex(t.light); sun.intensity=t.sun*(0.7+0.3*dl); }
+  if(t.daynight){
+    if(hemi){ hemi.color.setHex(blend(0x5A6AA8,t.light,dl)); hemi.groundColor.setHex(blend(t.ground,0x000000,0.6)); hemi.intensity=t.amb*(0.42+0.58*dl); }
+    if(sun){ sun.color.setHex(blend(0x8A9AD8,t.light,dl)); sun.intensity=t.sun*(0.06+0.94*dl); }
+  } else {
+    if(hemi){ hemi.color.setHex(t.light); hemi.groundColor.setHex(blend(t.ground,0x000000,0.6)); hemi.intensity=t.amb*(0.75+0.25*dl); }
+    if(sun){ sun.color.setHex(t.light); sun.intensity=t.sun*(0.7+0.3*dl); }
+  }
   if(stars) stars.material.opacity=Math.max(stars.material.opacity,t.stars);
 }
 /* stepping through a portal changes the world at once, not at the next tick */
@@ -14908,7 +15056,18 @@ var SPECIES_FEATS={
 function meLook(){
   var d=dreamer();
   if(!d.look){ d.look=blankLook("human"); d.look.src={}; }
+  fillLook(d.look,(typeof myUserId==="function"&&myUserId())||d.seed||(d.seed=String(Math.random()).slice(2)));
   return d.look;
+}
+/* anything about a dreamer's look they haven't chosen yet is filled from a
+   seed of their own, so no two dreamers come out as the same grey statue —
+   and what they HAVE chosen is never touched */
+function fillLook(L,seed){
+  var R=randomLook(seed,"human");
+  ["sex","skin","hair","hairStyle","top","topKind","bottom","bottomKind","shoes","hat","build"].forEach(function(k){
+    if(L[k]===null||L[k]===undefined) L[k]=R[k];
+  });
+  return L;
 }
 function meSpec(){ return {id:"__me",archetype:"human",attrs:{},look:meLook(),solid:true,detail:4,nights:[store.session]}; }
 function rebuildMe(){
@@ -15043,12 +15202,12 @@ function renderView(){
     var towerH=(def&&def.size?def.size[1]*sc:210);
     camera.position.set(spec.x,towerH+60,spec.z+80);
     camera.lookAt(spec.x,towerH*0.25,spec.z);
-    renderer.render(scene,camera);
+    (typeof gfxRender==="function"?gfxRender():renderer.render(scene,camera));
     camera.position.set(px0,py0,pz0);
     camera.rotation.order="YXZ"; camera.rotation.set(pitch,yaw,0);
     return;
   }
-  if(!walkMode||meView==="eyes"||!meG){ renderer.render(scene,camera); return; }
+  if(!walkMode||meView==="eyes"||!meG){ (typeof gfxRender==="function"?gfxRender():renderer.render(scene,camera)); return; }
   var P=camera.position, px=P.x, py=P.y, pz=P.z;
   var fx=-Math.sin(yaw), fz=-Math.cos(yaw);
   if(meView==="behind"){
@@ -15061,7 +15220,7 @@ function renderView(){
     camera.position.set(px+fx*2.6,py-0.35,pz+fz*2.6);
     camera.lookAt(px,py-0.55,pz);
   }
-  renderer.render(scene,camera);
+  (typeof gfxRender==="function"?gfxRender():renderer.render(scene,camera));
   camera.position.set(px,py,pz);
   camera.rotation.order="YXZ"; camera.rotation.set(pitch,yaw,0);
 }
@@ -15890,7 +16049,7 @@ function makeInterior(spec){
       realPut(p.k,+p.x||0,+p.z||0,+p.r||0);
     });
     lvl=keepL; yOff=keepY;
-  } else if(wpKey&&typeof workplaceFit==="function"){
+  } else if(wpKey&&!/^lot:/.test(wpKey)&&typeof workplaceFit==="function"){
     /* not rearranged yet: furnished for its trade, the trade's own pieces set along the walls */
     var keepL2=lvl, keepY2=yOff; lvl=0; yOff=0;
     workplaceFit(wpKey,W,D,asBuilt).forEach(function(p){ asBuilt.push(p); realPut(p.k,p.x,p.z,p.r); });
@@ -16248,12 +16407,28 @@ function bringOccupants(){
   });
 }
 /* each frame while walking: step into a doorway to go in; step into the way out to leave */
+/* indoors the light is the building's own: the same comfortable level at noon
+   and at midnight. the sun and sky light the city outside; let in through a
+   roof they washed floors white by day and left rooms murky by night. */
+var indoorLit=false;
+function indoorLight(on){
+  if(on){
+    indoorLit=true;
+    if(typeof sun!=="undefined"&&sun) sun.intensity=0;
+    if(typeof hemi!=="undefined"&&hemi){ hemi.color.setHex(0xFFF2E2); hemi.groundColor.setHex(0x4A4036); hemi.intensity=0.78; }
+    if(scene&&scene.fog) scene.fog.density=Math.min(scene.fog.density,0.002);
+  } else if(indoorLit){
+    indoorLit=false;
+    if(typeof tickClock==="function") tickClock(true);
+  }
+}
 function interiorTick(dt){
   if(intCool>0) intCool-=dt;
   if(liftCool>0) liftCool-=dt;
   paintLiftPanel();
-  if(!walkMode){ if(INT) exitInterior(true); return; }
+  if(!walkMode){ if(INT) exitInterior(true); indoorLight(false); return; }
   var P=camera.position;
+  indoorLight(!!INT);
   if(INT){
     var day=daylight(dreamHour()), wc=blend(0x1A2238,0xCFE0F0,day);
     var sun=daySunAngle(day);
@@ -16268,7 +16443,10 @@ function interiorTick(dt){
     if(intCool<=0&&(INT.level||0)===0&&Math.hypot(P.x-INT.exit.x,P.z-INT.exit.z)<0.9) exitInterior(false);
     return;
   }
-  if(intCool>0||P.y-1.72>2) return;
+  /* on the ground you're standing on — in the risen city that ground is a terrace
+     a hundred metres up, so measure from it, not from sea level */
+  var gy=(typeof terrainY==="function")?terrainY(P.x,P.z):0;
+  if(intCool>0||P.y-1.72-gy>2) return;
   for(var i=0;i<store.objects.length;i++){
     var o=store.objects[i];
     if((o.realm||0)!==(store.here||0)||o.filler||!enterable(o)) continue;
@@ -16763,6 +16941,69 @@ function atlTick(dt){
 
 var ATL_GOLD=0xD9B45A, ATL_MARBLE=0xF1ECE0, ATL_DEEP=0x24304A, ATL_CYAN=0x7FE6FF, ATL_BRONZE=0x8A6A3A;
 
+
+/* ---------------------------------------------------------------- the Warrens' own clutter */
+var SLUMWOOD=0x5E4A36, SLUMGREY=0x6A6660, TARP1=0x4E6A7A, TARP2=0x7A5A3A, SOOT=0x2C2A28;
+S("leanto","structure",[5,3,4],[
+  {g:"cyl",s:[.07,.08,2.8,6],p:[-2.2,1.4,1.6],c:SLUMWOOD},{g:"cyl",s:[.07,.08,2.8,6],p:[2.2,1.4,1.6],c:SLUMWOOD},
+  {g:"cyl",s:[.07,.08,1.4,6],p:[-2.2,.7,-1.6],c:SLUMWOOD},{g:"cyl",s:[.07,.08,1.4,6],p:[2.2,.7,-1.6],c:SLUMWOOD},
+  {g:"box",s:[4.8,.05,3.8],p:[0,2.1,0],r:[.38,0,0],c:TARP1},
+  {g:"box",s:[1.2,.8,.9],p:[-1.2,.4,-.9],c:SLUMWOOD},{g:"box",s:[1.6,.25,1.8],p:[.9,.13,-.4],c:0x7A6A58}
+],["lean-to","tarp shelter","makeshift tent"]);
+S("rubble","infra",[4,1.4,4],[
+  {g:"box",s:[1.6,.7,1.2],p:[-.6,.35,.2],r:[0,.4,.1],c:SLUMGREY},{g:"box",s:[1,.5,1.3],p:[.8,.25,-.3],r:[.1,-.3,0],c:0x7A746A},
+  {g:"box",s:[.9,.9,.8],p:[.1,.6,.9],r:[.3,.2,.2],c:0x8A8276},{g:"box",s:[2.4,.08,.18],p:[.2,.9,-.6],r:[0,.6,.35],c:SLUMWOOD},
+  {g:"sph",s:[.45,6,5],p:[-1.4,.2,-1],c:0x5E5A54}
+],["rubble","heap of bricks","broken stone"]);
+S("puddle","infra",[3,.05,2],[
+  {g:"cyl",s:[1.4,1.4,.02,18],p:[0,.03,0],c:0x2A3440,opa:.85}
+],["puddle","puddles"]);
+S("handpump","infra",[2.4,2,1.2],[
+  {g:"cyl",s:[.14,.16,1.4,8],p:[0,.7,0],c:0x2E3236},{g:"box",s:[.9,.08,.08],p:[.4,1.45,0],r:[0,0,-.4],c:0x2E3236},
+  {g:"cyl",s:[.06,.06,.4,6],p:[0,1.1,.25],r:[1.4,0,0],c:0x2E3236},
+  {g:"box",s:[1.8,.5,.8],p:[.2,.25,.7],c:SLUMWOOD},{g:"box",s:[1.6,.05,.6],p:[.2,.46,.7],c:0x3A5060}
+],["water pump","hand pump","village pump"]);
+S("pallets","infra",[2,1,1.4],[
+  {g:"box",s:[1.6,.14,1.2],p:[0,.07,0],c:0x8A6A42,rep:[1,0,0,0],rep2:[5,0,.18,0]},
+  {g:"box",s:[1.5,.14,1.1],p:[.1,1.05,0],r:[0,.3,0],c:0x7A5E3A}
+],["pallets","stacked pallets"]);
+S("sacks","infra",[2,1,1.6],[
+  {g:"sph",s:[.45,8,6],p:[-.4,.32,0],c:0x9A8256},{g:"sph",s:[.45,8,6],p:[.45,.3,.2],c:0x8E7650},
+  {g:"sph",s:[.4,8,6],p:[0,.78,.05],c:0xA48C5E},{g:"sph",s:[.42,8,6],p:[.2,.3,-.6],c:0x86704C}
+],["sacks","sacks of grain","bags"]);
+S("brokencart","infra",[3,1.6,2],[
+  {g:"box",s:[2.4,.7,1.4],p:[0,.75,0],r:[0,0,.22],c:SLUMWOOD},
+  {g:"tor",s:[.55,.07,6,12],p:[-.6,.55,.75],c:0x3A2E24},{g:"tor",s:[.55,.07,6,12],p:[.9,.15,-.6],r:[1.5,0,0],c:0x3A2E24},
+  {g:"cyl",s:[.04,.04,1.8,5],p:[1.5,.5,0],r:[0,0,1.2],c:SLUMWOOD}
+],["broken cart","abandoned cart","wrecked cart"]);
+S("boardedshack","structure",[5,4,4.4],[
+  {g:"box",s:[4.6,2.8,4],p:[0,1.4,0],c:0x6E5A44},
+  {g:"box",s:[4.7,.12,.22],p:[0,.5,2.02],c:0x5A4834,rep:[1,0,0,0],rep2:[6,0,.45,0]},
+  {g:"box",s:[5.2,.1,4.8],p:[0,3,0],r:[0,0,.1],c:0x7A7468},
+  {g:"box",s:[1.1,2,.1],p:[-1.1,1,2.05],c:SOOT},
+  {g:"box",s:[.9,.7,.06],p:[1.2,1.7,2.05],c:0x6A6058},{g:"box",s:[1.1,.08,.08],p:[1.2,1.7,2.1],r:[0,0,.6],c:0x5A4834},
+  {g:"cyl",s:[.2,.22,1.4,8],p:[1.6,3.6,-1],c:0x4A4642}
+],["boarded shack","shack","hovel"]);
+S("ragline","infra",[8,3.4,.6],[
+  {g:"cyl",s:[.05,.06,3.2,5],p:[-3.8,1.6,0],c:SLUMWOOD},{g:"cyl",s:[.05,.06,3.2,5],p:[3.8,1.6,0],c:SLUMWOOD},
+  {g:"cyl",s:[.01,.01,7.6,3],p:[0,3,0],r:[0,0,Math.PI/2],c:0xCFC6B4},
+  {g:"box",s:[.6,.9,.02],p:[-2.8,2.5,0],c:0xA0523A},{g:"box",s:[.5,.7,.02],p:[-1.7,2.6,0],c:0x5A6E4A},
+  {g:"box",s:[.7,1.1,.02],p:[-.5,2.4,0],c:0xB8A880},{g:"box",s:[.5,.6,.02],p:[.7,2.65,0],c:0x6A4A7A},
+  {g:"box",s:[.8,.9,.02],p:[1.9,2.5,0],c:0x8A8070},{g:"box",s:[.4,.5,.02],p:[3,2.7,0],c:0xC0603A}
+],["rags on a line","patched washing"]);
+S("dimlamp","infra",[1,4,1],[
+  {g:"cyl",s:[.07,.09,3.6,6],p:[0,1.8,0],r:[0,0,.06],c:0x3A3632},
+  {g:"box",s:[.5,.08,.08],p:[.2,3.55,0],c:0x3A3632},
+  {g:"sph",s:[.16,8,6],p:[.42,3.38,0],c:0xE8B060,glow:1}
+],["gas lamp","dim lamp","old street lamp"]);
+S("soupkitchen","structure",[8,4,6],[
+  {g:"box",s:[7,3,5],p:[0,1.5,0],c:0x7A6450},
+  {g:"box",s:[7.6,.15,6.2],p:[0,3.1,.4],r:[.08,0,0],c:0x5A4A3A},
+  {g:"box",s:[5,.9,1],p:[0,.45,3.2],c:SLUMWOOD},
+  {g:"cyl",s:[.55,.5,.7,12],p:[-1.5,1.25,3.2],c:0x3A3A3A},{g:"cyl",s:[.55,.5,.7,12],p:[1.4,1.25,3.2],c:0x3A3A3A},
+  {g:"box",s:[2.4,.6,.1],p:[0,2.6,2.56],c:0xE8DCC0}
+],["soup kitchen","food bank","charity kitchen"],{sign:[0,2.6,2.62,2.4,.6]});
+
 /* ---------------------------------------------------------------- sacred */
 S("grandtemple","structure",[24,17,36],[
   {g:"box",s:[24,1.2,36],p:[0,.6,0],c:0xE6E0D2},
@@ -17061,8 +17302,8 @@ var WORKPLACES=[
  /* ---- the Civic Ring ---- */
  {key:"The Courthouse",ring:"civic",arch:"courthouse",jobs:[9,30,70,79],fit:["lectern","filecabinet","filecabinet","noticeboard","keyrack"],
   note:"Where the city's cases are heard. The magistrates sit here, the advocates argue, the clerks keep the record."},
- {key:"The Watch House",ring:"civic",arch:"institution",jobs:[8,19,86],fit:["noticeboard","filecabinet","keyrack","desk","cellbars","bunk"],
-  note:"The city watch: constables, the night watch and their sergeants. Every patrol begins and ends here."},
+ {key:"The Dragon Roost",ring:"civic",arch:"institution",jobs:[8,19,86],fit:["noticeboard","filecabinet","keyrack","desk","cellbars","bunk"],
+  note:"The Dragon Corp: riders of the city's dragons, each keeping a sector of Somnucor. Every patrol begins and ends here."},
  {key:"The City Treasury",ring:"civic",arch:"bank",jobs:[20,40,112],fit:["filecabinet","filecabinet","desk","weighscale","vaultround"],
   note:"Where the city's own gold is counted: taxes, tolls, and what the treasury holds."},
  {key:"The City Archive",ring:"civic",arch:"library",jobs:[2,68,69],fit:["filecabinet","filecabinet","filecabinet","lectern","mapchest"],
@@ -17204,7 +17445,7 @@ function atlHands(r,h){
     if(!KIT[arch]) return null;
     /* every thing in the city has the same fixed name on every dreamer's device,
        so a change the keeper makes to it is a change to the one city */
-    var spec={id:"sc"+(++C.seq),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
+    var spec={id:(C.pre||"sc")+(++C.seq),archetype:arch,label:name||null,attrs:attrs||{},x:h.x+x,z:h.z+z,rot:rot||0,
       solid:KIT[arch].cat!=="being"&&!ATL_WALKTHROUGH[arch],detail:3,nights:[store.session],realm:r.id,hub:true,city:true,
       addr:null,name:name||null,named:name?"stated":null,peopled:true};
     if(extra) Object.keys(extra).forEach(function(k){ spec[k]=extra[k]; });
@@ -17295,6 +17536,7 @@ function buildSomnucorCity(){
 
   atlPlaza(C); atlCivic(C); atlEstates(C); atlTemples(C); atlMarkets(C);
   atlCommons(C); atlWarrens(C); atlHarvest(C); atlWilds(C); atlStairDress(C);
+  if(typeof atlTransit==="function") atlTransit(C);
 
   if(typeof housePeople==="function"&&typeof BELONGS!=="undefined"){
     store.objects.filter(function(o){ return o.city&&o.workplace&&BELONGS[o.archetype]; })
@@ -17354,7 +17596,7 @@ function atlCivic(C){
   var rs=245, G=atlGaps(rs+40,28,4), Gi=atlGaps(rs-40,24,4);
   C.sign(170,0.19+0.12,rotOut(0.31),"The Civic Ring","The city's own business: its courts and its watch, its treasury and archive, its hospital and its post.");
   /* outside the street: the great halls, one to a gap */
-  var outer=["The City Hospital","The Watch House","The Courthouse","The City Treasury","The City Archive","The Gate Lodge","The City Museum","The Map House",
+  var outer=["The City Hospital","The Dragon Roost","The Courthouse","The City Treasury","The City Archive","The Gate Lodge","The City Museum","The Map House",
              "The Land Office","The Post Office","The Chronicle Press","The Runners' Hall"];
   outer.forEach(function(k,i){
     var g=G[(i*4)%16+Math.floor(i/4)]; if(!g) return;
@@ -17752,6 +17994,94 @@ function atlWarrens(C){
     cx:C.h.x,cz:C.h.z};
   /* the poorhouse soup queue and the rest of the street's dressing */
   var sp=gIn[5]; if(sp){ C.front("tenementblock",rs,-1,sp.mid,1,"The Poorhouse",{sign:"The Poorhouse"}); C.at("crowd",rs-12,sp.mid+14/rs,0); C.at("firebarrel",rs-14,sp.mid-10/rs,0); }
+  atlWarrensDress(C,rs,gIn,gOut);
+}
+
+/* the Warrens lived in: what gathers in streets nobody sweeps. Clutter at the
+   kerbs, rags strung between posts, puddles, pumps where water is fetched,
+   shanties and lean-tos in every back lot, fire barrels with people round
+   them, dim old lamps, and a soup kitchen or two. Laid by a fixed hand, so it
+   is the same Warrens on every dreamer's device. */
+function atlWarrensDress(C,rs,gIn,gOut){
+  /* its own run of names, so nothing already in the city is renumbered and
+     every change the keeper has made still lands on the thing it was made to */
+  var keepSeq=C.seq, keepPre=C.pre; C.pre="sw"; C.seq=0;
+  try{ atlWarrensDressing(C,rs,gIn,gOut); } finally { C.pre=keepPre; C.seq=keepSeq; }
+}
+function atlWarrensDressing(C,rs,gIn,gOut){
+  var W=atlRing("warrens"), clutter=["crates","barrel","pallets","sacks","rubble","brokencart","scrapheap","trashcan","crates","puddle"];
+  var seq=0; function pick(list){ seq++; return list[(seq*7+Math.floor(seq/3))%list.length]; }
+  /* clear of the stairways, and of every house, wall and sign already standing */
+  var stand=store.objects.filter(function(o){ if(o.realm!==C.r.id) return false; var dx=o.x-C.h.x, dz=o.z-C.h.z, rr=Math.sqrt(dx*dx+dz*dz); return rr>W.S-30&&rr<W.E+30; })
+    .map(function(o){ var d=KIT[o.archetype]; var s=(o.attrs&&o.attrs.s)||1; return {x:o.x,z:o.z,r:d?Math.max(d.size[0],d.size[2])*s*0.5:2}; });
+  function free(rr,a,r){
+    r=r||3;
+    if(typeof atlClearAt==="function"&&!atlClearAt(rr,a,r,2)) return false;
+    var x=C.h.x+Math.cos(a)*rr, z=C.h.z+Math.sin(a)*rr;
+    for(var i=0;i<stand.length;i++){ var q=stand[i], dx=q.x-x, dz=q.z-z, m=q.r+r+1; if(dx*dx+dz*dz<m*m) return false; }
+    stand.push({x:x,z:z,r:r});
+    return true;
+  }
+  /* along both kerbs of the Warrens street, all the way round */
+  var circ=Math.PI*2*rs;
+  for(var d=0;d<circ;d+=17){
+    var a=d/rs, side=(Math.floor(d/17)%2)?1:-1, kb=C.kerb(rs,side)+side*1.5;
+    var Y=store.gaolYard; if(Y&&Math.abs(((a-Y.a+Math.PI*3)%(Math.PI*2))-Math.PI)<0.07) continue;   // not across the Gaol's front
+    if(!free(kb,a,2.5)) continue;
+    var k=pick(clutter); if(KIT[k]) C.at(k,kb,a,(seq*1.3)%6.28);
+    if(seq%5===0&&KIT.dimlamp) C.at("dimlamp",C.kerb(rs,-side)-side*0.8,a+4/rs,side>0?rotOut(a):rotIn(a));
+    if(seq%9===0&&KIT.ragline) C.at("ragline",rs,a+8/rs,rotAlong(a));                       // strung across the street
+  }
+  /* where the city never built, the poor built for themselves: the street is
+     lined end to end with shacks, boarded huts, lean-tos and the odd crumbling
+     tenement, every one facing the street */
+  var front=["boardedshack","shanty","boardedshack","leanto","shanty","boardedshack","tenementblock","shanty"];
+  for(var fd=4;fd<circ;fd+=9){
+    var fa=fd/rs;
+    [-1,1].forEach(function(sd){
+      var hut=front[(Math.floor(fd/9)*3+(sd>0?1:0))%front.length];
+      var dep=KIT[hut]?KIT[hut].size[2]:5, wid=KIT[hut]?KIT[hut].size[0]:5;
+      var rr=rs+sd*(ATL_ROAD+ATL_SETBACK+dep/2);
+      if(!free(rr,fa,Math.max(dep,wid)*0.5)) return;
+      C.at(hut,rr,fa,sd>0?rotIn(fa):rotOut(fa));
+    });
+  }
+  /* the back lots: shanty towns between the rows and the rim */
+  var inner=W.S+ATL_STAIR_RUN+14, outer=W.E-10;
+  var huts=["shanty","leanto","boardedshack","tent","shanty","boardedshack","leanto","shanty"];
+  for(var bd=0;bd<circ;bd+=10){
+    var ba=bd/rs;
+    [inner+8,inner+20,outer-20,outer-8].forEach(function(rr,j){
+      var a=ba+((j*5+Math.floor(bd/10))%3)*3/rr;
+      var hut=huts[(Math.floor(bd/10)+j*3)%huts.length];
+      if(!free(rr,a,3.6)) return;
+      C.at(hut,rr,a,(j<2?rotOut(a):rotIn(a))+((Math.floor(bd/10)+j)%3-1)*0.3);
+      var cl=clutter[(Math.floor(bd/10)*5+j)%clutter.length], cr=rr+(j<2?5:-5);
+      if((Math.floor(bd/10)+j)%2===0&&KIT[cl]&&free(cr,a+3/rr,1.4)) C.at(cl,cr,a+3/rr,j);
+    });
+  }
+  for(var i=0;i<72;i++){
+    var a0=i/72*Math.PI*2+0.011;
+    var Y2=store.gaolYard; if(Y2&&Math.abs(((a0-Y2.a+Math.PI*3)%(Math.PI*2))-Math.PI)<0.09) continue;
+    [inner+6, outer-8].forEach(function(rr,j){
+      var a=a0+j*0.006;
+      if(!free(rr,a,6)) return;
+      var hut=["shanty","leanto","boardedshack","tent","shanty","leanto"][(i+j)%6];
+      if(KIT[hut]) C.at(hut,rr,a,(j?rotIn(a):rotOut(a))+((i%3)-1)*0.25);
+      var near=rr+(j?-7:7);
+      if(i%3===0&&KIT.firebarrel&&free(near,a+5/rr,1.5)){ C.at("firebarrel",near,a+5/rr,0); if(i%6===0&&KIT.crowd) C.at("crowd",near+(j?-3:3),a+5/rr,0); }
+      if(i%4===1&&KIT.ragline&&free(near,a-6/rr,2)) C.at("ragline",near,a-6/rr,rotAlong(a));
+      if(i%5===2&&KIT.handpump&&free(near,a,1.5)) C.at("handpump",near,a,j?rotIn(a):rotOut(a));
+      if(i%7===3&&KIT.cat&&free(near,a+9/rr,1)) C.at("cat",near,a+9/rr,i);
+      if(i%8===5&&KIT.rat) C.at("rat",near,a-3/rr,i);
+    });
+  }
+  /* two soup kitchens, on the far sides of the ring from the Poorhouse */
+  [Math.PI*0.62,Math.PI*1.38].forEach(function(da){
+    var base=(gIn[5]?gIn[5].mid:0)+da;
+    if(KIT.soupkitchen&&free(rs-24,base,6)){ C.at("soupkitchen",rs-24,base,rotOut(base),"Soup kitchen",null,{sign:"Soup kitchen"});
+      if(KIT.crowd) C.at("crowd",rs-14,base+8/rs,0); }
+  });
 }
 
 /* ---------------------------------------------------------------- 7 the Harvest Ring */
@@ -17863,8 +18193,11 @@ function atlStairDress(C){
 /* nothing far off is drawn: small things go first, the great buildings last,
    so the skyline stands while the street furniture of the far rings rests */
 var cullAt=0;
+var cullLast=null;
 function cityLifeTick(dt){
-  cullAt-=dt; if(cullAt>0) return; cullAt=0.35;
+  var Pq=camera.position, jumped=!cullLast||Math.abs(cullLast.x-Pq.x)+Math.abs(cullLast.z-Pq.z)>40||cullLast.here!==(store.here||0)||cullLast.inside!==!!store.inside;
+  cullAt-=dt; if(cullAt>0&&!jumped) return; cullAt=0.35;
+  cullLast={x:Pq.x,z:Pq.z,here:store.here||0,inside:!!store.inside};
   if(!ATLC) return;
   var P=camera.position, here=store.here||0;
   var r=somnucorRealm(); if(!r) return;
@@ -17875,9 +18208,14 @@ function cityLifeTick(dt){
     if(g.userData.nmGone) return;
     if(!inCity){ if(g.userData.culled!==true){ g.visible=false; g.userData.culled=true; } return; }
     var d=KIT[o.archetype], big=d?Math.max(d.size[0],d.size[1],d.size[2])*((o.attrs&&o.attrs.s)||1):5;
-    var reach=d&&d.cat==="structure"?(big>40?2600:(big>18?1200:700)):(d&&d.cat==="being"?260:(big>12?700:360));
+    var alive=(d&&d.cat==="being")||(typeof CREATURE!=="undefined"&&CREATURE[o.archetype]);
+    var reach=d&&d.cat==="structure"?(big>40?2600:(big>18?1200:700)):(alive?(big>12?420:200):(big>12?700:360));
     var dx=o.x-P.x, dz=o.z-P.z, show=dx*dx+dz*dz<reach*reach;
-    if(show!==(g.userData.culled!==true)){ g.visible=show; g.userData.culled=!show; }
+    /* a figure whose hour has them indoors or away stays unseen even when near */
+    var ch=(d&&d.cat==="being"&&typeof charOf==="function")?charOf(o):null;
+    var want=show&&!(ch&&ch.visible===false);
+    g.userData.culled=!show;
+    if(g.visible!==want) g.visible=want;
   });
 }
 </script>
@@ -17955,9 +18293,8 @@ function rebuildHere(){
 function canArrange(key){
   if(!key) return false;
   if(typeof heldNow==="function"&&heldNow()) return false;      /* nobody rearranges anything while held */
-  if(WP_MINE[key]) return true;
-  if(typeof amKeeper==="function"&&amKeeper()) return true;
-  return !!(typeof standing!=="undefined"&&standing&&(standing.jobs||[]).some(function(j){ return j.workplace===key; }));
+  if(WP_MINE[key]) return true;                                    /* the server's own say */
+  return typeof mayArrangeAny==="function"&&mayArrangeAny();
 }
 
 /* ---- the arranging itself ---- */
@@ -17981,7 +18318,7 @@ function paintWorkButton(){
   var key=INT&&INT.wpKey;
   var show=walkMode&&key&&!wpEditing&&canArrange(key);
   b.style.display=show?"block":"none";
-  if(show) b.textContent="Rearrange "+key;
+  if(show) b.textContent=/^lot:/.test(key)?"Rearrange your house":("Rearrange "+key);
 }
 var FURN_NAMES=null;
 function furnList(){
@@ -17991,7 +18328,7 @@ function furnList(){
 }
 function startArranging(){
   var key=INT&&INT.wpKey; if(!key) return;
-  if(!canArrange(key)) return setStatus("Only the people who work here may rearrange it.");
+  if(!canArrange(key)) return setStatus("Only the keeper, the City planner and the Carpenter rearrange Somnucor's buildings.");
   wpEditing=key;
   wpDraft=JSON.parse(JSON.stringify(workplaceDecor(key)||INT.asBuilt||[]));
   if(!WP_DECOR[key]) wpDraft=JSON.parse(JSON.stringify(INT.asBuilt||[]));
@@ -18380,7 +18717,7 @@ function paintShapeButton(){
   shapeEl();
   var b=document.getElementById("shape-btn"); if(!b) return;
   var r=somnucorRealm();
-  var show=walkMode&&!store.inside&&r&&(store.here||0)===r.id&&(typeof amKeeper==="function"&&amKeeper())&&!shapeOpen;
+  var show=walkMode&&!store.inside&&r&&(store.here||0)===r.id&&(typeof mayShape==="function"&&mayShape())&&!shapeOpen;
   b.style.display=show?"block":"none";
   if(!shapeOpen){ var el=document.getElementById("shape"); if(el) el.style.display="none"; if(shapeRing) shapeRing.visible=false; }
 }
@@ -18480,6 +18817,334 @@ function shapeSend(key,op,data,ok){
     return _setPlot.apply(this,arguments);
   };
 })();
+</script>
+<script>/* js/atlantis-bake.js */
+/* SomnuMatrix — atlantis-bake.js
+   Somnucor drawn fast. The city is eight thousand things made of a hundred
+   thousand little pieces, and drawing each piece on its own every frame is
+   what made walking it feel slow. Here every piece that never moves is
+   pressed together, area by area, into a handful of large meshes — its own
+   colour carried in the mesh itself — so the whole city costs a few hundred
+   draws instead of fifteen thousand.
+
+   Nothing about the city changes: every piece is still there, still clickable
+   and inspectable (the originals stay in place, only hidden), and anything
+   the keeper changes is re-pressed a moment later. People, creatures,
+   vehicles and anything that moves or shimmers are left exactly as they are.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var BAKE={chunks:{},queue:[],ready:false,cell:260,bigCell:1100,lamps:[],pools:[],
+          checkAt:0,cullAt:0,started:false,off:false};
+
+function bakeSkipObject(o,g){
+  if(!g||g.userData.drives||g.userData.nmGone) return true;
+  if(o.wild||(typeof CREATURE!=="undefined"&&CREATURE[o.archetype])) return true;
+  var d=KIT[o.archetype]; if(!d) return true;
+  if(d.cat==="being"||d.cat==="vehicle") return true;
+  if(typeof isHidden==="function"&&isHidden(o)) return true;
+  if(typeof ROADGOING!=="undefined"&&ROADGOING[o.archetype]) return true;
+  return false;
+}
+function bakeBig(o){
+  var d=KIT[o.archetype]; if(!d) return false;
+  var s=(o.attrs&&o.attrs.s)||1;
+  return Math.max(d.size[0],d.size[1],d.size[2])*s>40;
+}
+function bakeChunkKey(o){
+  if(bakeBig(o)) return "B"+Math.floor(o.x/BAKE.bigCell)+","+Math.floor(o.z/BAKE.bigCell);
+  return "S"+Math.floor(o.x/BAKE.cell)+","+Math.floor(o.z/BAKE.cell);
+}
+
+/* a thing that moves only in part — a flag that flutters on a still castle, a
+   fountain's water on its still stone — keeps those parts moving and has the
+   rest pressed. Which parts move is found by letting it move twice and
+   seeing what changed. */
+function bakeAnimatedSet(g){
+  var run=g.userData.anim; if(!run) return null;
+  var nodes=[]; g.traverse(function(n){ nodes.push(n); });
+  function snap(){ return nodes.map(function(n){
+    var mt=n.material&&!Array.isArray(n.material)?n.material:null;
+    return [n.position.x,n.position.y,n.position.z,n.rotation.x,n.rotation.y,n.rotation.z,n.scale.x,n.scale.y,n.scale.z,n.visible?1:0,
+      mt&&mt.color?mt.color.getHex():-1,mt&&mt.emissive?mt.emissive.getHex():-1,mt?mt.opacity:-1,
+      mt&&mt.map?mt.map.offset.x+mt.map.offset.y*7:-1].join(","); }); }
+  var a=snap();
+  try{ run(1.37,0.11); run(3.91,0.13); run(7.7,0.2); }catch(e){ return "all"; }
+  var bb=snap(), moving=new Set();
+  for(var i=0;i<nodes.length;i++) if(a[i]!==bb[i]){
+    if(nodes[i]===g) return "all";
+    nodes[i].traverse(function(c){ moving.add(c); });
+    /* anything sharing a changing material changes with it */
+    var mt=nodes[i].material; if(mt) nodes.forEach(function(n){ if(n.material===mt) moving.add(n); });
+  }
+  return moving;
+}
+
+/* which pieces can be pressed together: anything plainly drawn. Lettering
+   painted on a canvas stays its own piece, and so does anything unusual. */
+function bakeable(m){
+  if(!m.isMesh||m.isSkinnedMesh) return false;
+  if(m.isInstancedMesh&&m.count>400) return false;
+  var mt=m.material; if(!mt||Array.isArray(mt)) return false;
+  /* painted lettering (a sign, a name) keeps its own piece; shared surface
+     textures — stone, brick, bark — press like anything else */
+  if(mt.map&&typeof SIGN_TEX!=="undefined"&&bakeIsSign(mt.map)) return false;
+  if(!(mt.isMeshLambertMaterial||mt.isMeshBasicMaterial||mt.isMeshPhongMaterial||mt.isMeshStandardMaterial)) return false;
+  if(mt.vertexColors||mt.alphaMap||mt.envMap) return false;
+  var ge=m.geometry; if(!ge||!ge.isBufferGeometry||!ge.attributes.position) return false;
+  if(ge.morphAttributes&&Object.keys(ge.morphAttributes).length) return false;
+  return true;
+}
+var BAKE_SIGNS=null, BAKE_SIGNN=-1;
+function bakeIsSign(t){
+  var keys=Object.keys(SIGN_TEX);
+  if(!BAKE_SIGNS||BAKE_SIGNN!==keys.length){ BAKE_SIGNS=new Set(keys.map(function(k){ return SIGN_TEX[k]; })); BAKE_SIGNN=keys.length; }
+  return BAKE_SIGNS.has(t);
+}
+function bakeMatKey(mt,special){
+  return [special||"",mt.type,mt.transparent?1:0,mt.transparent?Math.round(mt.opacity*100):100,mt.side,
+    mt.depthWrite?1:0,mt.map?mt.map.uuid:"",mt.emissive?mt.emissive.getHex():"",
+    mt.shininess!==undefined?Math.round(mt.shininess):"",mt.specular?mt.specular.getHex():"",
+    mt.flatShading?1:0,mt.blending,mt.polygonOffset?1:0,mt.wireframe?1:0].join("|");
+}
+function bakeMakeMaterial(mt){
+  var m=mt.clone();
+  if(m.color) m.color.setHex(0xFFFFFF);
+  m.vertexColors=true;
+  m.needsUpdate=true;
+  return m;
+}
+
+function bakePressGroups(groups,origin,key,big){
+  var v=new THREE.Vector3(), nm=new THREE.Matrix3(), col=new THREE.Color(), rad=0;
+  var out=[];
+  Object.keys(groups).forEach(function(k){
+    var G=groups[k];
+    var pos=new Float32Array(G.verts*3), nor=new Float32Array(G.verts*3), clr=new Float32Array(G.verts*3);
+    var uvs=G.uv?new Float32Array(G.verts*2):null;
+    var big32=G.verts>65535, idx=big32?new Uint32Array(G.idx):new Uint16Array(G.idx);
+    var vo=0, io=0;
+    G.parts.forEach(function(P){
+      var ge=P.ge, pa=ge.attributes.position, na=ge.attributes.normal, ua=ge.attributes.uv, ia=ge.index;
+      nm.getNormalMatrix(P.mat);
+      col.setHex(P.col);
+      var flip=P.mat.determinant()<0;
+      for(var i=0;i<pa.count;i++){
+        v.fromBufferAttribute(pa,i).applyMatrix4(P.mat).sub(origin);
+        pos[(vo+i)*3]=v.x; pos[(vo+i)*3+1]=v.y; pos[(vo+i)*3+2]=v.z;
+        if(v.x*v.x+v.z*v.z>rad) rad=v.x*v.x+v.z*v.z;
+        if(na){ v.fromBufferAttribute(na,i).applyMatrix3(nm).normalize(); nor[(vo+i)*3]=v.x; nor[(vo+i)*3+1]=v.y; nor[(vo+i)*3+2]=v.z; }
+        clr[(vo+i)*3]=col.r; clr[(vo+i)*3+1]=col.g; clr[(vo+i)*3+2]=col.b;
+        if(uvs&&ua){ uvs[(vo+i)*2]=ua.getX(i); uvs[(vo+i)*2+1]=ua.getY(i); }
+      }
+      if(ia){
+        for(var j=0;j<ia.count;j+=3){
+          var a=ia.getX(j)+vo, b=ia.getX(j+1)+vo, c=ia.getX(j+2)+vo;
+          if(flip){ idx[io++]=a; idx[io++]=c; idx[io++]=b; } else { idx[io++]=a; idx[io++]=b; idx[io++]=c; }
+        }
+      } else {
+        for(var q=0;q<pa.count;q+=3){
+          if(flip){ idx[io++]=vo+q; idx[io++]=vo+q+2; idx[io++]=vo+q+1; } else { idx[io++]=vo+q; idx[io++]=vo+q+1; idx[io++]=vo+q+2; }
+        }
+      }
+      vo+=pa.count;
+    });
+    var bg=new THREE.BufferGeometry();
+    bg.setAttribute("position",new THREE.BufferAttribute(pos,3));
+    bg.setAttribute("normal",new THREE.BufferAttribute(nor,3));
+    bg.setAttribute("color",new THREE.BufferAttribute(clr,3));
+    if(uvs) bg.setAttribute("uv",new THREE.BufferAttribute(uvs,2));
+    bg.setIndex(new THREE.BufferAttribute(idx.subarray(0,io),1));
+    bg.computeBoundingSphere(); bg.computeBoundingBox();
+    var mat=bakeMakeMaterial(G.mat);
+    var mesh=new THREE.Mesh(bg,mat);
+    mesh.position.copy(origin);
+    mesh.castShadow=G.cast; mesh.receiveShadow=!G.mat.transparent;
+    mesh.matrixAutoUpdate=false; mesh.updateMatrix();
+    mesh.raycast=function(){};            // picking still finds the real piece underneath
+    mesh.userData.bakedChunk=key;
+    if(G.mat.transparent) mesh.renderOrder=1;
+    if(G.special==="lamp") BAKE.lamps.push(mat);
+    if(G.special==="pool") BAKE.pools.push(mat);
+    scene.add(mesh); out.push(mesh);
+  });
+  return {meshes:out,rad:rad};
+}
+/* press a loose list of pieces (not belonging to any one thing in the city) */
+function bakePress(list,cx,cz,key){
+  var groups={}, origin=new THREE.Vector3(cx,0,cz);
+  list.forEach(function(it){
+    var m=it.m, mt=m.material, k=bakeMatKey(mt,it.special);
+    var G=groups[k]||(groups[k]={mat:mt,special:it.special,parts:[],verts:0,idx:0,cast:false,uv:!!mt.map});
+    bakeAddParts(G,m);
+  });
+  return bakePressGroups(groups,origin,key,false);
+}
+
+function bakeAddParts(G,m){
+  var mt=m.material, ge=m.geometry, pc=ge.attributes.position.count, base=mt.color?mt.color.getHex():0xFFFFFF;
+  if(m.isInstancedMesh){
+    var im=new THREE.Matrix4(), c=new THREE.Color();
+    for(var i=0;i<m.count;i++){
+      m.getMatrixAt(i,im);
+      var col=base; if(m.instanceColor){ m.getColorAt(i,c); if(mt.color) c.multiply(mt.color); col=c.getHex(); }
+      G.parts.push({ge:ge,mat:m.matrixWorld.clone().multiply(im),col:col});
+      G.verts+=pc; G.idx+=ge.index?ge.index.count:pc;
+    }
+  } else {
+    G.parts.push({ge:ge,mat:m.matrixWorld.clone(),col:base});
+    G.verts+=pc; G.idx+=ge.index?ge.index.count:pc;
+  }
+  if(m.castShadow) G.cast=true;
+}
+/* gather one area's still pieces and press them into meshes, one per kind
+   of surface */
+function bakeChunk(key){
+  var ch=BAKE.chunks[key]; if(!ch) return;
+  bakeUnbake(key,true);
+  var groups={}, members=[], big=key.charAt(0)==="B";
+  var cx=0,cz=0,n=0;
+  ch.ids.forEach(function(id){
+    var o=specById(id), g=meshes[id];
+    if(!o||!g||bakeSkipObject(o,g)) return;
+    cx+=o.x; cz+=o.z; n++;
+  });
+  if(!n){ ch.meshes=[]; ch.members=[]; return; }
+  cx/=n; cz/=n; ch.cx=cx; ch.cz=cz;
+  var origin=new THREE.Vector3(cx,0,cz), v=new THREE.Vector3(), nm=new THREE.Matrix3(), col=new THREE.Color();
+  var rad=0;
+  ch.ids.forEach(function(id){
+    var o=specById(id), g=meshes[id];
+    if(!o||!g||bakeSkipObject(o,g)) return;
+    var moving=bakeAnimatedSet(g); if(moving==="all") return;
+    var lampSet=g.userData.lamps?new Set(g.userData.lamps):null;
+    var poolMat=g.userData.pool?g.userData.pool.material:null;
+    g.updateMatrixWorld(true);
+    var took=[];
+    g.traverse(function(m){
+      if(!bakeable(m)||m.userData.baked||(moving&&moving.has(m))) return;
+      /* a piece somebody hid on purpose stays hidden: only what shows is pressed */
+      var p=m, shown=true; while(p&&p!==g){ if(!p.visible){ shown=false; break; } p=p.parent; }
+      if(!shown) return;
+      var mt=m.material, special=(lampSet&&lampSet.has(mt))?"lamp":(mt===poolMat?"pool":"");
+      var k=bakeMatKey(mt,special);
+      var G=groups[k]||(groups[k]={mat:mt,special:special,parts:[],verts:0,idx:0,cast:false,uv:!!mt.map});
+      bakeAddParts(G,m);
+      took.push(m);
+    });
+    if(took.length) members.push({id:id,g:g,x:g.position.x,z:g.position.z,ry:g.rotation.y,y:g.position.y,took:took});
+  });
+  var pr=bakePressGroups(groups,origin,key,big);
+  var out=pr.meshes; rad=pr.rad;
+  /* the originals stay where they are, hidden, so clicking and inspecting
+     anything in the city works exactly as before */
+  members.forEach(function(M){ M.took.forEach(function(m){ m.visible=false; m.userData.baked=key; }); });
+  ch.meshes=out; ch.members=members; ch.big=big; ch.rad=Math.sqrt(rad);
+  ch.shown=null;
+}
+/* the terraces' own fittings — stair lamps, posts, balustrades — are pressed too */
+function bakeTerrain(){
+  if(BAKE.terrain){ BAKE.terrain.forEach(function(m){ scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+    (BAKE.terrainTook||[]).forEach(function(m){ m.visible=true; m.userData.baked=null; }); }
+  BAKE.terrain=[]; BAKE.terrainTook=[]; BAKE.terrainOf=atlGroup;
+  if(!atlGroup) return;
+  atlGroup.updateMatrixWorld(true);
+  var cells={}, v=new THREE.Vector3();
+  atlGroup.traverse(function(m){
+    if(!bakeable(m)||m.userData.baked||!m.visible) return;
+    v.setFromMatrixPosition(m.matrixWorld);
+    var k=Math.floor(v.x/BAKE.cell)+","+Math.floor(v.z/BAKE.cell);
+    (cells[k]||(cells[k]=[])).push(m);
+  });
+  Object.keys(cells).forEach(function(k){
+    var list=cells[k], cx=0, cz=0;
+    list.forEach(function(m){ v.setFromMatrixPosition(m.matrixWorld); cx+=v.x; cz+=v.z; });
+    var made=bakePress(list.map(function(m){ return {m:m,special:""}; }),cx/list.length,cz/list.length,"T"+k);
+    made.meshes.forEach(function(mm){ BAKE.terrain.push(mm); });
+    list.forEach(function(m){ m.visible=false; m.userData.baked="T"+k; BAKE.terrainTook.push(m); });
+  });
+}
+function bakeUnbake(key,quiet){
+  var ch=BAKE.chunks[key]; if(!ch) return;
+  (ch.meshes||[]).forEach(function(m){
+    scene.remove(m);
+    var i=BAKE.lamps.indexOf(m.material); if(i>-1) BAKE.lamps.splice(i,1);
+    i=BAKE.pools.indexOf(m.material); if(i>-1) BAKE.pools.splice(i,1);
+    m.geometry.dispose(); m.material.dispose();
+  });
+  (ch.members||[]).forEach(function(M){ M.took.forEach(function(m){ if(m.userData.baked===key){ m.visible=true; m.userData.baked=null; } }); });
+  ch.meshes=[]; ch.members=[];
+}
+
+/* sort the city into areas once it stands, then press them nearest first,
+   a few each frame so nothing ever stalls */
+function bakeStart(){
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null; if(!r) return;
+  Object.keys(BAKE.chunks).forEach(function(k){ bakeUnbake(k,true); });
+  BAKE.chunks={}; BAKE.queue=[];
+  store.objects.forEach(function(o){
+    if(!o.city||o.realm!==r.id) return;
+    o._bakeKnown=1;
+    var k=bakeChunkKey(o);
+    (BAKE.chunks[k]||(BAKE.chunks[k]={ids:[],meshes:[],members:[]})).ids.push(o.id);
+  });
+  var P=camera.position;
+  BAKE.queue=Object.keys(BAKE.chunks).sort(function(a,b){
+    function d(k){ var s=k.slice(1).split(","), c=k.charAt(0)==="B"?BAKE.bigCell:BAKE.cell;
+      var x=(+s[0]+0.5)*c, z=(+s[1]+0.5)*c; return (x-P.x)*(x-P.x)+(z-P.z)*(z-P.z); }
+    return d(a)-d(b);
+  });
+  BAKE.started=true; BAKE.ready=false;
+}
+function bakeTick(dt){
+  if(BAKE.off||typeof scene==="undefined"||!scene||typeof ATLC==="undefined"||!ATLC) return;
+  var r=somnucorRealm(); if(!r) { if(BAKE.started){ Object.keys(BAKE.chunks).forEach(function(k){ bakeUnbake(k,true); }); BAKE.chunks={}; BAKE.started=false; } return; }
+  /* not while the city is still being put up */
+  if(typeof atlMeshQueue!=="undefined"&&atlMeshQueue.length) return;
+  if(!BAKE.started) bakeStart();
+  if(typeof atlGroup!=="undefined"&&BAKE.terrainOf!==atlGroup) bakeTerrain();
+  var t0=performance.now();
+  while(BAKE.queue.length&&performance.now()-t0<12){ bakeChunk(BAKE.queue.shift()); }
+  if(!BAKE.queue.length&&!BAKE.ready){ BAKE.ready=true; }
+  /* anything moved, changed or taken away since it was pressed: press its area again */
+  BAKE.checkAt-=dt;
+  if(BAKE.checkAt<=0){
+    BAKE.checkAt=1.5;
+    Object.keys(BAKE.chunks).forEach(function(k){
+      var ch=BAKE.chunks[k]; if(!ch.members||!ch.members.length) return;
+      for(var i=0;i<ch.members.length;i++){
+        var M=ch.members[i], g=meshes[M.id];
+        if(g!==M.g||Math.abs(g.position.x-M.x)>0.01||Math.abs(g.position.z-M.z)>0.01||Math.abs(g.position.y-M.y)>0.01||Math.abs(g.rotation.y-M.ry)>0.001||(g.userData.nmGone)){
+          if(BAKE.queue.indexOf(k)<0) BAKE.queue.unshift(k); break;
+        }
+      }
+    });
+    /* new things in the city (a keeper's addition) find their area */
+    store.objects.forEach(function(o){
+      if(!o.city||o.realm!==r.id||o._bakeKnown) return;
+      o._bakeKnown=1;
+      var k=bakeChunkKey(o), ch=BAKE.chunks[k]||(BAKE.chunks[k]={ids:[],meshes:[],members:[]});
+      if(ch.ids.indexOf(o.id)<0){ ch.ids.push(o.id); if(BAKE.queue.indexOf(k)<0) BAKE.queue.push(k); }
+    });
+  }
+  /* near areas drawn, far ones not; the great buildings show from across the city */
+  var P=camera.position, inCity=(store.here||0)===r.id&&!store.inside;
+  /* every third of a second — or at once after a jump: a door, a stairway
+     taken in one step, being shown the way */
+  var L=BAKE.lastAt, jumped=!L||L.inCity!==inCity||Math.abs(L.x-P.x)+Math.abs(L.z-P.z)>40;
+  BAKE.cullAt-=dt; if(BAKE.cullAt>0&&!jumped) return; BAKE.cullAt=0.3;
+  BAKE.lastAt={x:P.x,z:P.z,inCity:inCity};
+  Object.keys(BAKE.chunks).forEach(function(k){
+    var ch=BAKE.chunks[k]; if(!ch.meshes||!ch.meshes.length) return;
+    var reach=(ch.big?3400:1100)*(window.BAKE_REACH||1)+(ch.rad||0);
+    var dx=ch.cx-P.x, dz=ch.cz-P.z, show=inCity&&dx*dx+dz*dz<reach*reach;
+    if(show!==ch.shown){ ch.shown=show; ch.meshes.forEach(function(m){ m.visible=show; }); }
+  });
+  (BAKE.terrain||[]).forEach(function(m){
+    var dx=m.position.x-P.x, dz=m.position.z-P.z, rr=1400+(m.geometry.boundingSphere?m.geometry.boundingSphere.radius:0);
+    m.visible=inCity&&dx*dx+dz*dz<rr*rr;
+  });
+}
 </script>
 <script>/* js/cloud.js */
 /* SomnuMatrix — cloud.js
@@ -19644,6 +20309,12 @@ function initBusiness(){
 var deskOpen=false, deskNear=false, deskOffices=[], deskJobs=[];
 
 function amKeeper(){ return !!(deskStanding&&deskStanding.keeper); }
+/* what this dreamer may change in Somnucor. Everyone: their own look and
+   the lots they hold. Shaping the city: the keeper and the City planner.
+   Rearranging a workplace: the keeper, the City planner and the Carpenter. */
+var myPowers={};
+function mayShape(){ return amKeeper()||!!(myPowers&&myPowers.shape); }
+function mayArrangeAny(){ return amKeeper()||!!(myPowers&&myPowers.arrange); }
 function amHolder(){ return !!(deskStanding&&deskStanding.holder); }
 function amDeskOfficer(){ return !!(deskStanding&&(deskStanding.keeper||deskStanding.officer||deskStanding.holder)); }
 var deskStanding=null;
@@ -19666,6 +20337,7 @@ function checkKeeper(){
       holder:!!a.holder,
       who:a.who||"code", hasCode:!!a.has_code
     };
+    cityRpc("my_powers").then(function(p){ myPowers=p||{}; if(typeof paintShapeButton==="function") paintShapeButton(); }).catch(function(){ myPowers={}; });
     return deskStanding;
   }).catch(function(){ deskStanding={keeper:false,officer:false,holder:false}; return deskStanding; });
 }
@@ -20241,7 +20913,7 @@ if(typeof addEventListener==="function") addEventListener("keydown",function(e){
    loaded as a plain script; shares scope with the other files */
 "use strict";
 
-var PRESENCE_INTERVAL=3.0, PRESENCE_STALE=20000;
+var PRESENCE_INTERVAL=3.0, PRESENCE_STALE=20000, presenceTotal=1;
 var presenceCool=0, presenceOthers={}, presencePublished=false, presenceNew=true;
 
 function inSomnucorRealm(){
@@ -20282,6 +20954,9 @@ function publishMyLook(){
   if(!(typeof signedIn==="function"&&signedIn())||!(typeof joinedSomnucor==="function"&&joinedSomnucor())) return;
   presencePublished=false;
   cityRpc("set_public_look",{p_look:meLook()}).then(function(){ presencePublished=true; }).catch(function(){});
+  /* the name over your head is the one you gave in "Who is dreaming" */
+  var nm=(dreamer().name||"").trim();
+  if(nm) cityRpc("set_public_name",{p_name:nm}).catch(function(){});
 }
 
 /* ---- a name over a head, and words that rise above it ---- */
@@ -20322,7 +20997,7 @@ function makeTag(text,bubble){
   var tex=new THREE.CanvasTexture(c);
   var mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
   var sp=new THREE.Sprite(mat);
-  var w=bubble?2.6:2.0;
+  var w=bubble?3.0:2.6;
   sp.scale.set(w,w*c.height/c.width,1);
   sp.renderOrder=10;
   return sp;
@@ -20343,12 +21018,13 @@ function sayOver(id,text){
 
 function presenceGroupFor(row){
   var sp=row.look&&row.look.species, o=sp&&SPECIES_FEATS[sp];
-  var spec={id:"presence_"+row.user_id,archetype:"human",attrs:{},look:row.look||blankLook("human"),
-    solid:false,detail:2,nights:[]};
-  var g=buildFigure(spec,0.7);
-  if(o){ dressFolk(g,spec,0.7,o); if(o.hover) g.children[0].position.y+=o.hover; }
+  var look=fillLook(JSON.parse(JSON.stringify(row.look||blankLook("human"))),row.user_id);
+  var spec={id:"presence_"+row.user_id,archetype:"human",attrs:{},look:look,
+    solid:false,detail:4,nights:[]};
+  var g=buildFigure(spec,1);
+  if(o){ dressFolk(g,spec,1,o); if(o.hover) g.children[0].position.y+=o.hover; }
   g.userData.presence=row.user_id;
-  var tag=makeTag(row.name||"a dreamer",false);
+  var tag=makeTag((row.name||"a dreamer")+(row.away?" \u00b7 away":""),false);
   tag.position.y=2.02; g.add(tag);
   g.userData.tag=tag;
   return g;
@@ -20381,19 +21057,23 @@ function pollPresence(){
   if(!presencePublished) publishMyLook();
   cityRpc("list_presence",{p_realm:"somnucor"}).then(function(rows){
     var seen={}, me=myUserId(), arrived=[];
+    /* everyone in Somnucor right now, wherever they are standing — out in the
+       streets or inside any building — and you as well */
+    var others={}; (rows||[]).forEach(function(r){ if(r&&r.user_id&&r.user_id!==me&&!r.away) others[r.user_id]=1; });
+    presenceTotal=Object.keys(others).length+1;
     (rows||[]).forEach(function(row){
       if(!row||row.user_id===me) return;
       var w=placeToWorld(row);
       if(!w) return;                         // somewhere this device isn't drawing
       seen[row.user_id]=1;
       var p=presenceOthers[row.user_id];
-      var lk=JSON.stringify(row.look||{}), nm=row.name||"a dreamer";
+      var lk=JSON.stringify(row.look||{}), nm=(row.name||"a dreamer")+(row.away?" \u00b7 away":"");
       if(!p){
         var g=presenceGroupFor(row);
         g.position.set(w.x,w.y,w.z); g.rotation.y=row.rot||0;
         if(scene) scene.add(g);
-        p=presenceOthers[row.user_id]={group:g,target:{x:w.x,y:w.y,z:w.z,rot:row.rot||0},lastLook:lk,name:nm};
-        arrived.push(nm);
+        p=presenceOthers[row.user_id]={group:g,target:{x:w.x,y:w.y,z:w.z,rot:row.rot||0},lastLook:lk,name:nm,away:!!row.away};
+        if(!row.away) arrived.push(nm);
       } else {
         p.target.x=w.x; p.target.y=w.y; p.target.z=w.z; p.target.rot=row.rot||0;
         /* their look or their name changed since we last drew them — rebuild
@@ -20537,8 +21217,8 @@ function showStreet(on){
 function incomingOpen(){ return myTradeRows.filter(function(t){ return t.incoming&&t.state==="open"; }).length; }
 function paintStreetButton(){
   var b=document.getElementById("street-btn"); if(!b) return;
-  var n=Object.keys(presenceOthers).length, inc=incomingOpen();
-  b.innerHTML=(streetOpen?"Close":"The street")+" <span class='st-dim'>· "+n+" here</span>"+(inc?"<span class='badge'>"+inc+"</span>":"");
+  var n=Object.keys(presenceOthers).filter(function(id){ return !presenceOthers[id].away; }).length, inc=incomingOpen(), all=Math.max(presenceTotal||1,n+1);
+  b.innerHTML=(streetOpen?"Close":"The street")+" <span class='st-dim'>· "+all+" in the city"+(n?", "+n+" near you":"")+"</span>"+(inc?"<span class='badge'>"+inc+"</span>":"");
   var el=document.getElementById("street");
   if(el) el.style.display=(presenceActive&&streetOpen)?"flex":"none";
 }
@@ -21270,6 +21950,1684 @@ function rebuildAll(){
   }
 }
 
+</script>
+<script>/* js/transit.js */
+/* SomnuMatrix — transit.js
+   getting about Somnucor.
+     - the Underground: a station on every ring, two on the wide ones, one
+       gold a ride from any station to any other
+     - the streets alive with traffic: trams on their rails, omnibuses,
+       hansom cabs, carriages and motor cars going round the rings, the trams
+       stopping at their stops
+     - a yard full of different things to own and ride — and when you ride
+       one, you are seen on it, by you and by every dreamer near you
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+/* ================================================================ the models */
+var TR_BRASS=0xC9A050, TR_IRON=0x2E3236, TR_WOOD=0x6A4A30, TR_LEATHER=0x4A2E22;
+function trWheels(x,z,r,gap,col){ return {g:"cyl",s:[r,r,.18,14],p:[-gap/2,r,z],r:[0,0,1.5708],c:col||"dark",rep:[2,gap,0,0]}; }
+S("coupe","vehicle",[1.8,1.3,4.2],[
+  {g:"box",s:[1.8,.62,4.2],p:[0,.6,0],c:"paint"},{g:"box",s:[1.6,.5,1.8],p:[0,1.12,-.35],c:"glass"},
+  {g:"box",s:[1.62,.06,1.85],p:[0,1.38,-.35],c:"paint"},
+  trWheels(0,1.35,.32,1.8),trWheels(0,-1.35,.32,1.8),
+  {g:"box",s:[.3,.12,.05],p:[-.6,.7,2.11],c:0xFFF4D0,glow:1,rep:[2,1.2,0,0]}
+],["coupe","two door car"]);
+S("roadster","vehicle",[1.8,1.1,4],[
+  {g:"box",s:[1.8,.55,4],p:[0,.55,0],c:"paint"},{g:"box",s:[1.6,.35,.08],p:[0,1,.2],r:[-.4,0,0],c:"glass"},
+  {g:"box",s:[1.4,.3,1.2],p:[0,.9,-.6],c:TR_LEATHER},
+  trWheels(0,1.3,.33,1.8),trWheels(0,-1.3,.33,1.8)
+],["roadster","open top car","convertible"]);
+S("sportscar","vehicle",[1.9,1.1,4.4],[
+  {g:"box",s:[1.9,.5,4.4],p:[0,.5,0],c:"paint"},{g:"box",s:[1.6,.42,1.6],p:[0,.95,-.3],r:[.08,0,0],c:"glass"},
+  {g:"box",s:[1.9,.06,.4],p:[0,.85,-2.1],c:"dark"},
+  trWheels(0,1.45,.34,1.9),trWheels(0,-1.45,.34,1.9)
+],["sports car","racing car","race car"]);
+S("limousine","vehicle",[2,1.5,6.6],[
+  {g:"box",s:[2,.7,6.6],p:[0,.65,0],c:0x16171C},{g:"box",s:[1.8,.6,4.4],p:[0,1.3,-.3],c:"glass"},
+  {g:"box",s:[1.82,.06,4.45],p:[0,1.62,-.3],c:0x16171C},
+  trWheels(0,2.3,.34,2),trWheels(0,-2.3,.34,2),
+  {g:"box",s:[.3,.12,.05],p:[-.65,.75,3.31],c:0xFFF4D0,glow:1,rep:[2,1.3,0,0]}
+],["limousine","limo","stretch car"]);
+S("taxicab","vehicle",[1.9,1.7,4.5],[
+  {g:"box",s:[1.9,.75,4.5],p:[0,.65,0],c:0xE8C23A},{g:"box",s:[1.72,.6,2.2],p:[0,1.3,-.2],c:"glass"},
+  {g:"box",s:[1.74,.06,2.25],p:[0,1.62,-.2],c:0xE8C23A},{g:"box",s:[.6,.22,.3],p:[0,1.76,-.2],c:0xFFF4D0,glow:1},
+  {g:"box",s:[1.92,.12,4.52],p:[0,.85,0],c:0x16171C},
+  trWheels(0,1.5,.33,1.9),trWheels(0,-1.5,.33,1.9)
+],["taxi","taxicab","cab"]);
+S("vintagecar","vehicle",[1.9,1.9,4.4],[
+  {g:"box",s:[1.5,.7,4.2],p:[0,.85,0],c:"paint"},{g:"box",s:[1.5,.8,1.8],p:[0,1.55,-.6],c:0x1A1A1E},
+  {g:"box",s:[1.4,.6,.06],p:[0,1.5,.32],c:"glass"},
+  {g:"box",s:[1.9,.08,1],p:[0,.6,1.8],c:0x1A1A1E},{g:"box",s:[1.9,.08,1],p:[0,.6,-1.8],c:0x1A1A1E},
+  trWheels(0,1.5,.42,1.8,0x1A1A1E),trWheels(0,-1.5,.42,1.8,0x1A1A1E),
+  {g:"cyl",s:[.18,.18,.12,12],p:[-.55,1.05,2.12],r:[1.5708,0,0],c:0xFFF4D0,glow:1,rep:[2,1.1,0,0]}
+],["vintage car","old car","antique car","model t"]);
+S("van","vehicle",[2,2.2,5],[
+  {g:"box",s:[2,1.9,4],p:[0,1.25,-.4],c:"paint"},{g:"box",s:[2,1.2,1.1],p:[0,.95,2.05],c:"paint"},
+  {g:"box",s:[1.8,.6,.06],p:[0,1.75,2.6],r:[-.3,0,0],c:"glass"},
+  trWheels(0,1.7,.36,2),trWheels(0,-1.7,.36,2)
+],["van","delivery van"]);
+S("motorbike","vehicle",[.7,1.2,2.1],[
+  {g:"tor",s:[.32,.08,8,16],p:[0,.36,.75],r:[0,1.5708,0],c:"dark"},{g:"tor",s:[.32,.08,8,16],p:[0,.36,-.75],r:[0,1.5708,0],c:"dark"},
+  {g:"box",s:[.34,.36,.8],p:[0,.6,.05],c:"paint"},{g:"box",s:[.3,.12,.7],p:[0,.86,-.35],c:TR_LEATHER},
+  {g:"box",s:[.66,.05,.05],p:[0,1.08,.6],c:0x9A9EA4},{g:"cyl",s:[.04,.04,.6,6],p:[0,.8,.65],r:[.4,0,0],c:0x9A9EA4},
+  {g:"sph",s:[.1,8,6],p:[0,.92,.86],c:0xFFF4D0,glow:1}
+],["motorbike","motorcycle","motor bike"]);
+S("scooter","vehicle",[.6,1.2,1.6],[
+  {g:"cyl",s:[.2,.2,.12,12],p:[0,.2,.6],r:[0,0,1.5708],c:"dark"},{g:"cyl",s:[.2,.2,.12,12],p:[0,.2,-.6],r:[0,0,1.5708],c:"dark"},
+  {g:"box",s:[.4,.12,1],p:[0,.3,-.05],c:"paint"},{g:"box",s:[.36,.6,.2],p:[0,.6,.55],c:"paint"},
+  {g:"box",s:[.3,.12,.5],p:[0,.72,-.35],c:TR_LEATHER},{g:"box",s:[.55,.04,.04],p:[0,1.1,.6],c:0x9A9EA4}
+],["scooter","moped","vespa"]);
+S("tricycle","vehicle",[.9,1.1,1.6],[
+  {g:"tor",s:[.36,.04],p:[0,.38,.55],r:[0,1.5708,0],c:"dark"},
+  {g:"tor",s:[.24,.04],p:[-.38,.26,-.5],r:[0,1.5708,0],c:"dark"},{g:"tor",s:[.24,.04],p:[.38,.26,-.5],r:[0,1.5708,0],c:"dark"},
+  {g:"box",s:[.05,.05,1.1],p:[0,.5,0],c:"paint"},{g:"box",s:[.8,.05,.05],p:[0,.26,-.5],c:"paint"},
+  {g:"box",s:[.5,.05,.05],p:[0,.98,.5],c:"metal"},{g:"box",s:[.6,.3,.4],p:[0,.5,-.55],c:TR_WOOD}
+],["tricycle","trike"]);
+S("tandem","vehicle",[.5,1.1,2.6],[
+  {g:"tor",s:[.33,.04],p:[0,.35,1.05],r:[0,1.5708,0],c:"dark"},{g:"tor",s:[.33,.04],p:[0,.35,-1.05],r:[0,1.5708,0],c:"dark"},
+  {g:"box",s:[.05,.05,2.1],p:[0,.6,0],c:"paint"},{g:"box",s:[.05,.5,.05],p:[0,.75,1],c:"metal"},
+  {g:"box",s:[.44,.05,.05],p:[0,1,1],c:"metal"},{g:"box",s:[.2,.06,.3],p:[0,.92,.2],c:TR_LEATHER},{g:"box",s:[.2,.06,.3],p:[0,.92,-.7],c:TR_LEATHER}
+],["tandem","bicycle built for two"]);
+S("carriage","vehicle",[2.2,2.6,6],[
+  {g:"box",s:[1.9,1.5,2.4],p:[0,1.55,-1.2],c:"paint"},{g:"box",s:[2,.12,2.6],p:[0,2.36,-1.2],c:0x1A1A1E},
+  {g:"box",s:[.9,.6,.04],p:[-.5,1.75,-1.2],r:[0,1.5708,0],c:"glass",rep:[2,1.92,0,0]},
+  {g:"cyl",s:[.6,.6,.08,16],p:[-1.05,.6,-2.1],r:[0,0,1.5708],c:TR_WOOD,rep:[2,2.1,0,0]},
+  {g:"cyl",s:[.45,.45,.08,16],p:[-1.05,.45,-.1],r:[0,0,1.5708],c:TR_WOOD,rep:[2,2.1,0,0]},
+  {g:"box",s:[1.2,.12,.7],p:[0,1.5,.25],c:TR_LEATHER},
+  {g:"box",s:[.08,.08,2.2],p:[-.45,.8,1.4],c:TR_WOOD,rep:[2,.9,0,0]},
+  {g:"cyl",s:[.06,.06,.3,6],p:[-1,2.5,-.1],c:TR_BRASS,rep:[2,2,0,0]}
+],["carriage","coach","stagecoach","horse drawn carriage"]);
+S("hansomcab","vehicle",[1.8,2.6,4.6],[
+  {g:"box",s:[1.5,1.4,1.4],p:[0,1.5,-.6],c:0x1E2A20},{g:"box",s:[1.6,.1,1.6],p:[0,2.25,-.6],c:0x141414},
+  {g:"box",s:[.5,.2,.5],p:[0,2.45,-1.3],c:TR_LEATHER},
+  {g:"cyl",s:[.75,.75,.08,16],p:[-.85,.75,-.6],r:[0,0,1.5708],c:TR_WOOD,rep:[2,1.7,0,0]},
+  {g:"box",s:[.07,.07,2.4],p:[-.4,.85,1.1],c:TR_WOOD,rep:[2,.8,0,0]}
+],["hansom cab","hansom","horse cab"]);
+S("omnibus","vehicle",[2.4,3.4,7],[
+  {g:"box",s:[2.3,1.8,5.4],p:[0,1.5,-.6],c:0x7A2A26},{g:"box",s:[2.32,.7,5],p:[0,1.75,-.6],c:"glass"},
+  {g:"box",s:[2.4,.1,5.6],p:[0,2.45,-.6],c:0x1A1A1E},{g:"box",s:[2.2,.08,4.8],p:[0,3.05,-.6],c:TR_WOOD},
+  {g:"cyl",s:[.04,.04,.6,5],p:[-1.05,2.75,-2.8],c:TR_BRASS,rep:[2,2.1,0,0],rep2:[4,0,0,1.5]},
+  {g:"box",s:[2.2,.4,.08],p:[0,2.2,2.15],c:0xE8DCC0},
+  {g:"cyl",s:[.55,.55,.1,16],p:[-1.2,.55,-2.5],r:[0,0,1.5708],c:TR_WOOD,rep:[2,2.4,0,0]},
+  {g:"cyl",s:[.55,.55,.1,16],p:[-1.2,.55,1.1],r:[0,0,1.5708],c:TR_WOOD,rep:[2,2.4,0,0]}
+],["omnibus","horse bus","double decker"]);
+S("tram","vehicle",[2.6,3.6,12],[
+  {g:"box",s:[2.5,2.2,11.4],p:[0,1.55,0],c:0x2E5A4A},{g:"box",s:[2.52,.9,10.6],p:[0,1.95,0],c:"glass"},
+  {g:"box",s:[2.6,.25,11.6],p:[0,2.75,0],c:0xE8DCC0},{g:"box",s:[2.4,.25,11],p:[0,2.98,0],c:0x2E5A4A},
+  {g:"box",s:[2.52,.14,11.42],p:[0,.95,0],c:TR_BRASS},
+  {g:"cyl",s:[.04,.04,1.8,5],p:[0,3.9,0],r:[.9,0,0],c:TR_IRON},{g:"box",s:[.9,.05,.05],p:[0,4.6,-.6],c:TR_IRON},
+  {g:"box",s:[1.6,.35,.06],p:[0,2.5,5.73],c:0xE8DCC0},{g:"sph",s:[.15,8,6],p:[0,1.2,5.75],c:0xFFF4D0,glow:1},
+  {g:"box",s:[2.2,.4,2.4],p:[0,.3,-3.6],c:TR_IRON},{g:"box",s:[2.2,.4,2.4],p:[0,.3,3.6],c:TR_IRON}
+],["tram","streetcar","trolley"]);
+S("wagon","vehicle",[2.2,2.4,4.4],[
+  {g:"box",s:[2,.6,3.6],p:[0,1.1,-.3],c:TR_WOOD},{g:"cyl",s:[1.05,1.05,3.4,12,1,true,0,3.1416],p:[0,1.4,-.3],r:[1.5708,1.5708,0],c:0xE8E0CC},
+  {g:"cyl",s:[.55,.55,.08,14],p:[-1.05,.55,-1.5],r:[0,0,1.5708],c:TR_WOOD,rep:[2,2.1,0,0]},
+  {g:"cyl",s:[.55,.55,.08,14],p:[-1.05,.55,.9],r:[0,0,1.5708],c:TR_WOOD,rep:[2,2.1,0,0]}
+],["covered wagon","wagon"]);
+S("airship","vehicle",[6,8,18],[
+  {g:"cyl",s:[3,3,12,20],p:[0,6,0],r:[1.5708,0,0],c:0xB8A880},
+  {g:"sph",s:[3,20,14],p:[0,6,6],c:0xB8A880},{g:"sph",s:[3,20,14],p:[0,6,-6],c:0xB8A880},{g:"box",s:[2,1.2,5],p:[0,2.2,0],c:TR_WOOD},
+  {g:"box",s:[2.04,.4,4.2],p:[0,2.5,0],c:"glass"},
+  {g:"cyl",s:[.03,.03,2.6,4],p:[-.9,3.6,-2],c:TR_IRON,rep:[2,1.8,0,0],rep2:[2,0,0,4]},
+  {g:"box",s:[.1,2,2.4],p:[0,6,-8.2],c:0x7A2A26},{g:"box",s:[2.4,.1,2],p:[0,6,-8.2],c:0x7A2A26}
+],["airship","zeppelin","dirigible","blimp"]);
+
+/* the Underground's own pieces */
+S("subwayentrance","infra",[5,4.4,7],[
+  {g:"box",s:[4.6,.3,6.6],p:[0,.15,0],c:0x3A3E46},
+  {g:"box",s:[3.2,.4,5.6],p:[0,.12,.3],c:0x0A0B0E},
+  {g:"box",s:[.2,1.1,6],p:[-2.2,.85,0],c:0x2A2E36,rep:[2,4.4,0,0]},{g:"box",s:[4.6,1.1,.2],p:[0,.85,-3.1],c:0x2A2E36},
+  {g:"box",s:[.08,.08,6],p:[-2.2,1.45,0],c:TR_BRASS,rep:[2,4.4,0,0]},
+  {g:"box",s:[2.6,.18,4],p:[0,.0,.6],r:[-.42,0,0],c:0x4A4E58},
+  {g:"cyl",s:[.08,.08,3.4,8],p:[-2.2,2.5,2.9],c:TR_IRON,rep:[2,4.4,0,0]},
+  {g:"box",s:[4.8,.12,3.4],p:[0,4.2,1.6],r:[-.12,0,0],c:"glass"},
+  {g:"cyl",s:[.1,.1,3.8,8],p:[2.9,1.9,3.2],c:TR_IRON},
+  {g:"cyl",s:[.55,.55,.14,24],p:[2.9,4,3.2],r:[1.5708,0,0],c:0xC03A2E,glow:1},
+  {g:"cyl",s:[.36,.36,.16,24],p:[2.9,4,3.2],r:[1.5708,0,0],c:0xF4F0E6,glow:1},
+  {g:"box",s:[1.1,.18,.2],p:[2.9,4,3.2],c:0x1E3A8A,glow:1}
+],["underground station","subway station","tube station","metro"],{sign:[0,3,3.25,3.6,.6]});
+S("tramstop","infra",[4,3,2],[
+  {g:"box",s:[3.8,.12,1.6],p:[0,2.7,0],c:0x2E5A4A},{g:"cyl",s:[.06,.06,2.7,6],p:[-1.8,1.35,-.6],c:TR_IRON,rep:[2,3.6,0,0]},
+  {g:"box",s:[3.6,1.8,.06],p:[0,1.6,-.7],c:"glass"},{g:"box",s:[2.6,.1,.5],p:[0,.5,-.4],c:TR_WOOD},
+  {g:"cyl",s:[.05,.05,2.6,6],p:[2.2,1.3,.6],c:TR_IRON},{g:"box",s:[.5,.5,.06],p:[2.2,2.5,.6],c:0x2E5A4A}
+],["tram stop","bus stop shelter"]);
+
+/* a car's colour: what the dream said, else one of the city's own paints */
+var PAINTS=[0x7A2A26,0x1E3A5A,0x2E4A2E,0xE8E4DA,0x16171C,0x8A8E94,0xB8862E,0x4A2A5A,0x5A7A8A,0xC0603A,0x2E5A4A,0xD4C49A];
+(function(){
+  if(typeof resolveColor!=="function") return;
+  var rc=resolveColor;
+  resolveColor=function(c,spec){
+    if(c==="paint"){
+      if(spec&&spec.attrs&&spec.attrs.c!==undefined) return spec.attrs.c;
+      if(spec&&spec.id&&typeof hash==="function") return PAINTS[hash(String(spec.id))%PAINTS.length];
+    }
+    return rc(c,spec);
+  };
+})();
+
+/* ================================================================ stations */
+var TR_RINGS=[["plaza",60],["civic",245],["estates",430],["temples",740],["markets",1080],["commons",1280],["warrens",1620],["harvest",1790]];
+var UNDERGROUND=[];       /* {key,name,ring,x,z,a,spec} — the same on every device */
+function trStationName(ring,a){
+  var R=atlRing(ring), base=R?R.name.replace(/^The /,""):ring;
+  if(ring==="plaza") return "Tower Plaza";
+  var deg=((Math.atan2(Math.sin(a),Math.cos(a))*180/Math.PI)+360)%360;
+  var side=deg<45||deg>=315?"East":deg<135?"South":deg<225?"West":"North";
+  return base+" "+side;
+}
+/* laid with the city, under its own run of names so nothing else is renumbered */
+function atlTransit(C){
+  var keepSeq=C.seq, keepPre=C.pre; C.pre="su"; C.seq=0;
+  try{ atlTransitBuild(C); } finally { C.pre=keepPre; C.seq=keepSeq; }
+}
+function atlTransitBuild(C){
+  UNDERGROUND=[];
+  var main=ATL_STAIRS.filter(function(s){ return s.main; });
+  /* a clear patch for a station: off the street, between whatever already stands there */
+  var stand=store.objects.filter(function(o){ return o.realm===C.r.id&&KIT[o.archetype]&&KIT[o.archetype].cat!=="being"; })
+    .map(function(o){ var d=KIT[o.archetype], s=(o.attrs&&o.attrs.s)||1; return {x:o.x,z:o.z,r:Math.max(d.size[0],d.size[2])*s*0.5}; });
+  function clear(rr,a,rad){
+    if(!atlClearAt(rr,a,rad,3)) return false;
+    var x=C.h.x+Math.cos(a)*rr, z=C.h.z+Math.sin(a)*rr;
+    for(var i=0;i<stand.length;i++){ var q=stand[i], dx=q.x-x, dz=q.z-z, m=q.r+rad; if(dx*dx+dz*dz<m*m) return false; }
+    return true;
+  }
+  TR_RINGS.forEach(function(rr){
+    var ring=rr[0], rs=rr[1];
+    var picks=ring==="plaza"?[main[1].a+0.35]:(ring==="civic"?[main[0].a+40/rs]:[main[0].a+40/rs,main[4].a+40/rs]);
+    picks.forEach(function(a0){
+      var a=a0, r0=ring==="plaza"?rs:rs+(ATL_ROAD+6), side=1, ok=false;
+      for(var t=0;t<160&&!ok;t+=4){
+        for(var sg=-1;sg<=1&&!ok;sg+=2){
+          for(var sd=1;sd>=-1&&!ok;sd-=2){
+            var rt=ring==="plaza"?rs:rs+sd*(ATL_ROAD+6), at=a0+sg*t/rs;
+            if(clear(rt,at,4.4)){ a=at; r0=rt; side=sd; ok=true; }
+          }
+        }
+      }
+      var name=trStationName(ring,a);
+      var sp=C.at("subwayentrance",r0,a,ring==="plaza"?rotOut(a):(side>0?rotIn(a):rotOut(a)),name+" Underground",null,{sign:"Underground · "+name,underground:name,ugRing:ring});
+      if(sp) stand.push({x:sp.x,z:sp.z,r:4.4});
+      if(sp) UNDERGROUND.push({key:name,name:name,ring:ring,x:sp.x,z:sp.z,a:a,spec:sp});
+    });
+    /* tram stops at the stations' streets, and a timetable board */
+    if(ring!=="plaza"&&ring!=="civic"&&ring!=="estates"){
+      for(var k=0;k<8;k++){
+        var ta=main[k].a+90/rs;
+        C.at("tramstop",rs-(ATL_ROAD+3),ta,rotOut(ta),"Tram stop");
+      }
+    }
+  });
+  atlHuntersLodge(C,clear);
+}
+
+/* the hunters' own lodge, at the edge of the harvest where the Wilds begin */
+if(typeof WORKPLACES!=="undefined"&&typeof WP_BY_KEY!=="undefined"&&!WP_BY_KEY["The Hunters' Lodge"]){
+  var HUNTLODGE={key:"The Hunters' Lodge",ring:"harvest",arch:"cottage",s:1.7,jobs:[],fit:["noticeboard","workbench","crates","fireplace","bunk"],
+    note:"The nightmare hunters. Out past the harvest, into the Wilds, and back with the count."};
+  WORKPLACES.push(HUNTLODGE); WP_BY_KEY[HUNTLODGE.key]=HUNTLODGE;
+}
+function atlHuntersLodge(C,clear){
+  var main=ATL_STAIRS.filter(function(s){ return s.main; }), rs=1790;
+  var d=kitD("cottage",1.7), rb=rs+(ATL_ROAD+ATL_SETBACK+d/2);
+  for(var t=0;t<300;t+=6){
+    for(var sg=-1;sg<=1;sg+=2){
+      var a=main[2].a+70/rs+sg*t/rs;
+      if(clear(rb,a,Math.max(d,kitW("cottage",1.7))*0.6+2)){ C.workplace("The Hunters' Lodge",rs,+1,a); return; }
+    }
+  }
+}
+
+/* ================================================================ riding the Underground */
+var ugNear=null, ugCool=0, ugOpen=false;
+function ugEl(){
+  var el=document.getElementById("ug"); if(el||!document.body) return el;
+  var css=document.createElement("style");
+  css.textContent="#ug{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;display:none;width:min(420px,calc(100vw - 24px));max-height:80vh;overflow:auto;"+
+    "background:rgba(8,10,16,.97);border:1px solid #C03A2E;border-radius:4px;padding:14px 16px;font:13px var(--sans);color:var(--bone)}"+
+    "#ug .st{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line,#2A2C34)}"+
+    "#ug-ride{position:fixed;inset:0;z-index:70;display:none;background:#05060A;overflow:hidden;font:15px var(--sans);color:#E8E2D2}"+
+    "#ug-ride .lt{position:absolute;left:-30%;width:28%;height:3px;background:linear-gradient(90deg,transparent,#FFD890,transparent);animation:ugl .55s linear infinite}"+
+    "@keyframes ugl{from{left:-30%}to{left:110%}}"+
+    "#ug-ride .win{position:absolute;left:8%;right:8%;top:22%;bottom:30%;border:10px solid #1C2A24;border-radius:18px;box-shadow:inset 0 0 60px #000}"+
+    "#ug-ride .say{position:absolute;left:0;right:0;bottom:12%;text-align:center;letter-spacing:.06em}"+
+    "#ug-prompt{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;display:none;"+
+    "background:rgba(10,12,18,.92);border:1px solid #C03A2E;border-radius:3px;padding:9px 14px;font:13px var(--sans);color:var(--bone);cursor:pointer}";
+  document.head.appendChild(css);
+  el=document.createElement("div"); el.id="ug"; document.body.appendChild(el);
+  var rd=document.createElement("div"); rd.id="ug-ride";
+  var h='<div class="win"></div>'; for(var i=0;i<9;i++) h+='<div class="lt" style="top:'+(26+i*5)+'%;animation-delay:'+(i*0.07)+'s"></div>';
+  rd.innerHTML=h+'<div class="say" id="ug-say"></div>'; document.body.appendChild(rd);
+  var pr=document.createElement("div"); pr.id="ug-prompt"; pr.onclick=function(){ if(ugNear) ugShow(ugNear); }; document.body.appendChild(pr);
+  return el;
+}
+function ugTick(dt){
+  if(ugCool>0) ugCool-=dt;
+  var pr=document.getElementById("ug-prompt");
+  if(!walkMode||store.inside||!UNDERGROUND.length||ugOpen){ if(pr) pr.style.display="none"; ugNear=null; return; }
+  var P=camera.position, near=null;
+  for(var i=0;i<UNDERGROUND.length;i++){ var s=UNDERGROUND[i]; if(Math.hypot(s.x-P.x,s.z-P.z)<5){ near=s; break; } }
+  ugNear=near;
+  if(!near){ if(pr) pr.style.display="none"; return; }
+  ugEl(); pr=document.getElementById("ug-prompt");
+  pr.innerHTML="<b>"+esc(near.name)+"</b> Underground · 1 gold a ride · <b>press U</b> or tap";
+  pr.style.display="block";
+}
+function ugShow(from){
+  var el=ugEl(); ugOpen=true;
+  var list=UNDERGROUND.filter(function(s){ return s!==from; });
+  var ringOrder=TR_RINGS.map(function(r){ return r[0]; });
+  list.sort(function(a,b){ return ringOrder.indexOf(a.ring)-ringOrder.indexOf(b.ring)||a.name.localeCompare(b.name); });
+  if(typeof MALL_STOP!=="undefined"&&MALL_STOP&&from.ring!=="mall") list.push(MALL_STOP);
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:15px;color:#E8C27A">The Underground</b>'+
+    '<button class="btn" id="ug-x">Leave</button></div>'+
+    '<div style="color:var(--dim);margin-bottom:8px">You are at <b>'+esc(from.name)+'</b>. Every ride is one gold, to anywhere on the line.</div>'+
+    list.map(function(s){ return '<div class="st"><span>'+esc(s.name)+'</span><button class="btn" data-go="'+esc(s.key)+'">Ride — 1 gold</button></div>'; }).join("")+
+    '<div id="ug-msg" style="margin-top:8px;color:#C0603A"></div>';
+  el.style.display="block";
+  if(document.exitPointerLock) document.exitPointerLock();
+  document.getElementById("ug-x").onclick=ugHide;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-go]"),function(b){ b.onclick=function(){
+    var to=list.filter(function(s){ return s.key===b.getAttribute("data-go"); })[0]; if(to) ugRide(from,to); }; });
+}
+function ugHide(){ ugOpen=false; ugCool=1; var el=document.getElementById("ug"); if(el) el.style.display="none"; }
+function ugRide(from,to){
+  var msg=document.getElementById("ug-msg");
+  if(!(typeof signedIn==="function"&&signedIn())){ if(msg) msg.textContent="Sign in to ride: the fare comes from your purse."; return; }
+  if(msg){ msg.style.color="var(--dim)"; msg.textContent="Paying the fare…"; }
+  cityRpc("ride_underground",{p_from:from.key,p_to:to.key}).then(function(o){
+    if(o!=="ok"){ if(msg){ msg.style.color="#C0603A"; msg.textContent=String(o); } return; }
+    ugHide();
+    var rd=document.getElementById("ug-ride"), say=document.getElementById("ug-say");
+    rd.style.display="block"; say.innerHTML="The Underground · next stop <b>"+esc(to.name)+"</b>";
+    if(typeof audio!=="undefined"&&audio.on&&typeof playTone==="function") try{ playTone(110,1.2); }catch(e){}
+    setTimeout(function(){
+      ugArrive(to);
+      say.innerHTML="<b>"+esc(to.name)+"</b> · mind the gap";
+      setTimeout(function(){ rd.style.display="none"; },700);
+    },2600);
+    if(typeof refreshStanding==="function") refreshStanding();
+  }).catch(function(e){ if(msg){ msg.style.color="#C0603A"; msg.textContent=e.message; } });
+}
+function ugArrive(to){
+  if(to.arrive){ to.arrive(); return; }
+  var sp=to.spec, fx=Math.sin(sp.rot||0), fz=Math.cos(sp.rot||0);
+  var x=sp.x+fx*5.5, z=sp.z+fz*5.5;
+  camera.position.set(x,terrainY(x,z)+1.72,z); yaw=Math.atan2(fx,fz); pitch=0; if(typeof flyY!=="undefined") flyY=0;
+  if(typeof walkResume!=="undefined") walkResume=null;
+  setStatus("<b>"+esc(to.name)+".</b> Up the steps and out into the city.");
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(e.code==="KeyU"&&ugNear&&!ugOpen&&ugCool<=0){ e.preventDefault(); ugShow(ugNear); }
+  if(e.code==="Escape"&&ugOpen) ugHide();
+});
+/* stations are found again whenever the city stands (it is built afresh on every device) */
+function ugFind(){
+  if(UNDERGROUND.length&&UNDERGROUND[0].spec&&specById(UNDERGROUND[0].spec.id)) return;
+  UNDERGROUND=[];
+  store.objects.forEach(function(o){ if(o.underground) UNDERGROUND.push({key:o.underground,name:o.underground,ring:o.ugRing||"markets",x:o.x,z:o.z,spec:o}); });
+}
+
+/* ================================================================ traffic */
+/* lines: a street, its lane (outside + going one way, inside - the other) and what runs on it */
+var TRAM_LINES=[
+  {r:740,kinds:["tram","tram","hansomcab","carriage","vintagecar"]},
+  {r:1080,kinds:["tram","tram","omnibus","taxicab","van","hansomcab","coupe"]},
+  {r:1280,kinds:["tram","tram","omnibus","taxicab","car","motorbike","wagon"]},
+  {r:1620,kinds:["tram","hansomcab","wagon","cart","bicycle"]},
+  {r:245,kinds:["omnibus","limousine","hansomcab","taxicab","coupe"]},
+  {r:430,kinds:["carriage","limousine","roadster","vintagecar"]},
+  {r:565,kinds:["carriage","limousine","sportscar","coupe"]},
+  {r:880,kinds:["omnibus","carriage","taxicab"]},
+  {r:1420,kinds:["omnibus","van","car","scooter","bicycle"]},
+  {r:1790,kinds:["wagon","tractor","cart","truck","omnibus"]}
+];
+var TRAFFIC=[], trafficReady=false, trafficCull=0;
+var TR_SPEED={tram:7,omnibus:6,carriage:6,hansomcab:7,wagon:4,cart:3.5,tractor:5,bicycle:5,motorbike:13,scooter:9};
+function trafficBuild(){
+  trafficClear();
+  if(!ATLC) return;
+  var seq=0;
+  TRAM_LINES.forEach(function(L){
+    L.kinds.forEach(function(k,i){
+      if(!KIT[k]) return;
+      var dir=(i%2)?-1:1, lane=L.r+dir*2.6, a0=(i/L.kinds.length)*Math.PI*2+L.r*0.001;
+      var spec={id:"tf"+(++seq),archetype:k,attrs:{},x:ATLC.x,z:ATLC.z,rot:0,solid:false,detail:3,nights:[],city:true,traffic:true};
+      var g=build(spec); g.visible=false; scene.add(g);
+      TRAFFIC.push({g:g,spec:spec,r:lane,a:a0,dir:dir,v:TR_SPEED[k]||9,tram:k==="tram",wait:0,rank:i/L.kinds.length,
+        stops:k==="tram"||k==="omnibus"?ATL_STAIRS.filter(function(s){ return s.main; }).map(function(s){ return s.a+90/L.r; }):null});
+    });
+  });
+  /* the rails */
+  [740,1080,1280,1620].forEach(function(r){
+    var H=terrainY(ATLC.x+r,ATLC.z)+0.04;
+    [-1,1].forEach(function(dir){
+      [-0.72,0.72].forEach(function(off){
+        var rr=r+dir*2.6+off, geo=new THREE.RingGeometry(rr-0.06,rr+0.06,720,1);
+        var m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:0x6A6E74}));
+        m.rotation.x=-Math.PI/2; m.position.set(ATLC.x,H,ATLC.z); m.userData.rail=1; m.raycast=function(){};
+        scene.add(m); TRAFFIC.push({rail:m});
+      });
+    });
+  });
+  trafficReady=true;
+}
+function trafficClear(){
+  TRAFFIC.forEach(function(t){ var g=t.g||t.rail; if(g){ scene.remove(g); } });
+  TRAFFIC=[]; trafficReady=false;
+}
+function trafficTick(dt){
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  if(!r||!ATLC){ if(trafficReady) trafficClear(); return; }
+  if(!trafficReady){ if(typeof atlMeshQueue==="undefined"||!atlMeshQueue.length) trafficBuild(); return; }
+  var P=camera.position, inCity=(store.here||0)===r.id&&!store.inside;
+  trafficCull-=dt; var cull=trafficCull<=0; if(cull) trafficCull=0.3;
+  for(var i=0;i<TRAFFIC.length;i++){
+    var t=TRAFFIC[i];
+    if(t.rail){ if(cull) t.rail.visible=inCity; continue; }
+    if(t.wait>0) t.wait-=dt;
+    else {
+      var prev=t.a;
+      t.a+=t.dir*t.v*dt/t.r;
+      if(t.stops) for(var k=0;k<t.stops.length;k++){
+        var s=t.stops[k], d0=((prev-s)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI, d1=((t.a-s)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI;
+        if(d0*d1<=0&&Math.abs(d0-d1)<0.5){ t.wait=t.tram?6:4; break; }
+      }
+    }
+    var x=ATLC.x+Math.cos(t.a)*t.r, z=ATLC.z+Math.sin(t.a)*t.r;
+    /* how much of the city's traffic runs depends on its drivers and signalmen */
+    if(cull){ var dx=x-P.x, dz=z-P.z, run=(typeof svcLevel==="function")?(0.35+0.65*svcLevel("transport")/100):1;
+      t.g.visible=inCity&&dx*dx+dz*dz<520*520&&t.rank<run; }
+    if(!t.g.visible) continue;
+    t.g.position.set(x,terrainY(x,z),z);
+    /* facing along the way it goes */
+    t.g.rotation.y=Math.atan2(-Math.sin(t.a)*t.dir,Math.cos(t.a)*t.dir);
+  }
+}
+
+/* ================================================================ riding what you own */
+var RIDE_SEAT={horse:1.25,unicorn:1.25,pegasus:1.3,stag:1.2,camel:1.9,elephant:2.7,griffin:1.5,hippogriff:1.4,dragon:2.6,
+  bicycle:.55,tandem:.55,tricycle:.45,motorbike:.55,scooter:.45,broomstick:.6,flyingcarpet:.4,
+  car:-.45,coupe:-.5,roadster:-.6,sportscar:-.6,limousine:-.45,taxicab:-.45,vintagecar:-.2,van:-.2,
+  carriage:.9,hansomcab:1.3,omnibus:.6,wagon:.5,airship:2.1,saucer:1.4,hovercar:-.3,sleigh:.4,firechariot:.5};
+var RIDE_FLIES={pegasus:1,griffin:1,hippogriff:1,dragon:1,broomstick:1,flyingcarpet:1,airship:1,saucer:1};
+var rideArch=null, rideG=null;
+function rideSeatNow(){ return (rideArch&&walkMode&&!store.inside&&RIDE_SEAT[rideArch]!==undefined)?RIDE_SEAT[rideArch]:0; }
+(function(){
+  if(typeof ride!=="function") return;
+  var rd=ride;
+  ride=function(name){
+    rd(name);
+    var t=name?(myThings||[]).filter(function(x){ return x.name===name; })[0]:null;
+    rideArch=(riding&&t)?t.archetype:null;
+    if(rideArch&&RIDE_FLIES[rideArch]&&typeof canFly!=="undefined") canFly=true;
+    if(rideG){ scene.remove(rideG); rideG=null; }
+    var L=meLook(); L.ride=rideArch||null;
+    if(typeof publishMyLook==="function") publishMyLook();
+  };
+})();
+function rideTick(dt){
+  var show=rideArch&&walkMode&&!store.inside&&KIT[rideArch];
+  if(!show){ if(rideG) rideG.visible=false; return; }
+  if(!rideG){ rideG=build({id:"__ride",archetype:rideArch,attrs:{},solid:false,detail:4,nights:[],city:true}); rideG.traverse(function(m){ m.raycast=function(){}; }); scene.add(rideG); }
+  var P=camera.position, seat=rideSeatNow();
+  rideG.visible=true;
+  rideG.position.set(P.x,P.y-1.72-seat,P.z);
+  rideG.rotation.y=yaw+Math.PI;
+  if(rideG.userData.anim) try{ rideG.userData.anim(performance.now()/1000,dt); }catch(e){}
+}
+/* other dreamers are drawn on what they ride */
+(function(){
+  if(typeof presenceGroupFor!=="function") return;
+  var pg=presenceGroupFor;
+  presenceGroupFor=function(row){
+    var g=pg(row), k=row&&row.look&&row.look.ride;
+    if(k&&KIT[k]){
+      var v=build({id:"__pride_"+row.user_id,archetype:k,attrs:{},solid:false,detail:3,nights:[],city:true});
+      var seat=RIDE_SEAT[k]||0;
+      g.children.forEach(function(c){ if(c!==g.userData.tag) c.position.y+=seat; });
+      if(g.userData.tag) g.userData.tag.position.y+=Math.max(0,seat);
+      v.rotation.y=Math.PI; g.add(v);
+    }
+    return g;
+  };
+})();
+
+
+/* ================================================================ the Tower by night */
+/* it never sleeps: its offices lit floor upon floor, light thrown up its
+   faces from the plaza, and a beacon on its crown seen from every ring */
+var TOWERLIGHT=null;
+function towerLightTick(dt){
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  var tw=r?store.objects.filter(function(o){ return o.realm===r.id&&o.archetype==="somnucortower"; })[0]:null;
+  if(!tw||!meshes[tw.id]){ if(TOWERLIGHT){ scene.remove(TOWERLIGHT.g); TOWERLIGHT=null; } return; }
+  if(!TOWERLIGHT||TOWERLIGHT.id!==tw.id){
+    if(TOWERLIGHT) scene.remove(TOWERLIGHT.g);
+    var G=new THREE.Group(), s=(tw.attrs&&tw.attrs.s)||1;
+    var geo=new THREE.PlaneGeometry(1.4,1.8), n=0, cols=9, rows=36, faces=4;
+    var inst=new THREE.InstancedMesh(geo,new THREE.MeshBasicMaterial({color:0xFFFFFF}),cols*rows*faces);
+    var m4=new THREE.Matrix4(), q=new THREE.Quaternion(), e=new THREE.Euler(), v=new THREE.Vector3(), sc=new THREE.Vector3(1,1,1), c=new THREE.Color();
+    for(var f=0;f<faces;f++) for(var row=0;row<rows;row++) for(var col=0;col<cols;col++){
+      var h=hash("tw"+f+"_"+row+"_"+col); if(h%10<3) continue;           /* not every office is lit */
+      var off=(col-(cols-1)/2)*2.5, y=10+row*4;
+      var ang=f*Math.PI/2; e.set(0,ang,0); q.setFromEuler(e);
+      v.set(Math.sin(ang)*15.6+Math.cos(ang)*off,y,Math.cos(ang)*15.6-Math.sin(ang)*off);
+      m4.compose(v,q,sc); inst.setMatrixAt(n,m4);
+      c.setHex(h%7===0?0x9FE8FF:(h%5===0?0xFFF2D0:0xFFD890)); inst.setColorAt(n,c); n++;
+    }
+    inst.count=n; inst.instanceMatrix.needsUpdate=true; if(inst.instanceColor) inst.instanceColor.needsUpdate=true;
+    inst.raycast=function(){}; G.add(inst);
+    for(var k=0;k<4;k++){
+      var a=k*Math.PI/2+Math.PI/4;
+      var beam=new THREE.Mesh(new THREE.CylinderGeometry(2,7,170,16,1,true),
+        new THREE.MeshBasicMaterial({color:0x7FD8FF,transparent:true,opacity:0.09,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}));
+      beam.position.set(Math.cos(a)*24,85,Math.sin(a)*24); beam.rotation.z=Math.cos(a)*0.06; beam.rotation.x=-Math.sin(a)*0.06; beam.raycast=function(){}; G.add(beam);
+    }
+    var beacon=new THREE.Mesh(new THREE.SphereGeometry(3,20,14),new THREE.MeshBasicMaterial({color:0xFF5A6A}));
+    beacon.position.y=212; beacon.raycast=function(){}; G.add(beacon);
+    G.scale.set(s,s,s);
+    G.position.copy(meshes[tw.id].position); G.rotation.y=meshes[tw.id].rotation.y;
+    scene.add(G); TOWERLIGHT={id:tw.id,g:G,beacon:beacon};
+  }
+  var night=(typeof daylight==="function")?(1-daylight(dreamHour())):0;
+  var show=night>0.35&&(store.here||0)===r.id&&!store.inside;
+  TOWERLIGHT.g.visible=show;
+  if(show) TOWERLIGHT.beacon.material.color.setHex((Math.floor(performance.now()/900)%2)?0xFF5A6A:0x5A1A20);
+}
+/* ================================================================ every frame */
+function transitTick(dt){
+  if(typeof ATLC==="undefined") return;
+  ugFind(); ugTick(dt); trafficTick(dt); rideTick(dt); towerLightTick(dt);
+}
+</script>
+<script>/* js/lot-build.js */
+/* SomnuMatrix — lot-build.js
+   your own ground in Somnucor. A dreamer who owns or leases a lot has the
+   full run of it: say what should stand there and it stands there, move it,
+   turn it, take it away, and arrange the house inside however they like.
+   What is built is kept on the server with the lot, so it stands in the city
+   for every dreamer whether its owner is online or not — and, if they want,
+   a copy goes into their own dream as well.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var LOT_R=20;                                   /* how far a lot reaches round its house */
+var LOTB={open:false,lot:null,items:[],copy:true,saved:null,msg:""};
+var LOT_SCAN=(typeof scanText==="function")?scanText:null;   /* the dream's own reading, before it was redirected */
+
+function lotPlots(){ return (store.plots||[]).concat(store.districtPlots||[]); }
+function lotHome(name){
+  var p=lotPlots().filter(function(q){ return q.name===name; })[0];
+  return p&&p.homeId?specById(p.homeId):null;
+}
+function lotToLocal(h,x,z){ var c=Math.cos(h.rot||0), s=Math.sin(h.rot||0), dx=x-h.x, dz=z-h.z;
+  return {x:dx*c-dz*s, z:dx*s+dz*c}; }
+function lotToWorld(h,lx,lz){ var c=Math.cos(h.rot||0), s=Math.sin(h.rot||0);
+  return {x:h.x+lx*c+lz*s, z:h.z-lx*s+lz*c}; }
+
+/* the lot you are standing on, if it is yours */
+function myLotHere(){
+  if(!walkMode||store.inside) return null;
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  if(!r||(store.here||0)!==r.id) return null;
+  var mine=(typeof standing!=="undefined"&&standing&&standing.lots)||[], P=camera.position;
+  for(var i=0;i<mine.length;i++){
+    var h=lotHome(mine[i].lot); if(!h) continue;
+    if(Math.hypot(P.x-h.x,P.z-h.z)<LOT_R) return {id:mine[i].lot_id,name:mine[i].lot,home:h};
+  }
+  return null;
+}
+
+/* ---- drawing what stands on every lot, for everyone ---- */
+function lotItemSpecs(lotId,home,items){
+  var r=somnucorRealm(); if(!r||!home) return [];
+  return (items||[]).map(function(it,i){
+    if(!it||!KIT[it.a]) return null;
+    var w=lotToWorld(home,+it.x||0,+it.z||0), d=KIT[it.a];
+    var attrs={}; if(it.s&&it.s!==1) attrs.s=Math.max(0.3,Math.min(3,+it.s));
+    if(it.c!==undefined&&it.c!==null) attrs.c=it.c;
+    return {id:"lt"+lotId+"_"+i,archetype:it.a,attrs:attrs,x:w.x,z:w.z,rot:(home.rot||0)+(+it.r||0),
+      solid:d.cat!=="being",detail:3,nights:[store.session],realm:r.id,hub:true,city:true,lotItem:lotId,
+      name:it.n||null,label:it.n||null,named:it.n?"stated":null,peopled:true};
+  }).filter(Boolean);
+}
+function lotDrawItems(lotId,home,items){
+  var pre="lt"+lotId+"_";
+  for(var i=store.objects.length-1;i>=0;i--){
+    var o=store.objects[i];
+    if(o.id.indexOf(pre)!==0) continue;
+    if(meshes[o.id]){ scene.remove(meshes[o.id]); delete meshes[o.id]; }
+    store.objects.splice(i,1);
+  }
+  lotItemSpecs(lotId,home,items).forEach(function(sp){ store.objects.push(sp); if(typeof addMesh==="function") addMesh(sp); });
+  if(typeof wallsAt!=="undefined") wallsAt=-1;
+}
+function lotDrawAll(){
+  if(typeof cityLots==="undefined") return;
+  cityLots.forEach(function(rec){
+    var d=rec.decor||{};
+    if(d.inside&&typeof WP_DECOR!=="undefined") WP_DECOR["lot:"+rec.lot_id]=d.inside;
+    if(LOTB.open&&LOTB.lot&&LOTB.lot.id===rec.lot_id) return;        /* the owner's draft is showing */
+    var h=lotHome(rec.name); if(!h) return;
+    var key=JSON.stringify(d.items||[]);
+    if(rec._drawn===key) return;
+    rec._drawn=key;
+    lotDrawItems(rec.lot_id,h,d.items||[]);
+  });
+}
+
+/* ---- reading "a stone fountain and two oak trees" into things ---- */
+var LOT_NUM={a:1,an:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,pair:2,couple:2,few:3,several:4};
+function lotRead(text){
+  var low=" "+deaccent(String(text||"")).toLowerCase().replace(/[^a-z\s'-]/g," ").replace(/\s+/g," ")+" ";
+  var found=[];
+  for(var i=0;i<PHRASES.length;i++){
+    var ph=" "+PHRASES[i][0]+" ", at;
+    while((at=low.indexOf(ph))>-1){
+      found.push({at:at,end:at+ph.length-1,arch:PHRASES[i][1],word:PHRASES[i][0]});
+      low=low.slice(0,at)+" "+new Array(ph.length-1).join("_")+" "+low.slice(at+ph.length);
+    }
+  }
+  found.sort(function(a,b){ return a.at-b.at; });
+  /* "oak trees" is one tree, not an oak and some trees */
+  found=found.filter(function(f,i){ var q=found[i-1]; return !(q&&q.arch===f.arch&&f.at-q.end<=1); });
+  var before=" "+deaccent(String(text||"")).toLowerCase().replace(/[^a-z\s'-]/g," ").replace(/\s+/g," ")+" ";
+  return found.map(function(f){
+    var pre=before.slice(Math.max(0,f.at-40),f.at).trim().split(" ").slice(-3), n=1, c;
+    pre.forEach(function(w){ if(LOT_NUM[w]) n=LOT_NUM[w]; if(/^\d+$/.test(w)) n=Math.min(10,+w); if(MODIFIERS[w]&&MODIFIERS[w].c!==undefined) c=MODIFIERS[w].c; });
+    return {arch:f.arch,word:f.word,n:Math.min(10,n),c:c};
+  });
+}
+function lotBuildFromText(text,L){
+  L=L||myLotHere(); if(!L) return 0;
+  if(!LOTB.open||!LOTB.lot||LOTB.lot.id!==L.id) lotOpen(L);
+  var want=lotRead(text), P=camera.position, fx=-Math.sin(yaw), fz=-Math.cos(yaw), made=0, refused=[];
+  var k=0;
+  want.forEach(function(w){
+    var d=KIT[w.arch]; if(!d) return;
+    if(d.cat==="structure"&&Math.max(d.size[0],d.size[2])>16){ refused.push(w.word); return; }
+    for(var j=0;j<w.n;j++){
+      if(LOTB.items.length>=150){ refused.push("(the lot is full)"); return; }
+      var side=((k%5)-2)*3.2, ahead=6+Math.floor(k/5)*4+Math.max(d.size[2],2)/2;
+      var x=P.x+fx*ahead+fz*side, z=P.z+fz*ahead-fx*side;
+      /* kept on your own ground */
+      var h=L.home, dx=x-h.x, dz=z-h.z, dd=Math.hypot(dx,dz), lim=LOT_R-Math.max(d.size[0],d.size[2])/2-1;
+      if(dd>lim){ x=h.x+dx/dd*lim; z=h.z+dz/dd*lim; }
+      var loc=lotToLocal(h,x,z);
+      LOTB.items.push({a:w.arch,x:+loc.x.toFixed(2),z:+loc.z.toFixed(2),r:+(-(yaw-(h.rot||0))+Math.PI).toFixed(3),c:w.c,n:null});
+      k++; made++;
+    }
+  });
+  lotPreview();
+  LOTB.msg=(made?("<b>"+made+"</b> "+(made>1?"things":"thing")+" set on your lot. Save to make it stand for everyone."):"Nothing there I know how to build.")+
+    (refused.length?("<br><span style='color:#C0603A'>Too big for a lot: "+esc(refused.join(", "))+"</span>"):"");
+  lotPaint();
+  return made;
+}
+
+/* ---- the builder ---- */
+function lotEl(){
+  var el=document.getElementById("lotb"); if(el||!document.body) return el;
+  var css=document.createElement("style");
+  css.textContent="#lotb-btn{position:fixed;left:12px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;"+
+    "background:rgba(10,12,18,.92);color:var(--bone);border:1px solid var(--gold,#C9A868);border-radius:3px;padding:9px 13px;font:13px var(--sans);cursor:pointer}"+
+    "#lotb{position:fixed;left:12px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:46;display:none;width:min(380px,calc(100vw - 24px));max-height:min(64vh,600px);overflow:auto;"+
+    "background:rgba(8,10,16,.96);border:1px solid var(--gold,#C9A868);border-radius:4px;padding:12px 14px;font:13px var(--sans);color:var(--bone)}"+
+    "#lotb input[type=text]{width:100%;box-sizing:border-box;background:var(--void,#07080B);border:1px solid var(--line,#2A2C34);color:var(--bone);padding:8px;font:14px var(--sans);border-radius:2px}"+
+    "#lotb .li{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--line,#2A2C34)}"+
+    "#lotb .li button{padding:3px 7px;font-size:12px}";
+  document.head.appendChild(css);
+  var b=document.createElement("button"); b.id="lotb-btn"; b.type="button"; b.textContent="Build on your lot";
+  b.onclick=function(){ var L=myLotHere(); if(L) lotOpen(L); };
+  document.body.appendChild(b);
+  el=document.createElement("div"); el.id="lotb"; document.body.appendChild(el);
+  return el;
+}
+function lotOpen(L){
+  lotEl();
+  var rec=(typeof lotByName==="function")?lotByName(L.name):null;
+  LOTB.open=true; LOTB.lot=L;
+  LOTB.items=JSON.parse(JSON.stringify((rec&&rec.decor&&rec.decor.items)||[]));
+  LOTB.saved=JSON.stringify(LOTB.items); LOTB.msg="";
+  lotPaint(); lotPreview();
+}
+function lotClose(keep){
+  LOTB.open=false;
+  var L=LOTB.lot; LOTB.lot=null;
+  if(L&&!keep){
+    /* put back what was saved */
+    var rec=lotByName(L.name); if(rec){ rec._drawn=null; }
+    lotDrawItems(L.id,L.home,JSON.parse(LOTB.saved||"[]"));
+  }
+  lotPaint();
+}
+function lotPreview(){ if(LOTB.open&&LOTB.lot) lotDrawItems(LOTB.lot.id,LOTB.lot.home,LOTB.items); }
+function lotName(it){ var d=KIT[it.a]; return it.n||(it.a.replace(/([a-z])([A-Z])/g,"$1 $2")); }
+function lotPaint(){
+  var el=lotEl(); if(!el) return;
+  if(!LOTB.open){ el.style.display="none"; return; }
+  el.style.display="block";
+  var L=LOTB.lot, dirty=JSON.stringify(LOTB.items)!==LOTB.saved;
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+    '<b style="font-size:14px">'+esc(L.name)+'</b><button class="btn" id="lotb-x">Close</button></div>'+
+    '<div style="color:var(--dim);margin-bottom:8px;line-height:1.5">Your own ground. Say what should stand here — <i>a stone fountain, two oak trees and a red bench</i> — and it is set in front of you.</div>'+
+    '<div style="display:flex;gap:6px"><input type="text" id="lotb-say" placeholder="what should stand here?"><button class="btn" id="lotb-go">Build</button></div>'+
+    '<label style="display:flex;gap:6px;align-items:center;margin:8px 0;color:var(--dim)"><input type="checkbox" id="lotb-copy"'+(LOTB.copy?" checked":"")+'> Also put a copy in my own dream</label>'+
+    (LOTB.msg?'<div style="margin:6px 0">'+LOTB.msg+'</div>':'')+
+    '<div>'+LOTB.items.map(function(it,i){
+      return '<div class="li"><span>'+esc(lotName(it))+'</span><span style="white-space:nowrap">'+
+        '<button class="btn" data-turn="'+i+'">Turn</button> <button class="btn" data-here="'+i+'">Move here</button> <button class="btn" data-del="'+i+'">Remove</button></span></div>';
+    }).join("")+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="lotb-save"'+(dirty?'':' disabled')+'>Save for everyone</button>'+
+    '<button class="btn" id="lotb-undo"'+(dirty?'':' disabled')+'>Undo changes</button></div>'+
+    '<div style="color:var(--dim);margin-top:8px;font-size:12px">Inside the house, use the <b>Rearrange</b> button.</div>';
+  function $l(id){ return document.getElementById(id); }
+  $l("lotb-x").onclick=function(){ lotClose(false); };
+  var say=$l("lotb-say");
+  function go(){ var t=say.value.trim(); if(!t) return; lotBuildFromText(t,L); if(LOTB.copy) lotCopyToDream(t); var s2=document.getElementById("lotb-say"); if(s2){ s2.value=""; s2.focus(); } }
+  $l("lotb-go").onclick=go;
+  say.onkeydown=function(e){ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); go(); } };
+  say.onkeyup=function(e){ e.stopPropagation(); };
+  $l("lotb-copy").onchange=function(){ LOTB.copy=this.checked; };
+  Array.prototype.forEach.call(el.querySelectorAll("[data-turn]"),function(b){ b.onclick=function(){ var it=LOTB.items[+b.getAttribute("data-turn")]; it.r=+(((+it.r||0)+Math.PI/4)%(Math.PI*2)).toFixed(3); lotPreview(); lotPaint(); }; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ LOTB.items.splice(+b.getAttribute("data-del"),1); lotPreview(); lotPaint(); }; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-here]"),function(b){ b.onclick=function(){
+    var it=LOTB.items[+b.getAttribute("data-here")], P=camera.position, h=L.home;
+    var x=P.x-Math.sin(yaw)*4, z=P.z-Math.cos(yaw)*4, dx=x-h.x, dz=z-h.z, dd=Math.hypot(dx,dz);
+    if(dd>LOT_R-2){ x=h.x+dx/dd*(LOT_R-2); z=h.z+dz/dd*(LOT_R-2); }
+    var loc=lotToLocal(h,x,z); it.x=+loc.x.toFixed(2); it.z=+loc.z.toFixed(2); lotPreview(); lotPaint(); }; });
+  $l("lotb-undo").onclick=function(){ LOTB.items=JSON.parse(LOTB.saved||"[]"); LOTB.msg=""; lotPreview(); lotPaint(); };
+  $l("lotb-save").onclick=function(){
+    LOTB.msg="Saving…"; lotPaint();
+    cityRpc("set_lot_build",{p_lot:L.id,p_items:LOTB.items,p_inside:null}).then(function(o){
+      if(o!=="ok"){ LOTB.msg="<span style='color:#C0603A'>"+esc(String(o))+"</span>"; lotPaint(); return; }
+      LOTB.saved=JSON.stringify(LOTB.items);
+      var rec=lotByName(L.name); if(rec){ rec.decor=rec.decor||{}; rec.decor.items=JSON.parse(LOTB.saved); rec._drawn=LOTB.saved; }
+      LOTB.msg="<b>Saved.</b> It stands on "+esc(L.name)+" for every dreamer now, whether you are here or not.";
+      lotPaint(); lotsAt=0;
+    }).catch(function(e){ LOTB.msg="<span style='color:#C0603A'>"+esc(e.message)+"</span>"; lotPaint(); });
+  };
+}
+/* a copy of what was said goes into the dreamer's own dream, built the way
+   any dream is */
+function lotCopyToDream(text){
+  if(!LOT_SCAN) return;
+  var was=store.here;
+  beHere(0);
+  try{ LOT_SCAN(text); if(typeof populate==="function") populate(); if(typeof save==="function") save(); }
+  finally{ beHere(was); }
+}
+
+/* the button appears when you stand on ground of your own */
+var lotTickAt=0;
+function lotTick(dt){
+  lotTickAt-=dt; if(lotTickAt>0) return; lotTickAt=0.4;
+  lotDrawAll();
+  var L=myLotHere(), b=document.getElementById("lotb-btn");
+  if(!b){ if(!L) return; lotEl(); b=document.getElementById("lotb-btn"); }
+  b.style.display=(L&&!LOTB.open)?"block":"none";
+  if(L&&!LOTB.open) b.textContent="Build on "+L.name;
+  if(LOTB.open&&(!L||L.id!==LOTB.lot.id)) lotClose(false);   /* walked off your ground */
+}
+
+/* inside your own house: arranging is yours */
+(function(){
+  if(typeof workplaceKeyOf==="function"){
+    var wk=workplaceKeyOf;
+    workplaceKeyOf=function(spec){
+      var k=wk(spec); if(k) return k;
+      if(!spec||!spec.city) return null;
+      var p=lotPlots().filter(function(q){ return q.homeId===spec.id; })[0];
+      var rec=p&&typeof lotByName==="function"?lotByName(p.name):null;
+      return rec&&rec.held?("lot:"+rec.lot_id):null;
+    };
+  }
+  if(typeof canArrange==="function"){
+    var ca=canArrange;
+    canArrange=function(key){
+      if(key&&/^lot:/.test(key)){
+        if(typeof heldNow==="function"&&heldNow()) return false;
+        var id=+key.slice(4);
+        return !!(typeof standing!=="undefined"&&standing&&(standing.lots||[]).some(function(l){ return l.lot_id===id; }));
+      }
+      return ca(key);
+    };
+  }
+  if(typeof wpSave==="function"){
+    var ws=wpSave;
+    wpSave=function(){
+      var key=wpEditing;
+      if(!key||!/^lot:/.test(key)) return ws();
+      cityRpc("set_lot_build",{p_lot:+key.slice(4),p_items:null,p_inside:wpDraft}).then(function(o){
+        if(o!=="ok") return paintArranger(String(o));
+        WP_DECOR[key]=wpDraft.slice(); wpEditing=null; wpDraft=null;
+        paintArranger(); paintWorkButton();
+        setStatus("<b>Saved.</b> Your house is arranged this way for everyone who comes in.");
+        lotsAt=0;
+      }).catch(function(e){ paintArranger(e.message); });
+    };
+  }
+  if(typeof applyLotDecor==="function"){
+    var ald=applyLotDecor;
+    applyLotDecor=function(){ ald(); lotDrawAll(); };
+  }
+})();
+</script>
+<script>/* js/job-work.js */
+/* SomnuMatrix — job-work.js
+   every post in Somnucor is real work. Each worker has their own panel with
+   the tasks of their trade: work done at their own desk, bench or counter;
+   rounds walked about the city (the post delivered, the lamps lit, the beat
+   walked, a lot shown to a buyer); gathering at the seam, the stand, the
+   fields and the quay; and, for the hunters, nightmares faced in the Wilds.
+   Pay needs both: the hours you were there, and the work you did in them.
+   Every task keeps one of the city's services going — the lamps that are lit
+   at night and the trams that run depend on somebody doing the work.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+/* where each trade's rounds go, and what it gathers at */
+var JOBWORK_TARGETS={"Bailiff":{"Serve a summons":["homes"]},"Ferryman":{"Run the ferry round the moat":["docks"]},"Harbourmaster":{"Inspect the moorings":["docks"]},"Shepherd":{"Walk the flock round the fields":["fields"]},"Forester":{"Mark trees for felling":["trees"]},"Dream warden":{"Walk the Hall of Doors":["gate"]},"Gate technician":{"Inspect the gate lamps":["lamps"]},"Guide":{"Show a newcomer the city":["workplaces"]},"Hall porter":{"Sweep the Hall's steps":["gate"]},"Gazette writer":{"Gather the news about the city":["workplaces"]},"Midwife":{"Visit new mothers at home":["homes"]},"Physician":{"Make house calls":["homes"]},"Cartographer":{"Survey a street":["streets"]},"City planner":{"Inspect the rings":["workplaces"]},"Surveyor":{"Measure out plots":["plots"]},"Pit foreman":{"Inspect the pits":["rocks"]},"Dragon rider":{"Fly your sector's patrol":["sector"]},"Night rider":{"Fly the night patrol over your sector":["sector"]},"Wing commander":{"Inspect your wing's sector":["sector"]},"Corp marshal":{"Fly over the whole city":["stations"]},"Letter carrier":{"Deliver the post":["homes"]},"Gaoler":{"Check the cells":["gaol"]},"Warden":{"Inspect the yard":["gaol"]},"Land assessor":{"Value a property":["plots"]},"Letting agent":{"Show a lot to let":["plots"]},"Realtor":{"Show a lot for sale":["plots"]},"Rent collector":{"Collect the rents":["plots"]},"Courier":{"Carry a parcel across the city":["workplaces"]},"Runner":{"Run a message":["workplaces"],"Run errands for the shops":["shops"]},"Teacher":{"Walk the children home":["homes"]},"Bell ringer":{"Ring the bells along the Row":["temples"]},"Candle keeper":{"Light the candles in the houses":["temples"]},"Gravedigger":{"Tend the graveyard":["temples"]},"Temple keeper":{"Open the houses of Temple Row":["temples"]},"Temple warden":{"Keep watch along Temple Row":["temples"]},"Bus driver":{"Drive the omnibus round":["stations"]},"Carriage driver":{"Drive a fare across the city":["workplaces"]},"Driver":{"Drive a delivery":["shops"]},"Tram driver":{"Drive the tram round the ring":["stations"]},"Tax clerk":{"Deliver tax notices":["shops"]},"Carpenter":{"Repair woodwork about the city":["workplaces"]},"Dome keeper":{"Check the dome's panes":["gardens"]},"Electrician":{"Mend the wiring about the city":["lamps"]},"Engineer":{"Inspect the pumps":["fountains"]},"Gardener":{"Tend the city's gardens":["gardens"]},"Glazier":{"Replace broken panes":["workplaces"]},"Groundskeeper":{"Mow the greens":["gardens"]},"Lamplighter":{"Light the street lamps":["lamps"]},"Mason":{"Repair the city's walls":["streets"]},"Plumber":{"Fix the city's pipes":["fountains"]},"Road crew":{"Mend the road":["streets"]},"Roofer":{"Repair roofs about the city":["homes"]},"Sanitation":{"Clear the bins":["streets"]},"Sign writer":{"Repaint the street signs":["signs"]},"Street sweeper":{"Sweep the streets":["streets"]},"Water keeper":{"Check the falls and canals":["fountains"]}};
+var JOBWORK_STOPS={"Bailiff|Serve a summons":2,"Ferryman|Run the ferry round the moat":3,"Harbourmaster|Inspect the moorings":3,"Shepherd|Walk the flock round the fields":3,"Forester|Mark trees for felling":4,"Dream warden|Walk the Hall of Doors":3,"Gate technician|Inspect the gate lamps":3,"Guide|Show a newcomer the city":4,"Hall porter|Sweep the Hall's steps":3,"Gazette writer|Gather the news about the city":3,"Midwife|Visit new mothers at home":2,"Physician|Make house calls":3,"Cartographer|Survey a street":4,"City planner|Inspect the rings":3,"Surveyor|Measure out plots":3,"Pit foreman|Inspect the pits":3,"Dragon rider|Fly your sector's patrol":5,"Night rider|Fly the night patrol over your sector":5,"Wing commander|Inspect your wing's sector":4,"Corp marshal|Fly over the whole city":4,"Letter carrier|Deliver the post":5,"Gaoler|Check the cells":3,"Warden|Inspect the yard":3,"Land assessor|Value a property":2,"Letting agent|Show a lot to let":2,"Realtor|Show a lot for sale":2,"Rent collector|Collect the rents":4,"Courier|Carry a parcel across the city":3,"Runner|Run a message":2,"Runner|Run errands for the shops":3,"Teacher|Walk the children home":2,"Bell ringer|Ring the bells along the Row":3,"Candle keeper|Light the candles in the houses":4,"Gravedigger|Tend the graveyard":2,"Temple keeper|Open the houses of Temple Row":4,"Temple warden|Keep watch along Temple Row":3,"Bus driver|Drive the omnibus round":4,"Carriage driver|Drive a fare across the city":3,"Driver|Drive a delivery":3,"Tram driver|Drive the tram round the ring":4,"Tax clerk|Deliver tax notices":3,"Carpenter|Repair woodwork about the city":3,"Dome keeper|Check the dome's panes":3,"Electrician|Mend the wiring about the city":3,"Engineer|Inspect the pumps":3,"Gardener|Tend the city's gardens":4,"Glazier|Replace broken panes":3,"Groundskeeper|Mow the greens":4,"Lamplighter|Light the street lamps":6,"Mason|Repair the city's walls":3,"Plumber|Fix the city's pipes":3,"Road crew|Mend the road":4,"Roofer|Repair roofs about the city":3,"Sanitation|Clear the bins":5,"Sign writer|Repaint the street signs":3,"Street sweeper|Sweep the streets":5,"Water keeper|Check the falls and canals":3};
+var JOBWORK_NODE={"Dock hand|Haul crates off the quay":"crates","Fisherman|Cast a net from the quay":"water","Dairyman|Milk the herd":"animals","Farmhand|Bring in the harvest":"fields","Shepherd|Shear the sheep":"animals","Charcoal burner|Gather deadwood":"trees","Forester|Plant saplings":"trees","Lumberjack|Fell a tree":"trees","Herbalist|Gather healing herbs":"gardens","Miner|Dig at the seam":"crystal","Quarryman|Quarry stone":"rocks","Gardener|Grow flowers":"gardens"};
+var WORK={data:null,at:0,busy:null,open:false,svc:{},svcAt:0,toast:""};
+
+/* ---- the city's services, read by everyone, worked by the workers ---- */
+function workServices(){
+  var now=Date.now(); if(now-WORK.svcAt<120000) return;
+  WORK.svcAt=now;
+  var f=(typeof signedIn==="function"&&signedIn())?cityRpc("city_services_board"):null;
+  if(!f) return;
+  f.then(function(rows){ (rows||[]).forEach(function(r){ WORK.svc[r.key]=r.level; }); }).catch(function(){});
+}
+function svcLevel(k){ var v=WORK.svc[k]; return v===undefined?70:v; }
+
+/* the lamps the lamplighters lit; the trams the drivers drive */
+(function(){
+  if(typeof lampsForNight==="function"){
+    var lf=lampsForNight;
+    lampsForNight=function(night){ lf(night*(0.25+0.75*svcLevel("lighting")/100)); };
+  }
+})();
+
+/* ---- where the work is ---- */
+function wpReach(key){ var w=WP_BY_KEY&&WP_BY_KEY[key]; return w&&w.ring==="harvest"?200:(key==="The Hunters' Lodge"?80:60); }
+function wpAt(key){ return store.workplaceAt&&store.workplaceAt[key]; }
+function inCityNow(){ var r=somnucorRealm(); return !!(r&&walkMode&&(store.here||0)===r.id); }
+function onSite(job){
+  if(!inCityNow()) return false;
+  if(job.roams) return true;
+  if(store.inside&&INT&&INT.spec) return INT.spec.workplace===job.workplace||(INT.spec.label===job.workplace);
+  var w=wpAt(job.workplace); if(!w) return false;
+  return Math.hypot(camera.position.x-w.x,camera.position.z-w.z)<wpReach(job.workplace);
+}
+function inWilds(){ if(!inCityNow()||store.inside||!ATLC) return false; return Math.hypot(camera.position.x-ATLC.x,camera.position.z-ATLC.z)>2160; }
+
+var NODE_RE={crystal:/crystal|gem|mineshaft/,rocks:/^rock$|crater|boulder|quarry/,trees:/^(tree|pine|oak|birch|willow|deadtree)$/,
+  fields:/field|crop|wheat|hay|orchard|vineyard|scarecrow|barn/,animals:/^(cow|sheep|goat|pig|horse|chicken)$/,water:/pier|boat|quay|dock|crane|fishingboat/,
+  gardens:/flower|hedge|topiary|garden|fountain|bush|lawn/,crates:/crates|barrel|pallets|sacks/};
+var TARGET_RE={lamps:/streetlight|ornatelamp|dimlamp|lamppost|crystalbrazier|gaslamp/,fountains:/fountain|well|handpump/,signs:/^signboard$/,
+  docks:NODE_RE.water,trees:NODE_RE.trees,fields:NODE_RE.fields,rocks:NODE_RE.rocks,gardens:NODE_RE.gardens};
+function cityObjs(){ var r=somnucorRealm(); return r?store.objects.filter(function(o){ return o.realm===r.id; }):[]; }
+function targetsFor(kind){
+  var out=[], rr=function(o){ return Math.hypot(o.x-ATLC.x,o.z-ATLC.z); };
+  if(kind==="homes") lotPlots().forEach(function(p){ var h=p.homeId&&specById(p.homeId); if(h) out.push({x:h.x,z:h.z,name:p.name}); });
+  else if(kind==="plots") cityObjs().forEach(function(o){ if(o.plot) out.push({x:o.x,z:o.z,name:o.plot.name,plot:o.plot}); });
+  else if(kind==="workplaces"||kind==="shops") Object.keys(store.workplaceAt||{}).forEach(function(k){
+    var w=store.workplaceAt[k], wp=WP_BY_KEY[k]; if(kind==="shops"&&!(wp&&wp.ring==="markets")) return; out.push({x:w.x,z:w.z,name:k}); });
+  else if(kind==="stations"){ (UNDERGROUND||[]).forEach(function(s){ out.push({x:s.x,z:s.z,name:s.name}); });
+    cityObjs().forEach(function(o){ if(o.archetype==="tramstop") out.push({x:o.x,z:o.z,name:"the tram stop"}); }); }
+  else if(kind==="temples") cityObjs().forEach(function(o){ var d=KIT[o.archetype], r=rr(o); if(d&&d.cat==="structure"&&r>660&&r<960&&Math.max(d.size[0],d.size[2])>9) out.push({x:o.x,z:o.z,name:o.label||o.name||"the house"}); });
+  else if(kind==="gate") cityObjs().forEach(function(o){ if(rr(o)<140&&KIT[o.archetype]&&KIT[o.archetype].cat!=="being") out.push({x:o.x,z:o.z,name:o.label||"the plaza"}); });
+  else if(kind==="gaol"){ var Y=store.gaolYard; if(Y) cityObjs().forEach(function(o){ if(/prisonwall|watchtower|brazier|crates/.test(o.archetype)&&Math.hypot(o.x-Y.x,o.z-Y.z)<80) out.push({x:o.x,z:o.z,name:"the yard"}); }); }
+  else if(kind==="streets"){
+    var P=camera.position, d=Math.hypot(P.x-ATLC.x,P.z-ATLC.z), best=null;
+    Object.keys(ATL_STREETS).forEach(function(k){ ATL_STREETS[k].forEach(function(rs){ if(best===null||Math.abs(rs-d)<Math.abs(best-d)) best=rs; }); });
+    var a0=Math.atan2(P.z-ATLC.z,P.x-ATLC.x);
+    for(var i=-12;i<=12;i++){ var a=a0+i*30/best; out.push({x:ATLC.x+Math.cos(a)*best,z:ATLC.z+Math.sin(a)*best,name:"the street"}); }
+  }
+  else { var re=TARGET_RE[kind]; if(re) cityObjs().forEach(function(o){ if(re.test(o.archetype)) out.push({x:o.x,z:o.z,name:o.label||o.archetype}); }); }
+  return out;
+}
+function pickStops(kinds,n){
+  var P=camera.position, all=[];
+  kinds.forEach(function(k){ all=all.concat(targetsFor(k)); });
+  all.forEach(function(t){ t.d=Math.hypot(t.x-P.x,t.z-P.z); });
+  var farLim=kinds.indexOf("sector")>-1?4000:420;       /* a rider's sector may be across the city: they fly */
+  all=all.filter(function(t){ return t.d>12&&t.d<farLim; }).sort(function(a,b){ return a.d-b.d; });
+  var out=[];
+  for(var i=0;i<all.length&&out.length<n;i++){
+    var t=all[i], far=out.every(function(q){ return Math.hypot(q.x-t.x,q.z-t.z)>25; });
+    if(far) out.push(t);
+  }
+  if(out.length<n&&farLim<1000) targetsFor("streets").forEach(function(t){ if(out.length<n&&out.every(function(q){ return Math.hypot(q.x-t.x,q.z-t.z)>25; })) out.push(t); });
+  return out;
+}
+function nearestNode(node,job){
+  var re=NODE_RE[node], P=camera.position, w=wpAt(job.workplace), reach=wpReach(job.workplace), best=null, bd=1e9;
+  if(re) cityObjs().forEach(function(o){
+    if(!re.test(o.archetype)) return;
+    if(w&&Math.hypot(o.x-w.x,o.z-w.z)>reach) return;
+    var d=Math.hypot(o.x-P.x,o.z-P.z); if(d<bd){ bd=d; best=o; }
+  });
+  /* nothing of the kind by this workplace: the work is done at the workplace itself */
+  if(!best&&w) best={x:w.x,z:w.z,label:job.workplace,fallback:true};
+  return best;
+}
+
+/* ---- the panel ---- */
+function workEl(){
+  var el=document.getElementById("work"); if(el||!document.body) return el;
+  var css=document.createElement("style");
+  css.textContent="#work-btn{position:fixed;right:12px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;"+
+    "background:rgba(10,12,18,.92);color:var(--bone);border:1px solid var(--gold,#C9A868);border-radius:3px;padding:9px 13px;font:13px var(--sans);cursor:pointer}"+
+    "#work{position:fixed;right:12px;bottom:calc(140px + env(safe-area-inset-bottom,0px));z-index:46;display:none;width:min(400px,calc(100vw - 24px));max-height:min(66vh,620px);overflow:auto;"+
+    "background:rgba(8,10,16,.96);border:1px solid var(--gold,#C9A868);border-radius:4px;padding:12px 14px;font:13px var(--sans);color:var(--bone)}"+
+    "#work .job{border-top:1px solid var(--line,#2A2C34);padding-top:8px;margin-top:8px}"+
+    "#work .tk{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0}"+
+    "#work .bar{height:5px;background:#22252C;border-radius:3px;overflow:hidden;margin-top:2px}#work .bar i{display:block;height:5px;background:#C9A868}"+
+    "#work-run{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:47;display:none;min-width:280px;max-width:calc(100vw - 24px);"+
+    "background:rgba(8,10,16,.94);border:1px solid var(--gold,#C9A868);border-radius:4px;padding:10px 14px;font:13px var(--sans);color:var(--bone);text-align:center}"+
+    "#work-run .bar{height:6px;background:#22252C;border-radius:3px;overflow:hidden;margin:8px 0 6px}#work-run .bar i{display:block;height:6px;background:#E8C27A}"+
+    "#work-run .arrow{display:inline-block;font-size:22px;color:#E8C27A;transition:transform .15s}";
+  document.head.appendChild(css);
+  var b=document.createElement("button"); b.id="work-btn"; b.type="button"; b.textContent="Your work";
+  b.onclick=function(){ WORK.open=!WORK.open; if(WORK.open) workRefresh(true); workPaint(); };
+  document.body.appendChild(b);
+  el=document.createElement("div"); el.id="work"; document.body.appendChild(el);
+  var run=document.createElement("div"); run.id="work-run"; document.body.appendChild(run);
+  return el;
+}
+function workRefresh(force){
+  if(!(typeof signedIn==="function"&&signedIn())) return Promise.resolve(null);
+  if(!force&&Date.now()-WORK.at<30000) return Promise.resolve(WORK.data);
+  WORK.at=Date.now();
+  return cityRpc("my_work").then(function(d){
+    WORK.data=d||null;
+    ((d&&d.services)||[]).forEach(function(r){ WORK.svc[r.key]=r.level; }); WORK.svcAt=Date.now();
+    workPaint(); return d;
+  }).catch(function(){ return null; });
+}
+function workPaint(){
+  var el=workEl(); if(!el) return;
+  var b=document.getElementById("work-btn"), jobs=(WORK.data&&WORK.data.jobs)||[];
+  var show=inCityNow()&&jobs.length>0;
+  b.style.display=show?"block":"none";
+  if(!show||!WORK.open){ el.style.display="none"; return; }
+  el.style.display="block";
+  var h='<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Your work</b>'+
+    '<span><button class="btn" id="work-pay">Draw pay</button> <button class="btn" id="work-x">Close</button></span></div>'+
+    '<div style="color:var(--dim);margin:6px 0 2px;line-height:1.5">Be at your post and do the work: pay is for the hours you were there <i>and</i> working.</div>';
+  jobs.forEach(function(j,ji){
+    var here=onSite(j), hunt=j.panel==="hunt";
+    h+='<div class="job"><b>'+esc(j.title)+'</b> <span style="color:var(--dim)">· '+esc(j.workplace||"")+'</span><br>'+
+      '<span style="color:'+(here?'#8FCB8A':'#C0603A')+'">'+(here?(j.roams?"On your rounds":"On site"):"Not at your post")+'</span>'+
+      ' <span style="color:var(--dim)">· '+j.credit_min+' min of work done, '+j.at_work_min+' min on site since last paid</span>'+
+      (j.quota?('<br><span style="color:var(--dim)">'+(hunt?"Nightmares faced":"Brought in")+': <b style="color:var(--bone)">'+j.units+'</b> · quota '+j.quota+' an hour · '+j.bonus+' gold for each over</span>'):'')+
+      (!here&&!j.roams?' <button class="btn" data-way="'+esc(j.workplace)+'">Show me the way</button>':'');
+    (j.tasks||[]).forEach(function(t,ti){
+      h+='<div class="tk"><span>'+esc(t.task)+' <span style="color:var(--dim);font-size:12px">'+
+        ({desk:"at your post",round:"rounds",gather:"gathering",hunt:"in the Wilds"}[t.kind]||"")+'</span></span>'+
+        '<button class="btn" data-job="'+ji+'" data-task="'+ti+'"'+(WORK.busy?' disabled':'')+'>'+(t.kind==="hunt"?"Go":"Start")+'</button></div>';
+    });
+    h+='</div>';
+  });
+  var sv=(WORK.data&&WORK.data.services)||[];
+  if(sv.length){
+    h+='<div class="job"><b>What the city needs</b><div style="color:var(--dim);margin:2px 0 6px">Every service wears down by the hour unless somebody works at it.</div>';
+    sv.slice().sort(function(a,b){ return a.level-b.level; }).forEach(function(s){
+      h+='<div style="margin:4px 0"><span>'+esc(s.name)+'</span> <span style="color:var(--dim)">'+s.level+'%</span><div class="bar"><i style="width:'+s.level+'%;background:'+(s.level<30?'#C0603A':s.level<60?'#C9A868':'#8FCB8A')+'"></i></div></div>';
+    });
+    h+='</div>';
+  }
+  el.innerHTML=h;
+  document.getElementById("work-x").onclick=function(){ WORK.open=false; workPaint(); };
+  document.getElementById("work-pay").onclick=function(){ drawPay().then(function(){ workRefresh(true); }); };
+  Array.prototype.forEach.call(el.querySelectorAll("[data-way]"),function(x){ x.onclick=function(){ showTheWay(x.getAttribute("data-way")); }; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-task]"),function(x){ x.onclick=function(){
+    var j=jobs[+x.getAttribute("data-job")], t=j.tasks[+x.getAttribute("data-task")]; workStart(j,t); }; });
+}
+
+/* ---- doing the work ---- */
+function workStart(job,task){
+  if(WORK.busy) return;
+  if(typeof heldNow==="function"&&heldNow()) return setStatus("You are held. Work at the yard benches instead.");
+  var B={job:job,task:task,t:0,need:task.secs,stops:null,i:0,node:null,ref:null};
+  if(task.kind==="round"){
+    var tgt=(JOBWORK_TARGETS[job.title]&&JOBWORK_TARGETS[job.title][task.task])||["streets"];
+    B.stops=pickStops(tgt,JOBWORK_STOPS[job.title+"|"+task.task]||3);
+    if(!B.stops.length) return setStatus("Nowhere to go for that just now.");
+    var last=B.stops[B.stops.length-1]; B.ref=last.plot?last.plot.name:(last.name||null);
+  }
+  if((task.kind==="desk"||task.kind==="gather")&&!onSite(job)){
+    setStatus("You have to be at <b>"+esc(job.workplace)+"</b> to do that. Follow the pointer.");
+    showTheWay(job.workplace); return;
+  }
+  WORK.busy=B; WORK.open=false; workPaint(); workRunPaint();
+}
+function workCancel(why){ WORK.busy=null; var r=document.getElementById("work-run"); if(r) r.style.display="none"; if(why) setStatus(why); workPaint(); }
+function workDone(){
+  var B=WORK.busy; if(!B) return;
+  B.sending=true; workRunPaint();
+  cityRpc("do_task",{p_job:B.job.job_id,p_task:B.task.task,p_ref:B.ref}).then(function(o){
+    WORK.busy=null; var r=document.getElementById("work-run"); if(r) r.style.display="none";
+    if(!o||!o.ok){ setStatus(esc((o&&o.say)||"That did not count.")); workRefresh(true); return; }
+    if(o.service) WORK.svc[o.service]=o.level;
+    setStatus("<b>"+esc(B.task.task)+"</b> — done. "+Math.round(o.credit/60)+" minutes of work to your name"+
+      (o.units&&o.stock?(", "+o.units+" "+esc(o.stock)+" brought in"):(o.units&&B.task.kind==="hunt"?", one more for the count":""))+
+      (o.service?(". "+esc((WORK.data&&(WORK.data.services||[]).filter(function(s){ return s.key===o.service; })[0]||{}).name||o.service)+" stands at "+o.level+"%."):"."));
+    workRefresh(true);
+  }).catch(function(e){ WORK.busy=null; setStatus(esc(e.message)); });
+}
+function workRunPaint(){
+  var el=document.getElementById("work-run"); if(!el) return;
+  var B=WORK.busy; if(!B){ el.style.display="none"; return; }
+  el.style.display="block";
+  var h="<b>"+esc(B.task.task)+"</b>";
+  if(B.sending) h+="<div style='margin-top:6px;color:var(--dim)'>Recording the work…</div>";
+  else if(B.task.kind==="round"){
+    var s=B.stops[B.i], P=camera.position, d=Math.hypot(s.x-P.x,s.z-P.z);
+    var bearing=Math.atan2(s.x-P.x,s.z-P.z), rel=(bearing-(yaw+Math.PI))*180/Math.PI;
+    h+="<div style='margin-top:6px'>Stop "+(B.i+1)+" of "+B.stops.length+": <b>"+esc(s.name)+"</b> · "+Math.round(d)+" m "+
+      "<span class='arrow' style='transform:rotate("+(-rel).toFixed(0)+"deg)'>↑</span></div>";
+  } else if(B.task.kind==="hunt"){
+    h+="<div style='margin-top:6px;color:var(--dim)'>"+(inWilds()?"Find a nightmare and face it — walk up to one and press <b>H</b>.":"Go down past the Harvest Ring into the Nightmare Wilds.")+"</div>";
+  } else {
+    var pct=Math.min(100,B.t/B.need*100);
+    if(B.task.kind==="gather"&&!B.atNode) h+="<div style='margin-top:6px;color:var(--dim)'>Go to "+esc(B.node?(B.node.label||B.node.archetype||"the work"):"the work")+
+      (B.node&&!B.node.fallback?" · "+Math.round(Math.hypot(B.node.x-camera.position.x,B.node.z-camera.position.z))+" m":"")+"</div>";
+    h+="<div class='bar'><i style='width:"+pct.toFixed(0)+"%'></i></div><span style='color:var(--dim)'>"+(B.paused?"Paused — come back to your post":"Working…")+"</span>";
+  }
+  h+="<div style='margin-top:6px'><button class='btn' id='work-stop'>Stop</button></div>";
+  el.innerHTML=h;
+  var st=document.getElementById("work-stop"); if(st) st.onclick=function(){ workCancel("Left off."); };
+}
+var workPaintAt=0, hunterNear=null;
+function workTick(dt){
+  workServices();
+  if(typeof signedIn==="function"&&signedIn()&&inCityNow()&&!WORK.data&&Date.now()-WORK.at>30000) workRefresh(false);
+  var b=document.getElementById("work-btn"); if(!b&&WORK.data&&(WORK.data.jobs||[]).length) workEl();
+  workPaintAt-=dt;
+  if(workPaintAt<=0){ workPaintAt=0.5; var bb=document.getElementById("work-btn"); if(bb) bb.style.display=(inCityNow()&&WORK.data&&(WORK.data.jobs||[]).length)?"block":"none"; }
+  hunterTick();
+  var B=WORK.busy; if(!B||B.sending) return;
+  if(!inCityNow()){ workCancel("You left the city; the work is left off."); return; }
+  var P=camera.position;
+  if(B.task.kind==="desk"){
+    B.paused=!onSite(B.job);
+    if(!B.paused) B.t+=dt;
+    if(B.t>=B.need){ workDone(); return; }
+  } else if(B.task.kind==="gather"){
+    if(!B.node||Math.random()<0.02) B.node=nearestNode(JOBWORK_NODE[B.job.title+"|"+B.task.task]||"crates",B.job);
+    B.atNode=B.node&&(B.node.fallback?onSite(B.job):Math.hypot(B.node.x-P.x,B.node.z-P.z)<9);
+    B.paused=!B.atNode;
+    if(!B.paused) B.t+=dt;
+    if(B.t>=B.need){ workDone(); return; }
+  } else if(B.task.kind==="round"){
+    var s=B.stops[B.i];
+    if(Math.hypot(s.x-P.x,s.z-P.z)<7){ B.i++; if(B.i>=B.stops.length){ workDone(); return; } setStatus("<b>"+esc(s.name)+"</b> — done. On to the next."); }
+  }
+  if(workPaintAt<=0.01||B.task.kind==="round") workRunPaint();
+}
+
+/* ---- the hunt: a hunter may face any nightmare in the Wilds, day or night ---- */
+function amHunter(){ return ((WORK.data&&WORK.data.jobs)||[]).some(function(j){ return j.panel==="hunt"; }); }
+function hunterTick(){
+  hunterNear=null;
+  if(!amHunter()||!inWilds()||typeof nmOpen==="undefined"||nmOpen) return;
+  var P=camera.position, list=store.wildsNightmares||[], best=null, bd=7;
+  list.forEach(function(w){ var g=meshes[w.id]; if(!g||!g.visible||g.userData.nmGone) return;
+    var d=Math.hypot(g.position.x-P.x,g.position.z-P.z); if(d<bd){ bd=d; best=w; } });
+  hunterNear=best;
+  if(best&&!WORK.huntSaid){ WORK.huntSaid=best.id; setStatus("A nightmare is close — press <b>H</b> to hunt it."); }
+  if(!best) WORK.huntSaid=null;
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(e.code==="KeyH"&&hunterNear&&typeof openEncounter==="function"&&typeof wildChar==="function"){
+    e.preventDefault(); openEncounter(wildChar(hunterNear,null));
+  }
+});
+(function(){
+  if(typeof defeatNightmare!=="function") return;
+  var dn=defeatNightmare;
+  defeatNightmare=function(c,way){
+    var r=dn.apply(this,arguments);
+    if(c&&c.wild&&amHunter()){
+      var jobs=(WORK.data.jobs||[]).filter(function(j){ return j.panel==="hunt"; });
+      var j=jobs[0], t=j&&(j.tasks||[]).filter(function(x){ return x.kind==="hunt"; })[0];
+      if(j&&t){ WORK.busy={job:j,task:t,t:0,need:0,ref:c.objId||null}; workDone(); }
+    }
+    return r;
+  };
+})();
+</script>
+
+<script>/* js/corp.js */
+/* SomnuMatrix — corp.js
+   the Dragon Corp, merit, and community service.
+     - the Corp's riders mount their dragons and keep a sector each: their
+       panel shows their sector and who rides the others, the reports coming
+       in, and the merit rolls; commanders assign the sectors
+     - merit: a dreamer who strikes another (press X beside them) does them
+       no harm at all — it only marks the striker, and the Corp is told; the
+       same for a thief at a market stall (press T)
+     - community service: the held may work in the Warrens, under the Corp's
+       eye, and every task done takes half an hour off the sentence
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var CORP={data:null,at:0,mounted:false};
+var SECTOR_A0=0.19, SECTOR_W=Math.PI/4;
+function sectorAt(x,z){ var a=Math.atan2(z-ATLC.z,x-ATLC.x); return 1+Math.floor((((a-SECTOR_A0)%(Math.PI*2))+Math.PI*2)%(Math.PI*2)/SECTOR_W); }
+function amCorp(){ return ((WORK.data&&WORK.data.jobs)||[]).some(function(j){ return j.panel==="police"; }); }
+
+/* the rider's own sector, for their patrol routes */
+(function(){
+  if(typeof targetsFor!=="function") return;
+  var tf=targetsFor;
+  targetsFor=function(kind){
+    if(kind!=="sector") return tf(kind);
+    var sec=(CORP.data&&CORP.data.sector)||sectorAt(camera.position.x,camera.position.z), out=[];
+    var a0=SECTOR_A0+(sec-1)*SECTOR_W;
+    Object.keys(ATL_STREETS).forEach(function(k){ ATL_STREETS[k].forEach(function(rs){
+      for(var i=1;i<6;i++){ var a=a0+SECTOR_W*i/6; out.push({x:ATLC.x+Math.cos(a)*rs,z:ATLC.z+Math.sin(a)*rs,name:"sector "+sec+", "+(atlRingAt?atlRingAt(rs):"the street")}); }
+    }); });
+    return out;
+  };
+})();
+function atlRingAt(r){ for(var i=0;i<ATL_RINGS.length;i++) if(r>=ATL_RINGS[i].S&&r<=ATL_RINGS[i].E) return ATL_RINGS[i].name; return "the city"; }
+
+/* patrols are flown: the rider's own dragon */
+function corpMount(on){
+  if(on){
+    riding="Corp dragon"; rideSpeed=4; rideArch="dragon"; if(typeof canFly!=="undefined") canFly=true;
+    if(rideG){ scene.remove(rideG); rideG=null; }
+    var L=meLook(); L.ride="dragon"; if(typeof publishMyLook==="function") publishMyLook();
+    CORP.mounted=true; setStatus("<b>Mounted.</b> Space to climb, C to come down. Your sector is yours to keep.");
+  } else {
+    if(typeof ride==="function") ride(null); CORP.mounted=false;
+  }
+}
+
+function corpRefresh(force){
+  if(!amCorp()&&!(typeof amKeeper==="function"&&amKeeper())) return Promise.resolve(null);
+  if(!force&&Date.now()-CORP.at<20000) return Promise.resolve(CORP.data);
+  CORP.at=Date.now();
+  return cityRpc("corp_status").then(function(d){ CORP.data=d&&d.corp?d:null; if(WORK.open) workPaint(); return CORP.data; }).catch(function(){ return null; });
+}
+/* the Corp's part of the work panel */
+function corpHtml(){
+  var d=CORP.data; if(!d) return "";
+  var h='<div class="job"><b style="color:#E8C27A">The Dragon Corp</b>'+(d.sector?' <span style="color:var(--dim)">· you keep the <b style="color:var(--bone)">'+esc(((d.sectors||[])[d.sector-1]||{}).name||("sector "+d.sector))+'</b></span>':'')+
+    '<div style="margin:6px 0"><button class="btn" id="corp-mount">'+(CORP.mounted?"Dismount":"Mount your dragon")+'</button></div>';
+  h+='<div style="color:var(--dim);margin-top:4px">Sectors</div>';
+  (d.sectors||[]).forEach(function(s){
+    h+='<div style="padding:3px 0">'+esc(s.name)+' · <span style="color:var(--dim)">'+(s.riders.length?s.riders.map(function(r){ return esc(r.name)+(r.online?" ●":""); }).join(", "):"no rider")+
+      (s.open?' · <b style="color:#C0603A">'+s.open+' open</b>':'')+'</span>'+
+      (d.command?s.riders.map(function(r){ return ' <select data-rider="'+r.id+'">'+[1,2,3,4,5,6,7,8].map(function(n){ return '<option'+(n===s.n?" selected":"")+'>'+n+'</option>'; }).join("")+'</select>'; }).join(""):"")+'</div>';
+  });
+  h+='<div style="color:var(--dim);margin-top:8px">Reports</div>';
+  if(!(d.reports||[]).length) h+='<div style="color:var(--dim)">Nothing open. The city is quiet.</div>';
+  (d.reports||[]).forEach(function(r){
+    h+='<div class="tk"><span><b>'+esc(r.kind)+'</b> · '+esc(r.offender||"?")+(r.victim?' against '+esc(r.victim):'')+' · sector '+(r.sector||"?")+
+      '<br><span style="color:var(--dim);font-size:12px">'+esc(r.note||"")+'</span></span><span style="white-space:nowrap">'+
+      (r.x!==null&&r.x!==undefined?'<button class="btn" data-fly="'+r.id+'">Go</button> ':'')+'<button class="btn" data-close="'+r.id+'">Close</button></span></div>';
+  });
+  h+='<div style="color:var(--dim);margin-top:8px">Merit rolls <span style="font-size:12px">(100 is good standing)</span></div>';
+  (d.rolls||[]).slice(0,25).forEach(function(m){
+    h+='<div class="tk"><span>'+esc(m.name)+' · <b style="color:'+(m.score<80?'#C0603A':m.score>110?'#8FCB8A':'var(--bone)')+'">'+m.score+'</b>'+
+      ((m.recent&&m.recent[0])?' <span style="color:var(--dim);font-size:12px">· '+esc(m.recent[0].kind)+(m.recent[0].note?": "+esc(m.recent[0].note):"")+'</span>':'')+'</span>'+
+      '<span style="white-space:nowrap"><button class="btn" data-mark="'+m.id+'" data-d="1">+</button> <button class="btn" data-mark="'+m.id+'" data-d="-1">−</button></span></div>';
+  });
+  return h+'</div>';
+}
+function corpWire(el){
+  var d=CORP.data; if(!d) return;
+  var mb=document.getElementById("corp-mount"); if(mb) mb.onclick=function(){ corpMount(!CORP.mounted); workPaint(); };
+  Array.prototype.forEach.call(el.querySelectorAll("[data-rider]"),function(sel){ sel.onchange=function(){
+    cityRpc("corp_assign_sector",{p_user:sel.getAttribute("data-rider"),p_sector:+sel.value}).then(function(o){ setStatus(o==="ok"?"Sector assigned.":esc(String(o))); corpRefresh(true); }); }; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-close]"),function(b){ b.onclick=function(){
+    var why=prompt("How was it seen to?","warned them"); if(why===null) return;
+    cityRpc("corp_resolve",{p_report:+b.getAttribute("data-close"),p_outcome:why}).then(function(o){ setStatus(o==="ok"?"Report closed.":esc(String(o))); corpRefresh(true); }); }; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-fly]"),function(b){ b.onclick=function(){
+    var r=(d.reports||[]).filter(function(x){ return String(x.id)===b.getAttribute("data-fly"); })[0]; if(!r) return;
+    var j=((WORK.data&&WORK.data.jobs)||[]).filter(function(x){ return x.panel==="police"; })[0];
+    WORK.busy={job:j,task:{task:"Answer a report",kind:"report"},stops:[{x:ATLC.x+r.x,z:ATLC.z+r.z,name:"where it happened"}],i:0,t:0,need:0,report:r.id};
+    WORK.open=false; workPaint(); workRunPaint(); }; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-mark]"),function(b){ b.onclick=function(){
+    var up=b.getAttribute("data-d")==="1", n=prompt(up?"Commend them — how much (1 to 5)?":"Caution them — how much (1 to 10)?",up?"2":"3"); if(!n) return;
+    var why=prompt("Why?",""); if(!why) return;
+    cityRpc("corp_mark",{p_user:b.getAttribute("data-mark"),p_delta:(up?1:-1)*Math.abs(parseInt(n,10)||1),p_note:why}).then(function(o){ setStatus(o==="ok"?"Marked.":esc(String(o))); corpRefresh(true); }); }; });
+}
+(function(){
+  if(typeof workPaint!=="function") return;
+  var wp=workPaint;
+  workPaint=function(){
+    wp();
+    var el=document.getElementById("work"); if(!el||el.style.display==="none") return;
+    var h=corpHtml(); if(!h&&!MERIT.score) return;
+    var box=document.createElement("div");
+    box.innerHTML=(MERIT.score?'<div class="job">Your merit: <b>'+MERIT.score+'</b> <span style="color:var(--dim)">· 100 is good standing; work and errands raise it, misdeeds lower it</span></div>':'')+h;
+    el.appendChild(box); corpWire(box);
+  };
+  var wr=workRefresh;
+  workRefresh=function(force){ return wr(force).then(function(d){ meritRefresh(); if(amCorp()) corpRefresh(force); return d; }); };
+})();
+/* a report answered when the rider reaches the place */
+(function(){
+  if(typeof workTick!=="function") return;
+  var wt=workTick;
+  workTick=function(dt){
+    var B=WORK.busy;
+    if(B&&B.task&&B.task.kind==="report"){
+      var s=B.stops[0], P=camera.position;
+      if(Math.hypot(s.x-P.x,s.z-P.z)<12){
+        WORK.busy=null; var r=document.getElementById("work-run"); if(r) r.style.display="none";
+        setStatus("<b>You are there.</b> See to it, then close the report from your panel.");
+      } else workRunPaint();
+      return;
+    }
+    wt(dt);
+    corpTick(dt);
+  };
+})();
+
+/* ---- merit ---- */
+var MERIT={score:0,at:0};
+function meritRefresh(){
+  if(!(typeof signedIn==="function"&&signedIn())) return;
+  if(Date.now()-MERIT.at<60000) return;
+  MERIT.at=Date.now();
+  cityRpc("my_merit").then(function(m){ if(m) MERIT.score=m.score; }).catch(function(){});
+}
+/* striking another dreamer: it never hurts them. It only marks you. */
+function nearestDreamer(maxD){
+  if(typeof presenceOthers==="undefined") return null;
+  var P=camera.position, best=null, bd=maxD;
+  Object.keys(presenceOthers).forEach(function(id){ var p=presenceOthers[id]; if(!p.group) return;
+    var d=Math.hypot(p.group.position.x-P.x,p.group.position.z-P.z); if(d<bd){ bd=d; best={id:id,name:p.name,p:p}; } });
+  return best;
+}
+var misdeedCool=0;
+function misdeed(kind,victim,note){
+  if(misdeedCool>0) return; misdeedCool=3;
+  cityRpc("merit_misdeed",{p_kind:kind,p_victim:victim||null,p_note:note}).catch(function(){});
+  MERIT.at=0;
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(!walkMode||!inCityNow()) return;
+  if(e.code==="KeyX"){
+    var v=nearestDreamer(3); if(!v) return;
+    misdeed("assault",v.id,"struck at "+(v.name||"a dreamer"));
+    if(v.p&&typeof sayOver==="function") sayOver(v.id,"…unhurt.");
+    cityRpc("say_in_city",{p_body:"* strikes at "+(v.name||"a dreamer")+" — it does them no harm *",p_channel:"near"}).catch(function(){});
+    setStatus("You strike at <b>"+esc(v.name||"them")+"</b>. It does them no harm at all — here, it cannot. It only marks you, and the Dragon Corp is told.");
+  }
+  if(e.code==="KeyT"){
+    var P=camera.position, stall=cityObjs().filter(function(o){ return /marketstall|marketawning|shop/.test(o.archetype)&&Math.hypot(o.x-P.x,o.z-P.z)<4; })[0];
+    if(!stall) return;
+    misdeed("theft",null,"took from "+(stall.label||stall.name||"a market stall"));
+    setStatus("You pocket something from the stall. It is worth nothing to you — but it is marked against you, and the Dragon Corp is told.");
+  }
+});
+
+/* ---- community service ---- */
+var CS={out:0,busy:null};
+var CS_TASKS=[
+  {task:"Sweep the Warrens streets",kind:"round",stops:4},
+  {task:"Clear the rubble",kind:"gather",node:"rubble",secs:12},
+  {task:"Serve at the soup kitchen",kind:"desk",at:"soup",secs:16},
+  {task:"Scrub the Gaol yard",kind:"desk",at:"yard",secs:14}
+];
+function csAllowed(){ return CS.out>Date.now(); }
+function csInWarrens(){ if(!ATLC) return false; var P=camera.position, r=Math.hypot(P.x-ATLC.x,P.z-ATLC.z); return r>1520&&r<1720&&!store.inside; }
+(function(){
+  if(typeof gaolTick!=="function") return;
+  var gt=gaolTick;
+  gaolTick=function(dt){
+    /* out on service: anywhere in the Warrens, under the Corp's eye — but not beyond it */
+    if(csAllowed()&&walkMode&&typeof heldNow==="function"&&heldNow()){
+      if(csInWarrens()||(store.inside&&INT&&INT.spec&&INT.spec.workplace==="The Gaol")) return;
+      CS.out=0; toCell("<b>Back to your cell.</b> Community service is done in the Warrens, nowhere else.");
+      return;
+    }
+    gt(dt);
+  };
+})();
+function csPanel(){
+  var el=workEl(); if(!el) return;
+  el.style.display="block";
+  var left=standing&&standing.prison?prisonWords(standing.prison):"";
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Community service</b><button class="btn" id="cs-x">Close</button></div>'+
+    '<div style="color:var(--dim);margin:6px 0;line-height:1.5">Work in the Warrens under the Dragon Corp\'s eye. Each task done takes <b style="color:var(--bone)">half an hour</b> off your sentence and earns back a little merit. Leave the Warrens and you are taken back to your cell.</div>'+
+    (left?'<div style="margin-bottom:6px">'+left+'</div>':'')+
+    CS_TASKS.map(function(t,i){ return '<div class="tk"><span>'+esc(t.task)+'</span><button class="btn" data-cs="'+i+'">Start</button></div>'; }).join("");
+  document.getElementById("cs-x").onclick=function(){ el.style.display="none"; };
+  Array.prototype.forEach.call(el.querySelectorAll("[data-cs]"),function(b){ b.onclick=function(){ csStart(CS_TASKS[+b.getAttribute("data-cs")]); }; });
+}
+function csSpot(which){
+  if(which==="yard"&&store.gaolYard) return {x:store.gaolYard.x,z:store.gaolYard.z,name:"the Gaol yard"};
+  var k=cityObjs().filter(function(o){ return o.archetype==="soupkitchen"; }).sort(function(a,b){ return Math.hypot(a.x-camera.position.x,a.z-camera.position.z)-Math.hypot(b.x-camera.position.x,b.z-camera.position.z); })[0];
+  return k?{x:k.x,z:k.z,name:"the soup kitchen"}:null;
+}
+function csStart(t){
+  CS.out=Date.now()+15*60000;               /* fifteen minutes out, renewed with every task */
+  if(store.inside&&typeof exitInterior==="function"&&typeof toYard==="function") toYard("<b>Out to work.</b> The Warrens, under the Corp's eye.");
+  var B={task:t,t:0,need:t.secs||0,i:0,cs:true};
+  if(t.kind==="round"){
+    var W=atlRing("warrens"), P=camera.position, a0=Math.atan2(P.z-ATLC.z,P.x-ATLC.x); B.stops=[];
+    for(var i=1;i<=t.stops;i++){ var a=a0+i*40/1620; B.stops.push({x:ATLC.x+Math.cos(a)*1620,z:ATLC.z+Math.sin(a)*1620,name:"the Warrens street"}); }
+  } else if(t.kind==="desk"){ B.spot=csSpot(t.at); }
+  CS.busy=B; var el=document.getElementById("work"); if(el) el.style.display="none";
+}
+function csTick(dt){
+  var held=typeof heldNow==="function"&&heldNow();
+  var b=document.getElementById("work-btn");
+  if(held&&inCityNow()){ workEl(); b=document.getElementById("work-btn"); b.style.display="block"; b.textContent="Community service"; b.onclick=csPanel; }
+  if(!held&&b&&b.textContent==="Community service"){ b.textContent="Your work"; b.onclick=function(){ WORK.open=!WORK.open; if(WORK.open) workRefresh(true); workPaint(); }; }
+  var B=CS.busy, run=document.getElementById("work-run"); if(!B){ return; }
+  if(!held){ CS.busy=null; if(run) run.style.display="none"; return; }
+  var P=camera.position, msg="";
+  if(B.task.kind==="round"){
+    var s=B.stops[B.i]; if(Math.hypot(s.x-P.x,s.z-P.z)<8){ B.i++; if(B.i>=B.stops.length){ csDone(); return; } }
+    s=B.stops[B.i]; var bearing=Math.atan2(s.x-P.x,s.z-P.z), rel=(bearing-(yaw+Math.PI))*180/Math.PI;
+    msg="Stop "+(B.i+1)+" of "+B.stops.length+" · "+Math.round(Math.hypot(s.x-P.x,s.z-P.z))+" m <span class='arrow' style='transform:rotate("+(-rel).toFixed(0)+"deg)'>↑</span>";
+  } else {
+    var at=false;
+    if(B.task.kind==="gather"){ var rub=cityObjs().filter(function(o){ return o.archetype==="rubble"&&Math.hypot(o.x-P.x,o.z-P.z)<8; })[0]; at=!!rub;
+      msg=at?"Clearing…":"Find a heap of rubble in the Warrens"; }
+    else { at=B.spot&&Math.hypot(B.spot.x-P.x,B.spot.z-P.z)<14; msg=at?"Working…":("Go to "+(B.spot?B.spot.name:"the place")+(B.spot?" · "+Math.round(Math.hypot(B.spot.x-P.x,B.spot.z-P.z))+" m":"")); }
+    if(at) B.t+=dt;
+    if(B.t>=B.need){ csDone(); return; }
+    msg+="<div class='bar'><i style='width:"+Math.min(100,B.t/B.need*100).toFixed(0)+"%'></i></div>";
+  }
+  if(run){ run.style.display="block"; run.innerHTML="<b>"+esc(B.task.task)+"</b><div style='margin-top:6px'>"+msg+"</div><div style='margin-top:6px'><button class='btn' id='cs-stop'>Stop</button></div>";
+    var st=document.getElementById("cs-stop"); if(st) st.onclick=function(){ CS.busy=null; run.style.display="none"; }; }
+}
+function csDone(){
+  var B=CS.busy; CS.busy=null; var run=document.getElementById("work-run"); if(run) run.style.display="none";
+  cityRpc("community_service",{p_task:B.task.task}).then(function(o){
+    if(!o||!o.ok){ setStatus(esc((o&&o.say)||"That did not count.")); return; }
+    CS.out=Date.now()+15*60000;
+    if(o.free){ CS.out=0; setStatus("<b>Your time is served.</b> The Corp signs you off — you are free to go."); }
+    else setStatus("<b>"+esc(B.task.task)+"</b> — done. Half an hour off your sentence; "+o.left_min+" minutes left to serve.");
+    if(typeof refreshStanding==="function") refreshStanding();
+  }).catch(function(e){ setStatus(esc(e.message)); });
+}
+
+/* ---- the Corp's dragons, circling the Roost and flying the sectors ---- */
+var CORP_SKY=[];
+function corpTick(dt){
+  if(misdeedCool>0) misdeedCool-=dt;
+  csTick(dt);
+  var r=somnucorRealm(); if(!r||!ATLC||typeof buildDragon!=="function") return;
+  var roost=store.workplaceAt&&store.workplaceAt["The Dragon Roost"]; if(!roost) return;
+  if(!CORP_SKY.length){
+    for(var i=0;i<4;i++){
+      var g=buildDragon({id:"corpsky"+i,archetype:"dragon",attrs:{s:0.8},nights:[],city:true},1);
+      g.traverse(function(m){ m.raycast=function(){}; }); scene.add(g);
+      CORP_SKY.push({g:g,a:i*Math.PI/2,r:i<2?60:900+i*300,h:i<2?70:140+i*20,v:i<2?0.25:0.06,cx:i<2?roost.x:ATLC.x,cz:i<2?roost.z:ATLC.z});
+    }
+  }
+  var P=camera.position, show=(store.here||0)===r.id&&!store.inside;
+  CORP_SKY.forEach(function(d){
+    d.a+=d.v*dt;
+    var x=d.cx+Math.cos(d.a)*d.r, z=d.cz+Math.sin(d.a)*d.r;
+    d.g.visible=show&&Math.hypot(x-P.x,z-P.z)<1500;
+    if(!d.g.visible) return;
+    d.g.position.set(x,terrainY(x,z)+d.h,z);
+    d.g.rotation.y=Math.atan2(-Math.sin(d.a),Math.cos(d.a));
+    if(d.g.userData.anim) try{ d.g.userData.anim(performance.now()/1000,dt); }catch(e){}
+  });
+}
+</script>
+
+<script>/* js/mall.js */
+/* SomnuMatrix — mall.js
+   the World Mall: a great glass-roofed hall of shops, reached by the
+   Underground, where real stores sell virtual versions of their products
+   for gold — and point the way to the real thing. Each store keeps its own
+   range up to date through the mall's API (see the keeper's admin page).
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var MALL={on:false,g:null,units:[],stores:[],at:0,near:null,station:null,cx:-120000,cz:0,A:110,B:62,open:false};
+var MALL_UNITS=40;
+var MALL_STOP={key:"World Mall",name:"World Mall",ring:"mall",arrive:function(){ mallEnter(); }};
+
+function mallStoresLoad(force){
+  if(!force&&Date.now()-MALL.at<60000) return Promise.resolve(MALL.stores);
+  MALL.at=Date.now();
+  return cityRpc("mall_board").then(function(rows){ MALL.stores=rows||[]; if(MALL.g) mallSigns(); return MALL.stores; })
+    .catch(function(){ return MALL.stores; });
+}
+function mallStoreAt(unit){ return (MALL.stores||[]).filter(function(s){ return s.unit===unit; })[0]||null; }
+
+/* ---- the building ---- */
+function mallTex(text,sub,col){
+  var c=document.createElement("canvas"); c.width=512; c.height=96; var x=c.getContext("2d");
+  x.fillStyle=col||"#1A1D24"; x.fillRect(0,0,512,96);
+  x.fillStyle="#F4EEDC"; x.textAlign="center"; x.textBaseline="middle";
+  var F=fitLines(x,String(text),480,1,48,18,"700","Georgia, serif");
+  x.font="700 "+F.size+"px Georgia, serif"; x.fillText(F.lines[0],256,sub?36:50);
+  if(sub){ x.font="400 18px Georgia, serif"; x.fillStyle="#D8CFB8"; x.fillText(String(sub).slice(0,56),256,74); }
+  var t=new THREE.CanvasTexture(c); t.anisotropy=4; return t;
+}
+function mallBuild(){
+  if(MALL.g) return;
+  var G=new THREE.Group(); G.position.set(MALL.cx,0,MALL.cz);
+  function M(c,o){ var m=new THREE.MeshLambertMaterial({color:c}); if(o){ m.transparent=true; m.opacity=o; m.depthWrite=false; } return m; }
+  function mesh(geo,mat,x,y,z,ry){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); if(ry) m.rotation.y=ry; m.receiveShadow=true; G.add(m); return m; }
+  var A=MALL.A, B=MALL.B;
+  /* the floor: polished stone with an inlaid compass, and the concourse ring */
+  var fl=new THREE.Mesh(new THREE.CircleGeometry(1,96),M(0xBDB2A0)); fl.scale.set(A+16,B+16,1); fl.rotation.x=-Math.PI/2; fl.position.y=0.02; G.add(fl);
+  var inl=new THREE.Mesh(new THREE.RingGeometry(0.42,0.47,96),M(0x8A6A3A)); inl.scale.set(A,B,1); inl.rotation.x=-Math.PI/2; inl.position.y=0.04; G.add(inl);
+  var inl2=new THREE.Mesh(new THREE.RingGeometry(0.80,0.82,96),M(0x8A7A62)); inl2.scale.set(A,B,1); inl2.rotation.x=-Math.PI/2; inl2.position.y=0.04; G.add(inl2);
+  /* the glass roof and its ribs */
+  var roof=new THREE.Mesh(new THREE.SphereGeometry(1,48,16,0,Math.PI*2,0,Math.PI/2),new THREE.MeshLambertMaterial({color:0xBFD8EE,transparent:true,opacity:0.22,side:THREE.DoubleSide,depthWrite:false}));
+  roof.scale.set(A+16,26,B+16); roof.position.y=14; G.add(roof);
+  for(var k=0;k<16;k++){ var rib=new THREE.Mesh(new THREE.TorusGeometry(1,0.004,4,48,Math.PI),M(0x3A3E46));
+    rib.scale.set(A+16,26,1); rib.rotation.y=k/16*Math.PI; rib.position.y=14; rib.scale.z=B+16; G.add(rib); }
+  /* the wall behind the shops */
+  var wall=new THREE.Mesh(new THREE.CylinderGeometry(1,1,14,96,1,true),new THREE.MeshLambertMaterial({color:0xD8D0C2,side:THREE.DoubleSide}));
+  wall.scale.set(A+16,1,B+16); wall.position.y=7; G.add(wall);
+  var band=new THREE.Mesh(new THREE.CylinderGeometry(1,1,0.6,96,1,true),new THREE.MeshLambertMaterial({color:0xB8935A,side:THREE.DoubleSide}));
+  band.scale.set(A+15.6,1,B+15.6); band.position.y=13.8; G.add(band);
+  /* the shops, all round */
+  MALL.units=[];
+  var shell=M(0xEDE6D8), glass=M(0x9FC4DC,0.35), frame=M(0x2E3238), floorIn=M(0xC8BBA6);
+  for(var i=0;i<MALL_UNITS;i++){
+    var t=(i+0.5)/MALL_UNITS*Math.PI*2;
+    var ex=Math.cos(t)*(A+4), ez=Math.sin(t)*(B+4);
+    /* facing the middle of the hall */
+    var nx=Math.cos(t)/(A+4), nz=Math.sin(t)/(B+4), nl=Math.hypot(nx,nz); nx/=nl; nz/=nl;
+    var ry=Math.atan2(-nx,-nz);
+    var U=new THREE.Group(); U.position.set(ex,0,ez); U.rotation.y=ry; G.add(U);
+    function um(geo,mat,x,y,z){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); U.add(m); return m; }
+    um(new THREE.BoxGeometry(11.4,7,0.4),shell,0,3.5,-9);
+    um(new THREE.BoxGeometry(0.4,7,9),shell,-5.7,3.5,-4.5); um(new THREE.BoxGeometry(0.4,7,9),shell,5.7,3.5,-4.5);
+    um(new THREE.BoxGeometry(11.4,0.3,9),floorIn,0,0.05,-4.5);
+    um(new THREE.BoxGeometry(4,4.2,0.08),glass,-3.5,2.3,0); um(new THREE.BoxGeometry(4,4.2,0.08),glass,3.5,2.3,0);
+    um(new THREE.BoxGeometry(11.6,0.25,0.3),frame,0,4.5,0); um(new THREE.BoxGeometry(0.25,4.5,0.3),frame,-5.6,2.25,0); um(new THREE.BoxGeometry(0.25,4.5,0.3),frame,5.6,2.25,0);
+    var sign=um(new THREE.PlaneGeometry(9,1.7),new THREE.MeshBasicMaterial({color:0xFFFFFF}),0,5.6,0.2);
+    /* a lit display stand in the window */
+    var stand=um(new THREE.CylinderGeometry(0.5,0.6,1,16),M(0x2E3238),-3.5,0.5,-1.2);
+    var gem=um(new THREE.SphereGeometry(0.35,16,12),new THREE.MeshBasicMaterial({color:0xFFE6A0}),-3.5,1.4,-1.2);
+    var gem2=um(new THREE.BoxGeometry(0.6,0.6,0.6),new THREE.MeshBasicMaterial({color:0xBFE6FF}),3.5,1.4,-1.2);
+    um(new THREE.CylinderGeometry(0.5,0.6,1,16),M(0x2E3238),3.5,0.5,-1.2);
+    MALL.units.push({i:i+1,x:MALL.cx+ex,z:MALL.cz+ez,nx:nx,nz:nz,sign:sign,gem:gem,gem2:gem2});
+  }
+  /* the middle: a great fountain, trees, benches */
+  var basin=new THREE.Mesh(new THREE.CylinderGeometry(9,9.6,0.9,48),M(0xD8D0C2)); basin.position.y=0.45; G.add(basin);
+  var water=new THREE.Mesh(new THREE.CircleGeometry(8.6,48),new THREE.MeshLambertMaterial({color:0x4A8ABF,transparent:true,opacity:0.85})); water.rotation.x=-Math.PI/2; water.position.y=0.8; G.add(water);
+  var col=new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.3,6,24),M(0xEDE6D8)); col.position.y=3.4; G.add(col);
+  var bowl=new THREE.Mesh(new THREE.CylinderGeometry(3.4,1.4,0.8,32),M(0xD8D0C2)); bowl.position.y=6.4; G.add(bowl);
+  var jet=new THREE.Mesh(new THREE.ConeGeometry(0.9,4,16,1,true),new THREE.MeshBasicMaterial({color:0xBFE6FF,transparent:true,opacity:0.55,depthWrite:false})); jet.position.y=8.8; G.add(jet); MALL.jet=jet;
+  var globe=new THREE.Mesh(new THREE.SphereGeometry(1.2,24,16),new THREE.MeshBasicMaterial({color:0xFFE6A0})); globe.position.y=11.4; G.add(globe);
+  var trunk=M(0x6A4A30), leaf=M(0x3E7A3A);
+  for(var p=0;p<12;p++){
+    var pa=p/12*Math.PI*2, px=Math.cos(pa)*(A*0.62), pz=Math.sin(pa)*(B*0.62);
+    mesh(new THREE.CylinderGeometry(1.6,1.8,1,20),M(0xB8935A),px,0.5,pz);
+    mesh(new THREE.CylinderGeometry(0.22,0.3,5,8),trunk,px,3.4,pz);
+    var cr=mesh(new THREE.SphereGeometry(2.2,14,10),leaf,px,6.6,pz); cr.scale.y=0.8;
+    var bx=Math.cos(pa+0.13)*(A*0.62), bz=Math.sin(pa+0.13)*(B*0.62);
+    mesh(new THREE.BoxGeometry(2.6,0.15,0.8),M(0x6A4A30),bx,0.6,bz,-pa);
+    mesh(new THREE.BoxGeometry(2.6,0.6,0.1),M(0x6A4A30),bx-Math.cos(pa)*0.4,0.9,bz-Math.sin(pa)*0.4,-pa);
+  }
+  /* hanging lights round the hall */
+  for(var l=0;l<24;l++){
+    var la=l/24*Math.PI*2, lx=Math.cos(la)*A*0.85, lz=Math.sin(la)*B*0.85;
+    mesh(new THREE.CylinderGeometry(0.02,0.02,8,4),M(0x2E3238),lx,15,lz);
+    mesh(new THREE.SphereGeometry(0.6,16,12),new THREE.MeshBasicMaterial({color:0xFFF0C8}),lx,11,lz);
+  }
+  /* the Underground's own station at the west end */
+  var st=build({id:"__mallug",archetype:"subwayentrance",attrs:{},sign:"Underground · World Mall",solid:false,detail:3,nights:[],city:true});
+  st.position.set(-A+18,0,0); st.rotation.y=Math.PI/2; G.add(st);
+  MALL.station={x:MALL.cx-A+18,z:MALL.cz};
+  /* the hall's own light */
+  var hl=new THREE.HemisphereLight(0xFFF6E6,0x5A5048,0.55); hl.position.set(0,30,0); G.add(hl);
+  G.visible=false; scene.add(G); MALL.g=G;
+  mallSigns();
+}
+function mallSigns(){
+  if(!MALL.units.length) return;
+  MALL.units.forEach(function(u){
+    var s=mallStoreAt(u.i), col=s&&s.color!==undefined&&s.color!==null?"#"+("000000"+(s.color>>>0).toString(16)).slice(-6):"#1A1D24";
+    var old=u.sign.material.map; if(old) old.dispose();
+    u.sign.material.map=s?mallTex(s.name,s.tagline,col):mallTex("To let","Unit "+u.i+" · enquire with the keeper","#2A2D34");
+    u.sign.material.needsUpdate=true;
+    u.gem.visible=u.gem2.visible=!!s;
+    if(s) u.gem.material.color.setHex(s.color||0xFFE6A0);
+  });
+}
+
+/* ---- going there and back ---- */
+function mallEnter(){
+  mallBuild(); mallStoresLoad(true);
+  MALL.on=true; MALL.g.visible=true;
+  if(store.inside&&typeof exitInterior==="function") exitInterior(true);
+  camera.position.set(MALL.station.x+8,1.72,MALL.station.z); yaw=-Math.PI/2; pitch=0; if(typeof flyY!=="undefined") flyY=0;
+  if(typeof walkResume!=="undefined") walkResume=null;
+  setStatus("<b>The World Mall.</b> Walk up to any shop window to step in. The Underground home is at the west end.");
+}
+function mallLeave(){ MALL.on=false; if(MALL.g) MALL.g.visible=false; mallClose(); if(MALL.lit&&typeof tickClock==="function"){ MALL.lit=false; tickClock(true); } }
+(function(){
+  if(typeof ugArrive!=="function") return;
+  var ua=ugArrive;
+  ugArrive=function(to){ if(to&&to.ring!=="mall"&&MALL.on) mallLeave(); return ua(to); };
+})();
+
+/* inside the hall: kept within its walls, lit by its own light */
+(function(){
+  if(typeof blockedAt!=="function") return;
+  var ba=blockedAt;
+  blockedAt=function(x,z,feet){
+    if(MALL.on&&!store.inside&&Math.abs(x-MALL.cx)<400&&Math.abs(z-MALL.cz)<400){
+      var dx=(x-MALL.cx)/(MALL.A+1.2), dz=(z-MALL.cz)/(MALL.B+1.2);
+      if(dx*dx+dz*dz>1) return true;
+      if(Math.hypot(x-MALL.cx,z-MALL.cz)<9.8) return true;          /* the fountain */
+      return false;
+    }
+    return ba(x,z,feet);
+  };
+})();
+
+/* ---- a shop ---- */
+function mallEl(){
+  var el=document.getElementById("mall"); if(el||!document.body) return el;
+  var css=document.createElement("style");
+  css.textContent="#mall{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;display:none;width:min(720px,calc(100vw - 24px));max-height:84vh;overflow:auto;"+
+    "background:rgba(10,11,16,.97);border:1px solid var(--gold,#C9A868);border-radius:6px;padding:16px 18px;font:14px var(--sans);color:var(--bone)}"+
+    "#mall .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:12px}"+
+    "#mall .card{border:1px solid var(--line,#2A2C34);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:6px}"+
+    "#mall .card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;background:#1A1D24}"+
+    "#mall-prompt{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;display:none;"+
+    "background:rgba(10,12,18,.92);border:1px solid var(--gold,#C9A868);border-radius:3px;padding:9px 14px;font:13px var(--sans);color:var(--bone);cursor:pointer}";
+  document.head.appendChild(css);
+  el=document.createElement("div"); el.id="mall"; document.body.appendChild(el);
+  var pr=document.createElement("div"); pr.id="mall-prompt"; document.body.appendChild(pr);
+  return el;
+}
+function mallOpen(u){
+  var el=mallEl(), s=mallStoreAt(u.i); MALL.open=true;
+  if(document.exitPointerLock) document.exitPointerLock();
+  if(!s){
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">Unit '+u.i+' — to let</b><button class="btn" id="mall-x">Leave</button></div>'+
+      '<p style="color:var(--dim);line-height:1.6">A shop in the World Mall for a real store: its own window, its own range sold here for gold, and the way to buy the real thing. Stores are let by the keeper.</p>';
+  } else {
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="display:flex;align-items:center;gap:10px">'+
+      (s.logo?'<img src="'+esc(s.logo)+'" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:4px;background:#fff">':'')+
+      '<span><b style="font-size:17px">'+esc(s.name)+'</b><br><span style="color:var(--dim)">'+esc(s.tagline||"")+'</span></span></span><button class="btn" id="mall-x">Leave</button></div>'+
+      (s.site?'<div style="margin-top:6px"><a href="'+esc(s.site)+'" target="_blank" rel="noopener" style="color:var(--gold,#C9A868)">Visit '+esc(s.name)+'</a></div>':'')+
+      '<div class="grid">'+(s.products||[]).map(function(p){
+        return '<div class="card">'+(p.image?'<img src="'+esc(p.image)+'" alt="" loading="lazy">':'')+
+          '<b>'+esc(p.name)+'</b>'+(p.description?'<span style="color:var(--dim);font-size:12px;line-height:1.4">'+esc(p.description)+'</span>':'')+
+          '<span>'+p.gold+' gold'+(p.real?' <span style="color:var(--dim)">· the real one '+esc(p.real)+'</span>':'')+'</span>'+
+          '<span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-buy="'+p.id+'">Buy for '+p.gold+' gold</button>'+
+          (p.url?'<a class="btn" href="'+esc(p.url)+'" target="_blank" rel="noopener" style="text-decoration:none">Buy the real one</a>':'')+'</span></div>';
+      }).join("")+'</div>'+((s.products||[]).length?'':'<p style="color:var(--dim)">The shelves are being stocked.</p>')+
+      '<div id="mall-msg" style="margin-top:10px;color:var(--dim)"></div>';
+  }
+  el.style.display="block";
+  document.getElementById("mall-x").onclick=mallClose;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-buy]"),function(b){ b.onclick=function(){
+    var msg=document.getElementById("mall-msg");
+    if(!(typeof signedIn==="function"&&signedIn())){ msg.textContent="Sign in to buy."; return; }
+    msg.textContent="Paying…";
+    cityRpc("mall_buy",{p_product:+b.getAttribute("data-buy")}).then(function(o){
+      msg.innerHTML=o==="ok"?"<b>Bought.</b> It is yours.":esc(String(o));
+      if(o==="ok"&&typeof refreshStanding==="function") refreshStanding();
+    }).catch(function(e){ msg.textContent=e.message; });
+  }; });
+}
+function mallClose(){ MALL.open=false; var el=document.getElementById("mall"); if(el) el.style.display="none"; }
+
+function mallTick(dt){
+  if(!MALL.on) return;
+  if(!walkMode){ return; }
+  if(scene&&scene.fog) scene.fog.density=Math.min(scene.fog.density,0.002);
+  /* under glass: softened daylight, never glare and never dark */
+  if(typeof sun!=="undefined"&&sun) sun.intensity=Math.min(sun.intensity,0.3);
+  if(typeof hemi!=="undefined"&&hemi) hemi.intensity=Math.max(0.35,Math.min(hemi.intensity,0.55));
+  MALL.lit=true;
+  if(MALL.jet){ MALL.jet.scale.y=1+Math.sin(performance.now()/300)*0.08; }
+  var P=camera.position, pr=document.getElementById("mall-prompt")||(mallEl(),document.getElementById("mall-prompt"));
+  var near=null;
+  MALL.units.forEach(function(u){ if(Math.hypot(u.x-P.x,u.z-P.z)<6.5) near=u; });
+  var atStation=MALL.station&&Math.hypot(MALL.station.x-P.x,MALL.station.z-P.z)<6;
+  MALL.near=near;
+  if(MALL.open||(typeof ugOpen!=="undefined"&&ugOpen)){ pr.style.display="none"; return; }
+  if(atStation){ pr.innerHTML="<b>World Mall</b> Underground · 1 gold a ride · <b>press U</b> or tap"; pr.style.display="block"; pr.onclick=function(){ ugShow({key:"World Mall",name:"World Mall",ring:"mall"}); }; MALL.atStation=true; return; }
+  MALL.atStation=false;
+  if(near){ var s=mallStoreAt(near.i); pr.innerHTML=s?("<b>"+esc(s.name)+"</b> · press <b>Enter</b> or tap to step in"):("Unit "+near.i+" · to let"); pr.style.display="block"; pr.onclick=function(){ mallOpen(near); }; }
+  else pr.style.display="none";
+}
+if(typeof addEventListener==="function") addEventListener("keydown",function(e){
+  if(!MALL.on||/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||"")) return;
+  if(e.code==="Enter"&&MALL.near&&!MALL.open){ e.preventDefault(); mallOpen(MALL.near); }
+  if(e.code==="KeyU"&&MALL.atStation&&!(typeof ugOpen!=="undefined"&&ugOpen)){ e.preventDefault(); ugShow({key:"World Mall",name:"World Mall",ring:"mall"}); }
+  if(e.code==="Escape"&&MALL.open) mallClose();
+});
+</script>
+
+<script>/* js/gfx.js */
+/* SomnuMatrix — gfx.js
+   the look of the world. On "High" (the default on a computer): a true
+   glow on everything that gives off light: lamps, windows, the Tower, crystals, the falls and
+   every glowing thing a dream holds, strongest at night. "Standard" (the
+   default on a phone) draws as before, for speed. Chosen in Settings.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var GFX={mode:null,composer:null,bloom:null,loading:false,failed:false,size:null};
+function gfxWanted(){
+  var c=(typeof cfg==="function")?cfg():{};
+  if(c.gfx==="high"||c.gfx==="standard") return c.gfx;
+  var phone=(typeof touchRig!=="undefined"&&touchRig)||/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent||"");
+  return phone?"standard":"high";
+}
+var GFX_LIBS=["postprocessing/EffectComposer.js","shaders/CopyShader.js","postprocessing/ShaderPass.js","postprocessing/RenderPass.js",
+  "shaders/LuminosityHighPassShader.js","postprocessing/UnrealBloomPass.js"];
+function gfxLoad(){
+  if(GFX.loading||GFX.failed||GFX.composer) return;
+  if(THREE.EffectComposer&&THREE.UnrealBloomPass){ gfxBuild(); return; }
+  GFX.loading=true;
+  var base="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/", i=0;
+  (function next(){
+    if(i>=GFX_LIBS.length){ GFX.loading=false; gfxBuild(); return; }
+    var s=document.createElement("script"); s.src=base+GFX_LIBS[i++]; s.async=false;
+    s.onload=next; s.onerror=function(){ GFX.loading=false; GFX.failed=true; };
+    document.head.appendChild(s);
+  })();
+}
+function gfxBuild(){
+  try{
+    var w=innerWidth, h=innerHeight, pr=renderer.getPixelRatio();
+    /* keep the edges smooth through the glow pass where the browser can */
+    var rt=null;
+    if(renderer.capabilities&&renderer.capabilities.isWebGL2&&THREE.WebGLMultisampleRenderTarget){
+      rt=new THREE.WebGLMultisampleRenderTarget(w*pr,h*pr,{format:THREE.RGBAFormat}); rt.samples=4;
+    }
+    var C=rt?new THREE.EffectComposer(renderer,rt):new THREE.EffectComposer(renderer);
+    C.setPixelRatio(pr); C.setSize(w,h);
+    C.addPass(new THREE.RenderPass(scene,camera));
+    var B=new THREE.UnrealBloomPass(new THREE.Vector2(w,h),0.5,0.45,0.82);
+    C.addPass(B);
+    GFX.composer=C; GFX.bloom=B; GFX.size=[w,h];
+  }catch(e){ GFX.failed=true; GFX.composer=null; }
+}
+function gfxApply(){
+  var want=gfxWanted();
+  if(want!==GFX.mode){
+    GFX.mode=want;
+    if(want==="high") gfxLoad();
+  }
+}
+/* the one way the world is drawn to the screen */
+function gfxRender(){
+  if(GFX.mode==="high"&&GFX.composer){
+    if(GFX.size[0]!==innerWidth||GFX.size[1]!==innerHeight){ GFX.composer.setSize(innerWidth,innerHeight); GFX.bloom.setSize(innerWidth,innerHeight); GFX.size=[innerWidth,innerHeight]; }
+    var night=(typeof daylight==="function")?1-daylight(dreamHour()):0;
+    GFX.bloom.strength=0.22+0.55*night; GFX.bloom.threshold=0.9-0.18*night;
+    GFX.composer.passes[0].camera=camera;
+    GFX.composer.render();
+  } else renderer.render(scene,camera);
+}
+</script>
+
+<script>/* js/dream-home.js */
+/* SomnuMatrix — dream-home.js
+   whatever you dream, say or have built while you stand in Somnucor goes to
+   your own dreamscape, never into the shared city */
+"use strict";
+function inSharedWorld(){
+  var r=(typeof realmById==="function"&&store.here)?realmById(store.here):null;
+  return !!(r&&(r.kind==="somnucor"||r.kind==="hall"));
+}
+function intoOwnDream(fn,name){
+  return function(){
+    if(!inSharedWorld()) return fn.apply(this,arguments);
+    /* standing on ground you hold: what you say is built there, in the city,
+       for everyone — and your dream keeps a copy as it always would */
+    if(name==="scanText"&&typeof myLotHere==="function"&&typeof arguments[0]==="string"){
+      var L=myLotHere(); if(L) lotBuildFromText(arguments[0],L);
+    }
+    var was=store.here, out;
+    beHere(0);
+    try{ out=fn.apply(this,arguments); }
+    finally{ beHere(was); }
+    return out;
+  };
+}
+/* choosing somewhere else to go means starting there, not where you left off */
+/* words for things defined after the vocabulary was first gathered (the
+   city's own kit, the Warrens' clutter, the trams and cars) are learnt too */
+(function(){
+  if(typeof MORE_VOCAB==="undefined"||typeof PHRASES==="undefined") return;
+  var have={}; PHRASES.forEach(function(p){ have[p[0]]=1; });
+  var added=0;
+  Object.keys(MORE_VOCAB).forEach(function(k){
+    if(!KIT[k]) return;
+    (MORE_VOCAB[k]||[]).forEach(function(w){
+      if(have[w]) return; have[w]=1;
+      (VOCAB[k]=VOCAB[k]||[]).push(w); PHRASES.push([w,k]); added++;
+    });
+  });
+  if(added) PHRASES.sort(function(a,b){ return b[0].length-a[0].length; });
+})();
+["visitRealm","toSomnucor","toHall","newDream"].forEach(function(n){
+  if(typeof window[n]!=="function") return;
+  var f=window[n]; window[n]=function(){ walkResume=null; if(typeof mallLeave==="function"&&MALL.on) mallLeave(); return f.apply(this,arguments); };
+});
+["scanText","populate","reconcile","buildFromReply"].forEach(function(n){
+  if(typeof window[n]==="function") window[n]=intoOwnDream(window[n],n);
+});
 </script>
 </body>
 </html>
