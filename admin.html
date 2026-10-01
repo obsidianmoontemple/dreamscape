@@ -263,7 +263,7 @@ td select,td input{padding:5px 7px;font-size:12.5px}
         <div id="dist-msg" class="note" style="margin-top:8px"></div>
 
         <h2 style="margin-top:36px">The World Mall</h2>
-        <p class="note">Forty shops round the glass hall, reached by the Underground. Let a unit to a real store: give it a name, a line and a colour, the address of its own site, and the account (by email) that is paid when its pieces sell &mdash; nine tenths to the store, one tenth to the treasury. Each store keeps its own range up to date through the mall&rsquo;s API with its own secret key, shown here once when it is issued.</p>
+        <p class="note">Forty shops round the glass hall, reached by the Underground. Stores apply through <b>store-portal.html</b>, where they design their own shopfront, stock their shelves and connect their website; their applications wait here for you to grant a unit. You can also let a unit to a store yourself: give it a name, a line and a colour, the address of its own site, and the account (by email) that is paid when its pieces sell &mdash; nine tenths to the store, one tenth to the treasury. Each store keeps its own range up to date through the mall&rsquo;s API with its own secret key, shown here once when it is issued.</p>
         <div class="filters" style="align-items:flex-end;flex-wrap:wrap">
           <label style="display:block">Unit (1&ndash;40)<br><input id="ml-unit" type="number" min="1" max="40" value="1" style="width:70px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
           <label style="display:block;flex:1 1 200px">Store name<br><input id="ml-name" placeholder="leave empty to close the unit" style="width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
@@ -724,13 +724,39 @@ function loadMallPane(){
   sb.rpc("mall_keeper_board").then(function(r){
     if(r.error){ $("ml-msg").textContent="Run schema-update-21 to open the World Mall. ("+r.error.message+")"; return; }
     mallRows=r.data||[];
-    var h="<tr><th>Unit</th><th>Store</th><th>Paid to</th><th>Pieces</th><th>Sold (gold)</th><th>Key</th></tr>";
-    mallRows.forEach(function(m){
+    var taken={}; mallRows.forEach(function(m){ if(m.unit) taken[m.unit]=1; });
+    var free=[]; for(var u=1;u<=40;u++) if(!taken[u]) free.push(u);
+    var apps=mallRows.filter(function(m){ return m.status==="pending"; });
+    var h="";
+    if(apps.length){
+      h+="<tr><th colspan='6' style='color:var(--ember)'>Waiting for a decision ("+apps.length+")</th></tr>";
+      apps.forEach(function(m){
+        h+="<tr><td colspan='6' style='padding:12px 10px'><b>"+esc(m.name)+"</b> <span class='note'>&middot; "+esc(m.category||"")+" &middot; "+esc(m.owner||"")+(m.contact&&m.contact!==m.owner?" &middot; "+esc(m.contact):"")+"</span><br>"+
+          "<span class='note'>"+esc(m.tagline||"")+"</span>"+(m.site?" &middot; <a href='"+esc(m.site)+"' target='_blank' rel='noopener' style='color:var(--moon)'>their site</a>":"")+
+          (m.about?"<div style='margin:6px 0;font-family:var(--serif);line-height:1.6'>"+esc(m.about)+"</div>":"")+
+          "<div class='note'>"+m.products+" products stocked already</div>"+
+          "<div style='display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap'>Unit <select data-unit-for='"+m.id+"' style='width:auto'>"+free.map(function(u){ return "<option>"+u+"</option>"; }).join("")+"</select>"+
+          "<input data-note-for='"+m.id+"' placeholder='a note to them (optional)' style='flex:1 1 200px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px;border-radius:2px'>"+
+          "<button class='btn' data-approve='"+m.id+"'>Grant the unit</button><button class='btn warn' data-reject='"+m.id+"'>Decline</button></div></td></tr>";
+      });
+    }
+    h+="<tr><th>Unit</th><th>Store</th><th>Paid to</th><th>Pieces</th><th>Sold (gold)</th><th>Key</th></tr>";
+    var open=mallRows.filter(function(m){ return m.unit; });
+    open.forEach(function(m){
       h+="<tr data-unit='"+m.unit+"' style='cursor:pointer'><td>"+m.unit+"</td><td>"+esc(m.name)+(m.active?"":" <span class='note'>(closed)</span>")+"<br><span class='note'>"+esc(m.tagline||"")+"</span></td><td>"+esc(m.owner||"\u2014")+
         "</td><td>"+m.products+"</td><td>"+m.sold+"</td><td>"+(m.has_key?"issued":"none")+"</td></tr>";
     });
-    if(!mallRows.length) h+="<tr><td colspan='6' class='note'>Every unit is to let.</td></tr>";
+    if(!open.length) h+="<tr><td colspan='6' class='note'>Every unit is to let.</td></tr>";
+    var rej=mallRows.filter(function(m){ return m.status==="rejected"; });
+    if(rej.length) h+="<tr><td colspan='6' class='note'>Declined: "+rej.map(function(m){ return esc(m.name); }).join(", ")+"</td></tr>";
     $("ml-table").innerHTML=h;
+    function decide(id,ok){
+      var unit=ok?+document.querySelector("[data-unit-for='"+id+"']").value:null, note=(document.querySelector("[data-note-for='"+id+"']")||{}).value||null;
+      sb.rpc("mall_keeper_decide",{p_store:+id,p_unit:unit,p_approve:ok,p_note:note}).then(function(r){
+        $("ml-msg").textContent=r.error?r.error.message:(r.data==="ok"?(ok?"Granted Unit "+unit+". Their shop is open.":"Declined."):r.data); loadMallPane(); });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll("#ml-table [data-approve]"),function(b){ b.onclick=function(){ decide(b.getAttribute("data-approve"),true); }; });
+    Array.prototype.forEach.call(document.querySelectorAll("#ml-table [data-reject]"),function(b){ b.onclick=function(){ if(confirm("Decline this application?")) decide(b.getAttribute("data-reject"),false); }; });
     Array.prototype.forEach.call(document.querySelectorAll("#ml-table tr[data-unit]"),function(tr){ tr.onclick=function(){
       var m=mallRows.filter(function(x){ return String(x.unit)===tr.getAttribute("data-unit"); })[0]; if(!m) return;
       $("ml-unit").value=m.unit; $("ml-name").value=m.name||""; $("ml-tag").value=m.tagline||""; $("ml-logo").value=m.logo||""; $("ml-site").value=m.site||"";
