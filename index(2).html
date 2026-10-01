@@ -720,9 +720,10 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
     <div id="held-list"></div>
   </details>
   <label for="gfx">Graphics</label>
-  <select id="gfx" onchange="var c=cfg(); c.gfx=this.value; setCfg(c);">
+  <select id="gfx" onchange="var c=cfg(), was=GFX_STYLE; c.gfx=this.value; setCfg(c); var now=(this.value==='auto')?(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?'standard':'stylized'):this.value; if((now==='stylized')!==(was==='stylized')&&confirm('The new look takes effect when the page reloads. Reload now? Your dreams are saved.')) location.reload();">
     <option value="auto">Best for this device</option>
-    <option value="high">High &mdash; glowing lights</option>
+    <option value="stylized">Stylized &mdash; cel-shaded fantasy art, ink outlines, glowing lights</option>
+    <option value="high">High &mdash; the plain look, with glowing lights</option>
     <option value="standard">Standard &mdash; fastest</option>
   </select>
   <label for="density">Fog &mdash; how far you can see</label>
@@ -879,6 +880,55 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>/* js/toon-early.js */
+/* SomnuMatrix — toon-early.js
+   the "Stylized" look begins here, before anything in the world is made:
+   every surface that would have been drawn with soft, per-corner lighting
+   (which reads muddy and faceted on simple shapes) is drawn instead with
+   clean cel-shading — light worked out at every pixel, stepped into a few
+   bright bands — and a soft rim of light round every edge.
+   Which look is used is read once, when the page loads. */
+"use strict";
+var GFX_STYLE=(function(){
+  var c={}; try{ c=JSON.parse(localStorage.getItem(/[?&]test=1\b/.test(location.search)?"dreamwalker.testcfg":"dreamwalker.cfg2")||"{}")||{}; }catch(e){}
+  if(c.gfx==="stylized"||c.gfx==="high"||c.gfx==="standard") return c.gfx;
+  var phone=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent||"")||(navigator.maxTouchPoints>1&&!/Windows|Macintosh|Linux x86/i.test(navigator.userAgent||""));
+  return phone?"standard":"stylized";
+})();
+var TOON=null;
+if(GFX_STYLE==="stylized"&&typeof THREE!=="undefined"&&THREE.MeshToonMaterial){
+  TOON={};
+  /* four bands of light: the shadow side stays bright and coloured, never muddy */
+  var tg=new Uint8Array([112,112,112,255, 168,168,168,255, 212,212,212,255, 238,238,238,255]);
+  TOON.gradient=new THREE.DataTexture(tg,4,1,THREE.RGBAFormat);
+  TOON.gradient.minFilter=TOON.gradient.magFilter=THREE.NearestFilter; TOON.gradient.generateMipmaps=false; TOON.gradient.needsUpdate=true;
+  TOON.rim={rimColor:{value:new THREE.Color(0xFFF2DC)},rimStrength:{value:0.32}};
+  TOON.hook=function(shader){
+    shader.uniforms.rimColor=TOON.rim.rimColor; shader.uniforms.rimStrength=TOON.rim.rimStrength;
+    shader.fragmentShader=shader.fragmentShader
+      .replace("uniform vec3 diffuse;","uniform vec3 diffuse;\nuniform vec3 rimColor;\nuniform float rimStrength;")
+      .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;",
+        "vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;\n"+
+        "float rimF = 1.0 - saturate( dot( normalize( vViewPosition ), normal ) );\n"+
+        "vec3 upV = normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );\n"+
+        "rimF *= 1.0 - abs( dot( normal, upV ) );\n"+
+        "outgoingLight += rimColor * diffuseColor.rgb * smoothstep( 0.55, 0.95, rimF ) * rimStrength;");
+  };
+  var probe=new THREE.MeshToonMaterial();
+  function toonParams(p){
+    var o={gradientMap:TOON.gradient};
+    if(p) Object.keys(p).forEach(function(k){ if(k in probe&&k!=="gradientMap") o[k]=p[k]; });
+    return o;
+  }
+  function makeToon(p){ var m=new THREE.MeshToonMaterial(toonParams(p)); m.onBeforeCompile=TOON.hook; m.userData.toon=1; return m; }
+  TOON.Lambert=THREE.MeshLambertMaterial; TOON.Phong=THREE.MeshPhongMaterial;
+  THREE.MeshLambertMaterial=function(p){ return makeToon(p); };
+  THREE.MeshLambertMaterial.prototype=TOON.Lambert.prototype;
+  THREE.MeshPhongMaterial=function(p){ var m=makeToon(p); if(p&&p.shininess>40){ m.userData.shiny=1; } return m; };
+  THREE.MeshPhongMaterial.prototype=TOON.Phong.prototype;
+}
+</script>
+
 <script>/* js/config.js */
 /* SomnuMatrix — config.js
    Where the Atlas's Supabase project lives. Fill in both values from your
@@ -18889,7 +18939,7 @@ function bakeable(m){
   /* painted lettering (a sign, a name) keeps its own piece; shared surface
      textures — stone, brick, bark — press like anything else */
   if(mt.map&&typeof SIGN_TEX!=="undefined"&&bakeIsSign(mt.map)) return false;
-  if(!(mt.isMeshLambertMaterial||mt.isMeshBasicMaterial||mt.isMeshPhongMaterial||mt.isMeshStandardMaterial)) return false;
+  if(!(mt.isMeshLambertMaterial||mt.isMeshBasicMaterial||mt.isMeshPhongMaterial||mt.isMeshStandardMaterial||mt.isMeshToonMaterial)) return false;
   if(mt.vertexColors||mt.alphaMap||mt.envMap) return false;
   var ge=m.geometry; if(!ge||!ge.isBufferGeometry||!ge.attributes.position) return false;
   if(ge.morphAttributes&&Object.keys(ge.morphAttributes).length) return false;
@@ -18909,6 +18959,7 @@ function bakeMatKey(mt,special){
 }
 function bakeMakeMaterial(mt){
   var m=mt.clone();
+  if(mt.onBeforeCompile&&mt.userData&&mt.userData.toon){ m.onBeforeCompile=mt.onBeforeCompile; m.userData.toon=1; }
   if(m.color) m.color.setHex(0xFFFFFF);
   m.vertexColors=true;
   m.needsUpdate=true;
@@ -23642,25 +23693,28 @@ if(typeof addEventListener==="function") addEventListener("keydown",function(e){
 
 <script>/* js/gfx.js */
 /* SomnuMatrix — gfx.js
-   the look of the world. On "High" (the default on a computer): a true
-   glow on everything that gives off light: lamps, windows, the Tower, crystals, the falls and
-   every glowing thing a dream holds, strongest at night. "Standard" (the
-   default on a phone) draws as before, for speed. Chosen in Settings.
+   the look of the world, chosen in Settings:
+     Stylized (the default on a computer) — hand-drawn fantasy art: clean
+       cel-shading with a rim of light (begun in toon-early.js), crisp ink
+       outlines round every shape, smooth edges, glowing lights, drifting
+       dream-motes, smoother people and creatures, and sharp textures
+     High — the plain look, with glowing lights
+     Standard (the default on a phone) — the fastest
    loaded as a plain script; shares scope with the other files */
 "use strict";
 
-var GFX={mode:null,composer:null,bloom:null,loading:false,failed:false,size:null};
+var GFX={mode:null,composer:null,bloom:null,ink:null,fxaa:null,loading:false,failed:false,size:null,aniso:1,sweepAt:0,motes:null};
 function gfxWanted(){
   var c=(typeof cfg==="function")?cfg():{};
-  if(c.gfx==="high"||c.gfx==="standard") return c.gfx;
-  var phone=(typeof touchRig!=="undefined"&&touchRig)||/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent||"");
-  return phone?"standard":"high";
+  /* stylized is set when the page loads; it cannot be taken up half-way */
+  if(c.gfx==="high"||c.gfx==="standard") return GFX_STYLE==="stylized"?"stylized":c.gfx;
+  return (typeof GFX_STYLE!=="undefined"&&GFX_STYLE)||"high";
 }
 var GFX_LIBS=["postprocessing/EffectComposer.js","shaders/CopyShader.js","postprocessing/ShaderPass.js","postprocessing/RenderPass.js",
-  "shaders/LuminosityHighPassShader.js","postprocessing/UnrealBloomPass.js"];
+  "shaders/LuminosityHighPassShader.js","postprocessing/UnrealBloomPass.js","shaders/FXAAShader.js"];
 function gfxLoad(){
   if(GFX.loading||GFX.failed||GFX.composer) return;
-  if(THREE.EffectComposer&&THREE.UnrealBloomPass){ gfxBuild(); return; }
+  if(THREE.EffectComposer&&THREE.UnrealBloomPass&&THREE.FXAAShader){ gfxBuild(); return; }
   GFX.loading=true;
   var base="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/", i=0;
   (function next(){
@@ -23670,40 +23724,212 @@ function gfxLoad(){
     document.head.appendChild(s);
   })();
 }
+
+/* ---- the ink: outlines found from the depth of the scene ----
+   on a flat surface, one-over-depth changes evenly across the screen; where
+   it stops changing evenly there is a crease or the edge of a shape, and a
+   line is drawn there. Fades with distance, so far streets stay clean. */
+var INK_SHADER={
+  uniforms:{tDiffuse:{value:null},tDepth:{value:null},res:{value:new THREE.Vector2(1,1)},near:{value:0.1},far:{value:6000},
+    logF:{value:0},isLog:{value:0},thick:{value:1},strength:{value:0.85},inkColor:{value:new THREE.Color(0x0A0A12)}},
+  vertexShader:"varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
+  fragmentShader:[
+    "uniform sampler2D tDiffuse; uniform sampler2D tDepth; uniform vec2 res; uniform float near; uniform float far;",
+    "uniform float logF; uniform float isLog; uniform float thick; uniform float strength; uniform vec3 inkColor; varying vec2 vUv;",
+    "float lin(vec2 uv){ float d=texture2D(tDepth,uv).x;",
+    "  if(isLog>0.5) return exp2(d*logF)-1.0;",
+    "  float z=d*2.0-1.0; return (2.0*near*far)/(far+near-z*(far-near)); }",
+    "void main(){",
+    "  vec4 base=texture2D(tDiffuse,vUv);",
+    "  vec2 px=thick/res;",
+    "  float zc=lin(vUv), zl=lin(vUv-vec2(px.x,0.0)), zr=lin(vUv+vec2(px.x,0.0)), zu=lin(vUv+vec2(0.0,px.y)), zd=lin(vUv-vec2(0.0,px.y));",
+    "  float ic=1.0/max(zc,0.001), il=1.0/max(zl,0.001), ir=1.0/max(zr,0.001), iu=1.0/max(zu,0.001), id=1.0/max(zd,0.001);",
+    "  float lap=abs(il+ir-2.0*ic)+abs(iu+id-2.0*ic);",
+    "  float m=max(max(ic,il),max(max(ir,iu),id));",
+    "  float e=smoothstep(0.04,0.12,lap/max(m,1e-6));",
+    "  float zmin=min(zc,min(min(zl,zr),min(zu,zd)));",
+    "  e*=1.0-smoothstep(260.0,900.0,zmin);",
+    "  vec3 ink=mix(base.rgb*0.22,inkColor,0.55);",
+    "  gl_FragColor=vec4(mix(base.rgb,ink,e*strength),base.a);",
+    "}"].join("\n")
+};
+function InkPass(){
+  this.enabled=true; this.needsSwap=true; this.clear=false; this.renderToScreen=false;
+  this.uniforms=THREE.UniformsUtils.clone(INK_SHADER.uniforms);
+  this.material=new THREE.ShaderMaterial({uniforms:this.uniforms,vertexShader:INK_SHADER.vertexShader,fragmentShader:INK_SHADER.fragmentShader,depthTest:false,depthWrite:false});
+  this.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),this.material); this.qs=new THREE.Scene(); this.qc=new THREE.OrthographicCamera(-1,1,1,-1,0,1); this.qs.add(this.quad);
+}
+InkPass.prototype.setSize=function(w,h){ this.uniforms.res.value.set(w,h); };
+InkPass.prototype.render=function(r,writeBuffer,readBuffer){
+  var u=this.uniforms;
+  u.tDiffuse.value=readBuffer.texture; u.tDepth.value=readBuffer.depthTexture;
+  u.near.value=camera.near; u.far.value=camera.far;
+  u.isLog.value=r.capabilities.logarithmicDepthBuffer?1:0; u.logF.value=Math.log2(camera.far+1);
+  r.setRenderTarget(this.renderToScreen?null:writeBuffer); r.render(this.qs,this.qc);
+};
+
 function gfxBuild(){
   try{
-    var w=innerWidth, h=innerHeight, pr=renderer.getPixelRatio();
-    /* keep the edges smooth through the glow pass where the browser can */
-    var rt=null;
-    if(renderer.capabilities&&renderer.capabilities.isWebGL2&&THREE.WebGLMultisampleRenderTarget){
-      rt=new THREE.WebGLMultisampleRenderTarget(w*pr,h*pr,{format:THREE.RGBAFormat}); rt.samples=4;
+    var w=innerWidth, h=innerHeight, pr=renderer.getPixelRatio(), C;
+    if(GFX.mode==="stylized"){
+      /* each of the two buffers keeps its own depth, for the ink to read */
+      function rt(){ var t=new THREE.WebGLRenderTarget(w*pr,h*pr,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat});
+        t.depthTexture=new THREE.DepthTexture(); t.depthTexture.type=THREE.UnsignedIntType; return t; }
+      C=new THREE.EffectComposer(renderer,rt());
+      C.renderTarget2.dispose(); C.renderTarget2=rt();
+      C.readBuffer=C.renderTarget1; C.writeBuffer=C.renderTarget2;
+      C.setPixelRatio(pr); C.setSize(w,h);
+      C.addPass(new THREE.RenderPass(scene,camera));
+      GFX.ink=new InkPass(); GFX.ink.setSize(w*pr,h*pr); C.addPass(GFX.ink);
+      var B=new THREE.UnrealBloomPass(new THREE.Vector2(w,h),0.5,0.45,0.82); C.addPass(B);
+      /* smooth every edge the ink and the shapes leave */
+      GFX.fxaa=new THREE.ShaderPass(THREE.FXAAShader); GFX.fxaa.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr)); C.addPass(GFX.fxaa);
+      GFX.bloom=B;
+    } else {
+      var rtm=null;
+      if(renderer.capabilities&&renderer.capabilities.isWebGL2&&THREE.WebGLMultisampleRenderTarget){
+        rtm=new THREE.WebGLMultisampleRenderTarget(w*pr,h*pr,{format:THREE.RGBAFormat}); rtm.samples=4;
+      }
+      C=rtm?new THREE.EffectComposer(renderer,rtm):new THREE.EffectComposer(renderer);
+      C.setPixelRatio(pr); C.setSize(w,h);
+      C.addPass(new THREE.RenderPass(scene,camera));
+      GFX.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(w,h),0.5,0.45,0.82); C.addPass(GFX.bloom);
     }
-    var C=rt?new THREE.EffectComposer(renderer,rt):new THREE.EffectComposer(renderer);
-    C.setPixelRatio(pr); C.setSize(w,h);
-    C.addPass(new THREE.RenderPass(scene,camera));
-    var B=new THREE.UnrealBloomPass(new THREE.Vector2(w,h),0.5,0.45,0.82);
-    C.addPass(B);
-    GFX.composer=C; GFX.bloom=B; GFX.size=[w,h];
-  }catch(e){ GFX.failed=true; GFX.composer=null; }
+    GFX.composer=C; GFX.size=[w,h];
+  }catch(e){ GFX.failed=true; GFX.composer=null; if(window.console) console.warn("graphics:",e); }
 }
 function gfxApply(){
   var want=gfxWanted();
   if(want!==GFX.mode){
     GFX.mode=want;
-    if(want==="high") gfxLoad();
+    if(want!=="standard") gfxLoad();
+    if(renderer.capabilities&&renderer.capabilities.getMaxAnisotropy) GFX.aniso=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   }
+  if(GFX.mode==="stylized"){ gfxSweep(); motesTick(); }
 }
 /* the one way the world is drawn to the screen */
 function gfxRender(){
-  if(GFX.mode==="high"&&GFX.composer){
-    if(GFX.size[0]!==innerWidth||GFX.size[1]!==innerHeight){ GFX.composer.setSize(innerWidth,innerHeight); GFX.bloom.setSize(innerWidth,innerHeight); GFX.size=[innerWidth,innerHeight]; }
+  if(GFX.mode!=="standard"&&GFX.composer){
+    if(GFX.size[0]!==innerWidth||GFX.size[1]!==innerHeight){
+      var pr=renderer.getPixelRatio();
+      GFX.composer.setSize(innerWidth,innerHeight); GFX.bloom.setSize(innerWidth,innerHeight); GFX.size=[innerWidth,innerHeight];
+      if(GFX.ink) GFX.ink.setSize(innerWidth*pr,innerHeight*pr);
+      if(GFX.fxaa) GFX.fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr));
+    }
     var night=(typeof daylight==="function")?1-daylight(dreamHour()):0;
     GFX.bloom.strength=0.22+0.55*night; GFX.bloom.threshold=0.9-0.18*night;
+    if(GFX.ink){ GFX.ink.uniforms.thick.value=Math.max(1,renderer.getPixelRatio()); GFX.ink.uniforms.strength.value=store.inside?0.7:0.85; }
+    if(typeof TOON!=="undefined"&&TOON){ TOON.rim.rimStrength.value=0.22+0.22*night; TOON.rim.rimColor.value.setHex(night>0.5?0xB8C8FF:0xFFF2DC); }
     GFX.composer.passes[0].camera=camera;
     GFX.composer.render();
   } else renderer.render(scene,camera);
 }
+
+/* ---- sharp textures at every angle: every picture in the world is filtered
+   smoothly, with its full set of smaller copies, and read at a slant without
+   going to mush ---- */
+var GFX_SEEN=new WeakSet();
+function gfxSweep(){
+  var now=performance.now(); if(now-GFX.sweepAt<2500) return; GFX.sweepAt=now;
+  var A=GFX.aniso;
+  scene.traverse(function(o){
+    var m=o.material; if(!m) return;
+    (Array.isArray(m)?m:[m]).forEach(function(mt){
+      var t=mt.map; if(!t||GFX_SEEN.has(t)) return;
+      GFX_SEEN.add(t);
+      if(t===((typeof TOON!=="undefined"&&TOON)?TOON.gradient:null)) return;
+      if(t.magFilter!==THREE.NearestFilter){ t.magFilter=THREE.LinearFilter; if(t.generateMipmaps!==false) t.minFilter=THREE.LinearMipmapLinearFilter; }
+      if(t.anisotropy<A){ t.anisotropy=A; t.needsUpdate=true; }
+    });
+  });
+}
+
+/* ---- dream-motes: soft specks of light drifting in the air about you ---- */
+function motesTick(){
+  if(typeof scene==="undefined"||!scene) return;
+  var show=walkMode&&!store.inside;
+  if(!GFX.motes){
+    var n=420, pos=new Float32Array(n*3), seed=new Float32Array(n);
+    for(var i=0;i<n;i++){ pos[i*3]=(Math.random()-0.5)*90; pos[i*3+1]=Math.random()*22; pos[i*3+2]=(Math.random()-0.5)*90; seed[i]=Math.random()*6.28; }
+    var g=new THREE.BufferGeometry(); g.setAttribute("position",new THREE.BufferAttribute(pos,3));
+    var c=document.createElement("canvas"); c.width=c.height=32; var x=c.getContext("2d"), gr=x.createRadialGradient(16,16,0,16,16,16);
+    gr.addColorStop(0,"rgba(255,255,255,1)"); gr.addColorStop(0.4,"rgba(255,240,210,.5)"); gr.addColorStop(1,"rgba(255,240,210,0)"); x.fillStyle=gr; x.fillRect(0,0,32,32);
+    var mat=new THREE.PointsMaterial({size:0.35,map:new THREE.CanvasTexture(c),transparent:true,opacity:0.6,depthWrite:false,blending:THREE.AdditiveBlending,color:0xFFE8C0});
+    var pts=new THREE.Points(g,mat); pts.frustumCulled=false; pts.raycast=function(){}; scene.add(pts);
+    GFX.motes={pts:pts,seed:seed,base:pos.slice(0),cx:0,cz:0};
+  }
+  var M=GFX.motes; M.pts.visible=show; if(!show) return;
+  var P=camera.position, t=performance.now()/1000, a=M.pts.geometry.attributes.position.array, gy=(typeof terrainY==="function")?terrainY(P.x,P.z):0;
+  for(var k=0;k<M.seed.length;k++){
+    var s=M.seed[k], bx=M.base[k*3], bz=M.base[k*3+2];
+    /* wrap round you as you walk, so the air is always full */
+    var rx=((bx-P.x)%90+135)%90-45, rz=((bz-P.z)%90+135)%90-45;
+    a[k*3]=P.x+rx+Math.sin(t*0.3+s)*1.5; a[k*3+1]=gy+M.base[k*3+1]+Math.sin(t*0.5+s*2)*0.8; a[k*3+2]=P.z+rz+Math.cos(t*0.27+s)*1.5;
+  }
+  M.pts.geometry.attributes.position.needsUpdate=true;
+  var night=(typeof daylight==="function")?1-daylight(dreamHour()):0;
+  M.pts.material.opacity=0.25+0.5*night; M.pts.material.color.setHex(night>0.5?0xBFD8FF:0xFFE8C0);
+}
+
+/* ---- smoother people and creatures: their limbs and heads drawn round,
+   not as eight-sided posts ---- */
+(function(){
+  if(typeof GFX_STYLE==="undefined"||GFX_STYLE!=="stylized"||typeof fg!=="function") return;
+  var orig=fg;
+  fg=function(key,make){
+    if(FIGGEO[key]) return FIGGEO[key];
+    var g=make(), p=g.parameters;
+    if(g.type==="CylinderGeometry"&&p&&p.radialSegments<16)
+      g=new THREE.CylinderGeometry(p.radiusTop,p.radiusBottom,p.height,Math.max(16,p.radialSegments*2),p.heightSegments,p.openEnded,p.thetaStart,p.thetaLength);
+    else if(g.type==="SphereGeometry"&&p&&p.widthSegments<24)
+      g=new THREE.SphereGeometry(p.radius,Math.max(24,p.widthSegments*2),Math.max(16,p.heightSegments*2),p.phiStart,p.phiLength,p.thetaStart,p.thetaLength);
+    else if(g.type==="ConeGeometry"&&p&&p.radialSegments<16)
+      g=new THREE.ConeGeometry(p.radius,p.height,Math.max(16,p.radialSegments*2),p.heightSegments,p.openEnded,p.thetaStart,p.thetaLength);
+    FIGGEO[key]=g; return g;
+  };
+})();
+
+/* ---- variety: the city's people and every passer-by each carry something
+   of their own — spectacles, a scarf, a bag, a satchel, a flower, an apron —
+   chosen from who they are, at no cost to how fast the city draws ---- */
+var ACC_COLS=[0x7A2A26,0x2E4A6A,0x3E6A3A,0xC9A868,0x6A4A7A,0xD8CFB8,0x2A2A30,0xB8622E,0x5A7A8A];
+function accessorize(g,spec){
+  var L=spec.look||{}; if(L.acc===false) return;
+  var h=hash(String(spec.id)+"acc"), head=null, torso=null;
+  g.traverse(function(m){ if(m.userData.part==="head") head=m; if(m.userData.part==="torso"&&!torso) torso=m; });
+  if(!head||!torso) return;
+  var body=head.parent, hy=head.position.y, col=ACC_COLS[(h>>>4)%ACC_COLS.length], mat=new THREE.MeshLambertMaterial({color:col});
+  var dark=new THREE.MeshLambertMaterial({color:0x1A1A20});
+  function add(geo,m,x,y,z,rx,ry,rz){ var o=new THREE.Mesh(geo,m); o.position.set(x,y,z); if(rx||ry||rz) o.rotation.set(rx||0,ry||0,rz||0); o.userData.acc=1; body.add(o); return o; }
+  var pick=h%20;
+  if(pick<3){ /* spectacles */
+    [-1,1].forEach(function(sd){ add(fg("specring",function(){ return new THREE.TorusGeometry(0.026,0.005,6,16); }),dark,sd*0.042,hy+0.012,0.104); });
+    add(fg("specbridge",function(){ return new THREE.BoxGeometry(0.03,0.006,0.006); }),dark,0,hy+0.014,0.108);
+  } else if(pick<7){ /* a scarf */
+    add(fg("scarf",function(){ return new THREE.TorusGeometry(0.075,0.03,8,20); }),mat,0,hy-0.135,0,Math.PI/2);
+    add(fg("scarftail",function(){ return new THREE.BoxGeometry(0.06,0.24,0.025); }),mat,0.05,hy-0.26,0.08,0.15,0,0.12);
+  } else if(pick<11){ /* a bag on a strap */
+    add(fg("bagbox",function(){ return new THREE.BoxGeometry(0.2,0.16,0.07); }),mat,0.2,hy-0.75,0.03);
+    add(fg("bagstrap",function(){ return new THREE.BoxGeometry(0.025,0.66,0.012); }),dark,0.02,hy-0.4,0.1,0,0,0.62);
+  } else if(pick<13){ /* a satchel on the back */
+    add(fg("satchel",function(){ return new THREE.BoxGeometry(0.24,0.28,0.1); }),mat,0,hy-0.45,-0.17);
+  } else if(pick<15){ /* a flower in the buttonhole */
+    add(fg("flower",function(){ return new THREE.SphereGeometry(0.022,10,8); }),new THREE.MeshLambertMaterial({color:[0xE84A6A,0xF2D04A,0xF4F0E6][h%3]}),-0.09,hy-0.24,0.13);
+  } else if(pick<17&&!(L.topKind==="dress"||L.topKind==="robe")){ /* an apron */
+    add(fg("apron",function(){ return new THREE.BoxGeometry(0.26,0.5,0.015); }),new THREE.MeshLambertMaterial({color:[0xF0EADC,0x6A4A30,0x2E4A6A][h%3]}),0,hy-0.6,0.17);
+  }
+}
+(function(){
+  if(typeof buildFigure!=="function") return;
+  var bf=buildFigure;
+  buildFigure=function(spec,f){
+    var g=bf.apply(this,arguments);
+    if(spec&&(spec.city||spec.filler||spec.hub||/^presence_/.test(String(spec.id)))&&spec.archetype!=="deity") try{ accessorize(g,spec); }catch(e){}
+    return g;
+  };
+})();
 </script>
+
 
 <script>/* js/dream-home.js */
 /* SomnuMatrix — dream-home.js
@@ -23753,5 +23979,218 @@ function intoOwnDream(fn,name){
   if(typeof window[n]==="function") window[n]=intoOwnDream(window[n],n);
 });
 </script>
+<script>/* js/charstyle.js */
+/* SomnuMatrix — charstyle.js
+   people drawn the way fantasy concept art draws them, built in layers:
+     1. the base — illustrated proportions (a fuller head, strong hands),
+        a painted face (eyes with colour and a glint, brows, a nose, a
+        smile), tousled hair, a collar at the neck, boots with turned cuffs
+     2. gear — a vest, a belt with its buckle, both, or a cloak
+     3. features — pointed ears, swapped in on anyone
+     and a shared colour palette, so the whole city's clothing belongs to
+     one world. Every dreamer chooses their own in the wardrobe; the city's
+     people are each given theirs from who they are.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var CS_PALETTE=[0x3A6A9A,0x6A4A32,0x8A2A3A,0x3A6A3A,0x5A3A7A,0x2E3A5A,0x8A6A3A,0x4A5A2E,0x7A3A2A,0x2A5A5A,0x6A6A72,0xC8B08A];
+var CS_EYES=[0x5A3A22,0x3A2A1A,0x4A7AAA,0x3A6A4A,0x6A6A5A,0x7A5A2A];
+var GEARS=["none","vest","belt","vestbelt","cloak"], GEAR_LABEL=["none","a vest","a belt","vest and belt","a cloak"];
+var EARS=["round","pointed"], EARS_LABEL=["rounded","pointed (elven)"];
+
+/* what a person carries in the gear layer, chosen from who they are unless they chose */
+function csLookFill(L,seed){
+  var h=hash(String(seed)+"cs");
+  if(L.gear===undefined||L.gear===null) L.gear=["none","vest","belt","vestbelt","cloak","vest","belt","none","vestbelt","none"][h%10];
+  if(L.gearColor===undefined||L.gearColor===null) L.gearColor=CS_PALETTE[(h>>>5)%CS_PALETTE.length];
+  if(L.eyes===undefined||L.eyes===null) L.eyes=CS_EYES[(h>>>9)%CS_EYES.length];
+  if(L.ears===undefined||L.ears===null) L.ears=((h>>>13)%13===0)?"pointed":"round";
+  return L;
+}
+(function(){
+  if(typeof fillLook!=="function") return;
+  var fl=fillLook;
+  fillLook=function(L,seed){ fl(L,seed); return csLookFill(L,seed); };
+})();
+
+/* ---- the painted face ---- */
+var FACE_TEX={};
+function hexCss(n){ return "#"+("000000"+((n||0)>>>0).toString(16)).slice(-6); }
+function faceTexture(skin,hair,eyes,sex,child){
+  var key=[skin,hair,eyes,sex,child?1:0].join("|"); if(FACE_TEX[key]) return FACE_TEX[key];
+  var c=document.createElement("canvas"); c.width=256; c.height=256; var x=c.getContext("2d");
+  x.clearRect(0,0,256,256);
+  var ink="#2A1A14", ey=140, ex=[86,170], er=child?17:15;
+  /* brows, in the hair's own colour, a shade darker */
+  x.strokeStyle=hexCss(blend(hair||0x3A2A1A,0x000000,0.35)); x.lineCap="round"; x.lineWidth=child?6:sex==="f"?6:9;
+  ex.forEach(function(px,i){ var sd=i?1:-1; x.beginPath(); x.moveTo(px-20*sd,ey-25); x.quadraticCurveTo(px,ey-37,px+21*sd,ey-29); x.stroke(); });
+  /* eyes: white, the iris in its colour, the pupil, a glint, and a line above */
+  ex.forEach(function(px){
+    x.fillStyle="#F8F4EC"; x.beginPath(); x.ellipse(px,ey,er+3,er-1,0,0,Math.PI*2); x.fill();
+    x.fillStyle=hexCss(eyes); x.beginPath(); x.arc(px,ey+1,er-3,0,Math.PI*2); x.fill();
+    x.fillStyle="#0E0A08"; x.beginPath(); x.arc(px,ey+1,er-9,0,Math.PI*2); x.fill();
+    x.fillStyle="#FFFFFF"; x.beginPath(); x.arc(px+4,ey-4,4,0,Math.PI*2); x.fill();
+    x.strokeStyle=ink; x.lineWidth=4; x.beginPath(); x.ellipse(px,ey,er+3,er-1,0,Math.PI*1.05,Math.PI*1.95); x.stroke();
+    if(sex==="f"){ x.beginPath(); x.moveTo(px+er+2,ey-6); x.lineTo(px+er+8,ey-11); x.stroke(); }
+  });
+  /* a nose, by its shadow */
+  x.strokeStyle=hexCss(blend(skin||0xC8A080,0x6A3A2A,0.45)); x.lineWidth=4; x.beginPath(); x.moveTo(128,ey+16); x.quadraticCurveTo(122,ey+40,132,ey+44); x.stroke();
+  /* the cheeks, warm */
+  x.fillStyle="rgba(220,110,100,0.32)"; [70,186].forEach(function(px){ x.beginPath(); x.ellipse(px,ey+42,16,9,0,0,Math.PI*2); x.fill(); });
+  /* a quiet smile */
+  x.strokeStyle="#7A3A30"; x.lineWidth=5; x.beginPath(); x.moveTo(108,ey+66); x.quadraticCurveTo(128,ey+78,150,ey+64); x.stroke();
+  var t=new THREE.CanvasTexture(c); t.anisotropy=4; FACE_TEX[key]=t; return t;
+}
+/* the front of the head, where the face is painted */
+function faceGeo(){ return fg("faceplate",function(){ return new THREE.SphereGeometry(0.1135,32,24,Math.PI/2-0.95,1.9,0.78,1.32); }); }
+
+/* ---- the layers, added to a figure as it is built ---- */
+var CS_HEADPART={head:1,eye:1,face:1,haircap:1,hairlong:1,bun:1,tail:1,afro:1,coily:1,locs:1,braid:1,braidband:1,buzzcap:1,waves:1,wrap:1,
+  wrapknot:1,curly:1,hatcap:1,brimcap:1,crown:1,brim:1,hood:1,tuft:1,ear:1};
+var CS_HEAD_K=1.2;
+function csDress(g,spec,f){
+  var L=lookOf(spec);
+  if(spec.city||spec.hub||spec.filler||/^presence_|^__me/.test(String(spec.id))) csLookFill(L,spec.id);
+  var body=g.children[0]; if(!body) return g;
+  var parts={}; body.children.forEach(function(m){ if(m.userData&&m.userData.part) (parts[m.userData.part]=parts[m.userData.part]||[]).push(m); });
+  var head=(parts.head||[])[0], torso=(parts.torso||[])[0]; if(!head||!torso) return g;
+  var filler=!!spec.filler, child=spec.archetype==="child"||L.age==="child";
+  function pick(v,d){ return v!==null&&v!==undefined?v:d; }
+  var skin=pick(L.skin,STATUE.skin), hair=pick(L.hair,STATUE.hair), top=pick(L.top,STATUE.top), shoes=pick(L.shoes,STATUE.shoes);
+  var topKind=L.topKind||"shirt", bottomKind=L.bottomKind||"trousers", style=L.hairStyle||(L.sex==="f"?"long":"short");
+  function add(key,make,mat,x,y,z){ var m=new THREE.Mesh(fg(key,make),mat); m.position.set(x||0,y||0,z||0); m.userData.part=key.replace(/[\d.]+/g,""); body.add(m); return m; }
+  var hy=head.position.y;
+
+  /* the face, painted, in place of two dots */
+  (parts.eye||[]).forEach(function(e){ body.remove(e); });
+  if(filler||f>=0.5){
+    var fm=new THREE.MeshLambertMaterial({map:faceTexture(skin,hair,L.eyes,L.sex,child),transparent:true,alphaTest:0.12,depthWrite:false,
+      polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});
+    var face=new THREE.Mesh(faceGeo(),fm); face.position.copy(head.position); face.scale.copy(head.scale); face.userData.part="face"; face.renderOrder=2; body.add(face);
+  }
+  /* hair, hoods and caps leave the face open: a cap over the crown, the
+     rest round the sides and back */
+  ["haircap","buzzcap","hatcap","hood","wrap"].forEach(function(pn){
+    (parts[pn]||[]).forEach(function(m){
+      var p=m.geometry.parameters; if(!p||p.phiLength<6) return;
+      var r=p.radius, tl=p.thetaLength, gap=pn==="hood"?1.7:1.9;
+      m.geometry=fg("open"+pn+r+"_"+tl,function(){ return new THREE.SphereGeometry(r,32,16,Math.PI/2+gap/2,Math.PI*2-gap,0,tl); });
+      if(m.material&&!m.material.userData.dbl){ m.material=m.material.clone(); m.material.side=THREE.DoubleSide; m.material.userData.dbl=1; }
+      var top=new THREE.Mesh(fg("crowncap"+r+"_"+(pn==="hood"?1:0),function(){ return new THREE.SphereGeometry(r,32,10,0,Math.PI*2,0,pn==="hood"?1.05:0.92); }),m.material);
+      top.position.copy(m.position); top.scale.copy(m.scale); top.userData.part=pn; body.add(top);
+    });
+  });
+  /* tousled hair: tufts over the crown and a fringe across the brow */
+  if(style!=="bald"&&style!=="buzz"&&style!=="afro"&&style!=="headwrap"&&style!=="curly"&&!(L.hat&&L.hat!=="none")){
+    var hm=figMat(hair,f,filler), n=style==="short"||style==="waves"?11:7;
+    for(var i=0;i<n;i++){
+      var a=i/n*Math.PI*2+0.3, rr=0.085, up=i%3===0;
+      var t=add("tuft",function(){ return new THREE.ConeGeometry(0.042,0.1,10); },hm,Math.cos(a)*rr,hy+0.085+(up?0.02:0),Math.sin(a)*rr-0.01);
+      t.rotation.z=-Math.cos(a)*0.9; t.rotation.x=Math.sin(a)*0.9; t.rotation.y=a;
+    }
+    for(var k=0;k<3;k++){
+      var fr=add("tuft",function(){ return new THREE.ConeGeometry(0.042,0.1,10); },hm,(k-1)*0.05,hy+0.06,0.085);
+      fr.rotation.x=2.3; fr.rotation.z=(k-1)*0.35;
+    }
+  }
+  /* pointed ears, on anyone who has them (a species that brings its own keeps those) */
+  var sp=L.species&&SPECIES_FEATS[L.species], ownEars=sp&&sp.feats.indexOf("ears")>-1;
+  if(L.ears==="pointed"&&!ownEars){
+    var em=figMat(skin,f,filler);
+    [-1,1].forEach(function(sd){ var e=add("ear",function(){ return new THREE.ConeGeometry(0.028,0.13,12); },em,sd*0.11,hy+0.02,-0.01); e.rotation.z=-sd*1.05; e.rotation.x=-0.25; });
+  }
+  /* a collar at the neck */
+  if(topKind!=="robe"){ var col=add("collar",function(){ return new THREE.TorusGeometry(0.062,0.018,8,20); },figMat(blend(top,0x000000,0.15),f,filler),0,1.565,0.006); col.rotation.x=Math.PI/2; col.scale.z=0.9; }
+  /* rounded shoulders where the sleeves meet the body */
+  body.children.forEach(function(pv){
+    if(!pv.isGroup||!pv.children.some(function(m){ return m.userData.part==="arm"; })) return;
+    var sm=pv.children.filter(function(m){ return m.userData.part==="arm"; })[0].material;
+    var sh=new THREE.Mesh(fg("shoulderball",function(){ return new THREE.SphereGeometry(0.068,20,14); }),sm); sh.position.y=-0.02; sh.userData.part="shoulder"; pv.add(sh);
+  });
+  /* strong hands */
+  body.children.forEach(function(pv){ if(pv.isGroup) pv.children.forEach(function(m){ if(m.userData.part==="hand") m.scale.setScalar(1.35); }); });
+  /* boots with turned cuffs, over the trousers */
+  if(bottomKind!=="skirt"&&topKind!=="dress"&&topKind!=="robe"){
+    var bm=figMat(shoes,f,filler), cm=figMat(blend(shoes,0xFFFFFF,0.12),f,filler);
+    body.children.forEach(function(pv){
+      if(!pv.isGroup) return;
+      var hasLeg=pv.children.some(function(m){ return m.userData.part==="leg"; }); if(!hasLeg) return;
+      var shaft=new THREE.Mesh(fg("bootshaft",function(){ return new THREE.CylinderGeometry(0.07,0.064,0.26,16); }),bm); shaft.position.y=-0.74; shaft.userData.part="boot"; pv.add(shaft);
+      var cuff=new THREE.Mesh(fg("bootcuff",function(){ return new THREE.CylinderGeometry(0.082,0.078,0.07,16); }),cm); cuff.position.y=-0.6; cuff.userData.part="boot"; pv.add(cuff);
+      pv.children.forEach(function(m){ if(m.userData.part==="shoe"){ m.scale.set(1.25,1.3,1.1); m.position.z=0.055; } });
+    });
+  }
+  /* the gear layer */
+  var gear=L.gear||"none", gm=figMat(pick(L.gearColor,CS_PALETTE[1]),f,filler), shoulder=torso.geometry.parameters.radiusTop||0.2;
+  if((gear==="vest"||gear==="vestbelt")&&topKind!=="robe"){
+    var v=add("vest"+shoulder,function(){ return new THREE.CylinderGeometry(shoulder+0.014,0.178,0.5,24,1,true,0.42,Math.PI*2-0.84); },gm,0,1.26,0);
+    v.material=v.material.clone(); v.material.side=THREE.DoubleSide; v.scale.z=0.68;
+  }
+  if((gear==="belt"||gear==="vestbelt")&&topKind!=="robe"){
+    var b=add("belt",function(){ return new THREE.CylinderGeometry(0.182,0.186,0.065,24); },figMat(0x3A2A1C,f,filler),0,0.99,0); b.scale.z=0.82;
+    add("buckle",function(){ return new THREE.BoxGeometry(0.06,0.055,0.02); },figMat(0xC9A868,f,filler),0,0.99,0.155);
+  }
+  if(gear==="cloak"){
+    var cl=add("cloak",function(){ return new THREE.CylinderGeometry(0.22,0.34,1.05,24,1,true,Math.PI/2+0.25,Math.PI-0.5); },gm,0,1.05,-0.02);
+    cl.material=cl.material.clone(); cl.material.side=THREE.DoubleSide; cl.scale.z=0.75;
+    add("clasp",function(){ return new THREE.SphereGeometry(0.022,10,8); },figMat(0xC9A868,f,filler),0,1.53,0.08);
+  }
+  /* illustrated proportions: the head, and all that sits on it, a size larger */
+  csHeadScale(body,hy);
+  return g;
+}
+function csHeadScale(body,hy){
+  var k=CS_HEAD_K;
+  body.children.forEach(function(m){
+    if(!m.isMesh||m.userData.csHead) return;
+    var p=m.userData.part, isHead=CS_HEADPART[p]||(m.userData.acc&&m.position.y>hy-0.07)||(m.userData.feat&&m.position.y>hy-0.2);
+    if(!isHead) return;
+    m.userData.csHead=1;
+    m.position.set(m.position.x*k,hy+(m.position.y-hy)*k,m.position.z*k);
+    m.scale.multiplyScalar(k);
+  });
+}
+(function(){
+  if(typeof buildFigure!=="function") return;
+  var bf=buildFigure;
+  buildFigure=function(spec,f){
+    var g=bf.apply(this,arguments);
+    try{ csDress(g,spec,f); }catch(e){ if(window.console) console.warn("dress:",e); }
+    return g;
+  };
+  /* a species' own features (ears, horns) sit on the larger head too */
+  if(typeof dressFolk==="function"){
+    var df=dressFolk;
+    dressFolk=function(g,spec,f,o){
+      var body=g.children[0], before=body?body.children.slice():[];
+      var r=df.apply(this,arguments);
+      if(body) body.children.forEach(function(m){ if(before.indexOf(m)<0&&m.isMesh) m.userData.feat=1; });
+      if(body) csHeadScale(body,1.72);
+      return r;
+    };
+  }
+  /* the wardrobe: gear, its colour, and ears */
+  if(typeof renderWardrobe==="function"){
+    var rw=renderWardrobe;
+    renderWardrobe=function(){
+      rw();
+      var w=document.getElementById("me-ward"); if(!w) return;
+      var L=meLook(), S=L.src||{};
+      function set(k,v){ L[k]=v; L.src=L.src||{}; L.src[k]="chosen"; rebuildMe(); save(); if(typeof publishMyLook==="function") publishMyLook(); renderWardrobe(); }
+      var box=document.createElement("div");
+      box.innerHTML='<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim,#999);margin:12px 0 4px">Gear and features</div>'+
+        selectRow("Gear",S.gear,GEARS,L.gear,function(v){ set("gear",v||"none"); },GEAR_LABEL)+
+        swatchRow("Gear colour",S.gearColor,CS_PALETTE,L.gearColor,function(v){ set("gearColor",v); })+
+        swatchRow("Eyes",S.eyes,CS_EYES,L.eyes,function(v){ set("eyes",v); })+
+        selectRow("Ears",S.ears,EARS,L.ears,function(v){ set("ears",v||"round"); },EARS_LABEL);
+      var done=w.querySelector("#me-close"); w.appendChild(box);
+      Array.prototype.forEach.call(box.querySelectorAll("[data-lk]"),function(b){ b.onclick=function(){ LKH[b.getAttribute("data-lk")](parseInt(b.getAttribute("data-c"),10)); }; });
+      Array.prototype.forEach.call(box.querySelectorAll("[data-lkp]"),function(inp){ inp.onchange=function(){ LKH[inp.getAttribute("data-lkp")](parseInt(inp.value.slice(1),16)); }; });
+      Array.prototype.forEach.call(box.querySelectorAll("[data-lks]"),function(s){ s.onchange=function(){ LKH[s.getAttribute("data-lks")](s.value); }; });
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
