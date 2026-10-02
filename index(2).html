@@ -722,9 +722,15 @@ body.touch #plotbar select,body.touch #p-bearing{font-size:16px}
   <label for="gfx">Graphics</label>
   <select id="gfx" onchange="var c=cfg(), was=GFX_STYLE; c.gfx=this.value; setCfg(c); var now=(this.value==='auto')?(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?'standard':'stylized'):this.value; if((now==='stylized')!==(was==='stylized')&&confirm('The new look takes effect when the page reloads. Reload now? Your dreams are saved.')) location.reload();">
     <option value="auto">Best for this device</option>
-    <option value="stylized">Stylized &mdash; cel-shaded fantasy art, ink outlines, glowing lights</option>
+    <option value="stylized">Stylized &mdash; cel-shaded fantasy art, glowing lights</option>
     <option value="high">High &mdash; the plain look, with glowing lights</option>
     <option value="standard">Standard &mdash; fastest</option>
+  </select>
+  <label for="ink">Outlines (Stylized look)</label>
+  <select id="ink" onchange="var c=cfg(); c.ink=this.value; setCfg(c);">
+    <option value="off">Off</option>
+    <option value="soft">Soft</option>
+    <option value="strong">Strong</option>
   </select>
   <label for="density">Fog &mdash; how far you can see</label>
   <input id="density" type="range" min="4" max="60" step="1" value="26">
@@ -13674,7 +13680,7 @@ function openPanel(){
   $("padmode").value=c.pad||"automatic"; $("skies").value=c.skies===false?"off":"on";
   $("solidall").value=c.solidAll===false?"half":"solid";
   renderHeld();
-  $("panel").classList.add("open"); var gsel=document.getElementById("gfx"); if(gsel) gsel.value=cfg().gfx||"auto";
+  $("panel").classList.add("open"); var gsel=document.getElementById("gfx"); if(gsel) gsel.value=cfg().gfx||"auto"; var isel=document.getElementById("ink"); if(isel) isel.value=cfg().ink||"off";
 }
 function savePanel(){
   var $=function(i){return document.getElementById(i);};
@@ -16140,8 +16146,11 @@ function makeInterior(spec){
     var gp=P(new THREE.PlaneGeometry(pw,ph*0.22),gm,w.x+Math.sin(w.ry)*0.01,(w.y||0)+midY+ph*0.42,w.z+Math.cos(w.ry)*0.01);
     gp.rotation.y=w.ry; root.add(gp);
   });
-  lights.slice(0,18).forEach(function(l){ var pl=new THREE.PointLight(0xFFE2B8,.62,15,1.7); pl.position.set(l.x,(l.y||0)+H-.3,l.z); root.add(pl);
-    root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,(l.y||0)+H-.12,l.z)); });
+  /* every lamp in the plan is drawn, on every floor; the light itself goes
+     with you, floor to floor, so the top floor is as well lit as the lobby */
+  lights.forEach(function(l){ root.add(P(sph(.14),mG(0xFFF0D0,1),l.x,(l.y||0)+H-.12,l.z)); });
+  var lightPool=[]; for(var lpi=0;lpi<10;lpi++){ var lpl=new THREE.PointLight(0xFFE2B8,0,16,1.6); root.add(lpl); lightPool.push(lpl); }
+  var lightFill=new THREE.PointLight(0xFFF0DC,0,Math.max(W,D)*1.3,1.1); root.add(lightFill);
   /* the way out: a door in the front wall */
   var ex=P(box(1.7,2.25,.12),mL(0x5A3A22),0,1.12,exitZ-.1); root.add(ex);
   var amb=new THREE.HemisphereLight(0xFFF0D8,0x2A2018,.3); amb.position.set(0,H,0); root.add(amb);
@@ -16171,7 +16180,32 @@ function makeInterior(spec){
   return {spec:spec,root:root,walls:walls,spots:spots,ox:ox,oz:oz,exit:{x:ox,z:oz+exitZ-1.0},start:{x:ox,z:oz+exitZ-2.4},
     winMats:winMats,winGlints:winGlints,W:W,D:D,levels:levels,floor:FLOOR,stairs:stairsAt,lifts:lifts,level:0,holes:holesOut,
     locked:plan.locked||null,unlocked:false,floorNames:floorNames,
-    asBuilt:asBuilt,wpKey:wpKey,wpSaved:!!wpSaved};
+    asBuilt:asBuilt,wpKey:wpKey,wpSaved:!!wpSaved,
+    lightSpots:lights,lightPool:lightPool,lightFill:lightFill,ceilH:H,lightAt:-1,lightLevel:-1};
+}
+/* the lights of the floor you are on: its own lamps nearest you first, and
+   where a floor has none of its own, lamps spread evenly across it */
+/* in the Stylized look every lamp lights the whole of a room in bands, so the
+   same lamps there are turned well down, or the rooms wash out white */
+var INT_TOONED=(typeof TOON!=="undefined"&&!!TOON);
+var INT_LAMP=INT_TOONED?0.12:0.42, INT_FILL=INT_TOONED?0.06:0.22, INT_HEMI=INT_TOONED?0.7:0.78;
+function intLightTick(dt){
+  if(!INT||!INT.lightPool) return;
+  var L=INT.level||0, now=performance.now();
+  if(L===INT.lightLevel&&now-INT.lightAt<500) return;
+  INT.lightLevel=L; INT.lightAt=now;
+  var F=INT.floor, H=INT.ceilH||3, rp=INT.root.position, P=camera.position, cx=P.x-rp.x, cz=P.z-rp.z;
+  var spots=(INT.lightSpots||[]).filter(function(l){ return Math.round((l.y||0)/F)===L; });
+  if(spots.length<4){
+    var nx=Math.max(2,Math.round(INT.W/7)), nz=Math.max(2,Math.round(INT.D/7));
+    for(var i=0;i<nx;i++) for(var j=0;j<nz;j++) spots.push({x:-INT.W/2+INT.W*(i+0.5)/nx,z:-INT.D/2+INT.D*(j+0.5)/nz,y:L*F});
+  }
+  spots.sort(function(a,b){ return Math.hypot(a.x-cx,a.z-cz)-Math.hypot(b.x-cx,b.z-cz); });
+  INT.lightPool.forEach(function(pl,i){
+    var s=spots[i]; if(!s){ pl.intensity=0; return; }
+    pl.position.set(s.x,L*F+H-0.3,s.z); pl.intensity=INT_LAMP;
+  });
+  INT.lightFill.position.set(0,L*F+H*0.8,0); INT.lightFill.intensity=INT_FILL;
 }
 function furnBox(k){ var s={bed:[1.6,2.1],sofa:[2.3,.9],table:[1.4,.9],longtable:[4.4,2.4],counter:[2.4,.7],piano:[1.5,.8],wardrobe:[1.3,.6],bookshelf:[1.6,.4],
   fireplace:[2,.6],stove:[.8,.7],fridge:[.75,.7],bathtub:[1.7,.8],desk:[1.4,.7],pew:[3.4,.6],altarinside:[2.3,1],throneseat:[1.4,1.4],shelfgoods:[2.4,.5],till:[2,.7],
@@ -16465,7 +16499,7 @@ function indoorLight(on){
   if(on){
     indoorLit=true;
     if(typeof sun!=="undefined"&&sun) sun.intensity=0;
-    if(typeof hemi!=="undefined"&&hemi){ hemi.color.setHex(0xFFF2E2); hemi.groundColor.setHex(0x4A4036); hemi.intensity=0.78; }
+    if(typeof hemi!=="undefined"&&hemi){ hemi.color.setHex(0xFFF2E2); hemi.groundColor.setHex(0x6A5E50); hemi.intensity=INT_HEMI; }
     if(scene&&scene.fog) scene.fog.density=Math.min(scene.fog.density,0.002);
   } else if(indoorLit){
     indoorLit=false;
@@ -16479,6 +16513,7 @@ function interiorTick(dt){
   if(!walkMode){ if(INT) exitInterior(true); indoorLight(false); return; }
   var P=camera.position;
   indoorLight(!!INT);
+  if(INT) intLightTick(dt);
   if(INT){
     var day=daylight(dreamHour()), wc=blend(0x1A2238,0xCFE0F0,day);
     var sun=daySunAngle(day);
@@ -22437,8 +22472,13 @@ function rideTick(dt){
   presenceGroupFor=function(row){
     var g=pg(row), k=row&&row.look&&row.look.ride;
     if(k&&KIT[k]){
-      var v=build({id:"__pride_"+row.user_id,archetype:k,attrs:{},solid:false,detail:3,nights:[],city:true});
-      var seat=RIDE_SEAT[k]||0;
+      var v, seat=RIDE_SEAT[k]||0;
+      if(k==="dragon"&&typeof buildMountDragon==="function"){
+        /* a Corp rider's own dragon, in its colour; the rider sits astride, whatever their size */
+        v=buildMountDragon(row.look.rideColor||"green");
+        seat=DRAGON_SADDLE-DRAGON_HIP*speciesScale(row.look);
+        g.userData.mount=v;
+      } else v=build({id:"__pride_"+row.user_id,archetype:k,attrs:{},solid:false,detail:3,nights:[],city:true});
       g.children.forEach(function(c){ if(c!==g.userData.tag) c.position.y+=seat; });
       if(g.userData.tag) g.userData.tag.position.y+=Math.max(0,seat);
       v.rotation.y=Math.PI; g.add(v);
@@ -23317,11 +23357,16 @@ var CORP_SKY=[];
 function corpTick(dt){
   if(misdeedCool>0) misdeedCool-=dt;
   csTick(dt);
-  var r=somnucorRealm(); if(!r||!ATLC||typeof buildDragon!=="function") return;
+  if(typeof eyrieTick==="function") try{ eyrieTick(dt); }catch(e){ if(window.console) console.warn("eyrie:",e); }
+  var r=somnucorRealm(); if(!r||!ATLC||typeof buildMountDragon!=="function") return;
   var roost=store.workplaceAt&&store.workplaceAt["The Dragon Roost"]; if(!roost) return;
   if(!CORP_SKY.length){
     for(var i=0;i<4;i++){
-      var g=buildDragon({id:"corpsky"+i,archetype:"dragon",attrs:{s:0.8},nights:[],city:true},1);
+      /* a rider of the Corp on a dragon of their own colour, in the Corp's blue */
+      var g=buildMountDragon(["red","blue","bronze","black"][i],{lod:true}); g.userData.pose="fly";
+      var rider=buildFigure({id:"corpsky_r"+i,archetype:"human",attrs:{},nights:[],city:true,detail:3,
+        look:{sex:i%2?"f":"m",top:0x23324E,bottom:0x1E2638,topKind:"shirt",bottomKind:"trousers",shoes:0x2A1E14,gear:"cloak",gearColor:0x23324E,hairStyle:i%2?"long":"short"}},1);
+      rider.position.y=DRAGON_SADDLE-DRAGON_HIP; riderPose(rider); g.add(rider);
       g.traverse(function(m){ m.raycast=function(){}; }); scene.add(g);
       CORP_SKY.push({g:g,a:i*Math.PI/2,r:i<2?60:900+i*300,h:i<2?70:140+i*20,v:i<2?0.25:0.06,cx:i<2?roost.x:ATLC.x,cz:i<2?roost.z:ATLC.z});
     }
@@ -23818,7 +23863,15 @@ function gfxRender(){
     }
     var night=(typeof daylight==="function")?1-daylight(dreamHour()):0;
     GFX.bloom.strength=0.22+0.55*night; GFX.bloom.threshold=0.9-0.18*night;
-    if(GFX.ink){ GFX.ink.uniforms.thick.value=Math.max(1,renderer.getPixelRatio()); GFX.ink.uniforms.strength.value=store.inside?0.7:0.85; }
+    /* indoors, pale floors and walls under lamps would bloom the whole room white */
+    if(store.inside){ GFX.bloom.strength=0.1; GFX.bloom.threshold=0.985; }
+    if(GFX.ink){
+      /* outlines: off unless chosen in Settings — soft, or strong */
+      var ik=((typeof cfg==="function"?cfg():{}).ink)||"off";
+      GFX.ink.enabled=ik!=="off";
+      GFX.ink.uniforms.thick.value=Math.max(1,renderer.getPixelRatio());
+      GFX.ink.uniforms.strength.value=ik==="strong"?(store.inside?0.7:0.85):(store.inside?0.26:0.32);
+    }
     if(typeof TOON!=="undefined"&&TOON){ TOON.rim.rimStrength.value=0.22+0.22*night; TOON.rim.rimColor.value.setHex(night>0.5?0xB8C8FF:0xFFF2DC); }
     GFX.composer.passes[0].camera=camera;
     GFX.composer.render();
@@ -24013,6 +24066,24 @@ function csLookFill(L,seed){
   fillLook=function(L,seed){ fl(L,seed); return csLookFill(L,seed); };
 })();
 
+/* ---- creatures, dragons and gods, drawn smooth: while one is being built,
+   every round shape it is made of has more sides to it (not on phones) ---- */
+var CS_SMOOTH=0;
+(function(){
+  if(typeof GFX_STYLE!=="undefined"&&GFX_STYLE==="standard") return;
+  if(typeof cyl!=="function"||typeof sph!=="function") return;
+  var c0=cyl, k0=cone, s0=sph, t0=tor;
+  cyl=function(a,b,h,s){ if(!CS_SMOOTH) return c0(a,b,h,s); s=s||8; return new THREE.CylinderGeometry(a,b,h,Math.max(s,Math.min(24,s*2.5|0))); };
+  cone=function(r,h,s){ if(!CS_SMOOTH) return k0(r,h,s); s=s||8; return new THREE.ConeGeometry(r,h,Math.max(s,Math.min(20,s*3))); };
+  sph=function(r,a,b){ if(!CS_SMOOTH) return s0(r,a,b); return new THREE.SphereGeometry(r,Math.max(a||12,24),Math.max(b||10,16)); };
+  tor=function(r,t,arc){ if(!CS_SMOOTH) return t0(r,t,arc); return new THREE.TorusGeometry(r,t,12,40,arc===undefined?Math.PI*2:arc); };
+  function smooth(fn){ return function(){ CS_SMOOTH++; try{ return fn.apply(this,arguments); } finally{ CS_SMOOTH--; } }; }
+  if(typeof buildCreature==="function") buildCreature=smooth(buildCreature);
+  if(typeof buildDragon==="function") buildDragon=smooth(buildDragon);
+  if(typeof buildDeity==="function") buildDeity=smooth(buildDeity);
+  if(typeof HEADS!=="undefined") Object.keys(HEADS).forEach(function(k){ HEADS[k]=smooth(HEADS[k]); });
+})();
+
 /* ---- the painted face ---- */
 var FACE_TEX={};
 function hexCss(n){ return "#"+("000000"+((n||0)>>>0).toString(16)).slice(-6); }
@@ -24058,15 +24129,16 @@ function csDress(g,spec,f){
   function pick(v,d){ return v!==null&&v!==undefined?v:d; }
   var skin=pick(L.skin,STATUE.skin), hair=pick(L.hair,STATUE.hair), top=pick(L.top,STATUE.top), shoes=pick(L.shoes,STATUE.shoes);
   var topKind=L.topKind||"shirt", bottomKind=L.bottomKind||"trousers", style=L.hairStyle||(L.sex==="f"?"long":"short");
-  function add(key,make,mat,x,y,z){ var m=new THREE.Mesh(fg(key,make),mat); m.position.set(x||0,y||0,z||0); m.userData.part=key.replace(/[\d.]+/g,""); body.add(m); return m; }
+  function add(key,make,mat,x,y,z){ var m=new THREE.Mesh(fg(key,make),mat); m.position.set(x||0,y||0,z||0); m.userData.part=key.replace(/[\d.]+/g,""); m.userData.cs=1; body.add(m); return m; }
   var hy=head.position.y;
 
-  /* the face, painted, in place of two dots */
-  (parts.eye||[]).forEach(function(e){ body.remove(e); });
+  /* the face, painted, in place of two dots — the dots are kept, shrunk away,
+     so a creature that hides its eyes (or shows only its eyes) still can */
+  (parts.eye||[]).forEach(function(e){ e.userData.csEye=e.scale.clone(); e.scale.setScalar(0.0001); });
   if(filler||f>=0.5){
     var fm=new THREE.MeshLambertMaterial({map:faceTexture(skin,hair,L.eyes,L.sex,child),transparent:true,alphaTest:0.12,depthWrite:false,
       polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});
-    var face=new THREE.Mesh(faceGeo(),fm); face.position.copy(head.position); face.scale.copy(head.scale); face.userData.part="face"; face.renderOrder=2; body.add(face);
+    var face=new THREE.Mesh(faceGeo(),fm); face.position.copy(head.position); face.scale.copy(head.scale); face.userData.part="face"; face.userData.cs=1; face.userData.map=fm.map; face.renderOrder=2; body.add(face);
   }
   /* hair, hoods and caps leave the face open: a cap over the crown, the
      rest round the sides and back */
@@ -24077,7 +24149,7 @@ function csDress(g,spec,f){
       m.geometry=fg("open"+pn+r+"_"+tl,function(){ return new THREE.SphereGeometry(r,32,16,Math.PI/2+gap/2,Math.PI*2-gap,0,tl); });
       if(m.material&&!m.material.userData.dbl){ m.material=m.material.clone(); m.material.side=THREE.DoubleSide; m.material.userData.dbl=1; }
       var top=new THREE.Mesh(fg("crowncap"+r+"_"+(pn==="hood"?1:0),function(){ return new THREE.SphereGeometry(r,32,10,0,Math.PI*2,0,pn==="hood"?1.05:0.92); }),m.material);
-      top.position.copy(m.position); top.scale.copy(m.scale); top.userData.part=pn; body.add(top);
+      top.position.copy(m.position); top.scale.copy(m.scale); top.userData.part=pn; top.userData.cs=1; body.add(top);
     });
   });
   /* tousled hair: tufts over the crown and a fringe across the brow */
@@ -24137,7 +24209,49 @@ function csDress(g,spec,f){
   }
   /* illustrated proportions: the head, and all that sits on it, a size larger */
   csHeadScale(body,hy);
+  body.children.forEach(function(m){ m.userData.csBase=1; });
+  g.userData.csHy=hy;
   return g;
+}
+function csIsSpecies(o){ if(typeof SPECIES_FEATS==="undefined") return false; for(var k in SPECIES_FEATS) if(SPECIES_FEATS[k]===o) return true; return false; }
+/* what was added after the figure was dressed: anything at the head grows with it */
+var CS_HAIRPART={haircap:1,hairlong:1,bun:1,tail:1,afro:1,coily:1,locs:1,braid:1,braidband:1,buzzcap:1,waves:1,wrap:1,wrapknot:1,curly:1};
+function csAfter(g){
+  var body=g&&g.children[0]; if(!body||!body.children) return;
+  if(!g.userData.csHy){ csSync(body); return; }
+  var hy=g.userData.csHy, k=CS_HEAD_K, limbs=g.userData.limbs||{}, lv=[];
+  Object.keys(limbs).forEach(function(n){ lv.push(limbs[n]); });
+  body.children.forEach(function(m){
+    if(m.userData.csBase||m.userData.csHead||lv.indexOf(m)>-1) return;
+    if(!(m.isMesh||m.isGroup)) return;
+    m.userData.csHead=1;
+    if(m.position.y<=hy-0.215) return;
+    m.position.set(m.position.x*k,hy+(m.position.y-hy)*k,m.position.z*k);
+    m.scale.multiplyScalar(k);
+  });
+  csSync(body);
+}
+function csSync(body){
+  var face=null, head=null, eyes=[], tufts=[], ears=[], hairHidden=false;
+  body.children.forEach(function(m){
+    var p=m.userData&&m.userData.part;
+    if(p==="face") face=m; else if(p==="head") head=head||m; else if(p==="eye") eyes.push(m);
+    else if(p==="tuft") tufts.push(m); else if(p==="ear"&&m.userData.cs) ears.push(m);
+    else if(CS_HAIRPART[p]&&m.visible===false) hairHidden=true;
+  });
+  var eyesHidden=eyes.some(function(e){ return e.visible===false; }), headHidden=!!(head&&head.visible===false);
+  /* formless: everything gone but the eyes — so the eyes come back */
+  if(face&&face.visible===false&&!eyesHidden) eyes.forEach(function(e){ if(e.userData.csEye){ e.scale.copy(e.userData.csEye).multiplyScalar(CS_HEAD_K); } });
+  if(eyesHidden||headHidden){
+    if(face) face.visible=false;
+    tufts.forEach(function(t){ t.visible=false; }); ears.forEach(function(e){ e.visible=false; });
+  }
+  if(hairHidden) tufts.forEach(function(t){ t.visible=false; });
+  if(face&&head) face.scale.copy(head.scale);
+  /* a ghost's face is as see-through as the rest of it */
+  if(face&&face.userData.map&&face.material&&!face.material.map){
+    face.material=new THREE.MeshBasicMaterial({map:face.userData.map,transparent:true,opacity:0.6,depthWrite:false,alphaTest:0.12});
+  }
 }
 function csHeadScale(body,hy){
   var k=CS_HEAD_K;
@@ -24158,15 +24272,23 @@ function csHeadScale(body,hy){
     try{ csDress(g,spec,f); }catch(e){ if(window.console) console.warn("dress:",e); }
     return g;
   };
-  /* a species' own features (ears, horns) sit on the larger head too */
+  /* a species' own features (ears, horns), and a folk's or a god's own
+     head — an animal's, a skull, a helm, a crown — sit on the larger head too;
+     and whatever hides a head or its eyes hides the painted face with it */
   if(typeof dressFolk==="function"){
     var df=dressFolk;
     dressFolk=function(g,spec,f,o){
-      var body=g.children[0], before=body?body.children.slice():[];
       var r=df.apply(this,arguments);
-      if(body) body.children.forEach(function(m){ if(before.indexOf(m)<0&&m.isMesh) m.userData.feat=1; });
-      if(body) csHeadScale(body,1.72);
+      try{ csAfter(g); }catch(e){ if(window.console) console.warn("folk:",e); }
       return r;
+    };
+  }
+  if(typeof buildDeity==="function"){
+    var bd=buildDeity;
+    buildDeity=function(spec,f){
+      var g=bd.apply(this,arguments);
+      try{ csAfter(g); }catch(e){ if(window.console) console.warn("deity:",e); }
+      return g;
     };
   }
   /* the wardrobe: gear, its colour, and ears */
@@ -24189,6 +24311,1091 @@ function csHeadScale(body,hy){
       Array.prototype.forEach.call(box.querySelectorAll("[data-lks]"),function(s){ s.onchange=function(){ LKH[s.getAttribute("data-lks")](s.value); }; });
     };
   }
+})();
+</script>
+<script>/* js/eyrie.js */
+/* SomnuMatrix — eyrie.js
+   the Dragon Corp's dragons, and where they live.
+     - a riding dragon, built to be ridden: a saddle at its shoulders, wings
+       that beat in flight and fold at rest, legs that tuck up when it flies,
+       a tail that curls round when it perches — in its rider's own colour
+     - the Eyrie, beside the Dragon Roost: every officer of the Corp has an
+       apartment there, with an open balcony where their own dragon perches
+     - from the apartment, out onto the balcony and up into the saddle; fly
+       home and land on the balcony to go back in
+     - everyone else in the city sees the dragons on the balconies, and the
+       riders on their dragons in the sky
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var DRAGON_COL={green:0x3F7A3A,red:0xA8322B,black:0x2A2A30,gold:0xC9A040,blue:0x2F5E9E,purple:0x5E3A7E,
+  white:0xE8E4DA,silver:0xB8BCC4,bronze:0x9A6A3A,teal:0x2A7A7A,grey:0x6A6E76,orange:0xC8662A};
+var DRAGON_COLS=Object.keys(DRAGON_COL);
+var DRAGON_SADDLE=2.52;          /* the top of the saddle, above the ground the dragon stands on */
+var DRAGON_HIP=0.95;             /* how high a rider's hips sit above their feet */
+function dragonHex(c){ if(typeof c==="number") return c; return DRAGON_COL[c]||0x3F7A3A; }
+
+/* ================================================================ the riding dragon */
+/* built about the ground under its saddle, its head toward +z.
+   o.lod: fewer small pieces (claws, belly plates, spines) for far-off dragons */
+function buildMountDragon(col,o){
+  o=o||{}; var c=dragonHex(col), lod=!!o.lod;
+  function M(h,ds){ var m=new THREE.MeshLambertMaterial({color:h}); if(ds) m.side=THREE.DoubleSide; return m; }
+  var skin=M(c), belly=M(blend(c,0xE8D8B0,0.45)), dark=M(shade(c,-0.45)), horn=M(0xE8DCC0), claw=M(0x2A2420),
+      wingM=M(shade(c,-0.22),true), eyeM=new THREE.MeshBasicMaterial({color:0xFFC23A}), pupil=new THREE.MeshBasicMaterial({color:0x140C08}),
+      leather=M(0x5A3A22), blanket=M(0x23324E,true), gold=M(0xC9A868,true);
+  function mesh(geo,mat,x,y,z,rx,ry,rz){ var m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); if(rx||ry||rz) m.rotation.set(rx||0,ry||0,rz||0); return m; }
+  var g=new THREE.Group(), body=new THREE.Group(); g.add(body);
+  g.userData.mount=1; g.userData.col=col;
+
+  /* the body: chest to hips, close-set, with a pale belly and a ridge of spines */
+  var R=[0.66,0.78,0.86,0.9,0.9,0.88,0.84,0.78,0.7,0.62], BY=1.6;
+  R.forEach(function(r,i){
+    var z=1.5-i*0.36;
+    var s=mesh(new THREE.SphereGeometry(r,22,16),skin,0,BY,z); s.scale.set(1,0.92,1.2); body.add(s);
+    if(!lod){ var b=mesh(new THREE.SphereGeometry(r*0.85,16,10),belly,0,BY-r*0.3,z); b.scale.set(0.9,0.45,1.1); body.add(b); }
+    if(!lod&&i%2===0) body.add(mesh(new THREE.ConeGeometry(0.11,0.42,10),dark,0,BY+r*0.86,z-0.05,-0.35));
+  });
+
+  /* the neck rises from the chest to the head; it bobs as one */
+  var neck=new THREE.Group(); neck.position.set(0,BY+0.25,1.55); body.add(neck);
+  for(var n=0;n<6;n++){
+    var t=(n+0.5)/6, r=0.58-t*0.22;
+    var qy=(1-t)*(1-t)*0+2*(1-t)*t*1.05+t*t*1.4, qz=(1-t)*(1-t)*0+2*(1-t)*t*0.45+t*t*2.0;
+    neck.add(mesh(new THREE.SphereGeometry(r,20,14),skin,0,qy,qz));
+    if(!lod&&n%2===1) neck.add(mesh(new THREE.ConeGeometry(0.08,0.3,8),dark,0,qy+r*0.9,qz-0.05,-0.5));
+  }
+  var head=new THREE.Group(); head.position.set(0,1.5,2.15); neck.add(head);
+  var cr=mesh(new THREE.SphereGeometry(0.42,24,16),skin,0,0,0); cr.scale.set(1,0.82,1.1); head.add(cr);
+  var sn=mesh(new THREE.SphereGeometry(0.3,20,14),skin,0,-0.1,0.55); sn.scale.set(0.95,0.7,1.75); head.add(sn);
+  var jw=mesh(new THREE.SphereGeometry(0.26,18,10),belly,0,-0.27,0.42); jw.scale.set(0.9,0.45,1.6); head.add(jw);
+  [-1,1].forEach(function(sd){
+    head.add(mesh(new THREE.BoxGeometry(0.16,0.07,0.32),dark,sd*0.2,0.2,0.22,0,sd*0.3,0));
+    var e=mesh(new THREE.SphereGeometry(0.075,14,10),eyeM,sd*0.245,0.08,0.3); head.add(e);
+    var pp=mesh(new THREE.BoxGeometry(0.018,0.1,0.02),pupil,sd*0.31,0.08,0.33); pp.rotation.y=sd*0.6; head.add(pp);
+    head.add(mesh(new THREE.SphereGeometry(0.035,8,6),pupil,sd*0.09,-0.02,1.02));
+    head.add(mesh(new THREE.ConeGeometry(0.09,0.9,14),horn,sd*0.22,0.3,-0.32,-2.05,0,sd*0.22));
+    head.add(mesh(new THREE.ConeGeometry(0.05,0.42,10),horn,sd*0.34,0.05,-0.15,-1.95,0,sd*0.65));
+    if(!lod) for(var q=0;q<3;q++) head.add(mesh(new THREE.ConeGeometry(0.035,0.12,8),horn,sd*(0.07+q*0.06),-0.19,0.9-q*0.13,Math.PI));
+  });
+  if(!lod) for(var cq=0;cq<3;cq++) head.add(mesh(new THREE.ConeGeometry(0.07,0.32,8),dark,0,0.22-cq*0.12,-0.42-cq*0.08,-1.9));
+
+  /* the tail: a chain of joints, so it can sway, droop and curl */
+  var tail=[], parent=body, TN=14;
+  var tj=new THREE.Group(); tj.position.set(0,BY,-1.85); body.add(tj); parent=tj;
+  for(var k=0;k<TN;k++){
+    var rr=0.56*Math.pow(1-k/TN,0.9)+0.06;
+    var j=k?new THREE.Group():tj; if(k){ j.position.set(0,0,-0.42); parent.add(j); }
+    var seg=mesh(new THREE.SphereGeometry(rr,18,12),skin,0,0,-0.21); seg.scale.set(1,0.9,1.35); j.add(seg);
+    if(!lod&&k%2===0) j.add(mesh(new THREE.ConeGeometry(Math.max(0.04,rr*0.25),rr*0.7,8),dark,0,rr*0.85,-0.21,-0.35));
+    tail.push(j); parent=j;
+  }
+  var spade=mesh(new THREE.ConeGeometry(0.22,0.5,4),dark,0,0,-0.55,-Math.PI/2); spade.scale.set(1,1,0.25); parent.add(spade);
+
+  /* four legs, each a shoulder or haunch, an upper and a lower leg, and a clawed foot */
+  var legs=[];
+  [[0.62,1.05,0],[-0.62,1.05,0],[0.7,-1.35,1],[-0.7,-1.35,1]].forEach(function(L,i){
+    var pv=new THREE.Group(); pv.position.set(L[0]*1.08,BY-0.3,L[1]); body.add(pv);
+    pv.add(mesh(new THREE.SphereGeometry(L[2]?0.44:0.36,18,12),skin,0,0.05,0));
+    pv.add(mesh(new THREE.CylinderGeometry(0.26,0.19,0.72,16),skin,0,-0.36,0));
+    var kn=new THREE.Group(); kn.position.y=-0.72; pv.add(kn);
+    kn.add(mesh(new THREE.CylinderGeometry(0.18,0.14,0.55,14),skin,0,-0.27,0));
+    var ft=mesh(new THREE.SphereGeometry(0.19,14,10),skin,0,-0.5,0.08); ft.scale.set(1.1,0.5,1.5); kn.add(ft);
+    if(!lod) for(var cl=-1;cl<=1;cl++) kn.add(mesh(new THREE.ConeGeometry(0.045,0.2,8),claw,cl*0.09,-0.54,0.36,Math.PI/2));
+    legs.push({pv:pv,kn:kn,hind:!!L[2],ph:i===0||i===3?0:Math.PI});
+  });
+
+  /* wings: a membrane between finger bones, scalloped at the trailing edge */
+  var shp=new THREE.Shape(), K=0.5;
+  shp.moveTo(0,0); shp.lineTo(3*K,4.5*K); shp.lineTo(11*K,3.2*K);
+  shp.quadraticCurveTo(9.5*K,1.2*K,9*K,-0.6*K); shp.quadraticCurveTo(7*K,0.4*K,6*K,-1.4*K);
+  shp.quadraticCurveTo(4*K,-0.2*K,2.8*K,-1.8*K); shp.quadraticCurveTo(1.5*K,-0.6*K,0,-1.2*K); shp.lineTo(0,0);
+  var wgeo=new THREE.ShapeGeometry(shp,8), wings=[];
+  [-1,1].forEach(function(sd){
+    var w=new THREE.Group(); w.position.set(sd*0.55,BY+0.6,0.55); body.add(w);
+    var mem=new THREE.Mesh(wgeo,wingM); mem.rotation.x=Math.PI/2; mem.scale.set(sd,1,1); w.add(mem);
+    [[3,4.5,0.09],[11,3.2,0.07],[9,-0.6,0.05],[6,-1.4,0.05],[2.8,-1.8,0.05]].forEach(function(pt,bi){
+      var x=pt[0]*K, y=pt[1]*K, len=Math.sqrt(x*x+y*y);
+      var bone=new THREE.Mesh(new THREE.CylinderGeometry(pt[2]*0.7,pt[2],len,8),dark);
+      bone.position.set(x/2,y/2,0.02); bone.rotation.z=Math.atan2(y,x)-Math.PI/2;
+      if(bi===1){ bone.position.set((3*K+x)/2,(4.5*K+y)/2,0.02); var dx=x-3*K, dy=y-4.5*K; bone.scale.y=Math.sqrt(dx*dx+dy*dy)/len; bone.rotation.z=Math.atan2(dy,dx)-Math.PI/2; }
+      mem.add(bone);
+    });
+    wings.push({g:w,mem:mem,sd:sd});
+  });
+
+  /* the Corp's saddle: a blue blanket trimmed in gold, a leather seat, stirrups */
+  var drape=mesh(new THREE.CylinderGeometry(0.94,0.94,1.5,24,1,true,Math.PI-1.15,2.3),blanket,0,BY,0.1,Math.PI/2); drape.scale.set(1,1,0.97); body.add(drape);
+  [-0.74,0.74].forEach(function(zz){ var tr=mesh(new THREE.CylinderGeometry(0.955,0.955,0.07,24,1,true,Math.PI-1.16,2.32),gold,0,BY,0.1+zz,Math.PI/2); body.add(tr); });
+  [-1,1].forEach(function(sd){
+    body.add(mesh(new THREE.CylinderGeometry(0.17,0.17,0.02,20),gold,sd*0.86,BY-0.42,0.1,0,0,Math.PI/2+sd*0.42));
+    var strap=mesh(new THREE.BoxGeometry(0.04,0.78,0.06),leather,sd*0.82,BY+0.2,0.05,0,0,sd*0.18); body.add(strap);
+    var st=mesh(new THREE.TorusGeometry(0.08,0.016,8,16),M(0x8A8C92),sd*0.9,BY-0.24,0.05); body.add(st);
+  });
+  body.add(mesh(new THREE.BoxGeometry(0.62,0.16,0.9),leather,0,DRAGON_SADDLE-0.08,0.05));
+  body.add(mesh(new THREE.BoxGeometry(0.6,0.34,0.12),leather,0,DRAGON_SADDLE+0.05,-0.4));
+  body.add(mesh(new THREE.CylinderGeometry(0.06,0.08,0.32,10),leather,0,DRAGON_SADDLE+0.06,0.46));
+  body.add(mesh(new THREE.SphereGeometry(0.07,10,8),gold,0,DRAGON_SADDLE+0.24,0.46));
+
+  /* how it holds itself: blended toward whatever it is doing now */
+  var S={fly:0,walk:0,curl:0,t0:hashSeed(col)};
+  g.userData.pose="stand"; g.userData.speed=0;
+  function lerp(a,b,k){ return a+(b-a)*k; }
+  g.userData.anim=function(t,dt){
+    var p=g.userData.pose, k=Math.min(1,(dt||0.033)*3.5);
+    S.fly+=((p==="fly"?1:0)-S.fly)*k; S.curl+=((p==="perch"?1:0)-S.curl)*k;
+    S.walk+=((p==="walk"?1:0)-S.walk)*k;
+    var tt=t+S.t0, F=S.fly;
+    /* wings: beating in flight, folded up and back at rest */
+    var beat=Math.sin(tt*2.6);
+    wings.forEach(function(w){
+      /* folded: laid back along the flanks, the tips over the haunches */
+      w.g.rotation.z=w.sd*lerp(0.55,0.12+beat*0.62,F);
+      w.g.rotation.y=w.sd*lerp(1.2,0,F);
+      w.g.rotation.x=lerp(-0.15,0,F);
+      w.mem.scale.x=w.sd*lerp(0.62,1,F);
+    });
+    body.position.y=F*(-beat*0.12);
+    neck.rotation.x=Math.sin(tt*0.9)*0.05+F*0.18-S.curl*0.08;
+    head.rotation.x=-F*0.14+S.curl*0.1;
+    head.rotation.y=S.curl*Math.sin(tt*0.25)*0.35;
+    /* legs: down and walking on the ground, tucked up in the air */
+    var sw=S.walk*Math.sin(tt*6.5)*0.42;
+    legs.forEach(function(L,i){
+      var walkA=(i%2===0?1:-1)*(L.hind?-1:1)*sw;
+      L.pv.rotation.x=lerp(walkA,L.hind?1.25:0.95,F);
+      L.kn.rotation.x=lerp(Math.max(0,-walkA)*0.6,L.hind?0.35:-1.35,F);
+    });
+    /* the tail: straight out behind in flight, down to the ground standing, curled round perching */
+    tail.forEach(function(j,i){
+      var sway=Math.sin(tt*1.3-i*0.45)*(0.04+F*0.04);
+      var droopStand=i<4?0.08:-0.03, droopFly=i<3?0.02:-0.01, droopPerch=i<4?0.1:-0.03;
+      j.rotation.x=lerp(lerp(droopStand,droopPerch,S.curl),droopFly,F);
+      j.rotation.y=sway+S.curl*0.26;
+    });
+  };
+  g.userData.anim(0,1); g.userData.anim(0,1);
+  return g;
+}
+function hashSeed(x){ return (typeof hash==="function"?hash(String(x)):7)%100/10; }
+
+/* ================================================================ riding it */
+RIDE_SEAT.dragon=DRAGON_SADDLE-DRAGON_HIP;
+function myDragon(){ var d=(CORP.data&&CORP.data.dragon)||{}; return {name:d.name||"your dragon",color:d.color||"green"}; }
+function speciesScale(L){ var sp=L&&L.species&&SPECIES_FEATS[L.species]; return (sp&&sp.s)||1; }
+/* a rider sits astride: legs out round the dragon's sides, hips in the saddle */
+function riderPose(fig){
+  var lm=fig&&fig.userData&&fig.userData.limbs; if(!lm) return;
+  [lm.ll,lm.rl].forEach(function(l){ if(!l) return; l.rotation.z=(l.position.x>0?1:-1)*0.62; l.rotation.x=-0.35; });
+}
+var EY={list:[],at:0,perched:{},guide:null,panelAt:0,mountedPrev:false,landCool:0,last:null,away:true};
+
+(function(){
+  /* the mount, drawn as the riding dragon in the rider's colour */
+  var rt=rideTick;
+  rideTick=function(dt){
+    if(rideArch!=="dragon") return rt(dt);
+    var show=walkMode&&!store.inside;
+    if(!show){ if(rideG) rideG.visible=false; return; }
+    var col=myDragon().color;
+    if(rideG&&rideG.userData.col!==col){ scene.remove(rideG); rideG=null; }
+    if(!rideG){ rideG=buildMountDragon(col); rideG.traverse(function(m){ m.raycast=function(){}; }); scene.add(rideG); }
+    var P=camera.position, seat=rideSeatNow(), base=P.y-1.72-seat;
+    rideG.visible=true;
+    rideG.position.set(P.x,base,P.z);
+    rideG.rotation.y=yaw+Math.PI;
+    var gy=(typeof supportAt==="function")?supportAt(P.x,P.z,base):terrainY(P.x,P.z);
+    var moved=EY.last?Math.hypot(P.x-EY.last.x,P.z-EY.last.z):0; EY.last={x:P.x,z:P.z};
+    rideG.userData.pose=base-gy>0.6?"fly":(moved>0.02?"walk":"stand");
+    rideG.userData.anim(performance.now()/1000,dt);
+  };
+  /* your own figure, seen from behind, sits in the saddle */
+  if(typeof avatarTick==="function"){
+    var at=avatarTick;
+    avatarTick=function(dt){
+      at(dt);
+      if(rideArch==="dragon"&&meG&&walkMode&&!store.inside){
+        meG.position.y+=DRAGON_HIP*(1-speciesScale(meLook()));
+        riderPose(meG);
+      }
+    };
+  }
+  /* stepping out of walking and back in keeps you in the saddle, and in the air */
+  if(typeof setWalk==="function"){
+    var sw=setWalk;
+    setWalk=function(on){ var r=sw.apply(this,arguments); if(rideArch&&RIDE_FLIES[rideArch]&&typeof canFly!=="undefined") canFly=true; return r; };
+  }
+  /* getting off: you keep flying only if you could fly before */
+  var rd=ride;
+  ride=function(name){
+    var was=rideArch;
+    rd(name);
+    if(!rideArch&&was&&RIDE_FLIES[was]&&typeof canFly!=="undefined")
+      canFly=hasAbility("flying")||hasAbility("floating")||(typeof magicGranted!=="undefined"&&!!magicGranted);
+  };
+})();
+
+/* the Corp mount: your own dragon, by name */
+(function(){
+  corpMount=function(on){
+    if(on){
+      var d=myDragon();
+      riding=d.name; rideSpeed=4; rideArch="dragon"; if(typeof canFly!=="undefined") canFly=true;
+      if(rideG){ scene.remove(rideG); rideG=null; }
+      var L=meLook(); L.ride="dragon"; L.rideColor=d.color; L.rideName=d.name;
+      if(typeof publishMyLook==="function") publishMyLook();
+      CORP.mounted=true;
+      setStatus("<b>Up on "+esc(d.name)+".</b> Space to climb, C to come down. Fly home to your balcony at the Eyrie and land to go in.");
+    } else {
+      if(typeof ride==="function") ride(null); CORP.mounted=false;
+      var L2=meLook(); delete L2.rideColor; delete L2.rideName;
+      if(typeof publishMyLook==="function") publishMyLook();
+    }
+  };
+})();
+
+/* other dreamers: facing the way they go, their size their own, astride their dragons */
+(function(){
+  if(typeof presenceGroupFor!=="function") return;
+  var pg=presenceGroupFor;
+  presenceGroupFor=function(row){
+    var g=pg(row), body=g.children[0], L=(row&&row.look)||{}, s=speciesScale(L);
+    /* a presence group turns with its dreamer's view, and the view looks down -z;
+       the figure is built facing +z, so it turns round to face where they look */
+    if(body&&body.isGroup!==false&&body!==g.userData.tag&&body!==g.userData.mount){ body.rotation.order="YXZ"; body.rotation.y+=Math.PI; }
+    if(g.userData.tag&&s!==1) g.userData.tag.position.y-=2.02*(1-s);
+    if(L.ride==="dragon"&&g.userData.mount) riderPose(g);
+    return g;
+  };
+})();
+
+/* ================================================================ the Eyrie */
+/* a tower of the Corp's own stone. Seven floors of apartments over a lobby;
+   on each floor, one apartment to each face, every one with a broad open
+   ledge for its dragon — staggered left and right, floor by floor, so a
+   dragon on one ledge has the open sky above it */
+var EYRIE_CORE=24, EYRIE_FLOORS=7, EYRIE_LEDGE={w:8,d:7};
+function eyrieLedgeTop(f){ return 5*f+1; }
+function eyrieSlot(n){ var i=n-1; var f=1+Math.floor(i/4); return {n:n,f:f,side:i%4,u:(f%2===1)?-6:6,y:eyrieLedgeTop(f)}; }
+/* a point on a face: u along it, v out from it */
+function eyrieLocal(side,u,v){
+  var h=EYRIE_CORE/2+v;
+  if(side===0) return {x:u,z:h,ox:0,oz:1};
+  if(side===1) return {x:h,z:-u,ox:1,oz:0};
+  if(side===2) return {x:-u,z:-h,ox:0,oz:-1};
+  return {x:-h,z:u,ox:-1,oz:0};
+}
+(function(){
+  var parts=[
+    {g:"box",s:[EYRIE_CORE,42,EYRIE_CORE],p:[0,21,0],c:"body"},
+    {g:"box",s:[EYRIE_CORE+1.2,0.6,EYRIE_CORE+1.2],p:[0,0.3,0],c:"trim"},
+    {g:"box",s:[EYRIE_CORE+1.4,1.2,EYRIE_CORE+1.4],p:[0,42.6,0],c:"trim"},
+    {g:"box",s:[EYRIE_CORE+1.4,0.5,EYRIE_CORE+1.4],p:[0,5.75,0],c:"trim"},
+    {g:"cone",s:[17.6,11,4],p:[0,48.7,0],r:[0,Math.PI/4,0],c:"roof"},
+    {g:"cyl",s:[0.45,0.6,6,10],p:[0,57,0],c:0x2A2E38},
+    {g:"sph",s:[1.1],p:[0,60.3,0],c:0xFFB45A,glow:1,pulse:1},
+    {g:"box",s:[3.2,3.8,0.5],p:[0,1.9,EYRIE_CORE/2+0.2],c:"dark"},
+    {g:"box",s:[4.6,0.5,0.8],p:[0,4.05,EYRIE_CORE/2+0.35],c:"trim"}
+  ];
+  /* a column of tall windows up the middle of every face, between the ledges */
+  [0,1,2,3].forEach(function(side){
+    var a=eyrieLocal(side,0,0.06), along=side%2===0;
+    parts.push({g:"box",s:along?[1.4,3,0.2]:[0.2,3,1.4],p:[a.x,eyrieLedgeTop(1)+2,a.z],c:0x3A4654,rep:[7,0,5,0]});
+  });
+  /* the ledges: odd floors to one side of each face, even floors to the other */
+  [[1,4],[2,3]].forEach(function(fr){
+    var f0=fr[0], n=fr[1], u=(f0%2===1)?-6:6, y=eyrieLedgeTop(f0);
+    [0,1,2,3].forEach(function(side){
+      var along=side%2===0;
+      function sz(a,o,h){ return along?[a,h,o]:[o,h,a]; }
+      function at(uu,v,yy){ var L=eyrieLocal(side,uu,v); return [L.x,yy,L.z]; }
+      var rep=[n,0,10,0];
+      parts.push({g:"box",s:sz(EYRIE_LEDGE.w,EYRIE_LEDGE.d,0.6),p:at(u,EYRIE_LEDGE.d/2,y-0.3),c:"trim",rep:rep});
+      [-1,1].forEach(function(sd){
+        parts.push({g:"box",s:sz(0.9,5,1.6),p:at(u+sd*3,2.5,y-1.4),c:"trim",rep:rep});
+        parts.push({g:"box",s:sz(0.3,EYRIE_LEDGE.d,1.1),p:at(u+sd*3.85,EYRIE_LEDGE.d/2,y+0.55),c:"body",rep:rep});
+      });
+      parts.push({g:"box",s:sz(3.4,0.25,3.6),p:at(u,0.12,y+1.8),c:0xFFC878,glow:1,rep:rep});
+      parts.push({g:"box",s:sz(4.2,0.3,0.6),p:at(u,0.3,y+3.75),c:"trim",rep:rep});
+      parts.push({g:"sph",s:[0.24],p:at(u+3.85,EYRIE_LEDGE.d-0.3,y+1.35),c:0xFFB45A,glow:1,rep:rep});
+      parts.push({g:"sph",s:[0.24],p:at(u-3.85,EYRIE_LEDGE.d-0.3,y+1.35),c:0xFFB45A,glow:1,rep:rep});
+    });
+  });
+  A("eyrie","structure",[EYRIE_CORE,44,EYRIE_CORE],parts,{sign:[0,4.95,EYRIE_CORE/2+0.8,4.4,1.3]});
+  if(typeof MORE_VOCAB!=="undefined") MORE_VOCAB.eyrie=["eyrie","dragon eyrie"];
+  if(typeof PLANS!=="undefined") PLANS.eyrie={mode:"mixed",ground:"lobby",w:20,d:20,upper:["living","bedroom","kitchen","bathroom"],wall:0xC8CCD4,floor:"wood",lift:true};
+  if(typeof STOREYS!=="undefined") STOREYS.eyrie=EYRIE_FLOORS+1;
+})();
+
+/* laid with the city, behind the Roost, under its own run of names */
+(function(){
+  if(typeof atlTransit!=="function") return;
+  var tr=atlTransit;
+  atlTransit=function(C){
+    tr(C);
+    var keepSeq=C.seq, keepPre=C.pre; C.pre="se"; C.seq=0;
+    try{ atlEyrie(C); }catch(e){ if(window.console) console.warn("eyrie:",e); } finally { C.pre=keepPre; C.seq=keepSeq; }
+  };
+})();
+function atlEyrie(C){
+  var w=C.workplaces["The Dragon Roost"]; if(!w) return;
+  var roost=store.objects.filter(function(o){ return o.id===w.id; })[0]; if(!roost) return;
+  var rx=roost.x-C.h.x, rz=roost.z-C.h.z, rr=Math.hypot(rx,rz), a=Math.atan2(rz,rx);
+  var rd=kitD(roost.archetype,(roost.attrs&&roost.attrs.s)||1);
+  var r=rr+rd/2+6+EYRIE_LEDGE.d+EYRIE_CORE/2;
+  /* its door faces along the ring, toward the street side of the Roost */
+  var sp=C.at("eyrie",r,a,rotAlong(a),"The Eyrie",{c:0x5C626E,rc:0x2C3A54},{eyrie:true,sign:"The Eyrie"});
+  if(!sp) return;
+  var d=doorWorld(sp), kx=d.x+d.out.x*4, kz=d.z+d.out.z*4;
+  var ka=Math.atan2(kz-C.h.z,kx-C.h.x), kr=Math.hypot(kx-C.h.x,kz-C.h.z);
+  C.sign(kr,ka+3/kr,rotAlong(a)+Math.PI/2,"The Eyrie","Quarters of the Dragon Corp. Every officer has an apartment here, and a balcony for their dragon.");
+  store.eyrieId=sp.id;
+}
+function eyrieSpec(){ var id=store.eyrieId; if(!id) return null; for(var i=0;i<store.objects.length;i++) if(store.objects[i].id===id) return store.objects[i]; return null; }
+/* where apartment n's dragon perches, in the world */
+function eyriePerch(n,v){
+  var sp=eyrieSpec(); if(!sp||!n) return null;
+  var S=eyrieSlot(n), L=eyrieLocal(S.side,S.u,v===undefined?3.9:v), r=sp.rot||0, c=Math.cos(r), s=Math.sin(r);
+  var base=terrainY(sp.x,sp.z)+(sp.y||0);
+  var ox=L.ox*c+L.oz*s, oz=-L.ox*s+L.oz*c;
+  return {x:sp.x+L.x*c+L.z*s, z:sp.z-L.x*s+L.z*c, y:base+S.y, ox:ox, oz:oz, rot:Math.atan2(ox,oz), floor:S.f, n:n};
+}
+var EYRIE_FACE=["north","east","south","west"];
+function eyrieWords(n){ var S=eyrieSlot(n); return "No. "+n+", floor "+(S.f+1)+" of the Eyrie"; }
+
+/* only the Corp go above the lobby */
+(function(){
+  if(typeof levelAllowed!=="function") return;
+  var la=levelAllowed;
+  levelAllowed=function(to){
+    if(INT&&INT.spec&&INT.spec.eyrie&&to>0&&!(amCorp()||(typeof amKeeper==="function"&&amKeeper()))){
+      setStatus("<b>The lift will not go up.</b> The floors above are the Corp's own quarters.");
+      return false;
+    }
+    return la(to);
+  };
+})();
+
+/* ================================================================ the balconies */
+function eyrieRefresh(){
+  if(!(typeof signedIn==="function"&&signedIn())) return;
+  if(Date.now()-EY.at<60000) return;
+  EY.at=Date.now();
+  cityRpc("corp_eyrie").then(function(l){ EY.list=Array.isArray(l)?l:[]; eyriePerchAll(); }).catch(function(){});
+}
+function eyrieAway(row){
+  /* a dragon is off its balcony while its rider is up on it */
+  var me=(typeof myUserId==="function")?myUserId():null;
+  if(row.id===me) return !!CORP.mounted;
+  var p=(typeof presenceOthers!=="undefined")?presenceOthers[row.id]:null;
+  return !!(p&&p.group&&p.group.userData.mount);
+}
+function eyrieClearPerch(n){
+  var P=EY.perched[n]; if(!P) return;
+  (P.meshes||[]).forEach(function(m){ scene.remove(m); }); if(P.g) scene.remove(P.g);
+  delete EY.perched[n];
+}
+function eyriePerchAll(){
+  var want={};
+  (EY.list||[]).forEach(function(row){
+    if(!row.apartment||eyrieAway(row)) return;
+    var key=row.apartment, sig=row.color+"|"+row.id;
+    want[key]=1;
+    if(EY.perched[key]&&EY.perched[key].sig===sig) return;
+    eyrieClearPerch(key);
+    var at=eyriePerch(row.apartment); if(!at) return;
+    var g=buildMountDragon(row.color,{lod:false}); g.userData.pose="perch";
+    for(var i=0;i<40;i++) g.userData.anim(i*0.1,0.1);
+    g.position.set(at.x,at.y,at.z); g.rotation.y=at.rot; g.updateMatrixWorld(true);
+    var rec={sig:sig,at:at,name:row.dragon,rider:row.rider};
+    if(typeof bakePress==="function"){
+      var list=[]; g.traverse(function(m){ if(m.isMesh) list.push({m:m}); });
+      try{
+        rec.meshes=bakePress(list,at.x,at.z,"eyrie"+key).meshes;
+        if(typeof TOON!=="undefined"&&TOON) rec.meshes.forEach(function(m){ if(m.material&&m.material.isMeshToonMaterial) m.material.onBeforeCompile=TOON.hook; });
+      }catch(e){ rec.meshes=null; }
+    }
+    if(!rec.meshes){ rec.g=g; g.traverse(function(m){ m.raycast=function(){}; }); scene.add(g); }
+    EY.perched[key]=rec;
+  });
+  Object.keys(EY.perched).forEach(function(k){ if(!want[k]) eyrieClearPerch(k); });
+}
+function eyrieShow(on){
+  Object.keys(EY.perched).forEach(function(k){ var P=EY.perched[k];
+    (P.meshes||[]).forEach(function(m){ m.visible=on; }); if(P.g) P.g.visible=on; });
+}
+
+/* ================================================================ every frame */
+function eyrieTick(dt){
+  var r=somnucorRealm(), here=r&&(store.here||0)===r.id;
+  if(!here){ eyrieShow(false); eyriePanel(null); return; }
+  eyrieRefresh();
+  var sp=eyrieSpec(), P=camera.position;
+  var near=sp&&!store.inside&&Math.hypot(sp.x-P.x,sp.z-P.z)<900;
+  eyrieShow(!!near);
+  /* the balconies follow who is riding */
+  if(CORP.mounted!==EY.mountedPrev){ EY.mountedPrev=CORP.mounted; eyriePerchAll(); }
+  EY.panelAt-=dt; if(EY.panelAt<=0){ EY.panelAt=2; eyriePerchAll(); }
+  /* the other riders' dragons, alive */
+  if(typeof presenceOthers!=="undefined") Object.keys(presenceOthers).forEach(function(id){
+    var p=presenceOthers[id], g=p.group, m=g&&g.userData.mount; if(!m) return;
+    var gy=terrainY(g.position.x,g.position.z), mv=p.lastX!==undefined?Math.hypot(g.position.x-p.lastX,g.position.z-p.lastZ):0;
+    p.lastX=g.position.x; p.lastZ=g.position.z;
+    m.userData.pose=g.position.y-gy>0.6?"fly":(mv>0.01?"walk":"stand");
+    m.userData.anim(performance.now()/1000,dt);
+  });
+  /* home: land on your own balcony and go in */
+  if(EY.landCool>0) EY.landCool-=dt;
+  var mine=CORP.data&&CORP.data.apartment, B=mine?eyriePerch(mine):null;
+  if(CORP.mounted&&B&&!store.inside){
+    var feet=P.y-1.72-rideSeatNow(), dh=Math.hypot(B.x-P.x,B.z-P.z);
+    if(dh>15) EY.away=true;
+    if(EY.away&&EY.landCool<=0&&dh<5&&Math.abs(feet-B.y)<3) eyrieLand(B);
+  }
+  eyrieGuideTick();
+  eyriePanel(store.inside&&INT&&INT.spec&&INT.spec.eyrie?INT:null);
+}
+function eyrieLand(B){
+  EY.landCool=4; EY.guide=null;
+  corpMount(false);
+  var sp=eyrieSpec(); if(!sp) return;
+  enterBuilding(sp);
+  var f=Math.min(B.floor,(INT.levels||1)-1);
+  INT.level=f; camera.position.y=1.72+f*INT.floor; wallsAt=-1;
+  setStatus("<b>Home.</b> "+esc(myDragon().name)+" settles on the balcony. You are on floor "+(f+1)+", at your apartment.");
+}
+function eyrieMountHere(){
+  var mine=CORP.data&&CORP.data.apartment, B=mine?eyriePerch(mine):null; if(!B) return;
+  if(store.inside&&typeof exitInterior==="function") exitInterior(true);
+  EY.landCool=5; EY.away=false;
+  camera.position.set(B.x,B.y+RIDE_SEAT.dragon+1.72,B.z);
+  yaw=Math.atan2(-B.ox,-B.oz); pitch=-0.12;
+  corpMount(true);
+  if(typeof flyY!=="undefined") flyY=B.y+RIDE_SEAT.dragon;
+  setStatus("<b>Out onto the balcony, and up into the saddle.</b> "+esc(myDragon().name)+" spreads its wings — Space to climb, C to come down. Land here again to go back in.");
+}
+/* the way home */
+function eyrieGo(){
+  var mine=CORP.data&&CORP.data.apartment, sp=eyrieSpec(); if(!sp) return;
+  if(CORP.mounted&&mine){ var B=eyriePerch(mine); EY.guide={x:B.x,z:B.z,y:B.y,name:"your balcony"}; }
+  else { var d=doorWorld(sp); EY.guide={x:d.x,z:d.z,name:"the Eyrie's door"}; }
+  if(typeof WORK!=="undefined"){ WORK.open=false; if(typeof workPaint==="function") workPaint(); }
+}
+function eyrieGuideTick(){
+  var G=EY.guide, run=document.getElementById("work-run"); if(!G) return;
+  if(!run){ if(typeof workEl==="function") workEl(); run=document.getElementById("work-run"); if(!run) return; }
+  var P=camera.position, d=Math.hypot(G.x-P.x,G.z-P.z);
+  if(store.inside||d<6){ EY.guide=null; run.style.display="none"; return; }
+  var bearing=Math.atan2(G.x-P.x,G.z-P.z), rel=(bearing-(yaw+Math.PI))*180/Math.PI;
+  var up=G.y!==undefined?Math.round(G.y-(P.y-1.72-rideSeatNow())):0;
+  run.style.display="block";
+  run.innerHTML="<b>Home to the Eyrie</b><div style='margin-top:6px'>"+esc(G.name)+" · "+Math.round(d)+" m"+(up>2?" · "+up+" m up":"")+
+    " <span class='arrow' style='display:inline-block;transform:rotate("+(-rel).toFixed(0)+"deg)'>↑</span></div><div style='margin-top:6px'><button class='btn' id='ey-stop'>Stop</button></div>";
+  var st=document.getElementById("ey-stop"); if(st) st.onclick=function(){ EY.guide=null; run.style.display="none"; };
+}
+
+/* inside the Eyrie: the way up, and your own door */
+function eyriePanel(I){
+  var el=document.getElementById("eyrie-panel");
+  if(!I){ if(el) el.style.display="none"; return; }
+  if(!el){
+    el=document.createElement("div"); el.id="eyrie-panel";
+    el.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:40;background:rgba(14,16,22,.9);border:1px solid #3A4458;"+
+      "border-radius:10px;padding:10px 14px;font:14px var(--sans,system-ui);color:#E8E2D2;max-width:min(92vw,460px);text-align:center;line-height:1.5";
+    document.body.appendChild(el);
+  }
+  var lvl=I.level||0, mine=CORP.data&&CORP.data.apartment, S=mine?eyrieSlot(mine):null, key;
+  var corp=amCorp(), h;
+  if(!corp) h='<b style="color:#E8C27A">The Eyrie</b><br>Quarters of the Dragon Corp. The floors above are the officers\' own.';
+  else if(!mine) h='<b style="color:#E8C27A">The Eyrie</b><br>Your apartment is being made ready. Open your work panel in a moment.';
+  else if(lvl!==S.f) h='<b style="color:#E8C27A">The Eyrie</b><br>Your apartment is <b>'+esc(eyrieWords(mine))+'</b>'+(lvl===0?' — take the lift up.':' — this is floor '+(lvl+1)+'.');
+  else h='<b style="color:#E8C27A">Apartment '+mine+'</b><br>'+esc(myDragon().name)+' waits on your balcony.<div style="margin-top:8px"><button class="btn" id="ey-mount">Out onto the balcony — mount '+esc(myDragon().name)+'</button></div>';
+  key=h;
+  if(el.dataset.k!==key){ el.dataset.k=key; el.innerHTML=h; var b=document.getElementById("ey-mount"); if(b) b.onclick=eyrieMountHere; }
+  el.style.display="block";
+}
+
+/* ================================================================ the Corp panel */
+(function(){
+  if(typeof corpHtml!=="function") return;
+  var ch=corpHtml;
+  corpHtml=function(){
+    var h=ch(), d=CORP.data; if(!h||!d||!amCorp()) return h;
+    var dr=myDragon(), mark='<div style="color:var(--dim);margin-top:4px">Sectors</div>';
+    var x='<div style="margin:8px 0;padding:8px 0;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)">'+
+      (d.apartment?'Your apartment: <b style="color:var(--bone)">'+esc(eyrieWords(d.apartment))+'</b> <button class="btn" id="ey-go">Go there</button>':'<span style="color:var(--dim)">Your apartment in the Eyrie is being made ready.</span>')+
+      '<div style="margin-top:6px">Your dragon: <input id="ey-name" maxlength="30" value="'+esc(dr.name==="your dragon"?"":dr.name)+'" placeholder="name your dragon" style="width:9em;background:#0E1016;color:var(--bone,#eee);border:1px solid #3A4458;border-radius:6px;padding:3px 6px"> '+
+      DRAGON_COLS.map(function(c){ return '<button data-dc="'+c+'" title="'+c+'" style="width:18px;height:18px;border-radius:50%;margin:0 2px;vertical-align:middle;cursor:pointer;background:#'+("000000"+DRAGON_COL[c].toString(16)).slice(-6)+
+        ';border:2px solid '+(c===dr.color?"#E8C27A":"transparent")+'"></button>'; }).join("")+
+      ' <button class="btn" id="ey-save">Keep</button></div></div>';
+    return h.indexOf(mark)>-1?h.replace(mark,x+mark):h+x;
+  };
+  var cw=corpWire;
+  corpWire=function(el){
+    cw(el);
+    var mb=document.getElementById("corp-mount"); if(mb&&!CORP.mounted) mb.textContent="Mount "+myDragon().name;
+    var go=document.getElementById("ey-go"); if(go) go.onclick=eyrieGo;
+    var pick=myDragon().color;
+    Array.prototype.forEach.call(el.querySelectorAll("[data-dc]"),function(b){ b.onclick=function(){
+      pick=b.getAttribute("data-dc");
+      Array.prototype.forEach.call(el.querySelectorAll("[data-dc]"),function(o){ o.style.borderColor=o===b?"#E8C27A":"transparent"; }); }; });
+    var sv=document.getElementById("ey-save"); if(sv) sv.onclick=function(){
+      var nm=(document.getElementById("ey-name").value||"").trim();
+      cityRpc("corp_dragon",{p_name:nm||null,p_color:pick}).then(function(o){
+        if(o!=="ok"){ setStatus(esc(String(o))); return; }
+        if(CORP.data){ CORP.data.dragon={name:nm||myDragon().name,color:pick}; }
+        if(CORP.mounted) corpMount(true);
+        EY.at=0; eyrieRefresh();
+        setStatus("<b>"+esc(nm||"Your dragon")+"</b> — so it is. ");
+        if(typeof workPaint==="function") workPaint();
+      }).catch(function(e){ setStatus(esc(e.message)); });
+    };
+  };
+})();
+</script>
+<script>/* js/deity-look.js */
+/* SomnuMatrix — deity-look.js
+   no two powers alike. Every deity is dressed from who they are:
+     - their own people: skin, hair and face from their tradition, never a
+       grey statue; goddesses as goddesses
+     - their tradition's own dress, on top of their own colours: a Greek
+       himation, a Norse fur mantle, an Egyptian broad collar and headcloth,
+       Hindu gold and a sash, a Japanese obi and sleeves, a Chinese court
+       robe, a Sumerian fleece skirt, a Mexica feather crown, orisha beads,
+       a Celtic torc and cloak, a Slavic embroidered belt, a Polynesian lei,
+       the tattered cloak of the adversaries
+     - their own sign: the sun, the moon, a wave, a flame, a leaf, a bolt…
+       hung glowing behind them, and carved over their temple's door
+   and every temple on Temple Row takes its colours, its banners and its sign
+   from the power who lives there.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var DEITY_F={hera:1,demeter:1,athena:1,artemis:1,aphrodite:1,hestia:1,persephone:1,hecate:1,nemesis:1,nyx:1,selene:1,gaia:1,echidna:1,
+  juno:1,minerva:1,venus:1,vesta:1,diana:1,ceres:1,fortuna:1,frigg:1,sif:1,idunn:1,freyja:1,skadi:1,hel:1,
+  isis:1,maat:1,nephthys:1,sekhmet:1,hathor:1,bastet:1,nut:1,taweret:1,lakshmi:1,saraswati:1,parvati:1,durga:1,kali:1,ganga:1,
+  amaterasu:1,izanami:1,inari:1,benzaiten:1,inanna:1,ereshkigal:1,ninhursag:1,tiamat:1,oya:1,osun:1,yemoja:1,
+  brigid:1,morrigan:1,airmid:1,eriu:1,rhiannon:1,cerridwen:1,arianrhod:1,orddu:1,mokosh:1,morana:1,babayaga:1,
+  erzulie:1,mamanbrigitte:1,nuwa:1,xiwangmu:1,change:1,guanyin:1,mazu:1,hexiangu:1,xochiquetzal:1,coatlicue:1,chalchiuhtlicue:1,
+  pachamama:1,mamaquilla:1,asaseyaa:1,pele:1,hina:1,papatuanuku:1,anahita:1,lilith:1,naamah:1,matres:1,epona:1,ixchel:1};
+var TRAD_SKIN={
+  Greek:[0xC89A70,0xD8B08A,0xB88660],Roman:[0xD0A27A,0xC08E66,0xDDB592],Hebrew:[0xC8986C],
+  Norse:[0xF0D2B8,0xE8C4A6,0xDDB596],Slavic:[0xF0D4BC,0xE6C2A2],Irish:[0xF2D6C0,0xE8C6A8],Welsh:[0xF0D2BA,0xE4C0A0],Gaulish:[0xE8C8A8,0xDCB896],"Anglo-Saxon":[0xEED0B6],
+  Egyptian:[0x9A6A44,0xB07A50,0x8A5A38],Hindu:[0xB07A50,0x9A6844,0xC48A5C],Japanese:[0xEAC8A2,0xDDB890],Chinese:[0xE6C49C,0xDAB48A],
+  Mesopotamian:[0xB8885E,0xA87A52],Persian:[0xC0906A,0xB08060],Aztec:[0xA8724A,0x9A6440],Maya:[0x9E6A44,0xA8724A],Inca:[0xA06A44,0x946040],
+  Yoruba:[0x5A3A26,0x6A4430,0x4A2E1E],Akan:[0x5E3C28,0x4E3220],Vodou:[0x5A3A26,0x6A4632],Hawaiian:[0x9A6640],Polynesian:[0x9A6640,0x8A5A38],
+  Demonology:[0xB8A8A0,0x8A3A30,0x6A6070],Qliphothic:[0xC8C0C8,0x5A4A5A],Adversarial:[0xD8C8B8,0x9A4A3A]};
+var TRAD_HAIR={Norse:[0xD8B46A,0xB0702E,0x8A5A2A],Irish:[0xA0441E,0xC86A2E,0x3A2A1A],Welsh:[0x3A2A1A,0x8A4A22],Slavic:[0xC8A060,0x6A4A2A],
+  Gaulish:[0xB07A3A,0x5A3A22],Greek:[0x2A1E16,0x4A3220,0x8A6A3A],Roman:[0x2A1E16,0x3A2A1A],
+  Demonology:[0x111114,0x6A1A1A],Qliphothic:[0x0E0E12,0xE8E4DA],Adversarial:[0x1A1418,0xC8C0B0]};
+var TRAD_ROBE={Greek:0xE8E4DA,Roman:0xE0D8C4,Norse:0x5A6A7A,Egyptian:0xEDE6D4,Hindu:0xD8822A,Japanese:0xC0392B,Chinese:0xB03A2E,
+  Mesopotamian:0xC8A882,Persian:0x8A2A3A,Aztec:0x2E8A6A,Maya:0x3A8A5A,Inca:0xD4B83C,Yoruba:0xF2EEE6,Akan:0xD4B83C,Vodou:0x8A2A6A,
+  Irish:0x3F7A3A,Welsh:0x4A7A5A,Gaulish:0x6A8A4A,Slavic:0xE8E0CC,Hawaiian:0x2E8A8A,Polynesian:0x9A6A3A,
+  Demonology:0x2A1A1A,Qliphothic:0x2A1A34,Adversarial:0x2A1820,"Anglo-Saxon":0x6A5A3A,Hebrew:0xE8E4DA};
+var HEADWEAR=["crown","crownwhite","crownred","helmet","wingedhelm","cap","hat","laurel","mooncrown","veil","hood","head","sundisc","horns",
+  "antlers","cowhorns","feather","plumes","skull","formless","halfface","tripleface","fourfaces","twoface"];
+
+/* the power's own sign, from what they rule */
+var DOMAIN_SIGNS=[
+  [/\bsun\b|daylight|\bdawn\b|\blight\b/,"sun",0xF2B33A],[/\bmoon\b|\bnight\b|stars|dreams|sleep/,"moon",0xC8D4F0],
+  [/\bsea\b|ocean|water|river|rain|lake|flood|tide/,"wave",0x3AA8C8],[/thunder|storm|lightning|\bsky\b|wind/,"bolt",0x9AD0FF],
+  [/\bfire\b|forge|hearth|volcano|flame/,"flame",0xF06A2A],[/death|\bdead\b|underworld|grave|souls|decay/,"hourglass",0x8A5AC8],
+  [/\bwar\b|battle|warriors|strife|courage/,"sword",0xC83A2A],[/love|beauty|desire|marriage|fertility|childbirth/,"heart",0xF07AA8],
+  [/harvest|grain|earth|forest|wild|hunt|crops|farm|plants|healing|herbs|spring/,"leaf",0x5AB84A],
+  [/wisdom|knowledge|writing|magic|craft|prophecy|poetry|music|learning|law|justice/,"eye",0x5A8AF0]];
+function deitySign(d){
+  var t=String(d.domains||"").toLowerCase();
+  for(var i=0;i<DOMAIN_SIGNS.length;i++) if(DOMAIN_SIGNS[i][0].test(t)) return {kind:DOMAIN_SIGNS[i][1],col:DOMAIN_SIGNS[i][2]};
+  return {kind:"star",col:0xE8C27A};
+}
+/* the sign as a little sculpture, about a metre across, facing +z */
+function signShape(kind,col,glow){
+  var g=new THREE.Group(), m=glow?new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.92,depthWrite:false}):new THREE.MeshLambertMaterial({color:col});
+  var dk=glow?new THREE.MeshBasicMaterial({color:blend(col,0x000000,0.55),transparent:true,opacity:0.9,depthWrite:false}):new THREE.MeshLambertMaterial({color:blend(col,0x000000,0.55)});
+  function add(geo,mat,x,y,z,rz,sx,sy){ var o=new THREE.Mesh(geo,mat||m); o.position.set(x||0,y||0,z||0); if(rz) o.rotation.z=rz; if(sx||sy) o.scale.set(sx||1,sy||1,1); g.add(o); return o; }
+  var disc=function(r){ var c=new THREE.CylinderGeometry(r,r,0.06,28); c.rotateX(Math.PI/2); return c; };
+  if(kind==="sun"){ add(disc(0.26)); for(var i=0;i<10;i++){ var a=i/10*Math.PI*2; add(new THREE.ConeGeometry(0.06,0.2,8),m,Math.cos(a)*0.38,Math.sin(a)*0.38,0,a-Math.PI/2); } }
+  else if(kind==="moon"){ add(new THREE.TorusGeometry(0.32,0.09,10,32,Math.PI*1.25),m,0,0,0,Math.PI*0.37); }
+  else if(kind==="wave"){ for(var w=0;w<3;w++) add(new THREE.TorusGeometry(0.18,0.045,8,20,Math.PI),m,-0.36+w*0.36,(w%2?-0.04:0.04),0,w%2?Math.PI:0); }
+  else if(kind==="bolt"){ [[0.08,0.22,0.5],[-0.06,0,-0.5],[0.06,-0.22,0.5]].forEach(function(b){ add(new THREE.BoxGeometry(0.1,0.32,0.06),m,b[0],b[1],0,b[2]); }); }
+  else if(kind==="flame"){ add(new THREE.ConeGeometry(0.2,0.6,16),m,0,0.02); add(new THREE.ConeGeometry(0.11,0.36,12),dk,0,-0.06,0.08); }
+  else if(kind==="hourglass"){ add(new THREE.ConeGeometry(0.2,0.3,16),m,0,0.15,0,Math.PI); add(new THREE.ConeGeometry(0.2,0.3,16),m,0,-0.15); add(new THREE.BoxGeometry(0.5,0.05,0.08),dk,0,0.31); add(new THREE.BoxGeometry(0.5,0.05,0.08),dk,0,-0.31); }
+  else if(kind==="sword"){ add(new THREE.BoxGeometry(0.07,0.62,0.04),m,0,0.08); add(new THREE.BoxGeometry(0.32,0.06,0.06),dk,0,-0.22); add(new THREE.BoxGeometry(0.06,0.16,0.06),dk,0,-0.33); }
+  else if(kind==="heart"){ add(new THREE.SphereGeometry(0.15,16,12),m,-0.1,0.08); add(new THREE.SphereGeometry(0.15,16,12),m,0.1,0.08); add(new THREE.ConeGeometry(0.24,0.34,16),m,0,-0.14,0,Math.PI); }
+  else if(kind==="leaf"){ var lf=add(new THREE.SphereGeometry(0.24,16,12),m,0,0.04,0,0.5); lf.scale.set(0.55,1.25,0.25); add(new THREE.BoxGeometry(0.03,0.5,0.03),dk,0,-0.02,0.04,0.5); }
+  else if(kind==="eye"){ var ey=add(new THREE.TorusGeometry(0.26,0.04,8,32),m); ey.scale.set(1,0.55,1); add(disc(0.09),dk,0,0,0.02); }
+  else { for(var s=0;s<5;s++){ var sa=s/5*Math.PI*2+Math.PI/2; add(new THREE.ConeGeometry(0.08,0.3,8),m,Math.cos(sa)*0.15,Math.sin(sa)*0.15,0,sa-Math.PI/2); } add(disc(0.12)); }
+  return g;
+}
+
+/* ---- who they are: set on their look before they are built ---- */
+function pickOf(list,h){ return list[(h>>>0)%list.length]; }
+function deityLookMore(spec,d){
+  var L=lookOf(spec); L.src=L.src||{};
+  var h=hash("dl"+d.key), t=d.trad||"Greek", f=!!DEITY_F[d.key]&&!hasIcon(d,"longbeard")&&!hasIcon(d,"beard");
+  L.sex=f?"f":(L.sex||"m");
+  if(L.skin===null||L.skin===undefined) L.skin=pickOf(TRAD_SKIN[t]||[0xC89A70],h);
+  if(L.hair===null||L.hair===undefined) L.hair=pickOf(TRAD_HAIR[t]||[0x1E1612,0x2A1E16,0x3A2A1A],h>>>4);
+  if(hasIcon(d,"longbeard")&&!L.src.hair){ L.hair=pickOf([0xE8E4DA,0xBCB8B0,0x8A847A],h>>>6); L.src.hair="tradition"; }
+  if(!L.top){ L.top=TRAD_ROBE[t]||0xE8E4DA; L.bottom=shade(L.top,-0.2); L.topKind=L.topKind||"robe"; }
+  var styles=f?["long","bun","braids","long","ponytail"]:["long","short","waves","long","curly"];
+  if(t==="Yoruba"||t==="Akan"||t==="Vodou") styles=f?["headwrap","braids","locs","coily"]:["coily","locs","short","afro"];
+  if(t==="Japanese"||t==="Chinese") styles=f?["bun","long"]:["bun","long"];
+  if(!L.src.hairStyle||L.src.hairStyle==="tradition"){ L.hairStyle=pickOf(styles,h>>>8); L.src.hairStyle="tradition"; }
+  L.gear="none"; L.acc=false;
+  var sg=deitySign(d);
+  L.eyes=(t==="Demonology"||t==="Qliphothic"||t==="Adversarial")?0xC02020:blend(sg.col,0x2A1A10,0.35);
+  L.ears=(t==="Demonology"||t==="Qliphothic")?"pointed":"round";
+  return L;
+}
+(function(){
+  if(typeof deityLook!=="function") return;
+  var dl=deityLook;
+  deityLook=function(spec,d){ dl(spec,d); try{ deityLookMore(spec,d); }catch(e){ if(window.console) console.warn("deity look:",e); } };
+})();
+
+/* ---- their dress, put on after they are built ---- */
+var DL_GEO={};
+function dlg(k,make){ return DL_GEO[k]||(DL_GEO[k]=make()); }
+function dressDeity(g,spec,d){
+  var body=g.children[0]; if(!body) return;
+  var L=lookOf(spec), t=d.trad||"Greek", f=L.sex==="f", h=hash("dd"+d.key);
+  var top=L.top!==null&&L.top!==undefined?L.top:0xE8E4DA, trim=(typeof PRECINCT!=="undefined"&&PRECINCT[t]&&PRECINCT[t].trim)||0xC9A868;
+  var gold=0xC9A040, sg=deitySign(d), hy=1.72, limbs=g.userData.limbs||{};
+  var formless=hasIcon(d,"formless"), headgear=HEADWEAR.some(function(k){ return hasIcon(d,k); });
+  if(formless) return;
+  function M(c,ds){ var m=new THREE.MeshLambertMaterial({color:c}); if(ds) m.side=THREE.DoubleSide; return m; }
+  function add(parent,geo,mat,x,y,z,rx,ry,rz){ var o=new THREE.Mesh(geo,mat); o.position.set(x||0,y||0,z||0); if(rx||ry||rz) o.rotation.set(rx||0,ry||0,rz||0); o.userData.dl=1; parent.add(o); return o; }
+  var robe=null; body.children.forEach(function(m){ if(m.userData&&m.userData.part==="robe") robe=m; });
+  var gm=M(gold), tm=M(trim), am=M(sg.col);
+
+  /* a robe that falls and flares, with a band at its hem */
+  if(robe&&robe.visible!==false){
+    robe.geometry=dlg("roberlathe",function(){ var pts=[]; for(var i=0;i<=10;i++){ var u=i/10; pts.push(new THREE.Vector2(0.2+0.17*Math.pow(u,1.6),0.5-u*1.0)); } pts.reverse(); return new THREE.LatheGeometry(pts,28); });
+    add(body,dlg("hem",function(){ return new THREE.TorusGeometry(0.36,0.022,8,40); }),tm,0,0.07,0,Math.PI/2);
+    add(body,dlg("sash",function(){ return new THREE.CylinderGeometry(0.19,0.195,0.07,24); }),tm,0,1.0,0).scale.z=0.8;
+  }
+  var arms=[limbs.la,limbs.ra].filter(Boolean);
+  function band(parent,y,r,c){ add(parent,dlg("band"+r,function(){ return new THREE.TorusGeometry(r,0.016,8,20); }),c,0,y,0,Math.PI/2); }
+  function drape(c){ /* a cloth across the body, shoulder to hip */
+    var dm=M(c,true);
+    add(body,dlg("drape",function(){ return new THREE.BoxGeometry(0.13,0.95,0.025); }),dm,0.02,1.2,0.125,0.05,0,0.6);
+    add(body,dlg("drape",function(){ return new THREE.BoxGeometry(0.13,0.95,0.025); }),dm,0.02,1.2,-0.125,-0.05,0,-0.6);
+  }
+  function cloak(c){
+    var cm=M(c,true);
+    add(body,dlg("dlcloak",function(){ return new THREE.CylinderGeometry(0.23,0.4,1.3,24,1,true,Math.PI/2+0.3,Math.PI-0.6); }),cm,0,0.92,-0.03).scale.z=0.72;
+  }
+  function necklace(r,y,c,beads){
+    if(beads){ var bm=M(c); for(var i=0;i<14;i++){ var a=i/14*Math.PI*2; add(body,dlg("bead",function(){ return new THREE.SphereGeometry(0.022,8,6); }),bm,Math.cos(a)*r,y-Math.max(0,Math.sin(a))*0.05,Math.sin(a)*r*0.75+0.01); } }
+    else add(body,dlg("neck"+r,function(){ return new THREE.TorusGeometry(r,0.018,8,28); }),M(c),0,y,0.02,Math.PI/2-0.25).scale.y=0.78;
+  }
+  function headCrown(c,tall){
+    add(body,dlg("dlcrown"+tall,function(){ return new THREE.CylinderGeometry(0.1,0.13,tall,10); }),M(c),0,hy+0.12+tall/2,0);
+  }
+
+  if(t==="Greek"||t==="Roman"||t==="Hebrew"){
+    drape(f?blend(top,0xFFFFFF,0.35):trim===0xE8E4DA?blend(top,0x2E5E9E,0.4):trim);
+    necklace(0.12,1.5,gold);
+    if(!headgear) add(body,dlg("wreath",function(){ return new THREE.TorusGeometry(0.135,0.022,8,28); }),M(0x6A8A3A),0,hy+0.06,0,Math.PI/2);
+  } else if(t==="Norse"||t==="Anglo-Saxon"){
+    var fur=add(body,dlg("fur",function(){ return new THREE.TorusGeometry(0.2,0.085,12,28); }),M(f?0xE8E0D0:0x6A5A48),0,1.52,0,Math.PI/2); fur.scale.set(1,0.75,0.9);
+    arms.forEach(function(a){ band(a,-0.32,0.05,gm); });
+    if(!f) band(body,0.99,0.19,M(0x3A2A1A));
+    cloak(shade(top,-0.25));
+  } else if(t==="Egyptian"){
+    add(body,dlg("usekh",function(){ return new THREE.CylinderGeometry(0.25,0.27,0.03,32); }),gm,0,1.5,0.01).scale.z=0.7;
+    add(body,dlg("usekh2",function(){ return new THREE.CylinderGeometry(0.2,0.22,0.035,32); }),M(0x2F5E9E),0,1.52,0.012).scale.z=0.7;
+    arms.forEach(function(a){ band(a,-0.18,0.05,gm); band(a,-0.5,0.042,gm); });
+    if(!headgear){
+      var nm=M(0x2F5E9E,true);
+      add(body,dlg("nemes",function(){ return new THREE.SphereGeometry(0.145,24,14,Math.PI/2+0.95,Math.PI*2-1.9,0,1.9); }),nm,0,hy,0);
+      [-1,1].forEach(function(sd){ add(body,dlg("lappet",function(){ return new THREE.BoxGeometry(0.07,0.32,0.04); }),gm,sd*0.13,hy-0.2,0.05); });
+      band(body,hy+0.04,0.142,gm);
+    }
+  } else if(t==="Hindu"){
+    necklace(0.13,1.5,gold); necklace(0.17,1.42,gold);
+    arms.forEach(function(a){ band(a,-0.2,0.05,gm); band(a,-0.55,0.04,gm); });
+    drape(blend(sg.col,top,0.3));
+    if(!headgear) add(body,dlg("mukuta",function(){ return new THREE.ConeGeometry(0.12,0.34,12); }),gm,0,hy+0.26,0);
+    add(body,dlg("bindi",function(){ return new THREE.SphereGeometry(0.014,8,6); }),M(0xC0201E),0,hy+0.07,0.132);
+  } else if(t==="Japanese"||t==="Chinese"){
+    add(body,dlg("obi",function(){ return new THREE.CylinderGeometry(0.2,0.205,0.16,24); }),M(t==="Japanese"?blend(sg.col,0xE8E0D0,0.3):0x2E6A4A),0,1.02,0).scale.z=0.8;
+    [-1,1].forEach(function(sd){ add(body,dlg("collarv",function(){ return new THREE.BoxGeometry(0.045,0.32,0.02); }),M(0xF2EEE6),sd*0.05,1.4,0.125,0,0,sd*0.45); });
+    arms.forEach(function(a){ var sl=add(a,dlg("sleeve",function(){ return new THREE.CylinderGeometry(0.07,0.15,0.42,16,1,true); }),M(shade(top,-0.08),true),0,-0.44,-0.02); sl.scale.x=0.6; });
+    if(t==="Chinese"){ add(body,dlg("jade",function(){ var c=new THREE.CylinderGeometry(0.04,0.04,0.02,16); c.rotateX(Math.PI/2); return c; }),M(0x5AAA7A),0,1.02,0.17);
+      if(!headgear&&!f) add(body,dlg("guan",function(){ return new THREE.BoxGeometry(0.1,0.12,0.16); }),M(0x1A1A1E),0,hy+0.17,-0.01); }
+    if(!headgear&&f) add(body,dlg("kanzashi",function(){ return new THREE.BoxGeometry(0.22,0.012,0.012); }),gm,0.02,hy+0.13,-0.06,0,0,0.3);
+  } else if(t==="Mesopotamian"||t==="Persian"){
+    var fl=M(blend(top,0xF2EEE6,0.4));
+    [0.3,0.55,0.8].forEach(function(y,i){ add(body,dlg("tier"+i,function(){ return new THREE.CylinderGeometry(0.27-i*0.03,0.35-i*0.03,0.16,24,1,true); }),fl,0,y,0); });
+    if(!headgear){ add(body,dlg("horncap",function(){ return new THREE.CylinderGeometry(0.13,0.14,0.16,16); }),M(t==="Persian"?0xC8A040:0xE8DCC0),0,hy+0.15,0);
+      if(t!=="Persian") [-1,1].forEach(function(sd){ add(body,dlg("chorn",function(){ return new THREE.TorusGeometry(0.11,0.016,8,16,Math.PI); }),M(0xC8B890),sd*0.01,hy+0.12+0.03,0,0,Math.PI/2,0); }); }
+    necklace(0.12,1.5,gold);
+  } else if(t==="Aztec"||t==="Maya"||t==="Inca"){
+    var fc=[0x2E9A5A,0x2F6EC8,0xC8322E,0xE8B83A,0x2E9A5A,0x2F6EC8,0xE8B83A,0xC8322E,0x2E9A5A];
+    if(!headgear||t!=="Inca") for(var q=0;q<9;q++){ var a=-1.1+q*0.275; var ft=add(body,dlg("plume",function(){ return new THREE.SphereGeometry(0.06,12,8); }),M(fc[q]),Math.sin(a)*0.22,hy+0.08+Math.cos(a)*0.22,-0.1,0,0,-a); ft.scale.set(0.6,3.2,0.3); }
+    if(t==="Inca") add(body,dlg("sunpect",function(){ var c=new THREE.CylinderGeometry(0.11,0.11,0.02,24); c.rotateX(Math.PI/2); return c; }),gm,0,1.42,0.14);
+    else necklace(0.15,1.47,0x3AAA7A,true);
+    [-1,1].forEach(function(sd){ add(body,dlg("spool",function(){ var c=new THREE.CylinderGeometry(0.03,0.03,0.02,12); c.rotateZ(Math.PI/2); return c; }),M(0x3AAA7A),sd*0.14,hy-0.01,0); });
+  } else if(t==="Yoruba"||t==="Akan"||t==="Vodou"){
+    necklace(0.12,1.52,top,true); necklace(0.16,1.46,0xF2EEE6,true); necklace(0.2,1.4,sg.col,true);
+    if(f&&!headgear) { var gl=add(body,dlg("gele",function(){ return new THREE.SphereGeometry(0.17,20,14,0,Math.PI*2,0,1.7); }),M(blend(top,sg.col,0.35)),0,hy+0.07,-0.02); gl.scale.set(1.1,1.0,1.05); }
+    if(t==="Akan") drape(0xD4B83C);
+  } else if(t==="Irish"||t==="Welsh"||t==="Gaulish"){
+    add(body,dlg("torc",function(){ return new THREE.TorusGeometry(0.085,0.018,10,24,Math.PI*1.7); }),gm,0,1.56,0.01,Math.PI/2,0,Math.PI*0.65);
+    cloak(shade(top,-0.3));
+    add(body,dlg("brooch",function(){ var c=new THREE.CylinderGeometry(0.035,0.035,0.02,16); c.rotateX(Math.PI/2); return c; }),gm,0.12,1.48,0.13);
+  } else if(t==="Slavic"){
+    var rm=M(0xB0302A); band(body,0.99,0.19,rm);
+    if(robe) add(body,dlg("hem2",function(){ return new THREE.TorusGeometry(0.33,0.02,8,40); }),rm,0,0.16,0,Math.PI/2);
+    arms.forEach(function(a){ band(a,-0.56,0.045,rm); });
+    if(f&&!headgear) add(body,dlg("kokoshnik",function(){ return new THREE.CylinderGeometry(0.17,0.15,0.18,20,1,true,-1.2,2.4); }),M(0xB0302A,true),0,hy+0.13,0.02);
+  } else if(t==="Hawaiian"||t==="Polynesian"){
+    var lc=[0xF2D04A,0xE84A6A,0xF4F0E6,0xE8823A];
+    for(var li=0;li<16;li++){ var la=li/16*Math.PI*2; add(body,dlg("flower",function(){ return new THREE.SphereGeometry(0.028,8,6); }),M(lc[li%4]),Math.cos(la)*0.15,1.49-Math.max(0,Math.sin(la))*0.06,Math.sin(la)*0.11+0.01); }
+    if(robe) add(body,dlg("tapa",function(){ return new THREE.TorusGeometry(0.31,0.03,8,40); }),M(0x6A3A1E),0,0.4,0,Math.PI/2);
+  } else if(t==="Demonology"||t==="Qliphothic"||t==="Adversarial"){
+    cloak(t==="Qliphothic"?0x1A1024:0x2A0E0E);
+    [-1,1].forEach(function(sd){ for(var k=0;k<3;k++) add(body,dlg("spike",function(){ return new THREE.ConeGeometry(0.022,0.13,8); }),M(0x1A1418),sd*(0.2+k*0.025),1.56,-0.03+k*0.03,0,0,-sd*0.5); });
+    necklace(0.13,1.5,0x6A1A1A);
+  }
+
+  /* a pale robe takes on a mantle in the colour of what they rule */
+  var pale=(((top>>16)&255)+((top>>8)&255)+(top&255))/3>200;
+  if(pale&&robe&&!(t==="Norse"||t==="Irish"||t==="Welsh"||t==="Gaulish"||t==="Demonology"||t==="Qliphothic"||t==="Adversarial")){
+    var mc=M(blend(sg.col,0x3A2A4A,0.25),true);
+    add(body,dlg("mantle",function(){ return new THREE.CylinderGeometry(0.22,0.36,1.15,24,1,true,Math.PI/2+0.55,Math.PI-1.1); }),mc,0,0.98,-0.02).scale.z=0.75;
+    add(body,dlg("stole",function(){ return new THREE.BoxGeometry(0.07,0.62,0.02); }),mc,-0.09,1.22,0.135,0,0,0.04);
+    add(body,dlg("stole",function(){ return new THREE.BoxGeometry(0.07,0.62,0.02); }),mc,0.09,1.22,0.135,0,0,-0.04);
+  }
+  /* their sign, glowing behind them */
+  var sgn=signShape(sg.kind,sg.col,true); sgn.position.set(0,hy+0.12,-0.34); sgn.scale.setScalar(0.62); sgn.userData.dl=1; body.add(sgn);
+  /* a power stands a head taller than the people who come to them */
+  body.scale.multiplyScalar(1.1);
+}
+(function(){
+  if(typeof buildDeity!=="function") return;
+  var bd=buildDeity;
+  buildDeity=function(spec,f){
+    var d=spec&&spec.deity?DEITY[spec.deity]:null;
+    /* a power dreamt before this was written is given their own look now too */
+    if(d) try{ deityLookMore(spec,d); }catch(e){}
+    var g=bd.apply(this,arguments);
+    if(d) try{ dressDeity(g,spec,d); }catch(e){ if(window.console) console.warn("deity dress:",e); }
+    return g;
+  };
+})();
+
+/* ================================================================ their temples */
+/* every house on Temple Row in its power's own colours: the walls taking a
+   little of their robe, the roof in it, two banners at the door, and their
+   sign carved over it */
+(function(){
+  if(typeof atlTemples!=="function") return;
+  var at=atlTemples;
+  atlTemples=function(C){
+    at(C);
+    store.objects.forEach(function(o){
+      if(!o.templerow||!o.deity||o.realm!==C.r.id) return;
+      var k=KIT[o.archetype], d=DEITY[o.deity]; if(!k||k.cat!=="structure"||!d) return;
+      var t=d.trad||"Greek", rc=null;
+      d.icons.forEach(function(x){ var p=x.split(":"); if(p[0]==="robe"&&ICONCOL[p[1]]!==undefined) rc=ICONCOL[p[1]]; });
+      if(rc===null) rc=TRAD_ROBE[t]||0xC9A868;
+      var base=(PRECINCT[t]&&PRECINCT[t].trim)||0xE8E4DA, stone=(t==="Demonology"||t==="Qliphothic"||t==="Adversarial")?0x4A4048:0xE6E0D2;
+      o.attrs=o.attrs||{};
+      if(o.attrs.c===undefined) o.attrs.c=blend(stone,rc,0.22);
+      if(o.attrs.rc===undefined) o.attrs.rc=blend(shade(rc,-0.15),base,0.25);
+      o.deityTemple=true;
+    });
+  };
+})();
+(function(){
+  if(typeof build!=="function") return;
+  var bl=build;
+  build=function(spec,f){
+    var g=bl.apply(this,arguments);
+    if(spec&&spec.deityTemple&&spec.deity&&DEITY[spec.deity]) try{ templeDress(g,spec,DEITY[spec.deity]); }catch(e){ if(window.console) console.warn("temple dress:",e); }
+    return g;
+  };
+})();
+function templeDress(g,spec,d){
+  var def=KIT[spec.archetype], parts=levelParts(def,spec), door=frontDoorOf(parts), B=bodyOf(parts);
+  var sx=g.scale.x||1;
+  var front=door?door.p[2]+door.s[2]/2:(B?B.z+B.d/2:def.size[2]/2), dw=door?door.s[0]:2, dtop=door?door.p[1]+door.s[1]/2:3;
+  var rc=null; d.icons.forEach(function(x){ var p=x.split(":"); if(p[0]==="robe"&&ICONCOL[p[1]]!==undefined) rc=ICONCOL[p[1]]; });
+  if(rc===null) rc=TRAD_ROBE[d.trad]||0xC9A868;
+  var sg=deitySign(d), gold=new THREE.MeshLambertMaterial({color:0xC9A040});
+  /* the sign over the door, on a round plaque */
+  var pl=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.75,0.12,32),new THREE.MeshLambertMaterial({color:shade(rc,-0.25)}));
+  pl.rotation.x=Math.PI/2; pl.position.set(0,dtop+1.1,front+0.12); g.add(pl);
+  var ring=new THREE.Mesh(new THREE.TorusGeometry(0.75,0.06,8,40),gold); ring.position.set(0,dtop+1.1,front+0.16); g.add(ring);
+  var s=signShape(sg.kind,sg.col,false); s.position.set(0,dtop+1.1,front+0.22); s.scale.setScalar(1.55); g.add(s);
+  /* two banners in their colours, either side of the door */
+  var paleR=(((rc>>16)&255)+((rc>>8)&255)+(rc&255))/3>200, bc=paleR?blend(sg.col,0x2A2040,0.3):rc;
+  var bm=new THREE.MeshLambertMaterial({color:bc,side:THREE.DoubleSide}), tm=new THREE.MeshLambertMaterial({color:paleR?0xC9A040:sg.col});
+  [-1,1].forEach(function(sd){
+    var x=sd*(dw/2+1.2);
+    var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.04+1.6,8),gold); pole.rotation.z=Math.PI/2; pole.position.set(x,dtop+0.9,front+0.35); g.add(pole);
+    var ban=new THREE.Mesh(new THREE.PlaneGeometry(1.3,dtop+0.4),bm); ban.position.set(x,(dtop+0.9)/2+0.2,front+0.36); g.add(ban);
+    var stripe=new THREE.Mesh(new THREE.PlaneGeometry(1.3,0.18),tm); stripe.position.set(x,0.75,front+0.37); g.add(stripe);
+    var mini=signShape(sg.kind,sg.col,false); mini.position.set(x,(dtop+0.9)*0.6,front+0.4); mini.scale.setScalar(0.8); g.add(mini);
+  });
+}
+</script>
+<script>/* js/temps.js */
+/* SomnuMatrix — temps.js
+   no post in Somnucor stands empty. Every job nobody has taken yet is
+   worked by a stand-in: a citizen of the city who does that job, on site,
+   the way a dreamer hired to it would —
+     - at the counter, bench or desk: at their post by the workplace door,
+       and inside at their station when you go in
+     - on the rounds: walking the trade's own round (the lamps, the post,
+       the homes, the docks, the gate), stopping to do the work at each
+     - at the gathering: in the fields, the orchards, the quarry, the quay
+     - in the Wilds: the hunters, out after nightmares
+     - the Dragon Corp: on dragons, flying their sectors
+   The moment a dreamer takes the post, the stand-in steps aside.
+   Every device sees the same stand-ins in the same places: who they are,
+   where they go and when all come from the post and the clock.
+   loaded as a plain script; shares scope with the other files */
+"use strict";
+
+var TEMP_GIVEN_F=["Mara","Isolde","Wren","Elsie","Tamsin","Hester","Ada","Nell","Rosalind","Imogen","Bryony","Clemency","Ottilie","Maud","Agnes","Sabine","Linnet","Delphine","Ione","Perpetua"];
+var TEMP_GIVEN_M=["Oswin","Ferrin","Gethin","Alban","Corbin","Jory","Tobias","Silas","Ambrose","Hal","Edric","Lucan","Bram","Ivo","Rafe","Dunstan","Piers","Casimir","Matthias","Anselm"];
+var TEMPS={list:[],at:0,busy:false,shown:{},inside:[],clock:0,maxNear:16,maxFly:6};
+
+/* ---- who is needed: every open post, from the job board ---- */
+function tempsRefresh(force){
+  if(TEMPS.busy) return;
+  if(!force&&Date.now()-TEMPS.at<120000&&TEMPS.list.length) return;
+  if(!store.workplaceAt||!ATLC) return;
+  TEMPS.at=Date.now();
+  var signed=typeof signedIn==="function"&&signedIn();
+  var src=signed?cityRpc("job_board"):Promise.resolve(null);
+  TEMPS.busy=true;
+  src.then(function(rows){ TEMPS.busy=false; tempsPlan(rows); }).catch(function(){ TEMPS.busy=false; tempsPlan(null); });
+}
+function tempsPlan(rows){
+  var posts=[];
+  if(Array.isArray(rows)&&rows.length){
+    rows.forEach(function(r){
+      var open=Math.max(0,(+r.positions||0)-(+r.taken||0)); if(!open) return;
+      if(!(r.workplace&&store.workplaceAt[r.workplace])&&r.panel!=="police") return;
+      for(var k=0;k<open;k++) posts.push({job:r.job_id,title:r.title||"worker",workplace:r.workplace||"The Dragon Roost",panel:r.panel,roams:!!r.roams,k:k});
+    });
+  } else if(typeof WORKPLACES!=="undefined"){
+    /* nobody signed in to ask: one stand-in to every post the city plans */
+    WORKPLACES.forEach(function(w){ if(!store.workplaceAt[w.key]) return;
+      (w.jobs||[]).forEach(function(j){ posts.push({job:j,title:"worker",workplace:w.key,panel:null,roams:false,k:0}); }); });
+  }
+  var keep={};
+  TEMPS.list=posts.map(function(p,i){
+    var id="tw"+p.job+"_"+p.k; keep[id]=1;
+    var old=TEMPS.list.filter(function(t){ return t.id===id; })[0];
+    return old||tempMake(id,p);
+  });
+  Object.keys(TEMPS.shown).forEach(function(id){ if(!keep[id]) tempHide(id); });
+}
+function tempMake(id,p){
+  var h=hash(id), f=(h>>>3)%2===0;
+  var name=(f?TEMP_GIVEN_F:TEMP_GIVEN_M)[(h>>>5)%20]+" "+SURNAME[(h>>>10)%SURNAME.length];
+  var t={id:id,post:p,name:name,f:f,seed:h,mode:"desk",stops:null,home:null};
+  var w=store.workplaceAt[p.workplace]; t.home=w?{x:w.x,z:w.z,id:w.id}:{x:ATLC.x,z:ATLC.z};
+  var title=p.title, tasks=(typeof JOBWORK_TARGETS!=="undefined"&&JOBWORK_TARGETS[title])||null, node=null;
+  if(typeof JOBWORK_NODE!=="undefined") Object.keys(JOBWORK_NODE).forEach(function(k){ if(k.split("|")[0]===title&&!node) node=JOBWORK_NODE[k]; });
+  if(p.panel==="police") t.mode="fly";
+  else if(p.workplace==="The Hunters' Lodge") t.mode="hunt";
+  else if(node) { t.mode="gather"; t.node=node; }
+  else if(tasks){ t.mode="round"; t.kinds=[]; Object.keys(tasks).forEach(function(k){ tasks[k].forEach(function(x){ if(t.kinds.indexOf(x)<0) t.kinds.push(x); }); }); }
+  else if(p.roams) { t.mode="round"; t.kinds=["streets"]; }
+  return t;
+}
+
+/* ---- where the work takes them ---- */
+function tempDoor(t){
+  var sp=t.home&&t.home.id&&specById(t.home.id);
+  if(!sp) return {x:t.home.x,z:t.home.z,out:{x:0,z:1}};
+  try{ var d=doorWorld(sp); return {x:d.x,z:d.z,out:d.out}; }catch(e){ return {x:sp.x,z:sp.z,out:{x:0,z:1}}; }
+}
+function tempStops(t){
+  if(t.stops) return t.stops;
+  var D=tempDoor(t), all=[], H=t.home;
+  if(t.mode==="hunt"){
+    var a0=Math.atan2(H.z-ATLC.z,H.x-ATLC.x);
+    for(var i=0;i<5;i++){ var a=a0+((t.seed>>>(i*3))%9-4)*0.06, r=2240+((t.seed>>>(i*4))%7)*55; all.push({x:ATLC.x+Math.cos(a)*r,z:ATLC.z+Math.sin(a)*r}); }
+  } else if(t.mode==="gather"){
+    var re=NODE_RE[t.node]||NODE_RE.fields;
+    cityObjs().forEach(function(o){ if(re.test(o.archetype)){ var d=Math.hypot(o.x-H.x,o.z-H.z); if(d<380) all.push({x:o.x,z:o.z,d:d}); } });
+    all.sort(function(a,b){ return a.d-b.d; }); all=all.slice(0,12);
+    var pick=[]; for(var j=0;j<Math.min(3,all.length);j++) pick.push(all[(t.seed>>>(j*5)+t.post.k)%all.length]); all=pick;
+  } else if(t.mode==="round"){
+    (t.kinds||[]).forEach(function(k){
+      if(k==="streets"){ var rs=tempStreetNear(Math.hypot(H.x-ATLC.x,H.z-ATLC.z)), a1=Math.atan2(H.z-ATLC.z,H.x-ATLC.x);
+        for(var s=-2;s<=2;s++){ var aa=a1+s*60/rs; all.push({x:ATLC.x+Math.cos(aa)*rs,z:ATLC.z+Math.sin(aa)*rs}); } return; }
+      try{ targetsFor(k).forEach(function(o){ var d=Math.hypot(o.x-H.x,o.z-H.z); if(d<450) all.push({x:o.x,z:o.z,d:d}); }); }catch(e){}
+    });
+    all.sort(function(a,b){ return (a.d||0)-(b.d||0); }); all=all.slice(0,14);
+    var n=Math.min(4,all.length), out=[]; for(var q=0;q<n;q++) out.push(all[((t.seed>>>(q*4))+q*3+t.post.k)%all.length]);
+    all=out;
+  }
+  /* the round runs in order round the city, from the door and back to it */
+  var ac=function(p){ return Math.atan2(p.z-ATLC.z,p.x-ATLC.x); };
+  all.sort(function(a,b){ return ac(a)-ac(b); });
+  t.stops=[{x:D.x+D.out.x*2,z:D.z+D.out.z*2,door:1}].concat(all.map(function(p){ return {x:p.x,z:p.z}; }));
+  /* the walk between stops keeps to the streets: out to the ring road, along it, and in */
+  t.legs=[]; var tot=0;
+  for(var i2=0;i2<t.stops.length;i2++){
+    var A=t.stops[i2], B=t.stops[(i2+1)%t.stops.length], path=tempPath(A,B), len=0;
+    for(var m=1;m<path.length;m++) len+=Math.hypot(path[m].x-path[m-1].x,path[m].z-path[m-1].z);
+    var pause=t.mode==="gather"?24:(t.mode==="hunt"?14:9);
+    t.legs.push({path:path,len:len,pause:pause,t0:tot}); tot+=len/1.5+pause;
+  }
+  t.loop=Math.max(30,tot);
+  return t.stops;
+}
+function tempStreetNear(r){
+  var best=null; Object.keys(ATL_STREETS).forEach(function(k){ ATL_STREETS[k].forEach(function(rs){ if(best===null||Math.abs(rs-r)<Math.abs(best-r)) best=rs; }); });
+  if(r>2160) return r; return best||r;
+}
+function tempPath(A,B){
+  var rA=Math.hypot(A.x-ATLC.x,A.z-ATLC.z), rB=Math.hypot(B.x-ATLC.x,B.z-ATLC.z);
+  var aA=Math.atan2(A.z-ATLC.z,A.x-ATLC.x), aB=Math.atan2(B.z-ATLC.z,B.x-ATLC.x);
+  var rs=tempStreetNear(rA), pts=[{x:A.x,z:A.z}];
+  if(Math.hypot(A.x-B.x,A.z-B.z)<40) return pts.concat([{x:B.x,z:B.z}]);
+  var da=Math.atan2(Math.sin(aB-aA),Math.cos(aB-aA)), n=Math.max(1,Math.ceil(Math.abs(da)*rs/25));
+  for(var i=0;i<=n;i++){ var a=aA+da*i/n; pts.push({x:ATLC.x+Math.cos(a)*rs,z:ATLC.z+Math.sin(a)*rs}); }
+  var rs2=tempStreetNear(rB);
+  if(rs2!==rs){ pts.push({x:ATLC.x+Math.cos(aB)*rs2,z:ATLC.z+Math.sin(aB)*rs2}); }
+  pts.push({x:B.x,z:B.z});
+  return pts;
+}
+/* where a stand-in is at time T, and whether they are walking or working */
+function tempAt(t,T){
+  if(t.mode==="desk"){
+    var D=tempDoor(t), side=(t.post.k%2?1:-1)*(1.8+Math.floor(t.post.k/2)*1.1)+((t.seed>>>7)%3-1)*0.4;
+    var sx=D.out.z, sz=-D.out.x;
+    return {x:D.x+D.out.x*2.4+sx*side,z:D.z+D.out.z*2.4+sz*side,face:Math.atan2(D.out.x,D.out.z),walk:false};
+  }
+  if(t.mode==="fly"){
+    var r=320+(t.seed%1200), a=(t.seed%628)/100+T*(0.012+((t.seed>>>8)%5)*0.002)*(t.seed%2?1:-1);
+    var x=ATLC.x+Math.cos(a)*r, z=ATLC.z+Math.sin(a)*r, dir=t.seed%2?1:-1;
+    return {x:x,z:z,y:terrainY(x,z)+55+(t.seed>>>4)%40,face:Math.atan2(-Math.sin(a)*dir,Math.cos(a)*dir),fly:true};
+  }
+  tempStops(t);
+  var u=((T+(t.seed%997))%t.loop+t.loop)%t.loop, L=t.legs[0];
+  for(var i=0;i<t.legs.length;i++) if(t.legs[i].t0<=u) L=t.legs[i];
+  var into=u-L.t0, p0=L.path[0], p1=L.path[1]||p0;
+  if(into<L.pause) return {x:p0.x,z:p0.z,face:Math.atan2(p1.x-p0.x,p1.z-p0.z),walk:false,work:true};
+  var d=(into-L.pause)*1.5;
+  for(var m=1;m<L.path.length;m++){
+    var a1=L.path[m-1], b1=L.path[m], sl=Math.hypot(b1.x-a1.x,b1.z-a1.z);
+    if(d<=sl||m===L.path.length-1){ var k=sl?Math.min(1,d/sl):1; return {x:a1.x+(b1.x-a1.x)*k,z:a1.z+(b1.z-a1.z)*k,face:Math.atan2(b1.x-a1.x,b1.z-a1.z),walk:k<1}; }
+    d-=sl;
+  }
+  return {x:p0.x,z:p0.z,face:0,walk:false};
+}
+
+/* ---- drawing them: only the nearest, and only while near ---- */
+function tempLook(t){
+  var L=randomLook(t.id,"human"); L.sex=t.f?"f":"m";
+  if(typeof csLookFill==="function") csLookFill(L,t.id);
+  var ti=String(t.post.title).toLowerCase();
+  if(/baker|cook|chef|brewer|butcher|apothecary/.test(ti)){ L.gear="none"; L.top=0xF2EEE6; }
+  if(/smith|miner|quarry|charcoal|carpenter|mason/.test(ti)){ L.gear="vestbelt"; L.gearColor=0x5A3A22; }
+  if(/farm|shepherd|dairy|forester|garden|harvest/.test(ti)){ L.gear="belt"; L.hat=L.hat||"brimmed"; }
+  if(/hunter/.test(ti)){ L.gear="cloak"; L.gearColor=0x2E3A2A; }
+  if(t.mode==="fly"){ L.top=0x23324E; L.bottom=0x1E2638; L.gear="cloak"; L.gearColor=0x23324E; }
+  return L;
+}
+function tempShow(t){
+  var spec={id:"__tw_"+t.id,archetype:"human",attrs:{},look:tempLook(t),solid:false,detail:3,nights:[],city:true};
+  var g=buildFigure(spec,1), fig=g;
+  if(t.mode==="fly"&&typeof buildMountDragon==="function"){
+    var dg=buildMountDragon(DRAGON_COLS[t.seed%DRAGON_COLS.length],{lod:true}); dg.userData.pose="fly";
+    g.position.y=DRAGON_SADDLE-DRAGON_HIP; if(typeof riderPose==="function") riderPose(g);
+    var root=new THREE.Group(); root.add(dg); root.add(g); root.userData.limbs=g.userData.limbs; root.userData.mount=dg; fig=root;
+  }
+  if(t.mode==="hunt"&&typeof HELD!=="undefined"&&HELD.spear){ try{ var it=HELD.spear(); it.position.set(-0.26,0.96,0.27); g.children[0].add(it); }catch(e){} }
+  var tag=makeTag(t.name+" · "+t.post.title,false); tag.position.y=t.mode==="fly"?4.6:2.15; tag.visible=false; fig.add(tag); fig.userData.tag=tag;
+  fig.traverse(function(m){ m.raycast=function(){}; });
+  scene.add(fig);
+  TEMPS.shown[t.id]={g:fig,t:t,phase:(t.seed%100)/10};
+}
+function tempHide(id){
+  var S=TEMPS.shown[id]; if(!S) return;
+  if(S.g.userData.tag) dropTag(S.g.userData.tag);
+  scene.remove(S.g); delete TEMPS.shown[id];
+}
+function tempsTick(dt){
+  var r=(typeof somnucorRealm==="function")?somnucorRealm():null;
+  var here=r&&(store.here||0)===r.id&&!store.inside;
+  if(!here||!ATLC){ Object.keys(TEMPS.shown).forEach(tempHide); return; }
+  tempsRefresh(false);
+  TEMPS.clock+=dt;
+  var T=Date.now()/1000, P=camera.position;
+  /* who is near enough to draw, nearest first */
+  if(!TEMPS.pickAt||TEMPS.clock-TEMPS.pickAt>1){
+    TEMPS.pickAt=TEMPS.clock;
+    var walkers=[], flyers=[];
+    TEMPS.list.forEach(function(t){
+      var at=tempAt(t,T), d=Math.hypot(at.x-P.x,at.z-P.z);
+      if(t.mode==="fly"){ if(d<1300) flyers.push({t:t,d:d}); } else if(d<150) walkers.push({t:t,d:d});
+    });
+    walkers.sort(function(a,b){ return a.d-b.d; }); flyers.sort(function(a,b){ return a.d-b.d; });
+    var want={};
+    walkers.slice(0,TEMPS.maxNear).concat(flyers.slice(0,TEMPS.maxFly)).forEach(function(w){ want[w.t.id]=1; if(!TEMPS.shown[w.t.id]) tempShow(w.t); });
+    Object.keys(TEMPS.shown).forEach(function(id){ if(!want[id]) tempHide(id); });
+  }
+  Object.keys(TEMPS.shown).forEach(function(id){
+    var S=TEMPS.shown[id], t=S.t, g=S.g, at=tempAt(t,T);
+    var y=at.y!==undefined?at.y:terrainY(at.x,at.z);
+    g.position.set(at.x,y,at.z);
+    var dr=((at.face-g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI; g.rotation.y+=dr*Math.min(1,dt*6);
+    var lm=g.userData.limbs;
+    S.phase+=dt*(at.walk?7:2.4);
+    if(at.fly){ var m=g.userData.mount; if(m&&m.userData.anim) m.userData.anim(T,dt); }
+    else if(lm){
+      var s=at.walk?Math.sin(S.phase)*0.5:0;
+      lm.ll.rotation.x=s; lm.rl.rotation.x=-s;
+      if(at.walk){ lm.la.rotation.x=-s*0.75; lm.ra.rotation.x=s*0.75; }
+      else { var w=Math.sin(S.phase)*0.35; lm.la.rotation.x=-0.7+w; lm.ra.rotation.x=-0.55-w; }
+    }
+    if(g.userData.tag) g.userData.tag.visible=Math.hypot(at.x-P.x,at.z-P.z)<(at.fly?120:22);
+  });
+}
+
+/* ---- inside: the stand-ins at their stations ---- */
+(function(){
+  if(typeof bringOccupants!=="function") return;
+  var bo=bringOccupants;
+  bringOccupants=function(){
+    bo.apply(this,arguments);
+    try{ tempsInside(); }catch(e){ if(window.console) console.warn("temps inside:",e); }
+  };
+})();
+function tempsInside(){
+  if(!INT||!INT.spec) return;
+  var key=INT.spec.workplace||INT.wpKey; if(!key) return;
+  var mine=TEMPS.list.filter(function(t){ return t.post.workplace===key&&t.mode!=="fly"; }).slice(0,8);
+  var spots=(INT.spots||[]).filter(function(s){ return !(s.level>0); });
+  mine.forEach(function(t,i){
+    var sp=spots.length?spots[(i+1)%spots.length]:{x:0,z:0}, lap=spots.length?Math.floor((i+1)/spots.length):i;
+    var g=buildFigure({id:"__twin_"+t.id,archetype:"human",attrs:{},look:tempLook(t),solid:false,detail:3,nights:[],city:true},1);
+    var x=sp.x+(lap%2?1.1:-1.1)*Math.ceil(lap/2), z=sp.z-0.8;
+    g.position.set(x,0,z); g.rotation.y=Math.PI+((t.seed%7)-3)*0.3;
+    var lm=g.userData.limbs; if(lm){ lm.la.rotation.x=-0.7; lm.ra.rotation.x=-0.5; }
+    var tag=makeTag(t.name+" · "+t.post.title,false); tag.position.y=2.15; g.add(tag);
+    g.traverse(function(m){ m.raycast=function(){}; });
+    INT.root.add(g);
+  });
+}
+
+/* every frame, with the city */
+(function(){
+  if(typeof transitTick!=="function") return;
+  var tt=transitTick;
+  transitTick=function(dt){ tt(dt); try{ tempsTick(dt); }catch(e){ if(window.console) console.warn("temps:",e); } };
 })();
 </script>
 
