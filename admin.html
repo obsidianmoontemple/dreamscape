@@ -262,6 +262,21 @@ td select,td input{padding:5px 7px;font-size:12.5px}
           <button class="btn" id="tr-toll-set">Set toll</button>
         </div>
         <div id="tr-msg" class="note" style="margin-top:8px"></div>
+        <div id="tr-books" class="note" style="margin-top:10px;color:var(--bone)"></div>
+        <div class="filters" style="margin-top:8px;align-items:end">
+          <label style="display:block">Gold<br><input id="tr-amt" type="number" min="1" step="1000" style="width:130px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="tr-to-treasury">Mint &rarr; treasury</button>
+          <button class="btn" id="tr-to-mint">Treasury &rarr; mint</button>
+          <button class="btn" id="tr-add-mint">Strike new gold into the mint</button>
+        </div>
+        <div class="filters" style="margin-top:8px;align-items:end">
+          <label style="display:block">Payday<br><select id="tr-payday" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+            <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+          </select></label>
+          <button class="btn" id="tr-payday-set">Set payday</button>
+          <span id="tr-payday-next" class="note"></span>
+        </div>
+        <p class="note">Hourly wages are paid once a week on payday, salaries every second payday. The treasury pays the city&rsquo;s own posts (Somnucor&rsquo;s); a business a dreamer runs pays its own staff from the owner&rsquo;s wallet, and hires and lets go its own staff. The treasury pays every city wage and salary; taxes, tolls, fares and rents flow back into it. The mint issues new gold: each new worker&rsquo;s starting income and every purchase of gold for money, and it takes back gold sold for money. If the treasury runs short, the mint tops it up by itself.</p>
 
         <h2 style="margin-top:36px">The Somnucor Employee &amp; Backer District</h2>
         <p class="note">Addresses in the city held for our own backers and workers &mdash; never bought or leased, only assigned by a keeper or by whoever presently holds the penthouse.</p>
@@ -1113,7 +1128,39 @@ function loadTreasuryPane(){
     $("tr-toll").value=tr.market_toll==null?"":tr.market_toll;
     paneMsg("tr-msg",tr.gold!=null?("The treasury itself holds "+Number(tr.gold).toLocaleString()+" gold."):"");
   });
+  loadPayday();
+  sb.rpc("treasury_board").then(function(r){
+    if(r.error||!r.data){ $("tr-books").textContent=r.error&&/function/.test(r.error.message)?"Run schema-update-25.sql to switch on the mint.":""; return; }
+    var d=r.data;
+    $("tr-books").innerHTML="Treasury: <b>"+Number(d.treasury).toLocaleString()+"</b> gold &middot; Mint: <b>"+Number(d.mint).toLocaleString()+"</b> gold &middot; in dreamers&rsquo; wallets: "+Number(d.in_wallets).toLocaleString()+" gold";
+  });
 }
+function loadPayday(){
+  if(!$("tr-payday")) return;
+  sb.rpc("next_paydays").then(function(r){
+    if(r.error||!r.data){ $("tr-payday-next").textContent=r.error&&/function/.test(r.error.message)?"Run schema-update-27.sql to switch on paydays.":""; return; }
+    var d=r.data, f=function(t){ return new Date(t).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"}); };
+    $("tr-payday").value=String(d.day);
+    $("tr-payday-next").textContent="Next wages: "+f(d.wage)+" · next salaries: "+f(d.salary);
+  });
+}
+if($("tr-payday-set")) $("tr-payday-set").onclick=function(){
+  sb.rpc("set_payday",{p_day:+$("tr-payday").value}).then(function(r){
+    if(r.error) return paneMsg("tr-msg",r.error.message,true);
+    paneMsg("tr-msg",r.data==="ok"?"Payday set.":String(r.data),r.data!=="ok"); loadPayday();
+  });
+};
+function treasuryMove(to){
+  var n=Math.floor(+$("tr-amt").value||0); if(n<=0) return paneMsg("tr-msg","How much gold?",true);
+  if(to==="add_mint"&&!confirm("Strike "+n.toLocaleString()+" new gold into the mint?")) return;
+  sb.rpc("treasury_move",{p_to:to,p_gold:n}).then(function(r){
+    if(r.error) return paneMsg("tr-msg",r.error.message,true);
+    paneMsg("tr-msg",r.data==="ok"?"Done.":String(r.data),r.data!=="ok"); loadTreasuryPane();
+  });
+}
+if($("tr-to-treasury")) $("tr-to-treasury").onclick=function(){ treasuryMove("treasury"); };
+if($("tr-to-mint")) $("tr-to-mint").onclick=function(){ treasuryMove("mint"); };
+if($("tr-add-mint")) $("tr-add-mint").onclick=function(){ treasuryMove("add_mint"); };
 if($("tr-tax-set")) $("tr-tax-set").onclick=function(){
   sb.rpc("set_tax",{p_per_cent:+$("tr-tax").value}).then(function(r2){
     if(r2.error) return paneMsg("tr-msg",r2.error.message,true);
