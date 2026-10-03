@@ -21,7 +21,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.primary{color:var(--bone);border-color:var(--moon)}
 .btn.warn:hover{color:var(--ember);border-color:var(--ember)}
 .btn:disabled{opacity:.35;cursor:default}
-input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],select,textarea{
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],input[type=url],input:not([type]),select,textarea{
   background:var(--void);border:1px solid var(--line);border-radius:2px;padding:8px 10px;font-size:14px;outline:none;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--moon)}
 textarea{font-family:var(--serif);line-height:1.6;resize:vertical}
@@ -101,6 +101,17 @@ td select,td input{padding:5px 7px;font-size:12.5px}
       <input type="password" id="g-pass" autocomplete="current-password">
       <div class="actions"><button class="btn primary" id="g-go">Sign in</button></div>
     </div>
+    <div id="gate-mfa" class="hidden">
+      <div id="mfa-new" class="hidden">
+        <p class="note"><b>Set up your second step.</b> Open an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy or 1Password), add an account, and scan this code. You only do this once.</p>
+        <div style="background:#fff;padding:10px;display:inline-block;margin:6px 0"><img id="mfa-qr" alt="Code to scan" width="180" height="180"></div>
+        <p class="note small">Can&rsquo;t scan? Type this key into the app instead:<br><code id="mfa-secret" style="color:var(--bone);word-break:break-all"></code></p>
+      </div>
+      <p class="note" id="mfa-ask">Enter the six-digit code your authenticator app shows for the Keeper&rsquo;s Desk.</p>
+      <label for="mfa-code">Code</label>
+      <input type="text" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+      <div class="actions"><button class="btn primary" id="mfa-go">Confirm</button> <button class="btn" id="mfa-out">Sign out</button></div>
+    </div>
   </div>
 </div>
 
@@ -119,6 +130,7 @@ td select,td input{padding:5px 7px;font-size:12.5px}
     <button data-tab="research">Research</button>
     <button data-tab="books">The books</button>
     <button data-tab="city">Somnucor city</button>
+    <button data-tab="gold">Gold exchange<span class="count" id="n-gold"></span></button>
     <button data-tab="settings">Settings</button>
   </nav>
   <main>
@@ -285,8 +297,48 @@ td select,td input{padding:5px 7px;font-size:12.5px}
       </div>
     </section>
 
+    <section id="tab-gold" class="hidden">
+      <div class="narrow" style="max-width:1100px">
+        <h2>Gold exchange</h2>
+        <div id="cash-box" style="border:1px solid var(--line);background:var(--deep);padding:14px 16px;margin:10px 0 16px;max-width:760px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <span style="font-size:15px">The cash system is <b id="cash-word">&hellip;</b></span>
+            <button class="btn primary" id="cash-flip">&hellip;</button>
+          </div>
+          <p class="note" style="margin:8px 0 0">One switch for real money in the whole game: buying gold with money, and selling it back. While it is <b>off</b>, nobody can buy or sell gold for money, and this desk and the penthouse need only a password and the door code. While it is <b>on</b>, this desk and the penthouse door also ask everyone for the code from their authenticator app.</p>
+          <div id="cash-msg" class="note" style="margin-top:6px"></div>
+        </div>
+        <p class="note"><b>Buying:</b> a dreamer asks for gold in the game and pays with the payment link below. When the money arrives, press <b>Payment received</b> and the gold is theirs at once.<br>
+        <b>Selling back:</b> a dreamer sells gold they earned or bought, and the gold is taken from them and held. Send them the money by hand to where they asked, then press <b>Payout sent</b>. <b>Refuse</b> gives the gold back. Starting income can never be sold.</p>
+        <p class="note">Paying out real money for game currency can carry legal duties (age and identity checks, tax forms, money-transfer rules) depending on where you and your players are. Every payout waits for you for that reason.</p>
+        <div id="gx-totals" class="note" style="color:var(--bone);margin:10px 0"></div>
+        <div class="filters" id="gx-f">
+          <button class="btn on" data-f="requested">Waiting</button>
+          <button class="btn" data-f="paid">Done</button>
+          <button class="btn" data-f="refused">Refused</button>
+          <button class="btn" data-f="">All</button>
+        </div>
+        <div class="wrap"><table id="gx-table"></table></div>
+        <div id="gx-msg" class="note" style="margin-top:10px"></div>
+        <h2 style="margin-top:26px">Rates</h2>
+        <div class="filters" style="align-items:end">
+          <label style="margin:0">Gold for $1 when buying<input id="gx-buy" type="number" min="1" step="1"></label>
+          <label style="margin:0">Gold for $1 when selling back<input id="gx-sell" type="number" min="1" step="1"></label>
+          <label style="margin:0">Smallest sale (gold)<input id="gx-min" type="number" min="0" step="100"></label>
+          <label style="margin:0">Selling back<select id="gx-on"><option value="true">Open</option><option value="false">Closed</option></select></label>
+        </div>
+        <label for="gx-url">Payment link dreamers are sent to when they buy (a payment button on your website)</label>
+        <input id="gx-url" type="url" placeholder="https://">
+        <div class="actions"><button class="btn primary" id="gx-save">Save rates</button></div>
+        <div id="gx-rmsg" class="note" style="margin-top:8px"></div>
+      </div>
+    </section>
+
     <section id="tab-settings" class="hidden">
       <div class="narrow">
+        <h2>Two-step sign-in</h2>
+        <p class="note" style="margin-bottom:22px">While the cash system is off, this desk and the penthouse door ask only for a password and the door code. While it is on, they also ask for the six-digit code from an authenticator app. The switch is on the <b>Gold exchange</b> tab.</p>
+
         <h2>Keepers of the desk</h2>
         <p class="note">A <b>keeper</b> sees and does everything here. A <b>watcher</b> sees only the Dreamers page &mdash; the accounts and the devices &mdash; and nothing else: no messages, no orders, no list, no settings. Neither can read anybody's dreamscape; nothing can.</p>
         <p class="note">Whoever you are adding must sign in to this desk once first, so there is an account to attach. Then add their email here.</p>
@@ -313,6 +365,19 @@ td select,td input{padding:5px 7px;font-size:12.5px}
         <h3 style="font-weight:500;margin:26px 0 8px">Positions and wages</h3>
         <p class="note">How many of each post the city keeps is yours alone. Wages for Somnucor's own posts are yours too; a business operator sets their own.</p>
         <div class="wrap" style="max-height:360px;overflow-y:auto"><table id="j-table"></table></div>
+
+        <h3 style="font-weight:500;margin:26px 0 8px">Shifts and the city clock</h3>
+        <p class="note">Every job in Somnucor is worked in shifts, in city time &mdash; one clock for every dreamer, wherever they are. Workers clock in at their post inside their hours and are paid for the minutes they actually work. Choose the city's time zone (for example <b>America/New_York</b>, <b>Europe/London</b>, <b>America/Phoenix</b>).</p>
+        <div class="filters">
+          <input id="tz-in" type="text" placeholder="America/New_York" style="flex:1 1 240px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <button class="btn" id="tz-save">Set the city's time zone</button>
+          <span id="tz-now" class="note"></span>
+        </div>
+        <div class="wrap" style="max-height:300px;overflow-y:auto;margin-top:10px"><table id="sh-table"></table></div>
+
+        <h3 style="font-weight:500;margin:26px 0 8px">New words dreamers have used</h3>
+        <p class="note">When a dreamer names something SomnuMatrix had no word for, it is built on the spot and kept for everyone. These are the words, newest first, and how often they have been dreamt.</p>
+        <div class="wrap" style="max-height:300px;overflow-y:auto"><table id="dw-table"></table></div>
 
         <h2 style="margin-top:40px">Somnucor security</h2>
         <p class="note">Somnucor Tower stands at the heart of the city, and the penthouse is the only floor in the world that is shut. What you set here is what the lift and the stairs ask for.</p>
@@ -412,11 +477,153 @@ function enter(user){
       sb.auth.signOut(); return;
     }
     me=user;
-    $("gate").classList.add("hidden"); $("desk").classList.remove("hidden");
-    $("who").textContent=user.email;
-    loadConfig().then(function(){ loadInbox(); loadOrders(); });
+    secondStep().then(function(ok){
+      if(!ok) return;
+      $("gate").classList.add("hidden"); $("desk").classList.remove("hidden");
+      $("who").textContent=user.email;
+      loadConfig().then(function(){ loadInbox(); loadOrders(); goldCount(); });
+    });
   });
 }
+
+/* ---------------- two-step sign-in ---------------- */
+/* resolves true once this session has passed the authenticator code (or the
+   keepers have switched the requirement off); until then the gate stays up */
+var mfaFactor=null, mfaDone=null;
+function secondStep(){
+  return new Promise(function(done){
+    mfaDone=done;
+    sb.rpc("admin_mfa_state").then(function(r){
+      if(r.error){ say("Run schema-update-24.sql to switch on two-step sign-in.",true); return done(true); }
+      if(!r.data||r.data.required===false) return done(true);
+      sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function(a){
+        if(a.data&&a.data.currentLevel==="aal2") return done(true);
+        sb.auth.mfa.listFactors().then(function(f){
+          var all=(f.data&&f.data.all)||[];
+          var good=all.filter(function(x){ return x.factor_type==="totp"&&x.status==="verified"; })[0];
+          $("gate-form").classList.add("hidden"); $("gate-mfa").classList.remove("hidden");
+          $("gate-note").textContent="Password accepted. One more step.";
+          if(good){ mfaFactor=good.id; $("mfa-new").classList.add("hidden"); setTimeout(function(){ $("mfa-code").focus(); },50); return; }
+          /* first time: clear any half-finished setup, then make a new one */
+          var stale=all.filter(function(x){ return x.status!=="verified"; });
+          Promise.all(stale.map(function(x){ return sb.auth.mfa.unenroll({factorId:x.id}); })).then(function(){
+            return sb.auth.mfa.enroll({factorType:"totp",friendlyName:"Keeper's Desk "+Date.now().toString(36)});
+          }).then(function(e){
+            if(e.error) return fail(e.error);
+            mfaFactor=e.data.id;
+            var q=String(e.data.totp.qr_code||""), ci=q.indexOf(",");
+            if(/^data:image\/svg\+xml/.test(q)&&ci>-1&&q.slice(ci+1,ci+2)==="<") q="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(q.slice(ci+1));
+            $("mfa-qr").src=q; $("mfa-secret").textContent=e.data.totp.secret;
+            $("mfa-new").classList.remove("hidden");
+          });
+        });
+      });
+    });
+  });
+}
+function mfaConfirm(){
+  var code=($("mfa-code").value||"").replace(/\D/g,"");
+  if(code.length!==6) return say("The code is six digits.",true);
+  $("mfa-go").disabled=true;
+  sb.auth.mfa.challengeAndVerify({factorId:mfaFactor,code:code}).then(function(r){
+    $("mfa-go").disabled=false;
+    if(r.error){ $("mfa-code").value=""; return say("That code didn't match. Codes change every 30 seconds; try the newest one.",true); }
+    $("gate-mfa").classList.add("hidden");
+    say("Signed in with your authenticator code.");
+    if(mfaDone) mfaDone(true);
+  });
+}
+$("mfa-go").onclick=mfaConfirm;
+$("mfa-code").onkeydown=function(e){ if(e.key==="Enter") mfaConfirm(); };
+$("mfa-out").onclick=function(){ sb.auth.signOut().then(function(){ location.reload(); }); };
+function showMfaSetting(){}
+
+/* ---------------- the cash system switch ---------------- */
+var cashOn=null;
+function paintCash(){
+  $("cash-word").textContent=cashOn===null?"\u2026":(cashOn?"ON":"OFF");
+  $("cash-word").style.color=cashOn?"var(--ok)":"var(--ember)";
+  $("cash-flip").textContent=cashOn?"Turn the cash system off":"Turn the cash system on";
+}
+function loadCash(){
+  return sb.rpc("admin_mfa_state").then(function(r){ if(!r.error&&r.data){ cashOn=!!r.data.cash_on; paintCash(); } });
+}
+$("cash-flip").onclick=function(){
+  var on=!cashOn;
+  if(on&&!confirm("Turn the cash system ON?\n\nPlayers will be able to buy gold with money and sell it back. This desk and the penthouse door will also ask everyone for the code from their authenticator app, starting now."))
+    return;
+  if(!on&&!confirm("Turn the cash system OFF?\n\nNobody will be able to buy or sell gold for money until it is turned on again. Requests already waiting stay on this page."))
+    return;
+  sb.rpc("cash_set",{p_on:on}).then(function(r){
+    if(r.error) return paneMsg("cash-msg",r.error.message,true);
+    if(r.data!=="ok") return paneMsg("cash-msg",String(r.data),true);
+    cashOn=on; paintCash();
+    paneMsg("cash-msg",on?"The cash system is on.":"The cash system is off.");
+    if(on){
+      /* the desk now needs the second step of this keeper too */
+      $("desk").classList.add("hidden"); $("gate").classList.remove("hidden");
+      secondStep().then(function(ok){ if(!ok) return; $("gate").classList.add("hidden"); $("desk").classList.remove("hidden"); loadGold(); });
+    } else loadGold();
+  });
+};
+
+/* ---------------- the gold exchange ---------------- */
+var gxF="requested";
+function money(n){ return "$"+Number(n||0).toFixed(2); }
+function goldCount(){
+  sb.rpc("gold_exchange_board",{p_status:"requested"}).then(function(r){
+    if(r.error||!r.data) return; var n=(r.data.rows||[]).length; $("n-gold").textContent=n?n:"";
+  });
+}
+function loadGold(){
+  loadCash();
+  $("gx-table").innerHTML='<tr><td class="dim">Looking\u2026</td></tr>';
+  sb.rpc("gold_exchange_board",{p_status:gxF||null}).then(function(r){
+    if(r.error){ $("gx-table").innerHTML='<tr><td class="dim">'+esc(/function|does not exist/i.test(r.error.message)?"Run schema-update-24.sql in the SQL Editor to switch this on.":r.error.message)+"</td></tr>"; return; }
+    var d=r.data||{}, rows=d.rows||[], rt=d.rates||{};
+    $("gx-totals").innerHTML="Taken in from sales of gold: <b>"+money(d.bought_usd)+"</b> &middot; paid out to dreamers: <b>"+money(d.paid_out_usd)+"</b>"+
+      " &middot; waiting to be paid out: <b>"+money(d.waiting_out_usd)+"</b> &middot; the city keeps <b>"+money((+d.bought_usd||0)-(+d.paid_out_usd||0))+"</b>";
+    $("gx-buy").value=rt.buy_per_dollar; $("gx-sell").value=rt.sell_per_dollar; $("gx-min").value=rt.sell_min;
+    $("gx-on").value=rt.sell_on?"true":"false"; $("gx-url").value=rt.pay_url||"";
+    if(gxF==="requested") $("n-gold").textContent=rows.length?rows.length:"";
+    if(!rows.length){ $("gx-table").innerHTML='<tr><td class="dim">Nothing here.</td></tr>'; return; }
+    $("gx-table").innerHTML="<tr><th>When</th><th>Who</th><th>What</th><th>Gold</th><th>Money</th><th>Send to / reference</th><th></th></tr>"+
+      rows.map(function(x){
+        var act=x.status==="requested"
+          ? '<input type="text" data-ref="'+x.id+'" placeholder="'+(x.kind==="buy"?"payment reference":"payout reference")+'" style="width:150px;display:inline-block"> '+
+            '<button class="btn primary" data-ok="'+x.id+'">'+(x.kind==="buy"?"Payment received":"Payout sent")+'</button> '+
+            '<button class="btn warn" data-no="'+x.id+'">'+(x.kind==="sell"?"Refuse &amp; return gold":"Refuse")+"</button>"
+          : '<span class="dim">'+esc(x.status)+(x.decided_at?" \u00b7 "+when(x.decided_at):"")+"</span>";
+        return "<tr><td>"+when(x.created_at)+"</td><td>"+esc(x.email||x.user_id)+"</td><td>"+(x.kind==="buy"?"Buying gold":"Selling gold back")+
+          "</td><td>"+Number(x.gold).toLocaleString()+"</td><td>"+money(x.usd)+"</td><td>"+esc(x.kind==="sell"?(x.payout_to||""):"")+
+          (x.payment_ref?'<br><span class="dim">ref '+esc(x.payment_ref)+"</span>":"")+"</td><td>"+act+"</td></tr>";
+      }).join("");
+    Array.prototype.forEach.call($("gx-table").querySelectorAll("[data-ok],[data-no]"),function(b){
+      b.onclick=function(){
+        var id=+(b.getAttribute("data-ok")||b.getAttribute("data-no")), ok=b.hasAttribute("data-ok");
+        var ref=($("gx-table").querySelector('[data-ref="'+id+'"]')||{}).value||"";
+        if(!ok&&!confirm("Refuse this request?")) return;
+        sb.rpc("gold_exchange_decide",{p_id:id,p_status:ok?"paid":"refused",p_ref:ref||null,p_note:null}).then(function(r2){
+          if(r2.error) return paneMsg("gx-msg",r2.error.message,true);
+          paneMsg("gx-msg",r2.data==="ok"?(ok?"Done.":"Refused."):String(r2.data),r2.data!=="ok"); loadGold();
+        });
+      };
+    });
+  });
+}
+Array.prototype.forEach.call(document.querySelectorAll("#gx-f .btn"),function(b){
+  b.onclick=function(){
+    Array.prototype.forEach.call(document.querySelectorAll("#gx-f .btn"),function(x){ x.classList.toggle("on",x===b); });
+    gxF=b.getAttribute("data-f"); loadGold();
+  };
+});
+$("gx-save").onclick=function(){
+  sb.rpc("gold_set_rates",{p_buy:+$("gx-buy").value,p_sell:+$("gx-sell").value,p_min:+$("gx-min").value,
+    p_on:$("gx-on").value==="true",p_pay_url:$("gx-url").value.trim()}).then(function(r){
+    if(r.error) return paneMsg("gx-rmsg",r.error.message,true);
+    paneMsg("gx-rmsg",r.data==="ok"?"Saved.":String(r.data),r.data!=="ok");
+  });
+};
 $("signout").onclick=function(){ sb.auth.signOut().then(function(){ location.reload(); }); };
 
 /* ---------------- tabs ---------------- */
@@ -425,13 +632,14 @@ Array.prototype.forEach.call(document.querySelectorAll("nav button"),function(b)
   b.onclick=function(){
     Array.prototype.forEach.call(document.querySelectorAll("nav button"),function(x){ x.classList.toggle("on",x===b); });
     var t=b.getAttribute("data-tab");
-    ["inbox","orders","dreamers","list","research","books","city","settings"].forEach(function(n){ $("tab-"+n).classList.toggle("hidden",n!==t); });
+    ["inbox","orders","dreamers","list","research","books","city","gold","settings"].forEach(function(n){ $("tab-"+n).classList.toggle("hidden",n!==t); });
     if(t==="dreamers") loadDreamers();
     if(t==="list") loadList();
     if(t==="research") loadResearch();
     if(t==="books"&&!loaded.books) loadBooks();
     if(t==="city") loadCityTab();
-    if(t==="settings"){ showSettings(); loadKeepers(); loadOffices(); loadJobs(); }
+    if(t==="gold") loadGold();
+    if(t==="settings"){ showMfaSetting(); showSettings(); loadKeepers(); loadOffices(); loadJobs(); loadShifts(); }
   };
 });
 
@@ -705,6 +913,29 @@ function loadJobs(){
       };
     });
   });
+}
+
+function loadShifts(){
+  if(!$("sh-table")) return;
+  sb.rpc("city_clock").then(function(r){ if(r.data){ $("tz-in").value=r.data.tz||""; $("tz-now").textContent="City time now: "+Math.floor(r.data.hour)+":"+("0"+Math.floor((r.data.hour%1)*60)).slice(-2); } });
+  sb.from("job_shift").select("title,start1,len1,start2,len2").order("title").then(function(r){
+    if(r.error){ $("sh-table").innerHTML='<tr><td class="dim">Run <b>schema-update-23.sql</b> to switch shifts on.</td></tr>'; return; }
+    function hh(h){ h=((+h%24)+24)%24; var H=Math.floor(h), M=Math.round((h-H)*60); return ("0"+H).slice(-2)+":"+("0"+M).slice(-2); }
+    $("sh-table").innerHTML="<tr><th>Post</th><th>Hours (city time)</th></tr>"+(r.data||[]).map(function(x){
+      return "<tr><td>"+esc(x.title)+"</td><td>"+hh(x.start1)+"&ndash;"+hh(+x.start1+ +x.len1)+(x.start2!==null?" and "+hh(x.start2)+"&ndash;"+hh(+x.start2+ +x.len2):"")+"</td></tr>"; }).join("");
+  });
+  sb.rpc("dream_words_board").then(function(r){
+    if(r.error){ $("dw-table").innerHTML='<tr><td class="dim">Run <b>schema-update-23.sql</b> first.</td></tr>'; return; }
+    var d=r.data||[];
+    $("dw-table").innerHTML=d.length?("<tr><th>Word</th><th>Built as</th><th>Times</th><th>Last dreamt</th></tr>"+d.map(function(w){
+      return "<tr><td><b>"+esc(w.word)+"</b></td><td>"+esc(w.kind||"")+"</td><td>"+w.times+"</td><td>"+new Date(w.last_at).toLocaleString()+"</td></tr>"; }).join("")):
+      '<tr><td class="dim">No new words yet.</td></tr>';
+  });
+  $("tz-save").onclick=function(){
+    var tz=$("tz-in").value.trim(); if(!tz) return;
+    try{ new Intl.DateTimeFormat("en",{timeZone:tz}); }catch(e){ omsg("That is not a time zone name (try America/New_York).",true); return; }
+    putConfig("city_tz",tz).then(function(r){ omsg(r.error?r.error.message:"The city now keeps "+tz+" time.",!!r.error); loadShifts(); });
+  };
 }
 
 /* ---------------- Somnucor city tab: office codes, catalogue, courts, treasury, the District ---------------- */
