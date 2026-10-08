@@ -66,7 +66,7 @@
   <p id="contact">For anything about your data, write to us through the help address shown in the app's Settings.</p>
 </main>
 <script>
-(function(){var t="https://ryxmrkwgdyphcdlglwka.supabase.co",e="sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY";fetch(t+"/rest/v1/app_config?select=value&key=eq.support_email",{headers:{apikey:e,Authorization:"Bearer "+e}}).then((function(t){return t.ok?t.json():[]})).then((function(t){var e=t&&t[0]&&t[0].value;if(typeof e!=="string")e=e&&e.email;if(!e||!/^[^@\s]+@[^@\s]+$/.test(e))return;var n=document.getElementById("contact");n.textContent="For anything about your data, write to ";var a=document.createElement("a");a.href="mailto:"+e;a.textContent=e;n.appendChild(a);n.appendChild(document.createTextNode("."))})).catch((function(){}))})();
+(function(){var t="https://ryxmrkwgdyphcdlglwka.supabase.co",e="sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY";fetch(t+"/rest/v1/app_config?select=value&key=eq.support_email",{headers:{apikey:e,Authorization:"Bearer "+e}}).then(function(t){return t.ok?t.json():[]}).then(function(t){var e=t&&t[0]&&t[0].value;if(typeof e!=="string")e=e&&e.email;if(!e||!/^[^@\s]+@[^@\s]+$/.test(e))return;var n=document.getElementById("contact");n.textContent="For anything about your data, write to ";var a=document.createElement("a");a.href="mailto:"+e;a.textContent=e;n.appendChild(a);n.appendChild(document.createTextNode("."))}).catch(function(){})})();
 </script>
 </body>
 </html>
