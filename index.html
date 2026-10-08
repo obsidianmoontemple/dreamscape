@@ -526,6 +526,72 @@ body.pad-on #joy{display:none!important}
 </head>
 <body>
 
+<style>
+#tg-splash{position:fixed;inset:0;z-index:8990;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 115%,#6B4F9E 0%,#3A2D6B 34%,#1B1A3F 66%,#0C0D22 100%);
+  color:#F4EEFF;font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;transition:opacity .9s ease;touch-action:manipulation}
+#tg-splash.tg-out{opacity:0;pointer-events:none}
+#tg-splash .tg-stars{position:absolute;inset:-10% -10%;background-image:
+  radial-gradient(1.6px 1.6px at 12% 18%,#fff 60%,transparent),radial-gradient(1.2px 1.2px at 27% 42%,#E8DDFF 60%,transparent),
+  radial-gradient(1.8px 1.8px at 44% 12%,#fff 60%,transparent),radial-gradient(1.1px 1.1px at 63% 31%,#fff 60%,transparent),
+  radial-gradient(1.5px 1.5px at 78% 16%,#FFF2D6 60%,transparent),radial-gradient(1.2px 1.2px at 88% 47%,#fff 60%,transparent),
+  radial-gradient(1.3px 1.3px at 8% 63%,#E8DDFF 60%,transparent),radial-gradient(1.6px 1.6px at 35% 70%,#fff 60%,transparent),
+  radial-gradient(1.1px 1.1px at 56% 58%,#fff 60%,transparent),radial-gradient(1.4px 1.4px at 71% 76%,#FFF2D6 60%,transparent),
+  radial-gradient(1.2px 1.2px at 93% 82%,#fff 60%,transparent),radial-gradient(1px 1px at 19% 88%,#fff 60%,transparent);
+  opacity:.85;animation:tg-drift 120s linear infinite}
+#tg-splash .tg-cloud{position:absolute;border-radius:50%;background:rgba(214,196,255,.13);filter:blur(18px);animation:tg-float 60s ease-in-out infinite alternate}
+#tg-splash .tg-c1{width:46vw;height:12vw;left:-8vw;bottom:14vh}
+#tg-splash .tg-c2{width:38vw;height:10vw;right:-6vw;bottom:26vh;animation-duration:75s;animation-direction:alternate-reverse}
+#tg-splash .tg-c3{width:60vw;height:16vw;left:20vw;bottom:-6vw;background:rgba(255,214,236,.10)}
+@keyframes tg-drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-6%,3%,0)}}
+@keyframes tg-float{from{transform:translateX(0)}to{transform:translateX(6vw)}}
+@keyframes tg-bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(-2deg)}}
+@keyframes tg-z{0%{opacity:0;transform:translate(0,0) scale(.7)}25%{opacity:.85}100%{opacity:0;transform:translate(18px,-38px) scale(1.15)}}
+@keyframes tg-slide{from{left:-35%}to{left:100%}}
+#tg-splash .tg-mid{position:relative;width:min(440px,92vw);text-align:center;padding:16px}
+#tg-splash .tg-moon{width:112px;height:112px;margin:0 auto 6px;position:relative;animation:tg-bob 7s ease-in-out infinite}
+#tg-splash .tg-moon i{position:absolute;font-style:normal;font-family:Georgia,serif;color:#E9DEFF;opacity:0;animation:tg-z 4.5s ease-out infinite}
+#tg-splash .tg-moon i.z1{right:2px;top:10px;font-size:15px}
+#tg-splash .tg-moon i.z2{right:-10px;top:-2px;font-size:20px;animation-delay:1.5s}
+#tg-splash .tg-moon i.z3{right:-22px;top:-16px;font-size:25px;animation-delay:3s}
+#tg-splash h1.tg-name{margin:0;font-weight:500;font-size:clamp(38px,10vw,58px);letter-spacing:.06em;line-height:1.05;
+  background:linear-gradient(180deg,#FFFFFF 0%,#E9DCFF 55%,#C7B3F2 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 28px rgba(200,170,255,.28)}
+#tg-splash .tg-sub{margin:6px 0 0;font-size:clamp(15px,4vw,18px);letter-spacing:.16em;text-transform:uppercase;color:#CFC1F0}
+#tg-splash .tg-tag{margin:10px 0 0;font-size:15px;font-style:italic;color:#B9ADD9}
+#tg-splash .tg-load{margin:30px auto 0;width:min(300px,80%)}
+#tg-splash .tg-bar{position:relative;height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+#tg-splash .tg-fill{position:absolute;left:0;top:0;bottom:0;width:4%;border-radius:999px;background:linear-gradient(90deg,#B79BFF,#FFC6E4);transition:width .5s ease}
+#tg-splash .tg-bar.tg-wait .tg-fill{width:35%;animation:tg-slide 2.6s ease-in-out infinite alternate}
+#tg-splash .tg-words{margin-top:10px;font:14px ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#D8CCF5;min-height:20px}
+@media (prefers-reduced-motion:reduce){#tg-splash *{animation:none!important}}
+</style>
+<div id="tg-splash" role="dialog" aria-label="SomnuMatrix is loading">
+  <div class="tg-stars"></div><div class="tg-cloud tg-c1"></div><div class="tg-cloud tg-c2"></div><div class="tg-cloud tg-c3"></div>
+  <div class="tg-mid">
+    <div class="tg-moon" aria-hidden="true">
+      <svg viewBox="0 0 120 120" width="112" height="112">
+        <defs><radialGradient id="tg-mg" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFF8DC"/><stop offset="1" stop-color="#F5D98B"/></radialGradient></defs>
+        <mask id="tg-cut"><rect width="120" height="120" fill="#fff"/><circle cx="84" cy="40" r="38" fill="#000"/></mask>
+        <circle cx="56" cy="62" r="44" fill="url(#tg-mg)" mask="url(#tg-cut)"/>
+        <path d="M40 66q6 6 12 0" stroke="#7A5A2E" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M44 80q6 4 12 0" stroke="#7A5A2E" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="34" cy="76" rx="6" ry="3.6" fill="#F7A9B8" opacity=".75"/>
+        <circle cx="96" cy="24" r="3" fill="#FFF6D8"/><circle cx="104" cy="44" r="1.8" fill="#FFF6D8"/>
+      </svg>
+      <i class="z1">z</i><i class="z2">z</i><i class="z3">Z</i>
+    </div>
+    <h1 class="tg-name">SomnuMatrix</h1>
+    <p class="tg-sub">The Dream Walker&rsquo;s Atlas</p>
+    <p class="tg-tag">Speak a dream, and walk the world it builds.</p>
+    <div class="tg-load" id="tg-load">
+      <div class="tg-bar tg-wait" id="tg-bar"><div class="tg-fill" id="tg-fill"></div></div>
+      <div class="tg-words" id="tg-words">Opening the Atlas&hellip;</div>
+    </div>
+    <div id="tg-card"></div>
+  </div>
+</div>
+
 <h1 class="sr-only">SomnuMatrix — speak a dream and walk the world it builds</h1>
 
 <div id="world"></div>
@@ -94812,6 +94878,241 @@ console.warn("fest-more:", e);
 }
 }
 };
+})();
+</script>
+<script>
+"use strict";
+var TG = { pct: 4, city: false, cityAt: 0, dom: 0, mgr: { done: 0, total: 0, idle: 0 }, ready: false, shown: false, entered: false, google: null, t0: Date.now() };
+function tgSkip() {
+if (/[?&]gate=1\b/.test(location.search))
+return false;
+return (typeof DW_TESTING !== "undefined" && DW_TESTING) || /[?&]nogate=1\b/.test(location.search) || !!(navigator && navigator.webdriver);
+}
+function tgEl(id) { return document.getElementById(id); }
+function tgSet(p, words) {
+TG.pct = Math.max(TG.pct, Math.min(100, p));
+var bar = tgEl("tg-bar"), fill = tgEl("tg-fill"), w = tgEl("tg-words");
+if (bar)
+bar.classList.remove("tg-wait");
+if (fill)
+fill.style.width = Math.round(TG.pct) + "%";
+if (w && words)
+w.textContent = words + " " + Math.round(TG.pct) + "%";
+}
+if (typeof atlProgressLine === "function") {
+var tgProgBase = atlProgressLine;
+atlProgressLine = function (f, words) { if (!TG.city)
+tgSet(40 + 42 * Math.max(0, Math.min(1, f)), "Raising Somnucor…"); return tgProgBase.apply(this, arguments); };
+}
+if (typeof atlBuildCityAsync === "function") {
+var tgCityBase = atlBuildCityAsync;
+atlBuildCityAsync = function (done, prog) {
+var a = Array.prototype.slice.call(arguments);
+a[0] = function () { try {
+return done && done.apply(this, arguments);
+}
+finally {
+TG.city = true;
+TG.cityAt = Date.now();
+} };
+return tgCityBase.apply(this, a);
+};
+}
+(function () {
+var M = typeof THREE !== "undefined" && THREE.DefaultLoadingManager;
+if (!M)
+return;
+var s0 = M.onStart, p0 = M.onProgress, l0 = M.onLoad;
+M.onStart = function (u, d, t) { TG.mgr.done = d; TG.mgr.total = t; TG.mgr.idle = 0; if (s0)
+s0.apply(this, arguments); };
+M.onProgress = function (u, d, t) { TG.mgr.done = d; TG.mgr.total = t; TG.mgr.idle = d >= t ? Date.now() : 0; if (p0)
+p0.apply(this, arguments); };
+M.onLoad = function () { TG.mgr.idle = Date.now(); if (l0)
+l0.apply(this, arguments); };
+})();
+tgSet(30, "Waking the dream…");
+function tgTick() {
+if (TG.ready)
+return;
+var now = Date.now();
+if (TG.dom && !TG.city && !(typeof joinedSomnucor === "function" && joinedSomnucor()) && now - TG.dom > 300) {
+TG.city = true;
+TG.cityAt = now;
+}
+if (TG.city) {
+var m = TG.mgr, f = m.total ? m.done / m.total : 1;
+tgSet(82 + 16 * f, "Dressing the world…");
+var settled = (!m.total || m.done >= m.total) && (!m.idle || now - m.idle > 700);
+if (settled && now - TG.cityAt > 600 || now - TG.cityAt > 15000 || TG.dom && now - TG.dom > 45000) {
+TG.ready = true;
+tgSet(100, "Ready");
+setTimeout(tgCard, 350);
+return;
+}
+}
+setTimeout(tgTick, 200);
+}
+var TG_CSS = "#tg-card{margin:26px auto 0;width:min(360px,100%);text-align:left;font:15px/1.5 ui-sans-serif,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#F4EEFF;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}" +
+"#tg-card.tg-on{opacity:1;transform:none}" +
+"#tg-card .tg-box{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(10,6,30,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}" +
+"#tg-card h2{margin:0 0 4px;font:500 21px 'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;text-align:center}" +
+"#tg-card .tg-hint{margin:0 0 12px;text-align:center;color:#CFC3EE;font-size:13px}" +
+"#tg-card button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:11px 16px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}" +
+"#tg-card .tg-g{background:#fff;color:#2D2440;font-weight:600}" +
+"#tg-card .tg-main{background:linear-gradient(90deg,#B79BFF,#F7B6DA);color:#24163F;font-weight:700;margin-top:10px}" +
+"#tg-card .tg-soft{background:rgba(255,255,255,.12);color:#F4EEFF;margin-top:8px}" +
+"#tg-card input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(12,10,32,.55);color:#fff;font:inherit;outline:none}" +
+"#tg-card input:focus{border-color:#C8B3FF;box-shadow:0 0 0 3px rgba(183,155,255,.25)}" +
+"#tg-card .tg-or{display:flex;align-items:center;gap:10px;margin:14px 0 4px;color:#BBAEDD;font-size:12px;text-transform:uppercase;letter-spacing:.12em}" +
+"#tg-card .tg-or:before,#tg-card .tg-or:after{content:'';flex:1;height:1px;background:rgba(255,255,255,.18)}" +
+"#tg-card .tg-links{display:flex;justify-content:space-between;gap:8px;margin-top:10px;font-size:13px}" +
+"#tg-card a{color:#E6D9FF;text-decoration:underline;text-underline-offset:3px;cursor:pointer}" +
+"#tg-card .tg-msg{min-height:20px;margin-top:8px;font-size:13px;text-align:center;color:#E9DEFF}" +
+"#tg-card .tg-msg.bad{color:#FFB4C2}" +
+"#tg-card .tg-look{display:block;text-align:center;margin-top:14px;font-size:14px}";
+var TG_G = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+function tgWords(e) { return (e instanceof TypeError || /fetch|network/i.test(String(e && e.message || ""))) ? "We can't reach the sign-in desk just now. Check your connection and try again." : authWords(e); }
+function tgMsg(t, bad) { var m = tgEl("tg-msg"); if (!m)
+return; m.textContent = t || ""; m.className = "tg-msg" + (bad ? " bad" : ""); }
+function tgName() {
+var u = session && session.user, md = u && u.user_metadata || {};
+var n = md.full_name || md.name || "";
+if (!n && u && u.email)
+n = u.email.split("@")[0];
+return String(n).split(" ")[0] || "dreamer";
+}
+function tgCard() {
+if (TG.shown)
+return;
+TG.shown = true;
+var load = tgEl("tg-load");
+if (load)
+load.style.display = "none";
+if (!tgEl("tg-css")) {
+var c = document.createElement("style");
+c.id = "tg-css";
+c.textContent = TG_CSS;
+document.head.appendChild(c);
+}
+tgDraw();
+try {
+authCall("GET", "settings").then(function (j) { TG.google = !!(j && j.external && j.external.google); }).catch(function () { TG.google = null; });
+}
+catch (e) { }
+}
+function tgDraw() {
+var card = tgEl("tg-card");
+if (!card)
+return;
+if (signedIn()) {
+card.innerHTML = '<div class="tg-box"><h2>Welcome back, ' + esc(tgName()) + '</h2>' +
+'<p class="tg-hint">Your dreams and your place in Somnucor are waiting.</p>' +
+'<button class="tg-main" id="tg-enter" type="button">Enter the dream</button>' +
+'<div class="tg-links" style="justify-content:center"><a id="tg-out">Not you? Sign out</a></div></div>';
+}
+else {
+card.innerHTML = '<div class="tg-box"><h2>Welcome, dreamer</h2>' +
+'<p class="tg-hint">Sign in to keep your dreams, your home and your gold.</p>' +
+'<button class="tg-g" id="tg-google" type="button">' + TG_G + '<span>Continue with Google</span></button>' +
+'<div class="tg-or">or</div>' +
+'<input id="tg-email" type="email" placeholder="Your email" autocomplete="email" inputmode="email">' +
+'<input id="tg-pass" type="password" placeholder="Your password" autocomplete="current-password">' +
+'<button class="tg-main" id="tg-signin" type="button">Sign in</button>' +
+'<button class="tg-soft" id="tg-create" type="button">Create an account</button>' +
+'<div class="tg-links"><a id="tg-forgot">Forgot your password?</a></div>' +
+'<div class="tg-msg" id="tg-msg"></div></div>' +
+'<a class="tg-look" id="tg-look">Just look around first</a>';
+}
+requestAnimationFrame(function () { card.classList.add("tg-on"); });
+var on = function (id, f) { var b = tgEl(id); if (b)
+b.onclick = f; };
+on("tg-enter", tgEnter);
+on("tg-look", tgEnter);
+on("tg-out", function () { signOut(); tgDraw(); });
+on("tg-google", tgGoogle);
+on("tg-signin", function () { tgEmail("in"); });
+on("tg-create", function () { tgEmail("new"); });
+on("tg-forgot", function () { tgEmail("forgot"); });
+var pw = tgEl("tg-pass");
+if (pw)
+pw.onkeydown = function (e) { if (e.key === "Enter")
+tgEmail("in"); };
+}
+function tgGoogle() {
+if (TG.google === false) {
+tgMsg("Google sign-in is not open yet. Please use your email for now.", true);
+return;
+}
+tgMsg("Taking you to Google…");
+location.href = authUrl("authorize?provider=google&redirect_to=" + encodeURIComponent(hereUrl()));
+}
+function tgEmail(kind) {
+var em = (tgEl("tg-email").value || "").trim(), pw = tgEl("tg-pass").value || "";
+if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)) {
+tgMsg("That doesn't look like an email address.", true);
+return;
+}
+if (kind === "forgot") {
+authPost("recover?redirect_to=" + encodeURIComponent(hereUrl()), { email: em }).then(function () { tgMsg("If that address has an account, a letter is on its way."); })
+.catch(function (e) { tgMsg(tgWords(e), true); });
+return;
+}
+if (!pw) {
+tgMsg("Your password, please.", true);
+return;
+}
+if (kind === "new" && pw.length < 10) {
+tgMsg("Use at least ten characters for the password.", true);
+return;
+}
+var keep = function (j) { keepSession({ access_token: j.access_token, refresh_token: j.refresh_token, user: j.user, at: Date.now() }); };
+if (kind === "new") {
+tgMsg("Making your account…");
+authPost("signup?redirect_to=" + encodeURIComponent(hereUrl()), { email: em, password: pw }).then(function (j) {
+if (j.access_token) {
+keep(j);
+tgEnter();
+}
+else
+tgMsg("Account made! Check your email to confirm it, then sign in here.");
+}).catch(function (e) { tgMsg(tgWords(e), true); });
+return;
+}
+tgMsg("Signing in…");
+authPost("token?grant_type=password", { email: em, password: pw }).then(function (j) { keep(j); tgEnter(); })
+.catch(function (e) { tgMsg(tgWords(e), true); });
+}
+function tgEnter() {
+if (TG.entered)
+return;
+TG.entered = true;
+var s = tgEl("tg-splash");
+if (!s)
+return;
+s.classList.add("tg-out");
+setTimeout(function () { if (s.parentNode)
+s.parentNode.removeChild(s); }, 1000);
+if (signedIn() && typeof setStatus === "function")
+setStatus("<b>Welcome back, " + esc(tgName()) + ".</b>");
+}
+(function () {
+var s = tgEl("tg-splash");
+if (!s)
+return;
+if (tgSkip()) {
+s.parentNode.removeChild(s);
+TG.ready = TG.entered = true;
+return;
+}
+["keydown", "keyup", "keypress"].forEach(function (k) { s.addEventListener(k, function (e) { e.stopPropagation(); }); });
+["keydown", "keyup"].forEach(function (k) { window.addEventListener(k, function (e) { if (!TG.entered && !s.contains(e.target))
+e.stopImmediatePropagation(); }, true); });
+["pointerdown", "mousedown", "touchstart", "wheel"].forEach(function (k) { s.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
+var go = function () { TG.dom = Date.now(); tgSet(38, "Waking the dream…"); setTimeout(tgTick, 200); };
+if (document.readyState === "loading")
+document.addEventListener("DOMContentLoaded", go);
+else
+go();
 })();
 </script>
 <script>
