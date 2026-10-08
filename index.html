@@ -49809,7 +49809,7 @@ return;
 }
 if (!f)
 return;
-hallViewer("Screen " + sc.n + " · " + f.title + (f.year ? " (" + f.year + ")" : ""), "https://archive.org/embed/" + encodeURIComponent(f.id), esc(CIN_RATING[f.rating] || "") + (f.rating === "adult" ? " (a horror film made for grown-ups)" : "") + '. A public-domain film, played from the <a target="_blank" rel="noopener noreferrer" href="https://archive.org/details/' + encodeURIComponent(f.id) + '">Internet Archive</a>. Press play; Escape leaves your seat.', { onClose: cinStand, closeWord: "Leave your seat", link: "https://archive.org/details/" + encodeURIComponent(f.id) });
+hallViewer("Screen " + sc.n + " · " + f.title + (f.year ? " (" + f.year + ")" : ""), "https://archive.org/embed/" + encodeURIComponent(f.id), esc(CIN_RATING[f.rating] || "") + (f.rating === "adult" ? " (a horror film made for grown-ups)" : "") + '. ' + (typeof cinLicence === "function" ? cinLicence(f) : "A public-domain film") + ', played from the <a target="_blank" rel="noopener noreferrer" href="https://archive.org/details/' + encodeURIComponent(f.id) + '">Internet Archive</a>. Press play; Escape leaves your seat.', { onClose: cinStand, closeWord: "Leave your seat", link: "https://archive.org/details/" + encodeURIComponent(f.id) });
 }
 function cinStand() { CIN.watching = null; setStatus("You get up from your seat."); }
 function cinPaint() {
@@ -50242,7 +50242,7 @@ if (CINL.vid)
 CINL.vid.muted = true;
 if (CINL.src[f.id] && cinFullMp4(CINL.src[f.id], f, CINL.vid ? CINL.vid.currentTime : 0))
 return;
-hallViewer("Screen " + sc.n + " · " + f.title + (f.year ? " (" + f.year + ")" : ""), "https://archive.org/embed/" + encodeURIComponent(f.id), "A public-domain film, played from the Internet Archive.", { onClose: function () { if (CINL.vid && CIN.watching)
+hallViewer("Screen " + sc.n + " · " + f.title + (f.year ? " (" + f.year + ")" : ""), "https://archive.org/embed/" + encodeURIComponent(f.id), (typeof cinLicence === "function" ? cinLicence(f) : "A public-domain film") + ", played from the Internet Archive.", { onClose: function () { if (CINL.vid && CIN.watching)
 CINL.vid.muted = false; }, closeWord: "Back to the screen", link: "https://archive.org/details/" + encodeURIComponent(f.id) });
 };
 }
@@ -50412,7 +50412,7 @@ exitInterior = function () { cinVidStop(); cinSeatBar(false); CINL.seat = null; 
 </script>
 <script>
 "use strict";
-var LIB_SHELVES = ["Science & Nature", "History", "Philosophy & Thought", "Mathematics", "Classic Literature", "Poetry", "Children's & Young Readers", "Languages & Reference", "Arts & Music", "Halloween & Gothic"];
+var LIB_SHELVES = ["Science & Nature", "History", "Philosophy & Thought", "Mathematics", "Classic Literature", "Poetry", "Children's & Young Readers", "Languages & Reference", "Arts & Music", "Halloween & Gothic", "Modern & Free"];
 var LIB_BOOKS = [
 [1228, "On the Origin of Species", "Charles Darwin", 0, "teen", "Darwin's founding case for evolution by natural selection."],
 [944, "The Voyage of the Beagle", "Charles Darwin", 0, "all", "Darwin's travel journal of the voyage that shaped his thinking."],
@@ -50487,7 +50487,23 @@ var LIB_BOOKS = [
 [10007, "Carmilla", "J. Sheridan Le Fanu", 9, "teen", "The vampire novella that predates Dracula."],
 [209, "The Turn of the Screw", "Henry James", 9, "teen", "A governess, two children and ghosts - or are they?"],
 [43, "The Strange Case of Dr. Jekyll and Mr. Hyde", "Robert Louis Stevenson", 9, "teen", "A doctor's potion unleashes his darker self."],
-[8486, "Ghost Stories of an Antiquary", "M. R. James", 9, "teen", "Eight classic English ghost stories."]
+[8486, "Ghost Stories of an Antiquary", "M. R. James", 9, "teen", "Eight classic English ghost stories."],
+["os-astronomy", "Astronomy (2nd edition)", "OpenStax, Rice University", 10, "teen", "Today's full tour of the stars, planets and galaxies, with the newest discoveries.", "https://openstax.org/details/books/astronomy-2e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-biology", "Biology (2nd edition)", "OpenStax, Rice University", 10, "teen", "Modern biology, from cells and DNA to evolution and ecosystems.", "https://openstax.org/details/books/biology-2e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-psychology", "Psychology (2nd edition)", "OpenStax, Rice University", 10, "teen", "How the mind works: memory, sleep, dreams, feelings and behaviour.", "https://openstax.org/details/books/psychology-2e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-chemistry", "Chemistry (2nd edition)", "OpenStax, Rice University", 10, "teen", "Atoms, reactions and the chemistry of everyday life.", "https://openstax.org/details/books/chemistry-2e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-anatomy", "Anatomy and Physiology (2nd edition)", "OpenStax, Rice University", 10, "teen", "The human body, system by system.", "https://openstax.org/details/books/anatomy-and-physiology-2e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-us-history", "U.S. History", "OpenStax, Rice University", 10, "teen", "America's story from its first peoples to the present day.", "https://openstax.org/details/books/us-history", "Creative Commons Attribution (CC BY 4.0)"],
+["os-world-history", "World History, Volume 2: from 1400", "OpenStax, Rice University", 10, "teen", "The modern world, from the age of exploration to the twenty-first century.", "https://openstax.org/details/books/world-history-volume-2", "Creative Commons Attribution (CC BY 4.0)"],
+["os-economics", "Principles of Economics (3rd edition)", "OpenStax, Rice University", 10, "teen", "How money, markets, jobs and banks work today.", "https://openstax.org/details/books/principles-economics-3e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-sociology", "Introduction to Sociology (3rd edition)", "OpenStax, Rice University", 10, "teen", "How people live together: families, cities, work and culture now.", "https://openstax.org/details/books/introduction-sociology-3e", "Creative Commons Attribution (CC BY 4.0)"],
+["os-philosophy", "Introduction to Philosophy", "OpenStax, Rice University", 10, "teen", "The big questions, old and new, explained for today's reader.", "https://openstax.org/details/books/introduction-philosophy", "Creative Commons Attribution (CC BY 4.0)"],
+["os-entrepreneurship", "Entrepreneurship", "OpenStax, Rice University", 10, "teen", "How to start and run your own business, step by step.", "https://openstax.org/details/books/entrepreneurship", "Creative Commons Attribution (CC BY 4.0)"],
+["pepper-carrot", "Pepper&Carrot", "David Revoy", 10, "all", "A funny, beautifully painted modern comic about a young witch and her cat.", "https://www.peppercarrot.com/en/webcomics/peppercarrot.html", "Creative Commons Attribution (CC BY 4.0)"],
+["storyweaver", "StoryWeaver picture books", "Pratham Books and friends", 10, "all", "Thousands of new illustrated children's stories in many languages.", "https://storyweaver.org.in/en/stories", "Creative Commons Attribution (CC BY 4.0)"],
+["wj-solar-system", "Wikijunior: Solar System", "Wikibooks writers", 10, "all", "A children's guide to the Sun, the planets and space travel.", "https://en.wikibooks.org/wiki/Wikijunior:Solar_System", "Creative Commons Attribution-ShareAlike (CC BY-SA)"],
+["wj-dinosaurs", "Wikijunior: Dinosaurs", "Wikibooks writers", 10, "all", "Meet the dinosaurs, one by one, for young readers.", "https://en.wikibooks.org/wiki/Wikijunior:Dinosaurs", "Creative Commons Attribution-ShareAlike (CC BY-SA)"],
+["producing-oss", "Producing Open Source Software", "Karl Fogel", 10, "adult", "How today's free software projects are run and kept going.", "https://producingoss.com/", "Creative Commons Attribution-ShareAlike (CC BY-SA)"]
 ];
 var LIB_KEY = "The Somnucor Public Library";
 cityWorkplace({ key: LIB_KEY, ring: "civic", arch: "museum", s: 1.1, jobs: [1620, 1621, 1622, 1623, 1624], fit: [],
@@ -50559,7 +50575,7 @@ function libRead(n) {
 var b = LIB_BOOKS.filter(function (q) { return q[0] === n; })[0];
 if (!b)
 return;
-if (typeof libReader === "function") {
+if (typeof libReader === "function" && !b[6]) {
 libReader(b, function () { libReadPage(b); });
 libNote("book", n);
 return;
@@ -50568,6 +50584,11 @@ libReadPage(b);
 }
 function libReadPage(b) {
 var n = b[0];
+if (b[6]) {
+hallViewer(b[1] + " · " + b[2], b[6], 'A modern book by ' + esc(b[2]) + ', shared under ' + esc(b[7]) + '. If the page stays blank, <a target="_blank" rel="noopener noreferrer" href="' + b[6] + '">open it in a new tab</a>. Escape closes the book.', { link: b[6], tall: true, closeWord: "Close the book" });
+libNote("book", n);
+return;
+}
 hallViewer(b[1] + " · " + b[2], libReadUrl(n), 'A public-domain book from <a target="_blank" rel="noopener noreferrer" href="' + libPage(n) + '">Project Gutenberg</a>. If the page stays blank, open it in a new tab. Escape closes the book.', { link: libReadUrl(n), tall: true, closeWord: "Close the book" });
 libNote("book", n);
 }
@@ -50724,7 +50745,7 @@ h += '<div class="dim">Simulations to play with, right here:</div><div class="ro
 }
 else if (w === "story") {
 h += '<div><b>The story corner.</b> <span class="dim">Sit on a cushion and pick a story; the storyteller reads at story hour.</span></div>';
-LIB_BOOKS.filter(function (b) { return b[3] === 6 || (b[3] === 9 && b[4] === "all"); }).forEach(function (b) {
+LIB_BOOKS.filter(function (b) { return b[3] === 6 || ((b[3] === 9 || b[3] === 10) && b[4] === "all"); }).forEach(function (b) {
 h += '<div class="item"><b>' + esc(b[1]) + '</b> <span class="dim">' + esc(b[2]) + '</span><div class="row"><button class="btn" data-lib="read:' + b[0] + '">Read</button></div></div>';
 });
 h += '<div class="item"><a target="_blank" rel="noopener noreferrer" href="https://librivox.org">Listen to stories read aloud at LibriVox</a> <span class="dim">(public domain, opens in a new tab)</span></div>';
@@ -50810,7 +50831,7 @@ if (a[0] === "read") {
 var c = document.getElementById("lib-cat");
 if (c)
 c.parentNode.removeChild(c);
-libRead(+a[1]);
+libRead(/^\d+$/.test(a[1]) ? +a[1] : a[1]);
 }
 else if (a[0] === "phet")
 libPhet(a[1]);
@@ -81503,7 +81524,7 @@ catch (e) { }
 })();
 </script>
 <script>
-var CIN_GENRES = { christmas: "Christmas", comedy: "Comedy", family: "Family", cartoon: "Cartoons", action: "Action and adventure", drama: "Drama and sci-fi", horror: "Horror" };
+var CIN_GENRES = { modern: "Modern animation", modernfilm: "Modern films", christmas: "Christmas", comedy: "Comedy", family: "Family", cartoon: "Cartoons", action: "Action and adventure", drama: "Drama and sci-fi", horror: "Horror" };
 var CIN_MORE = {
 "pd-scrooge-1935": ["Scrooge", 1935, 78, "family", "christmas"],
 "pd-a-christmas-carol-1910": ["A Christmas Carol", 1910, 11, "family", "christmas"],
@@ -81579,6 +81600,28 @@ var CIN_MORE = {
 "pd-terror-by-night-1946": ["Sherlock Holmes: Terror by Night", 1946, 60, "teen", "action", "Terror by Night"],
 "pd-dressed-to-kill-1946": ["Sherlock Holmes: Dressed to Kill", 1946, 72, "teen", "action", "Dressed to Kill"],
 "pd-the-woman-in-green-1945": ["Sherlock Holmes: The Woman in Green", 1945, 68, "teen", "action", "The Woman in Green"],
+"pd-big-buck-bunny-2008": ["Big Buck Bunny", 2008, 10, "family", "modern"],
+"pd-elephants-dream-2006": ["Elephants Dream", 2006, 11, "teen", "modern"],
+"pd-sintel-2010": ["Sintel", 2010, 15, "teen", "modern"],
+"pd-tears-of-steel-2012": ["Tears of Steel", 2012, 12, "teen", "modernfilm"],
+"pd-caminandes-llamigos-2016": ["Caminandes: Llamigos", 2016, 3, "family", "modern", "Llamigos"],
+"pd-cosmos-laundromat-2015": ["Cosmos Laundromat", 2015, 12, "teen", "modern"],
+"pd-agent-327-2017": ["Agent 327: Operation Barbershop", 2017, 4, "family", "modern", "Agent 327"],
+"pd-spring-2019": ["Spring", 2019, 8, "family", "modern", "Spring Blender"],
+"pd-coffee-run-2020": ["Coffee Run", 2020, 3, "family", "modern"],
+"pd-sprite-fright-2021": ["Sprite Fright", 2021, 10, "teen", "modern"],
+"pd-charge-2022": ["Charge", 2022, 4, "teen", "modern", "Charge Blender"],
+"pd-wing-it-2023": ["Wing It!", 2023, 4, "family", "modern", "Wing It"],
+"pd-llama-drama-2013": ["Caminandes: Llama Drama", 2013, 2, "family", "modern", "Llama Drama"],
+"pd-gran-dillama-2013": ["Caminandes: Gran Dillama", 2013, 3, "family", "modern", "Gran Dillama"],
+"pd-glass-half-2015": ["Glass Half", 2015, 3, "family", "modern"],
+"pd-daily-dweebs-2017": ["The Daily Dweebs", 2017, 3, "family", "modern", "Daily Dweebs"],
+"pd-hero-2018": ["Hero", 2018, 4, "family", "modern", "Hero Blender"],
+"pd-sita-sings-the-blues-2008": ["Sita Sings the Blues", 2008, 82, "teen", "modern", "Sita Sings the Blues", "Nina Paley, who gave it to the public domain"],
+"pd-seder-masochism-2018": ["Seder-Masochism", 2018, 78, "adult", "modern", "Seder-Masochism", "Nina Paley, who gave it to the public domain"],
+"pd-the-cosmonaut-2013": ["The Cosmonaut", 2013, 93, "teen", "modernfilm", "The Cosmonaut", "Riot Cinema Collective, shared under Creative Commons Attribution-ShareAlike"],
+"pd-valkaama-2010": ["Valkaama", 2010, 88, "teen", "modernfilm", "Valkaama", "the Valkaama makers, shared under Creative Commons Attribution-ShareAlike"],
+"pd-arduino-documentary-2010": ["Arduino: The Documentary", 2010, 28, "family", "modernfilm", "Arduino The Documentary", "Raul Alaejos and Laboral Centro de Arte, shared under Creative Commons Attribution-ShareAlike"],
 "pd-metropolis-1927": ["Metropolis", 1927, 148, "teen", "drama"],
 "pd-sunrise-1927": ["Sunrise: A Song of Two Humans", 1927, 94, "teen", "drama", "Sunrise"],
 "pd-the-jazz-singer-1927": ["The Jazz Singer", 1927, 88, "family", "drama"],
@@ -81596,28 +81639,34 @@ Object.keys(CIN_MORE).forEach(function (k) { CIN_FILMS[k] = CIN_MORE[k]; });
 Object.keys(CIN_FILMS).forEach(function (k) { var d = CIN_FILMS[k]; if (!d[4])
 d[4] = /skeleton|hells|swing/.test(k) ? "cartoon" : "horror"; });
 })();
+function cinLicence(f) {
+var d = f && CIN_FILMS[f.pd || f.id];
+if (!d || String(d[4]).indexOf("modern") !== 0)
+return "A public-domain film";
+return "A film by " + (d[6] || "the Blender Foundation (blender.org), shared under Creative Commons Attribution");
+}
 CIN_RATING = { family: "For everyone", teen: "Older children and up", adult: "Grown-ups" };
 var CIN_SEASONS = {
 october: [
 { n: 1, name: "Comedy Classics", films: ["pd-the-gold-rush-1925", "pd-his-girl-friday-1940", "pd-the-general-1926", "pd-my-man-godfrey-1936", "pd-safety-last-1923", "pd-africa-screams-1949", "pd-sherlock-jr-1924", "pd-nothing-sacred-1937"] },
 { n: 2, name: "Horror", films: ["Nosferatu1922", "HouseOnHauntedHill1959", "ThePhantomoftheOpera", "The_Bat.mpeg", "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari", "lastmanonearth-1964", "TheGolem_893", "Little_ShopOf_Horrors.avi", "DrJekyllandMrHyde", "ABucketofBlood", "The_Hunchback_of_Notre_Dame", "TheTerror"] },
-{ n: 3, name: "Family & Cartoons", films: ["the-skeleton-dance-1929", "pd-jack-and-the-beanstalk-1952", "pd-steamboat-willie-1928", "hells-bells_1929", "pd-gullivers-travels-1939", "pd-popeye-meets-sindbad-1936", "swing-you-sinners-1930", "pd-the-wizard-of-oz-1925", "pd-superman-1941", "Frankenstein1910", "pd-the-little-princess-1939", "pd-falling-hare-1943"] },
-{ n: 4, name: "Horror for Grown-ups", films: ["night_of_the_living_dead_dvd", "CarnivalOfSouls1962", "dementia-13-1963_202312", "Haxan_tinted_and_subtitled", "WhiteZombie"] },
-{ n: 5, name: "Action & Adventure", films: ["pd-the-mark-of-zorro-1920", "pd-the-black-pirate-1926", "pd-angel-and-the-badman-1947", "pd-the-thief-of-bagdad-1924", "pd-charade-1963", "pd-robin-hood-1922", "pd-mclintock-1963", "pd-the-lost-world-1925"] }
+{ n: 3, name: "Family & Cartoons", films: ["pd-big-buck-bunny-2008", "the-skeleton-dance-1929", "pd-jack-and-the-beanstalk-1952", "pd-steamboat-willie-1928", "hells-bells_1929", "pd-gullivers-travels-1939", "pd-popeye-meets-sindbad-1936", "pd-the-wizard-of-oz-1925", "pd-superman-1941", "Frankenstein1910", "pd-the-little-princess-1939", "pd-spring-2019"], altName: "Modern Cartoons", alt: ["pd-big-buck-bunny-2008", "pd-spring-2019", "pd-wing-it-2023", "pd-coffee-run-2020", "pd-agent-327-2017", "pd-hero-2018", "pd-glass-half-2015", "pd-daily-dweebs-2017", "pd-llama-drama-2013", "pd-gran-dillama-2013", "pd-caminandes-llamigos-2016", "the-skeleton-dance-1929"] },
+{ n: 4, name: "Horror for Grown-ups", films: ["night_of_the_living_dead_dvd", "CarnivalOfSouls1962", "dementia-13-1963_202312", "Haxan_tinted_and_subtitled", "WhiteZombie", "pd-sprite-fright-2021"] },
+{ n: 5, name: "Action & Adventure", films: ["pd-the-mark-of-zorro-1920", "pd-the-black-pirate-1926", "pd-angel-and-the-badman-1947", "pd-the-thief-of-bagdad-1924", "pd-charade-1963", "pd-robin-hood-1922", "pd-mclintock-1963", "pd-the-lost-world-1925", "pd-tears-of-steel-2012", "pd-the-cosmonaut-2013", "pd-sintel-2010", "pd-charge-2022"] }
 ],
 general: [
 { n: 1, name: "Comedy Classics", films: ["pd-the-kid-1921", "pd-his-girl-friday-1940", "pd-the-circus-1928", "pd-topper-returns-1941", "pd-steamboat-bill-jr-1928", "pd-the-inspector-general-1949", "pd-the-navigator-1924", "pd-road-to-bali-1952", "pd-the-cameraman-1928", "pd-speedy-1928"] },
 { n: 2, name: "Action & Adventure", films: ["pd-the-three-musketeers-1921", "pd-captain-kidd-1945", "pd-the-iron-mask-1929", "pd-kansas-city-confidential-1952", "pd-ben-hur-1925", "pd-hercules-1958", "pd-terror-by-night-1946", "pd-wings-1927", "pd-dressed-to-kill-1946", "pd-the-woman-in-green-1945"] },
 { n: 3, name: "Family & Cartoons", films: ["pd-a-trip-to-the-moon-1902", "pd-peter-pan-1924", "pd-plane-crazy-1928", "pd-the-adventures-of-tom-sawyer-1938", "pd-gertie-the-dinosaur-1914", "pd-the-adventures-of-prince-achmed-1926", "pd-popeye-meets-ali-baba-1937", "pd-little-lord-fauntleroy-1936", "pd-the-mechanical-monsters-1941", "pd-alice-in-wonderland-1915", "pd-a-corny-concerto-1943", "pd-aladdin-and-his-wonderful-lamp-1939"] },
-{ n: 4, name: "Drama & Sci-Fi", films: ["pd-metropolis-1927", "pd-sunrise-1927", "pd-rocketship-x-m-1950", "pd-meet-john-doe-1941", "pd-detour-1945", "pd-plan-9-from-outer-space-1957", "pd-the-stranger-1946", "pd-teenagers-from-outer-space-1959", "pd-robot-monster-1953"] },
-{ n: 5, name: "A Bit of Everything", films: ["pd-the-gold-rush-1925", "pd-royal-wedding-1951", "pd-fresh-hare-1942", "pd-the-mark-of-zorro-1920", "pd-jack-and-the-beanstalk-1952", "pd-the-jazz-singer-1927", "pd-the-bulleteers-1942", "pd-my-man-godfrey-1936", "pd-the-lost-world-1925", "pd-the-wabbit-who-came-to-supper-1942", "pd-angel-and-the-badman-1947"] }
+{ n: 4, name: "Drama & Sci-Fi", films: ["pd-metropolis-1927", "pd-sunrise-1927", "pd-rocketship-x-m-1950", "pd-meet-john-doe-1941", "pd-detour-1945", "pd-plan-9-from-outer-space-1957", "pd-the-stranger-1946", "pd-teenagers-from-outer-space-1959", "pd-robot-monster-1953", "pd-the-cosmonaut-2013", "pd-valkaama-2010", "pd-tears-of-steel-2012"], altName: "Modern Films", alt: ["pd-the-cosmonaut-2013", "pd-valkaama-2010", "pd-tears-of-steel-2012", "pd-arduino-documentary-2010", "pd-sintel-2010", "pd-elephants-dream-2006", "pd-cosmos-laundromat-2015", "pd-metropolis-1927", "pd-rocketship-x-m-1950", "pd-charge-2022"] },
+{ n: 5, name: "Modern Animation", films: ["pd-big-buck-bunny-2008", "pd-sintel-2010", "pd-spring-2019", "pd-sprite-fright-2021", "pd-coffee-run-2020", "pd-agent-327-2017", "pd-cosmos-laundromat-2015", "pd-wing-it-2023", "pd-elephants-dream-2006", "pd-charge-2022", "pd-caminandes-llamigos-2016", "pd-hero-2018"], altName: "Modern Animation", alt: ["pd-sita-sings-the-blues-2008", "pd-glass-half-2015", "pd-daily-dweebs-2017", "pd-llama-drama-2013", "pd-gran-dillama-2013", "pd-spring-2019", "pd-big-buck-bunny-2008", "pd-sprite-fright-2021", "pd-wing-it-2023", "pd-coffee-run-2020", "pd-seder-masochism-2018", "pd-cosmos-laundromat-2015"] }
 ],
 christmas: [
 { n: 1, name: "Christmas Classics", films: ["pd-scrooge-1935", "pd-babes-in-toyland-1934", "pd-beyond-tomorrow-1940", "pd-the-great-rupert-1950", "pd-meet-john-doe-1941", "pd-santa-claus-conquers-the-martians-1964", "pd-a-christmas-carol-1910"] },
 { n: 2, name: "Comedy Classics", films: ["pd-the-gold-rush-1925", "pd-his-girl-friday-1940", "pd-the-kid-1921", "pd-the-inspector-general-1949", "pd-the-general-1926", "pd-africa-screams-1949", "pd-safety-last-1923", "pd-road-to-bali-1952", "pd-sherlock-jr-1924"] },
 { n: 3, name: "Christmas Cartoons", films: ["pd-rudolph-the-red-nosed-reindeer-1948", "pd-christmas-comes-but-once-a-year-1936", "pd-santas-surprise-1947", "pd-the-night-before-christmas-1905", "pd-hectors-hectic-life-1948", "pd-snow-foolin-1949", "pd-babes-in-toyland-1934", "pd-gullivers-travels-1939", "pd-steamboat-willie-1928", "pd-jack-and-the-beanstalk-1952", "pd-the-little-princess-1939", "pd-a-corny-concerto-1943"] },
-{ n: 4, name: "Action & Adventure", films: ["pd-the-thief-of-bagdad-1924", "pd-charade-1963", "pd-the-black-pirate-1926", "pd-mclintock-1963", "pd-the-mark-of-zorro-1920", "pd-robin-hood-1922", "pd-captain-kidd-1945", "pd-ben-hur-1925"] },
-{ n: 5, name: "Holiday Mix", films: ["pd-scrooge-1935", "pd-the-wizard-of-oz-1925", "pd-rudolph-the-red-nosed-reindeer-1948", "pd-royal-wedding-1951", "pd-the-great-rupert-1950", "pd-superman-1941", "pd-my-man-godfrey-1936", "pd-santas-surprise-1947", "pd-peter-pan-1924", "pd-metropolis-1927"] }
+{ n: 4, name: "Action & Adventure", films: ["pd-the-thief-of-bagdad-1924", "pd-charade-1963", "pd-the-black-pirate-1926", "pd-mclintock-1963", "pd-the-mark-of-zorro-1920", "pd-robin-hood-1922", "pd-captain-kidd-1945", "pd-ben-hur-1925", "pd-sintel-2010", "pd-tears-of-steel-2012", "pd-the-cosmonaut-2013", "pd-agent-327-2017"] },
+{ n: 5, name: "Holiday Mix", films: ["pd-scrooge-1935", "pd-the-wizard-of-oz-1925", "pd-rudolph-the-red-nosed-reindeer-1948", "pd-royal-wedding-1951", "pd-the-great-rupert-1950", "pd-superman-1941", "pd-my-man-godfrey-1936", "pd-santas-surprise-1947", "pd-peter-pan-1924", "pd-metropolis-1927", "pd-big-buck-bunny-2008", "pd-spring-2019"], altName: "Modern Cartoons", alt: ["pd-big-buck-bunny-2008", "pd-spring-2019", "pd-wing-it-2023", "pd-coffee-run-2020", "pd-hero-2018", "pd-glass-half-2015", "pd-daily-dweebs-2017", "pd-llama-drama-2013", "pd-gran-dillama-2013", "pd-caminandes-llamigos-2016", "pd-agent-327-2017", "pd-sita-sings-the-blues-2008"] }
 ]
 };
 function cinSeasonName(at) {
@@ -81681,7 +81730,7 @@ if (!o.identifier || t.indexOf(nt) < 0)
 return;
 if (/trailer|clip|scene|excerpt|preview|review|soundtrack|audio|radio|podcast|lux/.test(t))
 return;
-if (!withYear) {
+if (!withYear && String(d[4]).indexOf("modern") !== 0) {
 var oy = parseInt(o.year, 10);
 if (!(String(t).indexOf(String(y)) >= 0 || (oy && Math.abs(oy - y) <= 1)))
 return;
@@ -81746,6 +81795,8 @@ return s;
 var q = null;
 season.forEach(function (x) { if (x.n === n)
 q = x; });
+if (q && q.alt && Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5) % 2)
+q = { n: q.n, name: q.altName || q.name, films: q.alt };
 return q || s;
 }).filter(Boolean);
 CIN.state = Object.assign({}, st || {}, { screens: raw });
@@ -94410,8 +94461,14 @@ musopen: { who: "Musopen performers", lic: "Public domain", q: 'collection:(muso
 macleod: { who: "Kevin MacLeod", lic: "CC BY 4.0", q: 'creator:("Kevin MacLeod") AND mediatype:(audio)' },
 woodward: { who: "Josh Woodward", lic: "CC BY 4.0", q: 'creator:("Josh Woodward") AND mediatype:(audio)' },
 shaw: { who: "Jason Shaw (Audionautix)", lic: "CC BY 4.0", q: '(creator:("Jason Shaw") OR creator:(Audionautix)) AND mediatype:(audio)' },
-zabriskie: { who: "Chris Zabriskie", lic: "CC BY 4.0", q: 'creator:("Chris Zabriskie") AND mediatype:(audio)' }
+zabriskie: { who: "Chris Zabriskie", lic: "CC BY 4.0", q: 'creator:("Chris Zabriskie") AND mediatype:(audio)' },
+pop: { who: "Pop from the Free Music Archive", lic: "Creative Commons", q: 'collection:(freemusicarchive) AND subject:(pop) AND mediatype:(audio)', many: 1 },
+hiphop: { who: "Hip-hop from the Free Music Archive", lic: "Creative Commons", q: 'collection:(freemusicarchive) AND subject:("hip-hop" OR "hip hop") AND mediatype:(audio)', many: 1 },
+electronic: { who: "Electronic from the Free Music Archive", lic: "Creative Commons", q: 'collection:(freemusicarchive) AND subject:(electronic) AND mediatype:(audio)', many: 1 },
+rock: { who: "Rock from the Free Music Archive", lic: "Creative Commons", q: 'collection:(freemusicarchive) AND subject:(rock) AND mediatype:(audio)', many: 1 },
+holiday: { who: "Christmas songs from the Free Music Archive", lic: "Creative Commons", q: 'collection:(freemusicarchive) AND subject:(christmas OR holiday) AND mediatype:(audio)', many: 1 }
 };
+var FEST_MODERN = ["pop", "electronic", "hiphop", "rock", "macleod"];
 var FMUS = { el: null, act: null, tracks: {}, asked: {}, title: "", fail: {}, vol: 0, syn: null, synAt: 0, step: 0, credit: "" };
 function festStageSet() {
 var h = dreamHour(), day = festDay();
@@ -94425,11 +94482,14 @@ if (h >= 17.5 && h < 18.5)
 return "woodward";
 if (h >= 20 && h < 23)
 return "shaw";
-if (h >= 10 && h < 20)
-return "macleod";
+if (h >= 10 && h < 20) {
+var m = new Date().getMonth();
+return m === 11 ? (Math.floor(h) % 2 ? "holiday" : "pop") : FEST_MODERN[Math.floor(h) % FEST_MODERN.length];
+}
 return null;
 }
 function festStagePiece() { return (FEST.layout || []).filter(function (q) { return q.kind === "stage"; })[0] || null; }
+function fmusLicName(u) { u = String(u || "").toLowerCase(); return /zero/.test(u) ? "CC0" : /publicdomain/.test(u) ? "Public domain" : /by-sa/.test(u) ? "CC BY-SA" : /by-nd/.test(u) ? "CC BY-ND" : /\/by\//.test(u) ? "CC BY" : ""; }
 function fmusLicOk(u, gov) { u = String(u || "").toLowerCase(); if (!u)
 return !!gov; if (/-nc|\/nc/.test(u))
 return false; return /publicdomain|\/zero\/|\/by\/|\/by-sa\/|\/by-nd\//.test(u); }
@@ -94446,9 +94506,11 @@ if (FMUS.asked[act])
 return;
 FMUS.asked[act] = 1;
 var A = FEST_ACTS[act];
-var url = "https://archive.org/advancedsearch.php?q=" + encodeURIComponent(A.q) + "&fl%5B%5D=identifier&fl%5B%5D=licenseurl&sort%5B%5D=downloads+desc&rows=25&output=json";
+var url = "https://archive.org/advancedsearch.php?q=" + encodeURIComponent(A.q) + "&fl%5B%5D=identifier&fl%5B%5D=licenseurl&fl%5B%5D=creator&sort%5B%5D=downloads+desc&rows=25&output=json";
 fetch(url, { mode: "cors", credentials: "omit" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-var ids = ((j && j.response && j.response.docs) || []).filter(function (d) { return d.identifier && fmusLicOk(d.licenseurl, A.gov); }).map(function (d) { return d.identifier; });
+var docs = ((j && j.response && j.response.docs) || []).filter(function (d) { return d.identifier && fmusLicOk(d.licenseurl, A.gov); }), who = {}, lic = {};
+docs.forEach(function (d) { who[d.identifier] = String(Array.isArray(d.creator) ? d.creator[0] : (d.creator || "")).slice(0, 60); lic[d.identifier] = fmusLicName(d.licenseurl); });
+var ids = docs.map(function (d) { return d.identifier; });
 if (!ids.length) {
 FMUS.tracks[act] = null;
 cb(null);
@@ -94458,7 +94520,7 @@ var pick = ids.slice(0, 8), out = [], left = pick.length;
 pick.forEach(function (id) {
 fetch("https://archive.org/metadata/" + encodeURIComponent(id), { mode: "cors", credentials: "omit" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) {
 ((m && m.files) || []).forEach(function (f) { if (/\.mp3$/i.test(f.name || "") && !/_64kb|sample/i.test(f.name) && (+f.size || 0) < 4e7)
-out.push({ url: "https://archive.org/download/" + encodeURIComponent(id) + "/" + f.name.split("/").map(encodeURIComponent).join("/"), title: String(f.title || f.name.replace(/\.mp3$/i, "").replace(/[_-]+/g, " ")).slice(0, 80) }); });
+out.push({ who: who[id] || "", lic: lic[id] || "", url: "https://archive.org/download/" + encodeURIComponent(id) + "/" + f.name.split("/").map(encodeURIComponent).join("/"), title: String(f.title || f.name.replace(/\.mp3$/i, "").replace(/[_-]+/g, " ")).slice(0, 80) }); });
 }).catch(function () { }).then(function () { if (--left === 0) {
 FMUS.tracks[act] = out.length ? out : null;
 cb(FMUS.tracks[act]);
@@ -94482,6 +94544,8 @@ fmusPlay(FMUS.act); }, 1500); });
 }
 var tr = L[Math.floor(Math.random() * L.length)];
 FMUS.title = tr.title;
+FMUS.who = tr.who;
+FMUS.lic = tr.lic;
 FMUS.el.src = tr.url;
 FMUS.el.volume = 0;
 var p = FMUS.el.play();
@@ -94539,8 +94603,8 @@ FMUS.synAt += 0.3;
 }
 }
 function fmusCredit() {
-var act = FMUS.act, A = act && FEST_ACTS[act], txt = A ? A.who : "", sub = A ? ((FMUS.title ? "“" + FMUS.title + "” · " : "") + A.lic + (FMUS.tracks[act] ? " · from the Internet Archive" : " · the game's own music")) : "music · fire dancers · every night";
-FMUS.credit = A ? txt + " · " + A.lic : "";
+var act = FMUS.act, A = act && FEST_ACTS[act], txt = A ? (A.many && FMUS.who ? FMUS.who : A.who) : "", lc = A ? (A.many && FMUS.lic ? FMUS.lic : A.lic) : "", sub = A ? ((FMUS.title ? "“" + FMUS.title + "” · " : "") + lc + (FMUS.tracks[act] ? " · from the Internet Archive" : " · the game's own music")) : "music · fire dancers · every night";
+FMUS.credit = A ? txt + " · " + lc : "";
 var st = FEST.pieces;
 if (!st || !st.stage || !st.stage.g)
 return;
@@ -94594,7 +94658,7 @@ var st = festStagePiece(), set = festStageSet();
 if (st) {
 var ds = Math.hypot(st.x - P.x, st.z - P.z);
 var hh = dreamHour();
-fmusBand(!!set && !(set === "macleod" && !(hh >= 14.5 && hh < 15)));
+fmusBand(!!set && (set === "musopen" || set === "woodward" || set === "shaw" || (hh >= 14.5 && hh < 15)));
 if (!want && set && ds < 110) {
 want = set;
 vol = Math.max(0, 1 - ds / 110);
@@ -94629,7 +94693,7 @@ function festMusicLine() {
 if (!FMUS.act)
 return "";
 var A = FEST_ACTS[FMUS.act];
-return '<div style="margin-top:6px;color:#C8B8D8">♪ Now playing: <b style="color:#FFF4E0">' + esc(A.who) + '</b>' + (FMUS.title ? ' · ' + esc(FMUS.title) : '') + ' <span style="font-size:12px">(' + esc(A.lic) + (FMUS.tracks[FMUS.act] ? ', from the Internet Archive' : ', the game\'s own music') + ')</span></div>';
+return '<div style="margin-top:6px;color:#C8B8D8">♪ Now playing: <b style="color:#FFF4E0">' + esc(A.many && FMUS.who ? FMUS.who : A.who) + '</b>' + (FMUS.title ? ' · ' + esc(FMUS.title) : '') + ' <span style="font-size:12px">(' + esc(A.many && FMUS.lic ? FMUS.lic : A.lic) + (FMUS.tracks[FMUS.act] ? ', from the Internet Archive' : ', the game\'s own music') + ')</span></div>';
 }
 function festDayDate(d) { if (!FEST.start)
 return ""; var dt = new Date(FEST.start.getTime() + (d - 1) * 86400000); return dt.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
