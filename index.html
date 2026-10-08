@@ -2658,6 +2658,18 @@ x.fill();
 x.fillRect(cx - 16, cy - 8, 32, 16);
 }
 },
+floortile: function (x, N, r) {
+x.fillStyle = grey(150);
+x.fillRect(0, 0, N, N);
+var n = 4, s = N / n;
+for (var j = 0; j < n; j++)
+for (var i = 0; i < n; i++) {
+x.fillStyle = grey(214 + (r() - 0.5) * 14);
+x.fillRect(i * s + 2, j * s + 2, s - 4, s - 4);
+x.fillStyle = "rgba(255,255,255,0.10)";
+x.fillRect(i * s + 2, j * s + 2, s - 4, 3);
+}
+},
 slate: function (x, N, r) {
 x.fillStyle = grey(100);
 x.fillRect(0, 0, N, N);
@@ -19498,7 +19510,7 @@ var sp = spots.filter(function (p) { return it.room && p.room === it.room; })[0]
 put(it.k, sp.x + ((i * 37) % 5 - 2) * .6, sp.z - 1.2 - ((i * 13) % 3) * .5, 0);
 });
 var fl = P(box(W, .1, D), new THREE.MeshLambertMaterial({ color: FLOORCOL[floorKind] || 0x7A5634 }), 0, -.05, 0);
-var tx = typeof texOf === "function" ? texOf(floorKind === "checker" ? "tile" : floorKind === "carpet" ? null : floorKind) : null;
+var tx = typeof texOf === "function" ? texOf((floorKind === "checker" || floorKind === "tile") ? "floortile" : floorKind === "carpet" ? null : floorKind) : null;
 if (tx) {
 fl.material.map = tx;
 fl.material.needsUpdate = true;
@@ -55918,7 +55930,7 @@ return;
 var kind = null, c = mat.color.getHex();
 Object.keys(FLOORCOL).forEach(function (k) { if (FLOORCOL[k] === c)
 kind = k; });
-var tx = texOf(kind === "checker" ? "tile" : kind === "carpet" ? "plaster" : kind || "wood");
+var tx = texOf((kind === "checker" || kind === "tile") ? "floortile" : kind === "carpet" ? "plaster" : kind || "wood");
 if (!tx)
 return;
 var p = m.geometry.parameters;
@@ -80774,7 +80786,7 @@ if (hsl.l > 0.72)
 return "marble";
 if (hsl.s < 0.25)
 return "paving";
-return "tile";
+return "floortile";
 }
 if (role === "ceil") {
 if (hsl.l < 0.22)
@@ -92552,6 +92564,33 @@ hook(); return rr2(sc, cam); };
 clearInterval(iv);
 } }, 500);
 }
+})();
+</script>
+<script>
+var TGD = { n: 0 };
+function tgdKeep() {
+if (!INT || !walkMode || !INT.lifts || !INT.lifts.length || !INT.W || !INT.D)
+return;
+if (INT.spec && INT.spec.archetype && INT.spec.archetype !== "somnucortower" && !(typeof STOREYS !== "undefined" && STOREYS[INT.spec.archetype] > 3))
+return;
+var P = camera.position, hx = INT.W / 2 - 0.35, hz = INT.D / 2 - 0.35, dx = P.x - INT.ox, dz = P.z - INT.oz;
+if ((INT.level || 0) === 0 && Math.abs(P.x - INT.exit.x) < 1.6 && dz > 0)
+return;
+var nx = Math.max(-hx, Math.min(hx, dx)), nz = Math.max(-hz, Math.min(hz, dz));
+if (nx !== dx || nz !== dz) {
+P.x = INT.ox + nx;
+P.z = INT.oz + nz;
+TGD.n++;
+}
+}
+(function () {
+if (typeof interiorTick !== "function")
+return;
+var it = interiorTick;
+interiorTick = function (dt) { var r = it.apply(this, arguments); try {
+tgdKeep();
+}
+catch (e) { } return r; };
 })();
 </script>
 <script>
