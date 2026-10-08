@@ -4026,7 +4026,8 @@ scene = new THREE.Scene();
 scene.background = new THREE.Color(SKY);
 setFog(cfg().density);
 camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.3, 6000);
-renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: canFragDepth() });
+var lowPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "") && (navigator.deviceMemory || 4) <= 4;
+renderer = new THREE.WebGLRenderer({ antialias: !lowPhone, powerPreference: "high-performance", logarithmicDepthBuffer: canFragDepth() });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 document.getElementById("world").appendChild(renderer.domElement);
@@ -12081,7 +12082,7 @@ P.y = 1.72 + feet;
 <script>
 "use strict";
 var walkMode = false, locked = false, keys = {}, yaw = 0, pitch = 0;
-var canFly = false, flyY = 0, portalCool = 0;
+var canFly = false, flyY = 0, flyVz = 0, portalCool = 0;
 var orb = { r: 180, t: 0.9, p: 0.95, tx: 0, tz: 0 }, dragging = null, idle = 0;
 function initControls() {
 var el = renderer.domElement;
@@ -12241,11 +12242,15 @@ if (keys["KeyC"] || keys["ControlLeft"])
 liftMove(-1);
 }
 if (canFly) {
-if (keys["Space"])
-flyY += sp * dt;
-if (keys["KeyC"] || keys["ControlLeft"])
-flyY -= sp * dt;
+var cv = (keys["Space"] ? 1 : 0) - ((keys["KeyC"] || keys["ControlLeft"]) ? 1 : 0);
+var vmax = (typeof touchRig !== "undefined" && touchRig) ? Math.min(sp, 12) : sp;
+flyVz += (cv * vmax - flyVz) * Math.min(1, dt * 5);
+if (!cv && Math.abs(flyVz) < 0.05)
+flyVz = 0;
+flyY += flyVz * dt;
 flyY = Math.max(0, Math.min(900, flyY));
+if (flyY === 0 && flyVz < 0)
+flyVz = 0;
 }
 }
 groundTick(dt);
@@ -41506,7 +41511,7 @@ var rollT = landed ? 0 : inp.s * 0.65;
 D.roll += (rollT - D.roll) * Math.min(1, dt * 3);
 var w = landed ? inp.s * 1.4 : Math.min(1.6, 9.81 * Math.tan(Math.abs(D.roll)) / Math.max(Math.abs(v), 5)) * Math.sign(D.roll);
 D.h -= w * dt;
-var c = (inp.up ? 1 : 0) - (inp.down ? 1 : 0), rate = Math.min(14, 4 + Math.abs(v) * 0.35);
+var c = (typeof inp.c === "number") ? inp.c : (inp.up ? 1 : 0) - (inp.down ? 1 : 0), rate = Math.min(14, 4 + Math.abs(v) * 0.35);
 var climb = c * rate;
 var ceilY = gy + FLY_CEILING;
 var ny = fy + climb * dt;
@@ -41643,7 +41648,7 @@ var hide = D.mode === "road" && !(vehSpec(D.arch) || {}).open && typeof rideG !=
 if (hide)
 rideG.visible = false;
 camera.rotation.order = "YXZ";
-camera.rotation.set(pitch - (D.mode === "fly" ? D.pitch * 0.3 : 0), yaw, D.mode === "fly" ? -D.roll * 0.5 : 0);
+camera.rotation.set(pitch - (D.mode === "fly" ? D.pitch * 0.3 : 0), yaw, D.mode === "fly" ? -D.roll * (typeof touchRig !== "undefined" && touchRig ? 0.2 : 0.5) : 0);
 doRender();
 if (hide)
 rideG.visible = true;
@@ -41665,7 +41670,7 @@ D.cam.z += (tz - D.cam.z) * k;
 camera.position.set(D.cam.x, D.cam.y, D.cam.z);
 camera.lookAt(px + fx * 4, base + 1.2 + Math.sin(pitch) * 3, pz + fz * 4);
 if (D.mode === "fly") {
-camera.rotateZ(-D.roll * 0.25);
+camera.rotateZ(-D.roll * (typeof touchRig !== "undefined" && touchRig ? 0.1 : 0.25));
 }
 doRender();
 camera.position.set(px, py, pz);
@@ -46538,9 +46543,10 @@ var b0 = build;
 build = function (spec) {
 var g = b0.apply(this, arguments);
 try {
-if (g && g.userData)
+if (g && g.userData && modelWanted(spec)) {
 g.userData.kitKids = g.children.slice();
 modelDress(g, spec);
+}
 }
 catch (e) {
 if (window.console)
@@ -95286,6 +95292,283 @@ at.rot += Math.PI;
 row.rot = at.rot;
 return { x: at.x, y: typeof terrainY === "function" ? terrainY(at.x, at.z) : 0, z: at.z };
 };
+})();
+</script>
+<script>
+"use strict";
+var PSTD = { key: "dreamwalker.resume", saveAt: 0, offered: false, menu: null, sheet: null, tucked: {}, sm: { f: 0, s: 0, c: 0 } };
+function psSpot() {
+try {
+if (!walkMode || store.inside || !(typeof inSomnucorNow === "function" && inSomnucorNow()) || typeof ATLC === "undefined" || !ATLC)
+return null;
+if (typeof DRIVE !== "undefined" && DRIVE && DRIVE.on)
+return null;
+var P = camera.position;
+return { x: P.x - ATLC.x, z: P.z - ATLC.z, yaw: yaw, t: Date.now() };
+}
+catch (e) {
+return null;
+}
+}
+function psSave(why) {
+var s = psSpot();
+if (!s)
+return;
+s.why = why || "";
+try {
+localStorage.setItem(PSTD.key, JSON.stringify(s));
+}
+catch (e) { }
+}
+function psLost(e) {
+if (e && e.preventDefault)
+e.preventDefault();
+psSave("lost");
+if (document.getElementById("ps-lost"))
+return;
+var d = document.createElement("div");
+d.id = "ps-lost";
+d.innerHTML = '<div><b>Your phone ran short of memory.</b><br>Picking the dream up again…</div>';
+document.body.appendChild(d);
+setTimeout(function () { location.reload(); }, 1500);
+}
+(function () {
+var tries = 0;
+(function hook() {
+if (typeof renderer !== "undefined" && renderer && renderer.domElement) {
+renderer.domElement.addEventListener("webglcontextlost", psLost, false);
+return;
+}
+if (++tries < 120)
+setTimeout(hook, 500);
+})();
+var away = function () { if (LITE || psIsPhone())
+psSave("hidden"); };
+document.addEventListener("visibilitychange", function () { if (document.hidden)
+away(); });
+addEventListener("pagehide", away);
+})();
+function psOffer() {
+if (PSTD.offered)
+return;
+var r = null;
+try {
+r = JSON.parse(localStorage.getItem(PSTD.key) || "null");
+}
+catch (e) { }
+if (!r || Date.now() - r.t > 20 * 60000) {
+PSTD.offered = true;
+return;
+}
+if (!walkMode || store.inside || !(typeof inSomnucorNow === "function" && inSomnucorNow()) || typeof ATLC === "undefined" || !ATLC)
+return;
+if (typeof ATL_JOB !== "undefined" && ATL_JOB)
+return;
+PSTD.offered = true;
+if (Math.hypot(camera.position.x - ATLC.x - r.x, camera.position.z - ATLC.z - r.z) < 30)
+return;
+var d = document.createElement("div");
+d.id = "ps-back";
+d.innerHTML = '<span>' + (r.why === "lost" ? "The dream slipped for a moment." : "Welcome back.") + ' Go back to where you were?</span><button type="button" data-a="go">Yes</button><button type="button" data-a="no" class="b2">No</button>';
+d.addEventListener("click", function (ev) {
+var a = ev.target && ev.target.getAttribute("data-a");
+if (!a)
+return;
+if (a === "go") {
+var x = ATLC.x + r.x, z = ATLC.z + r.z;
+camera.position.x = x;
+camera.position.z = z;
+if (typeof terrainY === "function")
+camera.position.y = terrainY(x, z) + 1.72;
+if (typeof r.yaw === "number")
+yaw = r.yaw;
+if (typeof flyY !== "undefined")
+flyY = 0;
+}
+try {
+localStorage.removeItem(PSTD.key);
+}
+catch (e) { }
+d.remove();
+});
+document.body.appendChild(d);
+setTimeout(function () { if (d.parentNode)
+d.remove(); }, 20000);
+}
+(function () {
+if (typeof driveInput !== "function")
+return;
+var di = driveInput;
+driveInput = function () {
+var r = di.apply(this, arguments);
+if (!(typeof touchRig !== "undefined" && touchRig))
+return r;
+var D = (typeof DRIVE !== "undefined") ? DRIVE : null, dt = Math.min(0.1, (D && D.dt) || 0.016), k = 1 - Math.exp(-dt * 6), sm = PSTD.sm;
+var s = r.s * (0.35 + 0.65 * Math.abs(r.s));
+sm.s += (s - sm.s) * k;
+sm.f += (r.f - sm.f) * k;
+sm.c += (((r.up ? 1 : 0) - (r.down ? 1 : 0)) - sm.c) * (1 - Math.exp(-dt * 4));
+if (!r.s && Math.abs(sm.s) < 0.02)
+sm.s = 0;
+if (!r.f && Math.abs(sm.f) < 0.02)
+sm.f = 0;
+r.s = sm.s;
+r.f = sm.f;
+if (D && D.mode === "fly")
+r.c = Math.abs(sm.c) < 0.02 ? 0 : sm.c;
+return r;
+};
+})();
+var PS_CSS = "#ps-lost{position:fixed;inset:0;z-index:99999;background:#0B0A14;color:#EDE8F8;display:flex;align-items:center;justify-content:center;text-align:center;font:16px/1.5 Georgia,serif;padding:24px}" +
+"#ps-back{position:fixed;left:50%;transform:translateX(-50%);top:calc(70px + env(safe-area-inset-top,0px));z-index:60;background:rgba(14,12,26,.94);color:#EDE8F8;border:1px solid #3A3160;border-radius:14px;padding:10px 12px;font:14px system-ui,sans-serif;display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:calc(100vw - 32px)}" +
+"#ps-back button{background:#E8C66A;color:#17120A;border:0;border-radius:12px;padding:6px 14px;font:600 14px system-ui,sans-serif}#ps-back button.b2{background:#2A2448;color:#EDE8F8}" +
+"#ps-menu{display:none}" +
+"body.ps-phone #ps-menu{display:block;position:fixed;z-index:46;right:calc(10px + env(safe-area-inset-right,0px));top:calc(48px + env(safe-area-inset-top,0px));height:40px;padding:0 14px;border-radius:20px;background:rgba(7,8,11,.66);color:#EDE8F8;border:1px solid rgba(232,198,106,.55);font:600 14px system-ui,sans-serif}" +
+"body.ps-phone #ps-menu i{font-style:normal;display:inline-block;min-width:16px;margin-left:6px;padding:0 5px;border-radius:9px;background:#E8C66A;color:#17120A;font-size:11px}" +
+"#ps-sheet{position:fixed;z-index:58;left:0;right:0;bottom:0;max-height:70vh;overflow:auto;background:rgba(12,10,22,.97);border-top:1px solid #3A3160;border-radius:18px 18px 0 0;padding:14px 12px calc(16px + env(safe-area-inset-bottom,0px));display:none;font:14px system-ui,sans-serif;color:#EDE8F8}" +
+"#ps-sheet.on{display:block}#ps-sheet h3{margin:0 0 10px;font:600 16px Georgia,serif;display:flex;justify-content:space-between;align-items:center}" +
+"#ps-sheet h3 button{background:#2A2448;color:#EDE8F8;border:0;border-radius:12px;padding:6px 12px;font:600 14px system-ui,sans-serif}" +
+"#ps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}" +
+"#ps-grid button{min-height:46px;border-radius:12px;background:#1E1A34;color:#EDE8F8;border:1px solid #3A3160;font:600 14px system-ui,sans-serif;padding:6px 8px;text-align:center}" +
+"body.ps-phone .ps-tuck{visibility:hidden!important;pointer-events:none!important}" +
+"body.ps-phone.ps-walk #title,body.ps-phone.ps-walk #count{display:none!important}" +
+"body.ps-phone.ps-walk #timebar:not(.ps-show){display:none!important}" +
+"body.ps-phone.ps-walk #compass{top:calc(40px + env(safe-area-inset-top,0px))!important;left:8px!important}" +
+"body.ps-phone.ps-walk #compass svg{width:46px!important;height:46px!important}" +
+"body.ps-phone.ps-walk #compass>*:not(svg){display:none!important}" +
+"body.ps-phone.ps-walk #realmname{top:calc(40px + env(safe-area-inset-top,0px))!important;font-size:12px!important;padding:2px 8px!important}" +
+"body.ps-phone.ps-walk #place{top:calc(68px + env(safe-area-inset-top,0px))!important;font-size:12px!important}" +
+"body.ps-phone.ps-walk #realmname:not(.gone)~#place{top:calc(68px + env(safe-area-inset-top,0px))!important}" +
+"body.ps-phone #pdside{top:auto!important;bottom:calc(100px + env(safe-area-inset-bottom,0px))!important;transform:scale(.72);transform-origin:right bottom}" +
+"body.ps-phone #pw-bar{top:calc(98px + env(safe-area-inset-top,0px))!important;bottom:auto!important;left:8px!important;right:52px!important;max-width:none!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch;scrollbar-width:none}" +
+"body.ps-phone #pw-bar button{flex:0 0 auto;height:38px!important;min-width:38px!important;padding:2px 9px!important}" +
+"body.ps-phone #bug-btn{top:calc(94px + env(safe-area-inset-top,0px))!important;bottom:auto!important;left:auto!important;right:calc(10px + env(safe-area-inset-right,0px))!important;width:34px!important;height:34px!important}";
+var PS_KEEP = { "bug-btn": 1, "ps-menu": 1, "join-btn": 1 };
+function psIsPhone() {
+return !!(typeof touchRig !== "undefined" && touchRig) && Math.min(innerWidth, innerHeight) < 700;
+}
+function psCandidates() {
+var out = [];
+var bar = document.getElementById("me-bar");
+if (bar)
+Array.prototype.forEach.call(bar.querySelectorAll("button"), function (b) { out.push({ el: b, box: bar }); });
+Array.prototype.forEach.call(document.querySelectorAll("body > button[id]"), function (b) {
+if (PS_KEEP[b.id])
+return;
+var cs = getComputedStyle(b);
+if (cs.position !== "fixed")
+return;
+out.push({ el: b, box: b });
+});
+return out;
+}
+function psAvailable(el) {
+if (!el.isConnected)
+return false;
+var cs = getComputedStyle(el);
+if (cs.display === "none")
+return false;
+for (var p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+if (getComputedStyle(p).display === "none")
+return false;
+}
+return !(el.disabled);
+}
+function psLabel(el) {
+var t = (el.textContent || "").replace(/\s+/g, " ").trim();
+if (el.id === "ph-btn")
+return "📱 Phone" + (/\d+/.test(t) && +t.replace(/\D/g, "") > 0 ? " (" + t.replace(/\D/g, "") + ")" : "");
+if (el.id === "tgl-btn")
+return "🚘 The limousine";
+return t || el.title || el.getAttribute("aria-label") || el.id;
+}
+function psPaintSheet() {
+var g = document.getElementById("ps-grid");
+if (!g)
+return;
+g.innerHTML = "";
+psCandidates().forEach(function (c) {
+if (!psAvailable(c.el))
+return;
+var b = document.createElement("button");
+b.type = "button";
+b.textContent = psLabel(c.el);
+b.addEventListener("click", function () { psClose(); setTimeout(function () { c.el.click(); }, 30); });
+g.appendChild(b);
+});
+var tb = document.getElementById("timebar");
+if (tb) {
+var t = document.createElement("button");
+t.type = "button";
+t.textContent = tb.classList.contains("ps-show") ? "Hide the time of day" : "The time of day";
+t.addEventListener("click", function () { tb.classList.toggle("ps-show"); psClose(); });
+g.appendChild(t);
+}
+}
+function psOpen() { psPaintSheet(); PSTD.sheet.classList.add("on"); }
+function psClose() { if (PSTD.sheet)
+PSTD.sheet.classList.remove("on"); }
+function psBuild() {
+if (PSTD.menu)
+return;
+var st = document.createElement("style");
+st.textContent = PS_CSS;
+document.head.appendChild(st);
+var m = document.createElement("button");
+m.id = "ps-menu";
+m.type = "button";
+m.innerHTML = "☰ Menu";
+m.addEventListener("click", function () { if (PSTD.sheet.classList.contains("on"))
+psClose();
+else
+psOpen(); });
+document.body.appendChild(m);
+PSTD.menu = m;
+var s = document.createElement("div");
+s.id = "ps-sheet";
+s.innerHTML = '<h3><span>Menu</span><button type="button" id="ps-x">Close</button></h3><div id="ps-grid"></div>';
+document.body.appendChild(s);
+PSTD.sheet = s;
+document.getElementById("ps-x").addEventListener("click", psClose);
+}
+function psTick() {
+psBuild();
+var phone = psIsPhone(), walking = !!(typeof walkMode !== "undefined" && walkMode);
+document.body.classList.toggle("ps-phone", phone);
+document.body.classList.toggle("ps-walk", walking);
+var n = 0;
+psCandidates().forEach(function (c) {
+var want = phone && walking;
+if (c.box.classList.contains("ps-tuck") !== want)
+c.box.classList.toggle("ps-tuck", want);
+if (want && psAvailable(c.el))
+n++;
+});
+PSTD.menu.innerHTML = "☰ Menu" + (n ? "<i>" + n + "</i>" : "");
+if (!walking || !phone)
+psClose();
+if (Date.now() - PSTD.saveAt > 15000) {
+PSTD.saveAt = Date.now();
+if (LITE || phone)
+psSave("walk");
+}
+if (!PSTD.offered)
+psOffer();
+}
+(function () {
+var go = function () { psTick(); setInterval(function () { try {
+psTick();
+}
+catch (e) {
+if (window.console && !PSTD.warned) {
+PSTD.warned = 1;
+console.warn("[phone-steady]", e);
+}
+} }, 500); };
+if (document.readyState === "loading")
+document.addEventListener("DOMContentLoaded", go);
+else
+go();
 })();
 </script>
 <script>
