@@ -94882,40 +94882,40 @@ console.warn("fest-more:", e);
 </script>
 <script>
 "use strict";
-var TG = { pct: 4, city: false, cityAt: 0, dom: 0, mgr: { done: 0, total: 0, idle: 0 }, ready: false, shown: false, entered: false, google: null, t0: Date.now() };
-function tgSkip() {
+var TGATE = { pct: 4, city: false, cityAt: 0, dom: 0, mgr: { done: 0, total: 0, idle: 0 }, ready: false, shown: false, entered: false, google: null, t0: Date.now() };
+function tgateSkip() {
 if (/[?&]gate=1\b/.test(location.search))
 return false;
 return (typeof DW_TESTING !== "undefined" && DW_TESTING) || /[?&]nogate=1\b/.test(location.search) || !!(navigator && navigator.webdriver);
 }
-function tgEl(id) { return document.getElementById(id); }
-function tgSet(p, words) {
-TG.pct = Math.max(TG.pct, Math.min(100, p));
-var bar = tgEl("tg-bar"), fill = tgEl("tg-fill"), w = tgEl("tg-words");
+function tgateEl(id) { return document.getElementById(id); }
+function tgateSet(p, words) {
+TGATE.pct = Math.max(TGATE.pct, Math.min(100, p));
+var bar = tgateEl("tg-bar"), fill = tgateEl("tg-fill"), w = tgateEl("tg-words");
 if (bar)
 bar.classList.remove("tg-wait");
 if (fill)
-fill.style.width = Math.round(TG.pct) + "%";
+fill.style.width = Math.round(TGATE.pct) + "%";
 if (w && words)
-w.textContent = words + " " + Math.round(TG.pct) + "%";
+w.textContent = words + " " + Math.round(TGATE.pct) + "%";
 }
 if (typeof atlProgressLine === "function") {
-var tgProgBase = atlProgressLine;
-atlProgressLine = function (f, words) { if (!TG.city)
-tgSet(40 + 42 * Math.max(0, Math.min(1, f)), "Raising Somnucor…"); return tgProgBase.apply(this, arguments); };
+var tgateProgBase = atlProgressLine;
+atlProgressLine = function (f, words) { if (!TGATE.city)
+tgateSet(40 + 42 * Math.max(0, Math.min(1, f)), "Raising Somnucor…"); return tgateProgBase.apply(this, arguments); };
 }
 if (typeof atlBuildCityAsync === "function") {
-var tgCityBase = atlBuildCityAsync;
+var tgateCityBase = atlBuildCityAsync;
 atlBuildCityAsync = function (done, prog) {
 var a = Array.prototype.slice.call(arguments);
 a[0] = function () { try {
 return done && done.apply(this, arguments);
 }
 finally {
-TG.city = true;
-TG.cityAt = Date.now();
+TGATE.city = true;
+TGATE.cityAt = Date.now();
 } };
-return tgCityBase.apply(this, a);
+return tgateCityBase.apply(this, a);
 };
 }
 (function () {
@@ -94923,36 +94923,36 @@ var M = typeof THREE !== "undefined" && THREE.DefaultLoadingManager;
 if (!M)
 return;
 var s0 = M.onStart, p0 = M.onProgress, l0 = M.onLoad;
-M.onStart = function (u, d, t) { TG.mgr.done = d; TG.mgr.total = t; TG.mgr.idle = 0; if (s0)
+M.onStart = function (u, d, t) { TGATE.mgr.done = d; TGATE.mgr.total = t; TGATE.mgr.idle = 0; if (s0)
 s0.apply(this, arguments); };
-M.onProgress = function (u, d, t) { TG.mgr.done = d; TG.mgr.total = t; TG.mgr.idle = d >= t ? Date.now() : 0; if (p0)
+M.onProgress = function (u, d, t) { TGATE.mgr.done = d; TGATE.mgr.total = t; TGATE.mgr.idle = d >= t ? Date.now() : 0; if (p0)
 p0.apply(this, arguments); };
-M.onLoad = function () { TG.mgr.idle = Date.now(); if (l0)
+M.onLoad = function () { TGATE.mgr.idle = Date.now(); if (l0)
 l0.apply(this, arguments); };
 })();
-tgSet(30, "Waking the dream…");
-function tgTick() {
-if (TG.ready)
+tgateSet(30, "Waking the dream…");
+function tgateTick() {
+if (TGATE.ready)
 return;
 var now = Date.now();
-if (TG.dom && !TG.city && !(typeof joinedSomnucor === "function" && joinedSomnucor()) && now - TG.dom > 300) {
-TG.city = true;
-TG.cityAt = now;
+if (TGATE.dom && !TGATE.city && !(typeof joinedSomnucor === "function" && joinedSomnucor()) && now - TGATE.dom > 300) {
+TGATE.city = true;
+TGATE.cityAt = now;
 }
-if (TG.city) {
-var m = TG.mgr, f = m.total ? m.done / m.total : 1;
-tgSet(82 + 16 * f, "Dressing the world…");
+if (TGATE.city) {
+var m = TGATE.mgr, f = m.total ? m.done / m.total : 1;
+tgateSet(82 + 16 * f, "Dressing the world…");
 var settled = (!m.total || m.done >= m.total) && (!m.idle || now - m.idle > 700);
-if (settled && now - TG.cityAt > 600 || now - TG.cityAt > 15000 || TG.dom && now - TG.dom > 45000) {
-TG.ready = true;
-tgSet(100, "Ready");
-setTimeout(tgCard, 350);
+if (settled && now - TGATE.cityAt > 600 || now - TGATE.cityAt > 15000 || TGATE.dom && now - TGATE.dom > 45000) {
+TGATE.ready = true;
+tgateSet(100, "Ready");
+setTimeout(tgateCard, 350);
 return;
 }
 }
-setTimeout(tgTick, 200);
+setTimeout(tgateTick, 200);
 }
-var TG_CSS = "#tg-card{margin:26px auto 0;width:min(360px,100%);text-align:left;font:15px/1.5 ui-sans-serif,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#F4EEFF;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}" +
+var TGATE_CSS = "#tg-card{margin:26px auto 0;width:min(360px,100%);text-align:left;font:15px/1.5 ui-sans-serif,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#F4EEFF;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}" +
 "#tg-card.tg-on{opacity:1;transform:none}" +
 "#tg-card .tg-box{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(10,6,30,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}" +
 "#tg-card h2{margin:0 0 4px;font:500 21px 'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;text-align:center}" +
@@ -94970,42 +94970,42 @@ var TG_CSS = "#tg-card{margin:26px auto 0;width:min(360px,100%);text-align:left;
 "#tg-card .tg-msg{min-height:20px;margin-top:8px;font-size:13px;text-align:center;color:#E9DEFF}" +
 "#tg-card .tg-msg.bad{color:#FFB4C2}" +
 "#tg-card .tg-look{display:block;text-align:center;margin-top:14px;font-size:14px}";
-var TG_G = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
-function tgWords(e) { return (e instanceof TypeError || /fetch|network/i.test(String(e && e.message || ""))) ? "We can't reach the sign-in desk just now. Check your connection and try again." : authWords(e); }
-function tgMsg(t, bad) { var m = tgEl("tg-msg"); if (!m)
+var TGATE_G = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+function tgateWords(e) { return (e instanceof TypeError || /fetch|network/i.test(String(e && e.message || ""))) ? "We can't reach the sign-in desk just now. Check your connection and try again." : authWords(e); }
+function tgateMsg(t, bad) { var m = tgateEl("tg-msg"); if (!m)
 return; m.textContent = t || ""; m.className = "tg-msg" + (bad ? " bad" : ""); }
-function tgName() {
+function tgateName() {
 var u = session && session.user, md = u && u.user_metadata || {};
 var n = md.full_name || md.name || "";
 if (!n && u && u.email)
 n = u.email.split("@")[0];
 return String(n).split(" ")[0] || "dreamer";
 }
-function tgCard() {
-if (TG.shown)
+function tgateCard() {
+if (TGATE.shown)
 return;
-TG.shown = true;
-var load = tgEl("tg-load");
+TGATE.shown = true;
+var load = tgateEl("tg-load");
 if (load)
 load.style.display = "none";
-if (!tgEl("tg-css")) {
+if (!tgateEl("tg-css")) {
 var c = document.createElement("style");
 c.id = "tg-css";
-c.textContent = TG_CSS;
+c.textContent = TGATE_CSS;
 document.head.appendChild(c);
 }
-tgDraw();
+tgateDraw();
 try {
-authCall("GET", "settings").then(function (j) { TG.google = !!(j && j.external && j.external.google); }).catch(function () { TG.google = null; });
+authCall("GET", "settings").then(function (j) { TGATE.google = !!(j && j.external && j.external.google); }).catch(function () { TGATE.google = null; });
 }
 catch (e) { }
 }
-function tgDraw() {
-var card = tgEl("tg-card");
+function tgateDraw() {
+var card = tgateEl("tg-card");
 if (!card)
 return;
 if (signedIn()) {
-card.innerHTML = '<div class="tg-box"><h2>Welcome back, ' + esc(tgName()) + '</h2>' +
+card.innerHTML = '<div class="tg-box"><h2>Welcome back, ' + esc(tgateName()) + '</h2>' +
 '<p class="tg-hint">Your dreams and your place in Somnucor are waiting.</p>' +
 '<button class="tg-main" id="tg-enter" type="button">Enter the dream</button>' +
 '<div class="tg-links" style="justify-content:center"><a id="tg-out">Not you? Sign out</a></div></div>';
@@ -95013,7 +95013,7 @@ card.innerHTML = '<div class="tg-box"><h2>Welcome back, ' + esc(tgName()) + '</h
 else {
 card.innerHTML = '<div class="tg-box"><h2>Welcome, dreamer</h2>' +
 '<p class="tg-hint">Sign in to keep your dreams, your home and your gold.</p>' +
-'<button class="tg-g" id="tg-google" type="button">' + TG_G + '<span>Continue with Google</span></button>' +
+'<button class="tg-g" id="tg-google" type="button">' + TGATE_G + '<span>Continue with Google</span></button>' +
 '<div class="tg-or">or</div>' +
 '<input id="tg-email" type="email" placeholder="Your email" autocomplete="email" inputmode="email">' +
 '<input id="tg-pass" type="password" placeholder="Your password" autocomplete="current-password">' +
@@ -95024,91 +95024,91 @@ card.innerHTML = '<div class="tg-box"><h2>Welcome, dreamer</h2>' +
 '<a class="tg-look" id="tg-look">Just look around first</a>';
 }
 requestAnimationFrame(function () { card.classList.add("tg-on"); });
-var on = function (id, f) { var b = tgEl(id); if (b)
+var on = function (id, f) { var b = tgateEl(id); if (b)
 b.onclick = f; };
-on("tg-enter", tgEnter);
-on("tg-look", tgEnter);
-on("tg-out", function () { signOut(); tgDraw(); });
-on("tg-google", tgGoogle);
-on("tg-signin", function () { tgEmail("in"); });
-on("tg-create", function () { tgEmail("new"); });
-on("tg-forgot", function () { tgEmail("forgot"); });
-var pw = tgEl("tg-pass");
+on("tg-enter", tgateEnter);
+on("tg-look", tgateEnter);
+on("tg-out", function () { signOut(); tgateDraw(); });
+on("tg-google", tgateGoogle);
+on("tg-signin", function () { tgateEmail("in"); });
+on("tg-create", function () { tgateEmail("new"); });
+on("tg-forgot", function () { tgateEmail("forgot"); });
+var pw = tgateEl("tg-pass");
 if (pw)
 pw.onkeydown = function (e) { if (e.key === "Enter")
-tgEmail("in"); };
+tgateEmail("in"); };
 }
-function tgGoogle() {
-if (TG.google === false) {
-tgMsg("Google sign-in is not open yet. Please use your email for now.", true);
+function tgateGoogle() {
+if (TGATE.google === false) {
+tgateMsg("Google sign-in is not open yet. Please use your email for now.", true);
 return;
 }
-tgMsg("Taking you to Google…");
+tgateMsg("Taking you to Google…");
 location.href = authUrl("authorize?provider=google&redirect_to=" + encodeURIComponent(hereUrl()));
 }
-function tgEmail(kind) {
-var em = (tgEl("tg-email").value || "").trim(), pw = tgEl("tg-pass").value || "";
+function tgateEmail(kind) {
+var em = (tgateEl("tg-email").value || "").trim(), pw = tgateEl("tg-pass").value || "";
 if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)) {
-tgMsg("That doesn't look like an email address.", true);
+tgateMsg("That doesn't look like an email address.", true);
 return;
 }
 if (kind === "forgot") {
-authPost("recover?redirect_to=" + encodeURIComponent(hereUrl()), { email: em }).then(function () { tgMsg("If that address has an account, a letter is on its way."); })
-.catch(function (e) { tgMsg(tgWords(e), true); });
+authPost("recover?redirect_to=" + encodeURIComponent(hereUrl()), { email: em }).then(function () { tgateMsg("If that address has an account, a letter is on its way."); })
+.catch(function (e) { tgateMsg(tgateWords(e), true); });
 return;
 }
 if (!pw) {
-tgMsg("Your password, please.", true);
+tgateMsg("Your password, please.", true);
 return;
 }
 if (kind === "new" && pw.length < 10) {
-tgMsg("Use at least ten characters for the password.", true);
+tgateMsg("Use at least ten characters for the password.", true);
 return;
 }
 var keep = function (j) { keepSession({ access_token: j.access_token, refresh_token: j.refresh_token, user: j.user, at: Date.now() }); };
 if (kind === "new") {
-tgMsg("Making your account…");
+tgateMsg("Making your account…");
 authPost("signup?redirect_to=" + encodeURIComponent(hereUrl()), { email: em, password: pw }).then(function (j) {
 if (j.access_token) {
 keep(j);
-tgEnter();
+tgateEnter();
 }
 else
-tgMsg("Account made! Check your email to confirm it, then sign in here.");
-}).catch(function (e) { tgMsg(tgWords(e), true); });
+tgateMsg("Account made! Check your email to confirm it, then sign in here.");
+}).catch(function (e) { tgateMsg(tgateWords(e), true); });
 return;
 }
-tgMsg("Signing in…");
-authPost("token?grant_type=password", { email: em, password: pw }).then(function (j) { keep(j); tgEnter(); })
-.catch(function (e) { tgMsg(tgWords(e), true); });
+tgateMsg("Signing in…");
+authPost("token?grant_type=password", { email: em, password: pw }).then(function (j) { keep(j); tgateEnter(); })
+.catch(function (e) { tgateMsg(tgateWords(e), true); });
 }
-function tgEnter() {
-if (TG.entered)
+function tgateEnter() {
+if (TGATE.entered)
 return;
-TG.entered = true;
-var s = tgEl("tg-splash");
+TGATE.entered = true;
+var s = tgateEl("tg-splash");
 if (!s)
 return;
 s.classList.add("tg-out");
 setTimeout(function () { if (s.parentNode)
 s.parentNode.removeChild(s); }, 1000);
 if (signedIn() && typeof setStatus === "function")
-setStatus("<b>Welcome back, " + esc(tgName()) + ".</b>");
+setStatus("<b>Welcome back, " + esc(tgateName()) + ".</b>");
 }
 (function () {
-var s = tgEl("tg-splash");
+var s = tgateEl("tg-splash");
 if (!s)
 return;
-if (tgSkip()) {
+if (tgateSkip()) {
 s.parentNode.removeChild(s);
-TG.ready = TG.entered = true;
+TGATE.ready = TGATE.entered = true;
 return;
 }
 ["keydown", "keyup", "keypress"].forEach(function (k) { s.addEventListener(k, function (e) { e.stopPropagation(); }); });
-["keydown", "keyup"].forEach(function (k) { window.addEventListener(k, function (e) { if (!TG.entered && !s.contains(e.target))
+["keydown", "keyup"].forEach(function (k) { window.addEventListener(k, function (e) { if (!TGATE.entered && !s.contains(e.target))
 e.stopImmediatePropagation(); }, true); });
 ["pointerdown", "mousedown", "touchstart", "wheel"].forEach(function (k) { s.addEventListener(k, function (e) { e.stopPropagation(); }, { passive: true }); });
-var go = function () { TG.dom = Date.now(); tgSet(38, "Waking the dream…"); setTimeout(tgTick, 200); };
+var go = function () { TGATE.dom = Date.now(); tgateSet(38, "Waking the dream…"); setTimeout(tgateTick, 200); };
 if (document.readyState === "loading")
 document.addEventListener("DOMContentLoaded", go);
 else
