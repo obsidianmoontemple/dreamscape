@@ -49441,7 +49441,7 @@ S("picturehouse", "structure", [26, 13, 22], [
 { g: "box", s: [12, .4, 4], p: [0, .2, 13], c: 0xB8AE9A }
 ], ["picture house", "cinema", "movie theatre", "movie theater", "picture palace", "the pictures", "the movies"], { sign: [0, 9.3, 11.3, 14, 2] });
 cityWorkplace({ key: CIN_KEY, ring: "markets", arch: "picturehouse", s: 1, jobs: [1610, 1611, 1612, 1613, 1614, 1615], fit: [],
-note: "Five screens of films that belong to everyone: this season, the Halloween classics. Tickets at the box office." });
+note: "Five screens of films that belong to everyone: comedy, family, cartoons, action, drama, Christmas and Halloween classics. Tickets at the box office." });
 cityMore("xpx", function (C) { var f = cityFrontage(C, CIN_KEY, 1080, 2); if (f && f.spec)
 f.spec.attrs.c = 0x7A2E2E; });
 var CIN_FILMS = {
@@ -81489,6 +81489,313 @@ catch (e) { }
 };
 }
 })();
+</script>
+<script>
+var CIN_GENRES = { christmas: "Christmas", comedy: "Comedy", family: "Family", cartoon: "Cartoons", action: "Action and adventure", drama: "Drama and sci-fi", horror: "Horror" };
+var CIN_MORE = {
+"pd-scrooge-1935": ["Scrooge", 1935, 78, "family", "christmas"],
+"pd-a-christmas-carol-1910": ["A Christmas Carol", 1910, 11, "family", "christmas"],
+"pd-the-night-before-christmas-1905": ["The Night Before Christmas", 1905, 10, "family", "christmas"],
+"pd-babes-in-toyland-1934": ["Babes in Toyland", 1934, 77, "family", "christmas"],
+"pd-beyond-tomorrow-1940": ["Beyond Tomorrow", 1940, 84, "family", "christmas"],
+"pd-the-great-rupert-1950": ["The Great Rupert", 1950, 87, "family", "christmas"],
+"pd-santa-claus-conquers-the-martians-1964": ["Santa Claus Conquers the Martians", 1964, 81, "family", "christmas"],
+"pd-rudolph-the-red-nosed-reindeer-1948": ["Rudolph the Red-Nosed Reindeer", 1948, 8, "family", "christmas"],
+"pd-christmas-comes-but-once-a-year-1936": ["Christmas Comes But Once a Year", 1936, 9, "family", "christmas"],
+"pd-santas-surprise-1947": ["Santa's Surprise", 1947, 9, "family", "christmas"],
+"pd-hectors-hectic-life-1948": ["Hector's Hectic Life", 1948, 7, "family", "christmas"],
+"pd-snow-foolin-1949": ["Snow Foolin'", 1949, 7, "family", "christmas"],
+"pd-the-kid-1921": ["The Kid", 1921, 68, "family", "comedy"],
+"pd-the-gold-rush-1925": ["The Gold Rush", 1925, 95, "family", "comedy"],
+"pd-the-circus-1928": ["The Circus", 1928, 72, "family", "comedy"],
+"pd-the-general-1926": ["The General", 1926, 78, "family", "comedy"],
+"pd-sherlock-jr-1924": ["Sherlock Jr.", 1924, 45, "family", "comedy"],
+"pd-the-navigator-1924": ["The Navigator", 1924, 59, "family", "comedy"],
+"pd-steamboat-bill-jr-1928": ["Steamboat Bill, Jr.", 1928, 70, "family", "comedy"],
+"pd-the-cameraman-1928": ["The Cameraman", 1928, 76, "family", "comedy"],
+"pd-safety-last-1923": ["Safety Last!", 1923, 73, "family", "comedy"],
+"pd-speedy-1928": ["Speedy", 1928, 86, "family", "comedy"],
+"pd-his-girl-friday-1940": ["His Girl Friday", 1940, 92, "teen", "comedy"],
+"pd-my-man-godfrey-1936": ["My Man Godfrey", 1936, 94, "teen", "comedy"],
+"pd-nothing-sacred-1937": ["Nothing Sacred", 1937, 77, "teen", "comedy"],
+"pd-topper-returns-1941": ["Topper Returns", 1941, 88, "teen", "comedy"],
+"pd-africa-screams-1949": ["Africa Screams", 1949, 79, "family", "comedy"],
+"pd-the-inspector-general-1949": ["The Inspector General", 1949, 102, "family", "comedy"],
+"pd-road-to-bali-1952": ["Road to Bali", 1952, 91, "family", "comedy"],
+"pd-jack-and-the-beanstalk-1952": ["Jack and the Beanstalk", 1952, 78, "family", "family"],
+"pd-the-little-princess-1939": ["The Little Princess", 1939, 91, "family", "family"],
+"pd-gullivers-travels-1939": ["Gulliver's Travels", 1939, 76, "family", "family"],
+"pd-peter-pan-1924": ["Peter Pan", 1924, 105, "family", "family"],
+"pd-the-wizard-of-oz-1925": ["The Wizard of Oz", 1925, 72, "family", "family"],
+"pd-the-adventures-of-prince-achmed-1926": ["The Adventures of Prince Achmed", 1926, 66, "family", "family"],
+"pd-little-lord-fauntleroy-1936": ["Little Lord Fauntleroy", 1936, 102, "family", "family"],
+"pd-the-adventures-of-tom-sawyer-1938": ["The Adventures of Tom Sawyer", 1938, 91, "family", "family"],
+"pd-alice-in-wonderland-1915": ["Alice in Wonderland", 1915, 52, "family", "family"],
+"pd-the-lost-world-1925": ["The Lost World", 1925, 93, "family", "family"],
+"pd-a-trip-to-the-moon-1902": ["A Trip to the Moon", 1902, 14, "family", "family"],
+"pd-steamboat-willie-1928": ["Steamboat Willie", 1928, 8, "family", "cartoon"],
+"pd-plane-crazy-1928": ["Plane Crazy", 1928, 6, "family", "cartoon"],
+"pd-the-gallopin-gaucho-1928": ["The Gallopin' Gaucho", 1928, 6, "family", "cartoon"],
+"pd-gertie-the-dinosaur-1914": ["Gertie the Dinosaur", 1914, 12, "family", "cartoon"],
+"pd-felix-the-cat-comicalamities-1928": ["Felix the Cat in Comicalamities", 1928, 7, "family", "cartoon", "Comicalamities"],
+"pd-popeye-meets-sindbad-1936": ["Popeye the Sailor Meets Sindbad the Sailor", 1936, 17, "family", "cartoon"],
+"pd-popeye-meets-ali-baba-1937": ["Popeye the Sailor Meets Ali Baba's Forty Thieves", 1937, 17, "family", "cartoon", "Ali Baba's Forty Thieves"],
+"pd-aladdin-and-his-wonderful-lamp-1939": ["Aladdin and His Wonderful Lamp", 1939, 22, "family", "cartoon"],
+"pd-superman-1941": ["Superman", 1941, 10, "family", "cartoon", "Superman Fleischer"],
+"pd-the-mechanical-monsters-1941": ["The Mechanical Monsters", 1941, 10, "family", "cartoon"],
+"pd-billion-dollar-limited-1942": ["Billion Dollar Limited", 1942, 9, "family", "cartoon"],
+"pd-the-bulleteers-1942": ["The Bulleteers", 1942, 9, "family", "cartoon"],
+"pd-a-corny-concerto-1943": ["A Corny Concerto", 1943, 8, "family", "cartoon"],
+"pd-falling-hare-1943": ["Falling Hare", 1943, 8, "family", "cartoon"],
+"pd-fresh-hare-1942": ["Fresh Hare", 1942, 8, "family", "cartoon"],
+"pd-the-wabbit-who-came-to-supper-1942": ["The Wabbit Who Came to Supper", 1942, 8, "family", "cartoon"],
+"pd-the-mark-of-zorro-1920": ["The Mark of Zorro", 1920, 90, "family", "action"],
+"pd-the-three-musketeers-1921": ["The Three Musketeers", 1921, 120, "family", "action"],
+"pd-robin-hood-1922": ["Robin Hood", 1922, 143, "family", "action"],
+"pd-the-thief-of-bagdad-1924": ["The Thief of Bagdad", 1924, 140, "family", "action"],
+"pd-ben-hur-1925": ["Ben-Hur: A Tale of the Christ", 1925, 143, "teen", "action", "Ben-Hur"],
+"pd-the-black-pirate-1926": ["The Black Pirate", 1926, 94, "family", "action"],
+"pd-wings-1927": ["Wings", 1927, 144, "teen", "action"],
+"pd-the-iron-mask-1929": ["The Iron Mask", 1929, 95, "family", "action"],
+"pd-the-great-train-robbery-1903": ["The Great Train Robbery", 1903, 12, "family", "action"],
+"pd-captain-kidd-1945": ["Captain Kidd", 1945, 89, "teen", "action"],
+"pd-angel-and-the-badman-1947": ["Angel and the Badman", 1947, 100, "family", "action"],
+"pd-mclintock-1963": ["McLintock!", 1963, 127, "family", "action"],
+"pd-charade-1963": ["Charade", 1963, 113, "teen", "action"],
+"pd-kansas-city-confidential-1952": ["Kansas City Confidential", 1952, 99, "teen", "action"],
+"pd-hercules-1958": ["Hercules", 1958, 98, "teen", "action"],
+"pd-terror-by-night-1946": ["Sherlock Holmes: Terror by Night", 1946, 60, "teen", "action", "Terror by Night"],
+"pd-dressed-to-kill-1946": ["Sherlock Holmes: Dressed to Kill", 1946, 72, "teen", "action", "Dressed to Kill"],
+"pd-the-woman-in-green-1945": ["Sherlock Holmes: The Woman in Green", 1945, 68, "teen", "action", "The Woman in Green"],
+"pd-metropolis-1927": ["Metropolis", 1927, 148, "teen", "drama"],
+"pd-sunrise-1927": ["Sunrise: A Song of Two Humans", 1927, 94, "teen", "drama", "Sunrise"],
+"pd-the-jazz-singer-1927": ["The Jazz Singer", 1927, 88, "family", "drama"],
+"pd-meet-john-doe-1941": ["Meet John Doe", 1941, 122, "family", "drama"],
+"pd-the-stranger-1946": ["The Stranger", 1946, 95, "teen", "drama"],
+"pd-royal-wedding-1951": ["Royal Wedding", 1951, 93, "family", "drama"],
+"pd-detour-1945": ["Detour", 1945, 67, "teen", "drama"],
+"pd-rocketship-x-m-1950": ["Rocketship X-M", 1950, 78, "teen", "drama"],
+"pd-robot-monster-1953": ["Robot Monster", 1953, 66, "teen", "drama"],
+"pd-plan-9-from-outer-space-1957": ["Plan 9 from Outer Space", 1957, 79, "teen", "drama"],
+"pd-teenagers-from-outer-space-1959": ["Teenagers from Outer Space", 1959, 86, "teen", "drama"]
+};
+(function () {
+Object.keys(CIN_MORE).forEach(function (k) { CIN_FILMS[k] = CIN_MORE[k]; });
+Object.keys(CIN_FILMS).forEach(function (k) { var d = CIN_FILMS[k]; if (!d[4])
+d[4] = /skeleton|hells|swing/.test(k) ? "cartoon" : "horror"; });
+})();
+CIN_RATING = { family: "For everyone", teen: "Older children and up", adult: "Grown-ups" };
+var CIN_SEASONS = {
+october: [
+{ n: 1, name: "Comedy Classics", films: ["pd-the-gold-rush-1925", "pd-his-girl-friday-1940", "pd-the-general-1926", "pd-my-man-godfrey-1936", "pd-safety-last-1923", "pd-africa-screams-1949", "pd-sherlock-jr-1924", "pd-nothing-sacred-1937"] },
+{ n: 2, name: "Horror", films: ["Nosferatu1922", "HouseOnHauntedHill1959", "ThePhantomoftheOpera", "The_Bat.mpeg", "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari", "lastmanonearth-1964", "TheGolem_893", "Little_ShopOf_Horrors.avi", "DrJekyllandMrHyde", "ABucketofBlood", "The_Hunchback_of_Notre_Dame", "TheTerror"] },
+{ n: 3, name: "Family & Cartoons", films: ["the-skeleton-dance-1929", "pd-jack-and-the-beanstalk-1952", "pd-steamboat-willie-1928", "hells-bells_1929", "pd-gullivers-travels-1939", "pd-popeye-meets-sindbad-1936", "swing-you-sinners-1930", "pd-the-wizard-of-oz-1925", "pd-superman-1941", "Frankenstein1910", "pd-the-little-princess-1939", "pd-falling-hare-1943"] },
+{ n: 4, name: "Horror for Grown-ups", films: ["night_of_the_living_dead_dvd", "CarnivalOfSouls1962", "dementia-13-1963_202312", "Haxan_tinted_and_subtitled", "WhiteZombie"] },
+{ n: 5, name: "Action & Adventure", films: ["pd-the-mark-of-zorro-1920", "pd-the-black-pirate-1926", "pd-angel-and-the-badman-1947", "pd-the-thief-of-bagdad-1924", "pd-charade-1963", "pd-robin-hood-1922", "pd-mclintock-1963", "pd-the-lost-world-1925"] }
+],
+general: [
+{ n: 1, name: "Comedy Classics", films: ["pd-the-kid-1921", "pd-his-girl-friday-1940", "pd-the-circus-1928", "pd-topper-returns-1941", "pd-steamboat-bill-jr-1928", "pd-the-inspector-general-1949", "pd-the-navigator-1924", "pd-road-to-bali-1952", "pd-the-cameraman-1928", "pd-speedy-1928"] },
+{ n: 2, name: "Action & Adventure", films: ["pd-the-three-musketeers-1921", "pd-captain-kidd-1945", "pd-the-iron-mask-1929", "pd-kansas-city-confidential-1952", "pd-ben-hur-1925", "pd-hercules-1958", "pd-terror-by-night-1946", "pd-wings-1927", "pd-dressed-to-kill-1946", "pd-the-woman-in-green-1945"] },
+{ n: 3, name: "Family & Cartoons", films: ["pd-a-trip-to-the-moon-1902", "pd-peter-pan-1924", "pd-plane-crazy-1928", "pd-the-adventures-of-tom-sawyer-1938", "pd-gertie-the-dinosaur-1914", "pd-the-adventures-of-prince-achmed-1926", "pd-popeye-meets-ali-baba-1937", "pd-little-lord-fauntleroy-1936", "pd-the-mechanical-monsters-1941", "pd-alice-in-wonderland-1915", "pd-a-corny-concerto-1943", "pd-aladdin-and-his-wonderful-lamp-1939"] },
+{ n: 4, name: "Drama & Sci-Fi", films: ["pd-metropolis-1927", "pd-sunrise-1927", "pd-rocketship-x-m-1950", "pd-meet-john-doe-1941", "pd-detour-1945", "pd-plan-9-from-outer-space-1957", "pd-the-stranger-1946", "pd-teenagers-from-outer-space-1959", "pd-robot-monster-1953"] },
+{ n: 5, name: "A Bit of Everything", films: ["pd-the-gold-rush-1925", "pd-royal-wedding-1951", "pd-fresh-hare-1942", "pd-the-mark-of-zorro-1920", "pd-jack-and-the-beanstalk-1952", "pd-the-jazz-singer-1927", "pd-the-bulleteers-1942", "pd-my-man-godfrey-1936", "pd-the-lost-world-1925", "pd-the-wabbit-who-came-to-supper-1942", "pd-angel-and-the-badman-1947"] }
+],
+christmas: [
+{ n: 1, name: "Christmas Classics", films: ["pd-scrooge-1935", "pd-babes-in-toyland-1934", "pd-beyond-tomorrow-1940", "pd-the-great-rupert-1950", "pd-meet-john-doe-1941", "pd-santa-claus-conquers-the-martians-1964", "pd-a-christmas-carol-1910"] },
+{ n: 2, name: "Comedy Classics", films: ["pd-the-gold-rush-1925", "pd-his-girl-friday-1940", "pd-the-kid-1921", "pd-the-inspector-general-1949", "pd-the-general-1926", "pd-africa-screams-1949", "pd-safety-last-1923", "pd-road-to-bali-1952", "pd-sherlock-jr-1924"] },
+{ n: 3, name: "Christmas Cartoons", films: ["pd-rudolph-the-red-nosed-reindeer-1948", "pd-christmas-comes-but-once-a-year-1936", "pd-santas-surprise-1947", "pd-the-night-before-christmas-1905", "pd-hectors-hectic-life-1948", "pd-snow-foolin-1949", "pd-babes-in-toyland-1934", "pd-gullivers-travels-1939", "pd-steamboat-willie-1928", "pd-jack-and-the-beanstalk-1952", "pd-the-little-princess-1939", "pd-a-corny-concerto-1943"] },
+{ n: 4, name: "Action & Adventure", films: ["pd-the-thief-of-bagdad-1924", "pd-charade-1963", "pd-the-black-pirate-1926", "pd-mclintock-1963", "pd-the-mark-of-zorro-1920", "pd-robin-hood-1922", "pd-captain-kidd-1945", "pd-ben-hur-1925"] },
+{ n: 5, name: "Holiday Mix", films: ["pd-scrooge-1935", "pd-the-wizard-of-oz-1925", "pd-rudolph-the-red-nosed-reindeer-1948", "pd-royal-wedding-1951", "pd-the-great-rupert-1950", "pd-superman-1941", "pd-my-man-godfrey-1936", "pd-santas-surprise-1947", "pd-peter-pan-1924", "pd-metropolis-1927"] }
+]
+};
+function cinSeasonName(at) {
+var d = new Date(at || Date.now()), m = d.getMonth(), day = d.getDate();
+if (m === 11 || (m === 0 && day <= 6))
+return "christmas";
+if (m === 9)
+return "october";
+return "general";
+}
+function cinIsSeed(sc) {
+var base = null;
+CIN_DEFAULT.forEach(function (q) { if (q.n === sc.n)
+base = q; });
+if (!base)
+return false;
+var ids = (sc.films || []).map(function (f) { return typeof f === "string" ? f : f.id; }).join("|");
+return ids === base.films.join("|");
+}
+var CINF = { map: {}, queue: [], busy: false, key: "cin-find-v1" };
+try {
+CINF.map = JSON.parse(localStorage.getItem(CINF.key) || "{}") || {};
+}
+catch (e) {
+CINF.map = {};
+}
+function cinFindKnown(id) {
+var m = CINF.map[id];
+if (!m)
+return undefined;
+if (Date.now() - m.at > (m.id ? 30 : 2) * 864e5)
+return undefined;
+return m.id || null;
+}
+function cinFindSave(id, found) {
+CINF.map[id] = { id: found || null, at: Date.now() };
+try {
+localStorage.setItem(CINF.key, JSON.stringify(CINF.map));
+}
+catch (e) { }
+}
+function cinNorm(s) { return String(s || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim(); }
+function cinFindAsk(id, cb) {
+var d = CIN_FILMS[id];
+if (!d) {
+cb(null);
+return;
+}
+var want = d[5] || d[0], y = d[1], nt = cinNorm(want).replace(/^(the|a) /, "");
+var title = want.replace(/["\\]/g, "");
+function ask(withYear, next) {
+var q = 'title:("' + title + '") AND mediatype:(movies)' + (withYear ? ' AND year:[' + (y - 1) + ' TO ' + (y + 1) + ']' : '');
+var url = "https://archive.org/advancedsearch.php?q=" + encodeURIComponent(q) + "&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year&sort%5B%5D=downloads+desc&rows=12&output=json";
+fetch(url, { mode: "cors", credentials: "omit" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+var docs = (j && j.response && j.response.docs) || [], pick = null;
+docs.forEach(function (o) {
+if (pick)
+return;
+var t = cinNorm(Array.isArray(o.title) ? o.title[0] : o.title);
+if (!o.identifier || t.indexOf(nt) < 0)
+return;
+if (/trailer|clip|scene|excerpt|preview|review|soundtrack|audio|radio|podcast|lux/.test(t))
+return;
+if (!withYear) {
+var oy = parseInt(o.year, 10);
+if (!(String(t).indexOf(String(y)) >= 0 || (oy && Math.abs(oy - y) <= 1)))
+return;
+}
+pick = o.identifier;
+});
+if (pick || !next)
+cb(pick);
+else
+next();
+}).catch(function () { if (next)
+next();
+else
+cb(undefined); });
+}
+ask(true, function () { ask(false, null); });
+}
+function cinFindPump() {
+if (CINF.busy || !CINF.queue.length)
+return;
+CINF.busy = true;
+var job = CINF.queue.shift();
+cinFindAsk(job.id, function (found) {
+if (found !== undefined)
+cinFindSave(job.id, found);
+var r = found === undefined ? null : found;
+job.cbs.forEach(function (cb) { try {
+cb(r);
+}
+catch (e) { } });
+setTimeout(function () { CINF.busy = false; cinFindPump(); }, 350);
+});
+}
+function cinFind(id, cb) {
+if (!/^pd-/.test(id) || !CIN_MORE[id]) {
+cb(id);
+return;
+}
+var k = cinFindKnown(id);
+if (k !== undefined) {
+cb(k);
+return;
+}
+for (var i = 0; i < CINF.queue.length; i++)
+if (CINF.queue[i].id === id) {
+if (cb)
+CINF.queue[i].cbs.push(cb);
+return;
+}
+CINF.queue.push({ id: id, cbs: cb ? [cb] : [] });
+cinFindPump();
+}
+var cinScreensBase = cinScreens;
+cinScreens = function () {
+var season = CIN_SEASONS[cinSeasonName()], st = CIN.state, mine = st && st.screens && st.screens.length ? st.screens : null;
+var raw = [1, 2, 3, 4, 5].map(function (n) {
+var s = null;
+(mine || []).forEach(function (q) { if (q.n === n)
+s = q; });
+if (s && !cinIsSeed(s))
+return s;
+var q = null;
+season.forEach(function (x) { if (x.n === n)
+q = x; });
+return q || s;
+}).filter(Boolean);
+CIN.state = Object.assign({}, st || {}, { screens: raw });
+var list;
+try {
+list = cinScreensBase();
+}
+finally {
+CIN.state = st;
+}
+list.forEach(function (sc) {
+sc.films = sc.films.map(function (f) {
+if (!/^pd-/.test(f.id) || !CIN_MORE[f.id])
+return f;
+var k = cinFindKnown(f.id);
+if (k === null)
+return null;
+if (k === undefined) {
+cinFind(f.id);
+return f;
+}
+var g = {};
+for (var p in f)
+g[p] = f[p];
+g.id = k;
+g.pd = f.id;
+return g;
+}).filter(Boolean);
+});
+return list;
+};
+var cinSrcBase = cinSrc;
+cinSrc = function (id, cb) {
+if (!/^pd-/.test(id))
+return cinSrcBase(id, cb);
+cinFind(id, function (found) { if (found)
+cinSrcBase(found, cb);
+else
+cb(null); });
+};
+var hallViewerCinBase = hallViewer;
+hallViewer = function (title, url, foot, opt) {
+var m = /archive\.org\/(embed|details)\/(pd-[a-z0-9-]+)/.exec(String(url || "")), args = arguments, me = this;
+if (!m || !CIN_MORE[m[2]])
+return hallViewerCinBase.apply(me, args);
+cinFind(m[2], function (found) {
+if (!found) {
+if (typeof setStatus === "function")
+setStatus("That film can't be found on the Internet Archive just now.");
+return;
+}
+var re = new RegExp(m[2], "g");
+hallViewerCinBase.call(me, title, String(url).replace(re, encodeURIComponent(found)), String(foot || "").replace(re, encodeURIComponent(found)), opt && opt.link ? Object.assign({}, opt, { link: String(opt.link).replace(re, encodeURIComponent(found)) }) : opt);
+});
+};
+setTimeout(function () {
+try {
+cinScreens().forEach(function (sc) { sc.films.slice(0, 6).forEach(function (f) { if (/^pd-/.test(f.id))
+cinFind(f.id); }); });
+}
+catch (e) { }
+}, 20000);
 </script>
 <script>
 "use strict";
