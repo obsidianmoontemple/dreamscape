@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<!-- SomnuMatrix (c) 2026 Thaddeus (obsidianmoontemple). All rights reserved. Proprietary: no copying, hosting or reuse without written permission. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SomnuMatrix privacy</title>
+<meta name="description" content="What SomnuMatrix keeps about you, who else sees it, and how to have it deleted.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+
+<style>
+  :root{--void:#08090D;--line:#242835;--bone:#E8E4DA;--dim:#9A9DA8;--gold:#C9A868;
+    --serif:Georgia,'Iowan Old Style','Times New Roman',serif;--sans:'Helvetica Neue',Arial,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--void);color:var(--bone);font-family:var(--serif);font-size:17px;line-height:1.65}
+  main{max-width:720px;margin:0 auto;padding:56px 18px 80px}
+  a{color:var(--gold)}
+  h1{font-weight:400;font-size:clamp(30px,6vw,44px);margin:0 0 6px}
+  h2{font-weight:400;font-size:22px;margin:36px 0 8px;border-top:1px solid var(--line);padding-top:24px}
+  .kicker{font-family:var(--sans);letter-spacing:.24em;text-transform:uppercase;font-size:11px;color:var(--gold)}
+  .dim{color:var(--dim);font-family:var(--sans);font-size:14px}
+  ul{padding-left:22px}
+  li{margin:6px 0}
+  a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">SomnuMatrix</div>
+  <h1>Privacy</h1>
+  <p class="dim">Last updated 4 October 2026</p>
+
+  <p>SomnuMatrix lets you write or speak a dream and walk through it, and, if you choose, take part in Somnucor, a city shared with other dreamers. This page says what we keep, who else sees it, and how to have it removed.</p>
+
+  <h2>What stays on your device</h2>
+  <p>Your dreams, their places and your settings are kept in your own browser. Nothing you dream is sent anywhere unless you ask for one of the things below. Clearing your browser's site data, or "Erase this device" in Settings, removes them from that device.</p>
+
+  <h2>What we keep if you make an account</h2>
+  <ul>
+    <li><b>Your email address and a password</b>, held by our sign-in provider. We never see your password.</li>
+    <li><b>Your purchase</b>: the date, amount and the email used at checkout, so we can give you access and keep the records the law requires.</li>
+    <li><b>A copy of your dreams</b>, only if you choose to keep them to your account.</li>
+    <li><b>Dreams you publish</b> through a door in the Hall of Doors. These are public: anyone can walk into them until you take them down.</li>
+    <li><b>Your part in Somnucor</b>: the name and look you choose, where you are in the city, your job, money, property and what you say in the city's chat. Other dreamers see your name, look, position and chat.</li>
+  </ul>
+
+  <h2>Waiting list</h2>
+  <p>If you join the waiting list we keep your email address only to tell you when SomnuMatrix opens. "Leave the list" on the front page removes it.</p>
+
+  <h2>Who else handles your data</h2>
+  <ul>
+    <li><b>Supabase</b> stores accounts and the city.</li>
+    <li><b>Stripe</b> takes payment. Your card details go to Stripe, not to us.</li>
+    <li><b>Groq</b> runs the AI that builds the parts of a dream the game doesn't already know. When the AI is used, the text of that dream is sent to Groq to be read. Words the game doesn't know may also be looked up on <b>Wikipedia and Wiktionary</b>. Don't put anything in a dream you wouldn't want processed this way; the game also builds dreams from its own catalogue without the AI.</li>
+    <li><b>GitHub Pages</b> serves the website, and like any web host it sees the address your request comes from.</li>
+  </ul>
+  <p>We don't sell your data and we don't show advertising.</p>
+
+  <h2>Deleting your account</h2>
+  <p>In the app, open Settings, then Your account, then "Delete my account". This removes your account, your saved and published dreams and your place in the city. Purchase records are kept without your account attached, because tax law requires it.</p>
+
+  <h2>Children</h2>
+  <p>SomnuMatrix is not meant for children under 13, and we don't knowingly keep their data. If you believe a child has made an account, write to us and we'll remove it.</p>
+
+  <h2>Contact</h2>
+  <p id="contact">For anything about your data, write to us through the help address shown in the app's Settings.</p>
+</main>
+<script>
+(function () {
+var URL = "https://ryxmrkwgdyphcdlglwka.supabase.co", KEY = "sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY";
+fetch(URL + "/rest/v1/app_config?select=value&key=eq.support_email", { headers: { apikey: KEY, Authorization: "Bearer " + KEY } })
+.then(function (r) { return r.ok ? r.json() : []; })
+.then(function (rows) {
+var v = rows && rows[0] && rows[0].value;
+if (typeof v !== "string")
+v = v && v.email;
+if (!v || !/^[^@\s]+@[^@\s]+$/.test(v))
+return;
+var p = document.getElementById("contact");
+p.textContent = "For anything about your data, write to ";
+var a = document.createElement("a");
+a.href = "mailto:" + v;
+a.textContent = v;
+p.appendChild(a);
+p.appendChild(document.createTextNode("."));
+}).catch(function () { });
+})();
+</script>
+</body>
+</html>

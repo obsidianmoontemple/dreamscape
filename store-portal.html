@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<!-- SomnuMatrix (c) 2026 Thaddeus (obsidianmoontemple). All rights reserved. Proprietary: no copying, hosting or reuse without written permission. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Somnucor World Mall &mdash; Store Portal</title>
+<meta name="description" content="Open your store in the Somnucor World Mall: design your shopfront, list your goods, and connect your website.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#07080B; --deep:#0D1017; --panel:#121620; --raise:#181D29; --bone:#E4DAC4; --text:#CFC6B2; --dim:#7D7766;
+  --gold:#C9A868; --gold2:#E8C27A; --moon:#7C93B8; --ember:#C0603A; --ok:#7FB08A; --line:rgba(228,218,196,0.13);
+  --display:"Cinzel",Georgia,serif; --serif:"Cormorant Garamond",Georgia,serif;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--void);color:var(--text);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(1200px 600px at 70% -10%,rgba(201,168,104,.10),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(124,147,184,.08),transparent 60%),var(--void)}
+a{color:var(--gold2)}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{background:transparent;border:1px solid var(--line);color:var(--text);font-size:13px;padding:8px 14px;border-radius:3px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.btn:hover{border-color:var(--gold);color:var(--bone)}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#16130C;font-weight:600}
+.btn.primary:hover{background:var(--gold2);border-color:var(--gold2)}
+.btn.warn:hover{border-color:var(--ember);color:var(--ember)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.sm{padding:5px 9px;font-size:12px}
+input[type=text],input[type=email],input[type=password],input[type=url],input[type=number],select,textarea{
+  width:100%;background:var(--void);border:1px solid var(--line);border-radius:3px;padding:9px 11px;font-size:14px;outline:none;color:var(--bone)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+input[type=color]{width:48px;height:36px;padding:2px;background:var(--void);border:1px solid var(--line);border-radius:3px}
+textarea{resize:vertical;line-height:1.55}
+label.f{display:block;font-size:12px;color:var(--dim);margin:14px 0 6px;letter-spacing:.02em}
+h1,h2,h3{font-family:var(--display);font-weight:500;color:var(--bone);letter-spacing:.04em;margin:0}
+h1{font-size:22px} h2{font-size:18px;margin-bottom:6px} h3{font-size:14px;margin:22px 0 8px;color:var(--gold)}
+.lede{font-family:var(--serif);font-size:19px;line-height:1.55;color:var(--text)}
+.note{font-size:13px;color:var(--dim);line-height:1.6}
+.hidden{display:none!important}
+.card{background:var(--deep);border:1px solid var(--line);border-radius:6px;padding:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+#bar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold);border-radius:4px;
+  padding:10px 18px;font-size:13px;max-width:90vw;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+#bar.on{opacity:1} #bar.err{border-color:var(--ember);color:var(--ember)}
+
+/* the gate */
+#gate{min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:40px;padding:40px clamp(18px,6vw,80px);max-width:1200px;margin:0 auto}
+@media(max-width:860px){#gate{grid-template-columns:1fr}}
+.mark{font-family:var(--display);font-size:12px;letter-spacing:.32em;color:var(--gold);text-transform:uppercase}
+.hero h1{font-size:clamp(30px,4.5vw,46px);line-height:1.15;margin:12px 0 18px}
+.points{display:grid;gap:14px;margin-top:26px}
+.point{display:flex;gap:14px;align-items:flex-start}
+.point i{flex:0 0 30px;height:30px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;font-style:normal;font-family:var(--display);color:var(--gold);font-size:13px}
+.point b{color:var(--bone);font-weight:600} .point span{color:var(--dim);font-size:13.5px;line-height:1.5}
+.tabs2{display:flex;gap:4px;margin-bottom:6px}
+.tabs2 button{flex:1;background:none;border:0;border-bottom:2px solid var(--line);padding:10px;color:var(--dim);cursor:pointer}
+.tabs2 button.on{color:var(--bone);border-bottom-color:var(--gold)}
+
+/* the desk */
+header{display:flex;align-items:center;gap:16px;padding:16px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:rgba(7,8,11,.7);backdrop-filter:blur(6px);position:sticky;top:0;z-index:20}
+header .brand{flex:1;display:flex;flex-direction:column;gap:2px}
+header .who{font-size:12px;color:var(--dim)}
+.pill{display:inline-block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.pill.ok{border-color:var(--ok);color:var(--ok)} .pill.wait{border-color:var(--gold);color:var(--gold)} .pill.no{border-color:var(--ember);color:var(--ember)}
+nav{display:flex;gap:2px;padding:0 clamp(16px,4vw,40px);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);padding:13px 14px 11px;font-size:13.5px;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--bone);border-bottom-color:var(--gold)}
+main{padding:24px clamp(16px,4vw,40px) 60px;max-width:1280px;margin:0 auto}
+.banner{border:1px solid var(--line);border-left:3px solid var(--gold);background:var(--panel);padding:14px 16px;border-radius:4px;margin-bottom:20px;line-height:1.6}
+.banner.ok{border-left-color:var(--ok)} .banner.no{border-left-color:var(--ember)}
+
+/* storefront */
+.designer{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:24px;align-items:start}
+@media(max-width:980px){.designer{grid-template-columns:1fr}}
+.preview{position:sticky;top:84px}
+#pv{width:100%;aspect-ratio:16/10;border-radius:6px;border:1px solid var(--line);background:#0A0C12;display:block;cursor:grab}
+.choices{display:flex;flex-wrap:wrap;gap:6px}
+.choices label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer;font-size:13px}
+.choices input{display:none}
+.choices label:has(input:checked){border-color:var(--gold);color:var(--bone);background:rgba(201,168,104,.08)}
+.row2{display:flex;gap:10px;align-items:center}
+.shopcard{margin-top:16px;border:1px solid var(--gold);border-radius:6px;overflow:hidden;background:#0A0B10}
+.shopcard .bn{height:90px;background:#141820 center/cover}
+.shopcard .in{padding:12px 14px}
+
+/* products */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:500;font-size:11.5px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;padding:9px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td img{width:46px;height:46px;object-fit:cover;border-radius:3px;background:var(--raise);display:block}
+.wrap{overflow-x:auto}
+.off td{opacity:.45}
+.pform{display:grid;grid-template-columns:repeat(4,1fr);gap:0 14px}
+.pform .w2{grid-column:span 2} .pform .w4{grid-column:span 4}
+@media(max-width:820px){.pform{grid-template-columns:1fr 1fr}.pform .w4{grid-column:span 2}}
+
+/* connect */
+pre.code{background:#05060A;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#D6CDB8;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin:8px 0}
+.step{display:grid;grid-template-columns:36px 1fr;gap:14px;margin-top:22px}
+.step>i{width:32px;height:32px;border-radius:50%;border:1px solid var(--gold);display:grid;place-items:center;font-style:normal;color:var(--gold);font-family:var(--display)}
+.demo{border:1px dashed var(--line);border-radius:4px;padding:16px;margin:10px 0;background:#fff}
+
+/* sales */
+.stats{display:flex;gap:30px;flex-wrap:wrap;margin:8px 0 22px}
+.stat b{display:block;font-family:var(--display);font-weight:500;font-size:28px;color:var(--bone)}
+.stat span{font-size:12px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+
+<div id="gate">
+  <div class="hero">
+    <div class="mark">Somnucor &middot; The World Mall</div>
+    <h1>Open your store inside the dream.</h1>
+    <p class="lede">The World Mall is a great glass hall at the heart of Somnucor, the shared city of the SomnuMatrix. Dreamers from everywhere walk its concourse, step into its shops, and buy what they find.</p>
+    <div class="points">
+      <div class="point"><i>1</i><div><b>Design your shopfront.</b><br><span>Your name in lights, your colours, your sign, your window display &mdash; built in 3D exactly as you design it.</span></div></div>
+      <div class="point"><i>2</i><div><b>List your goods and prices.</b><br><span>Dreamers buy a virtual piece for gold, and every listing links to the real one in your own store.</span></div></div>
+      <div class="point"><i>3</i><div><b>Connect your website.</b><br><span>A badge and a live shelf you paste onto your site, and an API that keeps your range in step automatically.</span></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tabs2"><button id="t-in" class="on">Sign in</button><button id="t-up">Create an account</button></div>
+    <p class="note" id="gate-note">Sign in to your store, or create an account to apply for a unit.</p>
+    <div id="gate-form">
+      <label class="f" for="g-email">Email</label>
+      <input type="email" id="g-email" autocomplete="username">
+      <label class="f" for="g-pass">Password</label>
+      <input type="password" id="g-pass" autocomplete="current-password">
+      <div style="display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap">
+        <button class="btn primary" id="g-go">Sign in</button>
+        <button class="btn" id="g-link">Email me a sign-in link</button>
+      </div>
+      <p class="note" style="margin-top:14px">Already play SomnuMatrix? Use the same account &mdash; what your store earns lands in that account&rsquo;s purse in the game.</p>
+    </div>
+  </div>
+</div>
+
+
+<div id="desk" class="hidden">
+  <header>
+    <div class="brand"><div class="mark">The World Mall &middot; Store Portal</div><h1 id="h-name">Your store</h1></div>
+    <span id="h-status" class="pill"></span>
+    <span class="who" id="who"></span>
+    <button class="btn sm" id="signout">Sign out</button>
+  </header>
+  <nav id="nav" class="hidden">
+    <button data-tab="front" class="on">Storefront</button>
+    <button data-tab="goods">Products</button>
+    <button data-tab="connect">Connect your website</button>
+    <button data-tab="sales">Sales</button>
+  </nav>
+  <main>
+    <div id="state-banner" class="banner hidden"></div>
+
+    
+    <section id="tab-apply" class="hidden">
+      <div class="card" style="max-width:720px">
+        <h2>Apply for a unit in the World Mall</h2>
+        <p class="note">Forty shops stand round the hall. Tell us about your store; once you have applied you can design your shopfront and stock your shelves straight away, and they open to dreamers the moment your unit is granted.</p>
+        <div class="grid2">
+          <div><label class="f" for="a-name">Store name</label><input type="text" id="a-name" maxlength="60"></div>
+          <div><label class="f" for="a-cat">What you sell</label>
+            <select id="a-cat"><option>Clothing &amp; accessories</option><option>Jewellery</option><option>Home &amp; candles</option><option>Books &amp; stationery</option><option>Art &amp; prints</option><option>Games &amp; toys</option><option>Beauty &amp; wellbeing</option><option>Food &amp; drink</option><option>Crystals &amp; spiritual</option><option>Technology</option><option>Music</option><option>Other</option></select></div>
+        </div>
+        <label class="f" for="a-tag">Your line &mdash; one sentence under your name</label><input type="text" id="a-tag" maxlength="120">
+        <div class="grid2">
+          <div><label class="f" for="a-site">Your website</label><input type="url" id="a-site" placeholder="https://"></div>
+          <div><label class="f" for="a-contact">Contact email</label><input type="email" id="a-contact"></div>
+        </div>
+        <label class="f" for="a-about">About your store</label><textarea id="a-about" rows="4" maxlength="1500"></textarea>
+        <div style="margin-top:18px"><button class="btn primary" id="a-go">Apply</button></div>
+      </div>
+    </section>
+
+    
+    <section id="tab-front" class="hidden">
+      <div class="designer">
+        <div>
+          <h2>Your shopfront</h2>
+          <p class="note">Everything here is drawn in the World Mall exactly as you set it. Drag the preview to look round it.</p>
+          <label class="f" for="s-name">Store name</label><input type="text" id="s-name" maxlength="60">
+          <label class="f" for="s-tag">Your line</label><input type="text" id="s-tag" maxlength="120">
+          <div class="row2" style="margin-top:6px">
+            <div><label class="f">Main colour</label><input type="color" id="s-color" value="#7A2A3A"></div>
+            <div><label class="f">Trim colour</label><input type="color" id="s-trim" value="#C9A868"></div>
+            <div style="flex:1"><label class="f" for="s-cat">What you sell</label><select id="s-cat"></select></div>
+          </div>
+
+          <h3>The sign</h3>
+          <div class="choices" data-k="sign">
+            <label><input type="radio" name="sign" value="classic">Classic board</label><label><input type="radio" name="sign" value="gilded">Gilded</label>
+            <label><input type="radio" name="sign" value="neon">Neon</label><label><input type="radio" name="sign" value="painted">Painted wood</label>
+            <label><input type="radio" name="sign" value="modern">Modern</label></div>
+          <label class="f">Lettering</label>
+          <div class="choices" data-k="font">
+            <label><input type="radio" name="font" value="serif">Serif</label><label><input type="radio" name="font" value="sans">Clean</label><label><input type="radio" name="font" value="script">Script</label></div>
+
+          <h3>The building</h3>
+          <div class="choices" data-k="facade">
+            <label><input type="radio" name="facade" value="stone">Stone</label><label><input type="radio" name="facade" value="marble">Marble</label>
+            <label><input type="radio" name="facade" value="brick">Brick</label><label><input type="radio" name="facade" value="wood">Wood</label>
+            <label><input type="radio" name="facade" value="glass">Glass</label><label><input type="radio" name="facade" value="dark">Black &amp; gold</label></div>
+          <label class="f">Awning</label>
+          <div class="choices" data-k="awning">
+            <label><input type="radio" name="awning" value="none">None</label><label><input type="radio" name="awning" value="solid">Plain</label>
+            <label><input type="radio" name="awning" value="striped">Striped</label><label><input type="radio" name="awning" value="scalloped">Scalloped</label></div>
+
+          <h3>The window and the shop</h3>
+          <div class="choices" data-k="display">
+            <label><input type="radio" name="display" value="pedestals">Pedestals</label><label><input type="radio" name="display" value="shelves">Shelves</label>
+            <label><input type="radio" name="display" value="mannequins">Mannequins</label><label><input type="radio" name="display" value="plants">Plants</label>
+            <label><input type="radio" name="display" value="lanterns">Lanterns</label></div>
+          <label class="f">Floor</label>
+          <div class="choices" data-k="floor">
+            <label><input type="radio" name="floor" value="wood">Wood</label><label><input type="radio" name="floor" value="marble">Marble</label>
+            <label><input type="radio" name="floor" value="tile">Tile</label><label><input type="radio" name="floor" value="carpet">Carpet</label></div>
+          <label class="f">Lighting</label>
+          <div class="choices" data-k="lights">
+            <label><input type="radio" name="lights" value="warm">Warm</label><label><input type="radio" name="lights" value="cool">Cool</label><label><input type="radio" name="lights" value="neon">Neon</label></div>
+          <label class="f">Featured in the window (up to two products with pictures)</label>
+          <div id="s-feat" class="choices"></div>
+
+          <h3>Inside</h3>
+          <label class="f" for="s-banner">Banner picture across the top of your shop (https:// address of an image)</label><input type="url" id="s-banner" placeholder="https://">
+          <label class="f" for="s-welcome">A welcome for dreamers who step in</label><textarea id="s-welcome" rows="2" maxlength="300"></textarea>
+          <div class="grid2">
+            <div><label class="f" for="s-logo">Logo (https:// address)</label><input type="url" id="s-logo" placeholder="https://"></div>
+            <div><label class="f" for="s-site">Your website</label><input type="url" id="s-site" placeholder="https://"></div>
+          </div>
+          <label class="f" for="s-about">About your store</label><textarea id="s-about" rows="3" maxlength="1500"></textarea>
+          <div style="margin-top:20px;display:flex;gap:10px"><button class="btn primary" id="s-save">Save my shopfront</button><button class="btn" id="s-reset">Undo changes</button></div>
+        </div>
+        <div class="preview">
+          <canvas id="pv"></canvas>
+          <p class="note" id="pv-note" style="margin-top:6px">How your shop looks from the concourse.</p>
+          <div class="shopcard" id="pv-card"></div>
+        </div>
+      </div>
+    </section>
+
+    
+    <section id="tab-goods" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div><h2>Your products</h2><p class="note" style="margin:0">Dreamers buy the virtual piece for gold &mdash; 100 gold is about a dollar of value in the game. Add the price of the real one and a link, and they can buy that from you too.</p></div>
+        <div style="display:flex;gap:8px"><button class="btn primary" id="p-new">Add a product</button><button class="btn" id="p-csv-open">Import a list</button></div>
+      </div>
+      <div class="card hidden" id="p-form" style="margin-top:16px">
+        <h3 style="margin-top:0" id="p-form-h">A new product</h3>
+        <div class="pform">
+          <div class="w2"><label class="f">Name</label><input type="text" id="p-name" maxlength="120"></div>
+          <div><label class="f">Code (SKU)</label><input type="text" id="p-sku" maxlength="80" placeholder="optional"></div>
+          <div><label class="f">Gold price in the mall</label><input type="number" id="p-gold" min="1" value="50"></div>
+          <div class="w4"><label class="f">Description</label><textarea id="p-desc" rows="2" maxlength="600"></textarea></div>
+          <div class="w2"><label class="f">Picture (https:// address of the image)</label><input type="url" id="p-img"></div>
+          <div><label class="f">Real price, as shown</label><input type="text" id="p-real" maxlength="40" placeholder="$24.00"></div>
+          <div><label class="f">Listed</label><select id="p-active"><option value="1">On the shelves</option><option value="0">Hidden</option></select></div>
+          <div class="w4"><label class="f">Link to buy the real one</label><input type="url" id="p-url" placeholder="https://yourstore.com/product"></div>
+        </div>
+        <p class="note" id="p-hint" style="margin-top:8px"></p>
+        <div style="display:flex;gap:10px;margin-top:12px"><button class="btn primary" id="p-save">Save product</button><button class="btn" id="p-cancel">Cancel</button></div>
+      </div>
+      <div class="card hidden" id="p-csv" style="margin-top:16px">
+        <h3 style="margin-top:0">Import a list</h3>
+        <p class="note">Paste a spreadsheet saved as CSV, or choose the file. The first row names the columns: <code>sku, name, description, image_url, price_gold, real_price, buy_url</code>. Only <code>sku</code> and <code>name</code> are required; a matching code updates that product.</p>
+        <input type="file" id="p-csv-file" accept=".csv,text/csv" style="margin:8px 0">
+        <textarea id="p-csv-text" rows="7" style="font-family:var(--mono);font-size:12.5px" placeholder="sku,name,description,image_url,price_gold,real_price,buy_url"></textarea>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="p-csv-replace"> Take down anything not in this list</label>
+        <p class="note" id="p-csv-msg"></p>
+        <div style="display:flex;gap:10px;margin-top:10px"><button class="btn primary" id="p-csv-go">Import</button><button class="btn" id="p-csv-x">Close</button></div>
+      </div>
+      <div class="wrap" style="margin-top:18px"><table id="p-table"></table></div>
+    </section>
+
+    
+    <section id="tab-connect" class="hidden">
+      <h2>Connect your website to the World Mall</h2>
+      <p class="note" style="max-width:76ch">Three ways, from the simplest. Copy and paste the code into your website wherever you want it to appear &mdash; most site builders (Shopify, Squarespace, Wix, WordPress) have a &ldquo;Custom HTML&rdquo; or &ldquo;Embed code&rdquo; block for exactly this.</p>
+      <div id="c-closed" class="banner hidden">These go live the moment your unit is granted. You can paste them now; until then they simply show nothing.</div>
+
+      <div class="step"><i>1</i><div>
+        <h3 style="margin-top:4px">A &ldquo;Visit us in the World Mall&rdquo; badge</h3>
+        <p class="note">A button that takes your visitors straight to your shop&rsquo;s door in Somnucor.</p>
+        <div class="demo" id="c-badge-demo"></div>
+        <pre class="code" id="c-badge"></pre><button class="btn sm" data-copy="c-badge">Copy the badge code</button>
+      </div></div>
+
+      <div class="step"><i>2</i><div>
+        <h3 style="margin-top:4px">A live shelf of your products</h3>
+        <p class="note">Shows your newest pieces from the mall, with their gold prices and a way in &mdash; and updates itself whenever you change your range here.</p>
+        <pre class="code" id="c-shelf"></pre><button class="btn sm" data-copy="c-shelf">Copy the shelf code</button>
+      </div></div>
+
+      <div class="step"><i>3</i><div>
+        <h3 style="margin-top:4px">Automatic sync, for your developer</h3>
+        <p class="note">Keep your range in the mall in step with your own store system. Your store key is secret: it is shown once, here, and making a new one stops the old one working.</p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn" id="c-key-go">Make a store key</button><span class="note" id="c-key-state"></span></div>
+        <pre class="code hidden" id="c-key"></pre>
+        <pre class="code" id="c-api"></pre><button class="btn sm" data-copy="c-api">Copy the example</button>
+        <p class="note">Fields for each product: <code>sku</code> (your code, required), <code>name</code> (required), <code>description</code>, <code>image_url</code>, <code>price_gold</code>, <code>real_price</code>, <code>buy_url</code>, <code>active</code> (true or false). With <code>"p_replace": true</code>, anything not in your list is taken off the shelves. Your sales come back from <code>mall_api_sales</code> with the same key.</p>
+      </div></div>
+    </section>
+
+    
+    <section id="tab-sales" class="hidden">
+      <h2>Sales</h2>
+      <p class="note">What dreamers have bought in your shop. Nine tenths of every sale is paid in gold into the purse of the account you sign in with; the mall keeps one tenth.</p>
+      <div class="stats" id="x-stats"></div>
+      <div class="grid2">
+        <div><h3>Best sellers</h3><div class="wrap"><table id="x-top"></table></div></div>
+        <div><h3>Most recent</h3><div class="wrap"><table id="x-recent"></table></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="bar"></div>
+
+<script>
+window.DW_CONFIG = {
+supabaseUrl: "https://ryxmrkwgdyphcdlglwka.supabase.co",
+supabaseKey: "sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY"
+};
+window.MALL_GAME_URL = "";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+var MF_FACADE = { stone: 0xD8D0C2, marble: 0xF2EEE6, glass: 0x9FB8C8, wood: 0x7A5634, brick: 0x9A4E3A, dark: 0x24262C };
+var MF_FLOOR = { wood: 0x8A6440, marble: 0xE8E4DC, tile: 0xC8C0B4, carpet: 0x6A2A34 };
+var MF_LIGHT = { warm: 0xFFE2B0, cool: 0xD8ECFF, neon: 0xFF6AE0 };
+var MF_FONTS = { serif: "Georgia, 'Times New Roman', serif", sans: "'Helvetica Neue', Arial, sans-serif", script: "'Brush Script MT', 'Segoe Script', cursive" };
+function mfHex(n) { return "#" + ("000000" + ((n || 0) >>> 0).toString(16)).slice(-6); }
+function mfLook(store) {
+var L = (store && store.look) || {};
+return { sign: L.sign || "classic", font: L.font || "serif", trim: L.trim !== undefined && L.trim !== null ? L.trim : 0xC9A868, facade: L.facade || "stone",
+awning: L.awning || "none", display: L.display || "pedestals", floor: L.floor || "wood", lights: L.lights || "warm",
+banner: L.banner || "", featured: Array.isArray(L.featured) ? L.featured.slice(0, 3) : [], welcome: L.welcome || "" };
+}
+function mfFit(x, text, maxW, big, small, weight, face) {
+var size = big;
+for (; size > small; size -= 2) {
+x.font = weight + " " + size + "px " + face;
+if (x.measureText(text).width <= maxW)
+break;
+}
+x.font = weight + " " + size + "px " + face;
+return size;
+}
+function mfSignTexture(T, store) {
+var L = mfLook(store), c = document.createElement("canvas");
+c.width = 1024;
+c.height = 192;
+var x = c.getContext("2d"), col = mfHex(store ? store.color : 0x1A1D24), trim = mfHex(L.trim), face = MF_FONTS[L.font] || MF_FONTS.serif;
+var name = store ? store.name : "To let", tag = store ? (store.tagline || "") : "";
+if (L.sign === "neon") {
+x.fillStyle = "#0A0B10";
+x.fillRect(0, 0, 1024, 192);
+}
+else if (L.sign === "gilded") {
+x.fillStyle = "#141418";
+x.fillRect(0, 0, 1024, 192);
+x.strokeStyle = trim;
+x.lineWidth = 10;
+x.strokeRect(10, 10, 1004, 172);
+x.lineWidth = 2;
+x.strokeRect(24, 24, 976, 144);
+}
+else if (L.sign === "painted") {
+var gr = x.createLinearGradient(0, 0, 0, 192);
+gr.addColorStop(0, "#C8A878");
+gr.addColorStop(1, "#A88458");
+x.fillStyle = gr;
+x.fillRect(0, 0, 1024, 192);
+x.strokeStyle = "rgba(90,60,30,.35)";
+for (var k = 0; k < 9; k++) {
+x.beginPath();
+x.moveTo(0, 20 + k * 20);
+x.lineTo(1024, 24 + k * 20);
+x.stroke();
+}
+}
+else if (L.sign === "modern") {
+x.fillStyle = col;
+x.fillRect(0, 0, 1024, 192);
+}
+else {
+x.fillStyle = col;
+x.fillRect(0, 0, 1024, 192);
+x.strokeStyle = trim;
+x.lineWidth = 8;
+x.strokeRect(6, 6, 1012, 180);
+}
+x.textAlign = "center";
+x.textBaseline = "middle";
+var weight = L.sign === "modern" ? "600" : "700", sz = mfFit(x, name, 940, tag ? 92 : 110, 30, weight, face), ty = tag ? 78 : 98;
+if (L.sign === "neon") {
+x.shadowColor = col;
+x.shadowBlur = 28;
+x.fillStyle = "#FFFFFF";
+x.fillText(name, 512, ty);
+x.shadowBlur = 12;
+x.fillStyle = col;
+x.fillText(name, 512, ty);
+x.shadowBlur = 0;
+}
+else {
+x.fillStyle = L.sign === "gilded" ? trim : (L.sign === "painted" ? "#2A1A0C" : "#F6F0E2");
+x.fillText(name, 512, ty);
+}
+if (tag) {
+mfFit(x, tag, 900, 36, 16, "400", face);
+x.fillStyle = L.sign === "painted" ? "#4A3420" : (L.sign === "neon" ? col : "#DCD2BC");
+x.fillText(tag, 512, 152);
+}
+var t = new T.CanvasTexture(c);
+t.anisotropy = 4;
+return t;
+}
+function mfBuild(T, store, opts) {
+opts = opts || {};
+var L = mfLook(store), G = new T.Group(), open = !!store;
+function M(c, o, basic) { var m = basic ? new T.MeshBasicMaterial({ color: c }) : new T.MeshLambertMaterial({ color: c }); if (o !== undefined) {
+m.transparent = true;
+m.opacity = o;
+m.depthWrite = false;
+} return m; }
+function add(geo, mat, x, y, z, rx, ry, rz) { var m = new T.Mesh(geo, mat); m.position.set(x, y, z); if (rx || ry || rz)
+m.rotation.set(rx || 0, ry || 0, rz || 0); G.add(m); return m; }
+var fc = MF_FACADE[L.facade] || MF_FACADE.stone, trim = L.trim, accent = store ? store.color || 0xC9A868 : 0x6A6E76;
+var shell = M(fc), trimM = M(trim), frame = M(L.facade === "dark" ? 0xC9A868 : 0x2E3238);
+add(new T.BoxGeometry(11.4, 7, 0.4), shell, 0, 3.5, -9);
+add(new T.BoxGeometry(0.4, 7, 9), shell, -5.7, 3.5, -4.5);
+add(new T.BoxGeometry(0.4, 7, 9), shell, 5.7, 3.5, -4.5);
+add(new T.BoxGeometry(11.4, 0.3, 9), shell, 0, 7, -4.5);
+add(new T.BoxGeometry(11.4, 0.3, 9), M(MF_FLOOR[L.floor] || MF_FLOOR.wood), 0, 0.05, -4.5);
+if (L.floor === "tile" || L.floor === "marble")
+for (var i = 0; i < 5; i++)
+add(new T.BoxGeometry(11.2, 0.02, 0.05), M(0x9A9288), 0, 0.22, -0.9 - i * 1.8);
+add(new T.BoxGeometry(1.1, 7, 0.6), shell, -5.4, 3.5, 0.1);
+add(new T.BoxGeometry(1.1, 7, 0.6), shell, 5.4, 3.5, 0.1);
+add(new T.BoxGeometry(11.8, 0.35, 0.7), trimM, 0, 4.65, 0.15);
+add(new T.BoxGeometry(11.8, 0.3, 0.8), trimM, 0, 6.85, 0.15);
+add(new T.BoxGeometry(3.6, 3.9, 0.08), M(0xA8C8DC, 0.3), -3, 2.15, 0);
+add(new T.BoxGeometry(3.6, 3.9, 0.08), M(0xA8C8DC, 0.3), 3, 2.15, 0);
+add(new T.BoxGeometry(0.15, 4.2, 0.2), frame, -4.85, 2.1, 0.05);
+add(new T.BoxGeometry(0.15, 4.2, 0.2), frame, 4.85, 2.1, 0.05);
+add(new T.BoxGeometry(0.15, 4.2, 0.2), frame, -1.15, 2.1, 0.05);
+add(new T.BoxGeometry(0.15, 4.2, 0.2), frame, 1.15, 2.1, 0.05);
+add(new T.BoxGeometry(2.2, 0.15, 0.2), frame, 0, 4.15, 0.05);
+add(new T.BoxGeometry(2.1, 0.25, 0.5), trimM, 0, 0.12, 0.25);
+var sign = add(new T.PlaneGeometry(9.6, 1.8), new T.MeshBasicMaterial({ map: mfSignTexture(T, store) }), 0, 5.75, 0.52);
+G.userData.sign = sign;
+if (L.sign === "neon" && open) {
+var tube = add(new T.BoxGeometry(9.8, 0.06, 0.06), M(accent, undefined, true), 0, 6.7, 0.55);
+add(new T.BoxGeometry(9.8, 0.06, 0.06), M(accent, undefined, true), 0, 4.82, 0.55);
+}
+if (L.sign === "gilded" && open) {
+add(new T.SphereGeometry(0.16, 12, 10), M(trim), -4.9, 5.75, 0.6);
+add(new T.SphereGeometry(0.16, 12, 10), M(trim), 4.9, 5.75, 0.6);
+}
+if (L.awning !== "none" && open) {
+var aw = new T.Group();
+aw.position.set(0, 4.5, 0.4);
+aw.rotation.x = 0.38;
+G.add(aw);
+var stripes = L.awning === "striped" ? 10 : 1;
+for (var s = 0; s < stripes; s++) {
+var w = 11 / stripes, m = new T.Mesh(new T.BoxGeometry(w, 0.05, 2.2), M(stripes > 1 && s % 2 ? 0xF2EEE6 : accent));
+m.position.set(-5.5 + w / 2 + s * w, 0, 1.1);
+aw.add(m);
+}
+if (L.awning === "scalloped")
+for (var q = 0; q < 11; q++) {
+var sc = new T.Mesh(new T.CylinderGeometry(0.5, 0.5, 0.05, 12, 1, false, 0, Math.PI), M(accent));
+sc.rotation.set(Math.PI / 2, 0, 0);
+sc.position.set(-5 + q, 0, 2.2);
+aw.add(sc);
+}
+}
+var lightCol = MF_LIGHT[L.lights] || MF_LIGHT.warm, dispM = M(L.facade === "dark" ? 0x3A3E46 : 0x2E3238), glowM = M(lightCol, undefined, true);
+G.userData.frames = [];
+[-3, 3].forEach(function (cx, side) {
+if (!open)
+return;
+if (L.display === "pedestals") {
+add(new T.CylinderGeometry(0.45, 0.55, 1, 16), dispM, cx - 0.9, 0.5, -1.2);
+add(new T.CylinderGeometry(0.45, 0.55, 1.4, 16), dispM, cx + 0.9, 0.7, -1.2);
+add(new T.SphereGeometry(0.32, 16, 12), M(accent), cx - 0.9, 1.35, -1.2);
+add(new T.BoxGeometry(0.5, 0.5, 0.5), M(trim), cx + 0.9, 1.65, -1.2);
+}
+else if (L.display === "shelves") {
+for (var h = 0; h < 3; h++) {
+add(new T.BoxGeometry(3, 0.08, 0.7), dispM, cx, 0.6 + h * 1.1, -1.4);
+for (var b = 0; b < 4; b++)
+add(new T.BoxGeometry(0.35, 0.5, 0.35), M(b % 2 ? accent : trim), cx - 1.1 + b * 0.73, 0.9 + h * 1.1, -1.4);
+}
+}
+else if (L.display === "mannequins") {
+[cx - 0.8, cx + 0.8].forEach(function (mx, k) {
+add(new T.CylinderGeometry(0.05, 0.05, 0.9, 6), dispM, mx, 0.45, -1.3);
+add(new T.CylinderGeometry(0.28, 0.22, 1.1, 12), M(k ? trim : accent), mx, 1.45, -1.3);
+add(new T.SphereGeometry(0.18, 12, 10), M(0xE8E0D4), mx, 2.2, -1.3);
+});
+}
+else if (L.display === "plants") {
+[cx - 0.9, cx + 0.9].forEach(function (px) {
+add(new T.CylinderGeometry(0.35, 0.28, 0.6, 12), M(trim), px, 0.3, -1.2);
+var f = add(new T.SphereGeometry(0.6, 12, 10), M(0x3E7A3A), px, 1.1, -1.2);
+f.scale.y = 1.3;
+});
+}
+else if (L.display === "lanterns") {
+for (var l = 0; l < 3; l++) {
+add(new T.CylinderGeometry(0.01, 0.01, 1.2, 4), dispM, cx - 1 + l, 3.4, -1.0);
+add(new T.CylinderGeometry(0.22, 0.26, 0.5, 8), glowM, cx - 1 + l, 2.6 - (l % 2) * 0.4, -1.0);
+}
+}
+var fr = add(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({ color: 0x2A2D34 }), cx, L.display === "shelves" ? 3.65 : 2.9, -2.4);
+add(new T.BoxGeometry(1.7, 1.7, 0.06), trimM, cx, fr.position.y, -2.45);
+G.userData.frames.push(fr);
+});
+var glow = add(new T.PlaneGeometry(10.6, 8.4), M(lightCol, 0.16, true), 0, 6.84, -4.5, Math.PI / 2);
+add(new T.BoxGeometry(10.8, 0.1, 0.1), glowM, 0, 6.75, -1);
+if (open) {
+add(new T.BoxGeometry(4, 1.1, 0.9), M(trim), 0, 0.55, -7.6);
+add(new T.BoxGeometry(4.2, 0.08, 1), dispM, 0, 1.12, -7.6);
+}
+return G;
+}
+function mfFeature(T, G, store) {
+var L = mfLook(store), prods = (store && store.products) || [];
+var pick = L.featured.map(function (id) { return prods.filter(function (p) { return String(p.id) === String(id); })[0]; }).filter(Boolean);
+if (pick.length < 2)
+prods.forEach(function (p) { if (pick.length < 2 && p.image && pick.indexOf(p) < 0)
+pick.push(p); });
+(G.userData.frames || []).forEach(function (fr, i) {
+var p = pick[i];
+if (!p || !p.image)
+return;
+var ld = new T.TextureLoader();
+ld.setCrossOrigin("anonymous");
+ld.load(p.image, function (tex) { fr.material.map = tex; fr.material.color.setHex(0xFFFFFF); fr.material.needsUpdate = true; }, undefined, function () { });
+});
+}
+</script>
+
+<script>
+"use strict";
+var sb = null, user = null, ME = null, draft = null, tab = "front", editing = null, upMode = false;
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+var barT = null;
+function say(msg, err) { var b = $("bar"); b.textContent = msg; b.className = "on" + (err ? " err" : ""); clearTimeout(barT); barT = setTimeout(function () { b.className = ""; }, 3800); }
+function fail(e) { say((e && (e.message || e.error_description)) || String(e), true); }
+function here() { return location.href.split("#")[0].split("?")[0]; }
+function gameUrl() { return window.MALL_GAME_URL || new URL("index.html", here()).href; }
+function baseUrl() { return new URL(".", here()).href; }
+function hexOf(n) { return "#" + ("000000" + ((n || 0) >>> 0).toString(16)).slice(-6); }
+function intOf(h) { return parseInt(String(h || "#000000").slice(1), 16) || 0; }
+var CATS = ["Clothing & accessories", "Jewellery", "Home & candles", "Books & stationery", "Art & prints", "Games & toys", "Beauty & wellbeing", "Food & drink", "Crystals & spiritual", "Technology", "Music", "Other"];
+function start() {
+if (!window.supabase) {
+$("gate-note").textContent = "The sign-in library didn't load. Check the connection and reload.";
+return;
+}
+sb = supabase.createClient(DW_CONFIG.supabaseUrl, DW_CONFIG.supabaseKey);
+sb.auth.getSession().then(function (r) { if (r.data && r.data.session)
+enter(r.data.session.user); });
+sb.auth.onAuthStateChange(function (ev, ses) { if (ses && ses.user && !user)
+enter(ses.user); });
+$("t-in").onclick = function () { upMode = false; $("t-in").classList.add("on"); $("t-up").classList.remove("on"); $("g-go").textContent = "Sign in"; $("gate-note").textContent = "Sign in to your store, or create an account to apply for a unit."; };
+$("t-up").onclick = function () { upMode = true; $("t-up").classList.add("on"); $("t-in").classList.remove("on"); $("g-go").textContent = "Create my account"; $("gate-note").textContent = "Choose a password of at least eight characters. We will email you to confirm the address."; };
+$("g-go").onclick = go;
+$("g-pass").onkeydown = function (e) { if (e.key === "Enter")
+go(); };
+$("g-link").onclick = function () {
+var em = $("g-email").value.trim();
+if (!em)
+return say("Enter your email first.", true);
+sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: here() } }).then(function (r) { if (r.error)
+return fail(r.error); $("gate-note").textContent = "Check your email for a sign-in link."; });
+};
+}
+function go() {
+var em = $("g-email").value.trim(), pw = $("g-pass").value;
+if (!em || !pw)
+return say("Enter your email and a password.", true);
+if (upMode) {
+if (pw.length < 8)
+return say("Use at least eight characters.", true);
+sb.auth.signUp({ email: em, password: pw, options: { emailRedirectTo: here() } }).then(function (r) {
+if (r.error)
+return fail(r.error);
+if (r.data && r.data.session)
+enter(r.data.user);
+else
+$("gate-note").textContent = "Almost there: open the email we just sent to confirm your address, then sign in.";
+});
+}
+else
+sb.auth.signInWithPassword({ email: em, password: pw }).then(function (r) { if (r.error)
+return fail(r.error); enter(r.data.user); });
+}
+function enter(u) {
+user = u;
+$("who").textContent = u.email;
+$("gate").classList.add("hidden");
+$("desk").classList.remove("hidden");
+$("a-contact").value = u.email;
+load();
+}
+$("signout").onclick = function () { sb.auth.signOut().then(function () { location.href = here(); }); };
+function rpc(fn, args) { return sb.rpc(fn, args || {}).then(function (r) { if (r.error)
+throw r.error; return r.data; }); }
+function load() {
+return rpc("my_mall_store").then(function (d) {
+ME = d || { store: null };
+if (!ME.store) {
+show("apply");
+$("h-name").textContent = "Apply for a unit";
+$("h-status").className = "hidden";
+$("nav").classList.add("hidden");
+return;
+}
+$("nav").classList.remove("hidden");
+var s = ME.store;
+$("h-name").textContent = s.name;
+var st = $("h-status"), b = $("state-banner");
+b.classList.remove("hidden", "ok", "no");
+if (s.status === "approved" && s.unit) {
+st.className = "pill ok";
+st.textContent = "Open · Unit " + s.unit;
+b.classList.add("ok");
+b.innerHTML = "<b>Your shop is open</b> in Unit " + s.unit + " of the World Mall. <a href='" + esc(gameUrl()) + "?mall=" + s.unit + "' target='_blank' rel='noopener'>Walk there now</a>" + (s.note ? " &middot; <span class='note'>" + esc(s.note) + "</span>" : "");
+}
+else if (s.status === "rejected") {
+st.className = "pill no";
+st.textContent = "Not accepted";
+b.classList.add("no");
+b.innerHTML = "<b>Your application was not accepted this time.</b>" + (s.note ? " " + esc(s.note) : "") + " You are welcome to keep your store here and write to us.";
+}
+else {
+st.className = "pill wait";
+st.textContent = "Under review";
+b.innerHTML = "<b>Your application is with us.</b> Design your shopfront and stock your shelves now &mdash; it all opens to dreamers the moment your unit is granted.";
+}
+fillFront();
+paintGoods();
+paintConnect();
+paintSales();
+show(tab);
+}).catch(function (e) {
+if (/function .* does not exist|Could not find the function/i.test(e.message || ""))
+say("The World Mall isn't set up on the server yet (schema-update-21).", true);
+else
+fail(e);
+});
+}
+function show(t) {
+["apply", "front", "goods", "connect", "sales"].forEach(function (n) { $("tab-" + n).classList.toggle("hidden", n !== t); });
+Array.prototype.forEach.call(document.querySelectorAll("#nav button"), function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === t); });
+if (t !== "apply")
+tab = t;
+if (t === "front")
+pvResize();
+}
+Array.prototype.forEach.call(document.querySelectorAll("#nav button"), function (b) { b.onclick = function () { show(b.getAttribute("data-tab")); }; });
+$("a-go").onclick = function () {
+var n = $("a-name").value.trim();
+if (!n)
+return say("Your store needs a name.", true);
+rpc("mall_apply", { p_name: n, p_tagline: $("a-tag").value.trim(), p_category: $("a-cat").value, p_site: $("a-site").value.trim(), p_contact: $("a-contact").value.trim(), p_about: $("a-about").value.trim() })
+.then(function (o) { if (o !== "ok")
+return say(o, true); say("Applied. Now make your shopfront your own."); tab = "front"; load(); }).catch(fail);
+};
+var LOOK_KEYS = ["sign", "font", "facade", "awning", "display", "floor", "lights"];
+var LOOK_DEF = { sign: "classic", font: "serif", facade: "stone", awning: "solid", display: "pedestals", floor: "wood", lights: "warm" };
+(function () { var sel = $("s-cat"); sel.innerHTML = CATS.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join(""); })();
+function fillFront() {
+var s = ME.store, L = s.look || {};
+$("s-name").value = s.name || "";
+$("s-tag").value = s.tagline || "";
+$("s-color").value = hexOf(s.color != null ? s.color : 0x7A2A3A);
+$("s-trim").value = hexOf(L.trim != null ? L.trim : 0xC9A868);
+$("s-cat").value = s.category || "Other";
+$("s-banner").value = L.banner || "";
+$("s-welcome").value = L.welcome || "";
+$("s-logo").value = s.logo || "";
+$("s-site").value = s.site || "";
+$("s-about").value = s.about || "";
+LOOK_KEYS.forEach(function (k) { var v = L[k] || LOOK_DEF[k], r = document.querySelector("input[name=" + k + "][value='" + v + "']"); if (r)
+r.checked = true; });
+var feat = (L.featured || []).map(String), withPic = (ME.products || []).filter(function (p) { return p.image && p.active; });
+$("s-feat").innerHTML = withPic.length ? withPic.map(function (p) { return "<label><input type='checkbox' value='" + p.id + "'" + (feat.indexOf(String(p.id)) > -1 ? " checked" : "") + ">" + esc(p.name) + "</label>"; }).join("") : "<span class='note'>Add products with pictures and they can be chosen here. Until then the window shows your first two.</span>";
+frontChanged();
+}
+function readFront() {
+var look = { trim: intOf($("s-trim").value), banner: $("s-banner").value.trim(), welcome: $("s-welcome").value.trim() };
+LOOK_KEYS.forEach(function (k) { var r = document.querySelector("input[name=" + k + "]:checked"); look[k] = r ? r.value : LOOK_DEF[k]; });
+look.featured = Array.prototype.map.call(document.querySelectorAll("#s-feat input:checked"), function (i) { return +i.value; }).slice(0, 2);
+return { id: ME.store.id, name: $("s-name").value.trim() || "Your store", tagline: $("s-tag").value.trim(), color: intOf($("s-color").value), look: look,
+logo: $("s-logo").value.trim(), site: $("s-site").value.trim(), category: $("s-cat").value, about: $("s-about").value.trim(),
+products: (ME.products || []).filter(function (p) { return p.active; }) };
+}
+var pvTimer = null;
+function frontChanged() {
+var ck = document.querySelectorAll("#s-feat input:checked");
+if (ck.length > 2)
+ck[ck.length - 1].checked = false;
+clearTimeout(pvTimer);
+pvTimer = setTimeout(function () { draft = readFront(); pvBuild(draft); paintCard(draft); }, 120);
+}
+document.addEventListener("input", function (e) { if (e.target.closest && e.target.closest("#tab-front"))
+frontChanged(); });
+document.addEventListener("change", function (e) { if (e.target.closest && e.target.closest("#tab-front"))
+frontChanged(); });
+$("s-reset").onclick = function () { fillFront(); say("Back to what is saved."); };
+$("s-save").onclick = function () {
+var d = readFront();
+rpc("mall_owner_save", { p_name: d.name, p_tagline: d.tagline, p_color: d.color, p_logo: d.logo || null, p_site: d.site || null, p_category: d.category, p_about: d.about, p_look: d.look })
+.then(function (o) { if (o !== "ok")
+return say(o, true); say("Saved. That is how your shop stands in the mall now."); load(); }).catch(fail);
+};
+function paintCard(d) {
+var L = d.look, acc = hexOf(d.color);
+$("pv-card").style.borderColor = acc;
+$("pv-card").innerHTML = (L.banner ? "<div class='bn' style=\"background-image:url('" + esc(L.banner).replace(/'/g, "%27") + "')\"></div>" : "<div style='height:6px;background:linear-gradient(90deg," + acc + "," + hexOf(L.trim) + ")'></div>") +
+"<div class='in'><div style='display:flex;gap:10px;align-items:center'>" + (d.logo ? "<img src='" + esc(d.logo) + "' alt='' style='width:38px;height:38px;object-fit:contain;background:#fff;border-radius:4px'>" : "") +
+"<div><b style='color:var(--bone);font-size:15px'>" + esc(d.name) + "</b><br><span class='note'>" + esc(d.tagline || "") + "</span></div></div>" +
+(L.welcome ? "<p style='margin:10px 0 0;font-family:" + (MF_FONTS[L.font] || MF_FONTS.serif) + ";line-height:1.5'>" + esc(L.welcome) + "</p>" : "") +
+"<p class='note' style='margin:8px 0 0'>What dreamers see when they step inside &mdash; then your products below it.</p></div>";
+}
+var PV = { r: null, s: null, c: null, g: null, a: 0.35, p: 0.12, drag: null, raf: 0 };
+function pvInit() {
+if (PV.r || typeof THREE === "undefined")
+return;
+var cv = $("pv");
+PV.r = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+PV.r.setPixelRatio(Math.min(devicePixelRatio, 2));
+PV.s = new THREE.Scene();
+PV.s.background = new THREE.Color(0x1A1C24);
+PV.c = new THREE.PerspectiveCamera(42, 16 / 10, 0.1, 200);
+PV.s.add(new THREE.HemisphereLight(0xFFF6E6, 0x4A4038, 0.85));
+var dl = new THREE.DirectionalLight(0xFFFFFF, 0.55);
+dl.position.set(6, 12, 10);
+PV.s.add(dl);
+var fl = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshLambertMaterial({ color: 0xBDB2A0 }));
+fl.rotation.x = -Math.PI / 2;
+fl.position.z = 6;
+PV.s.add(fl);
+var wl = new THREE.Mesh(new THREE.PlaneGeometry(60, 14), new THREE.MeshLambertMaterial({ color: 0xD8D0C2 }));
+wl.position.set(0, 7, -9.3);
+PV.s.add(wl);
+cv.addEventListener("pointerdown", function (e) { PV.drag = { x: e.clientX, y: e.clientY, a: PV.a, p: PV.p }; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; });
+cv.addEventListener("pointermove", function (e) { if (!PV.drag)
+return; PV.a = Math.max(-1.1, Math.min(1.1, PV.drag.a - (e.clientX - PV.drag.x) * 0.006)); PV.p = Math.max(-0.05, Math.min(0.7, PV.drag.p + (e.clientY - PV.drag.y) * 0.004)); });
+cv.addEventListener("pointerup", function () { PV.drag = null; cv.style.cursor = "grab"; });
+addEventListener("resize", pvResize);
+pvResize();
+(function loop() {
+PV.raf = requestAnimationFrame(loop);
+if (!PV.drag)
+PV.a = Math.sin(performance.now() / 6000) * 0.5;
+var r = 20;
+PV.c.position.set(Math.sin(PV.a) * r * Math.cos(PV.p), 2.2 + Math.sin(PV.p) * r, Math.cos(PV.a) * r * Math.cos(PV.p));
+PV.c.lookAt(0, 3, -2);
+PV.r.render(PV.s, PV.c);
+})();
+}
+function pvResize() { if (!PV.r)
+return; var cv = $("pv"), w = cv.clientWidth || 600, h = Math.round(w * 10 / 16); PV.r.setSize(w, h, false); PV.c.aspect = w / h; PV.c.updateProjectionMatrix(); }
+function pvBuild(d) {
+pvInit();
+if (!PV.s)
+return;
+if (PV.g)
+PV.s.remove(PV.g);
+PV.g = mfBuild(THREE, d);
+mfFeature(THREE, PV.g, d);
+PV.s.add(PV.g);
+}
+function paintGoods() {
+var ps = ME.products || [], t = $("p-table");
+if (!ps.length) {
+t.innerHTML = "<tr><td class='note' style='padding:30px 10px'>No products yet. Add your first, or import a list from a spreadsheet.</td></tr>";
+return;
+}
+t.innerHTML = "<tr><th></th><th>Product</th><th>Code</th><th>Gold</th><th>Real price</th><th>Link</th><th></th></tr>" + ps.map(function (p) {
+return "<tr class='" + (p.active ? "" : "off") + "'><td>" + (p.image ? "<img src='" + esc(p.image) + "' alt='' loading='lazy'>" : "<img alt=''>") + "</td>" +
+"<td><b style='color:var(--bone)'>" + esc(p.name) + "</b>" + (p.active ? "" : " <span class='pill'>hidden</span>") + "<br><span class='note'>" + esc((p.description || "").slice(0, 90)) + "</span></td>" +
+"<td class='note'>" + esc(p.sku) + "</td><td>" + p.gold + "</td><td>" + esc(p.real || "—") + "</td>" +
+"<td>" + (p.url ? "<a href='" + esc(p.url) + "' target='_blank' rel='noopener'>open</a>" : "—") + "</td>" +
+"<td style='white-space:nowrap'><button class='btn sm' data-edit='" + p.id + "'>Edit</button> <button class='btn sm warn' data-del='" + p.id + "'>Remove</button></td></tr>";
+}).join("");
+Array.prototype.forEach.call(t.querySelectorAll("[data-edit]"), function (b) { b.onclick = function () { openForm(ps.filter(function (p) { return String(p.id) === b.getAttribute("data-edit"); })[0]); }; });
+Array.prototype.forEach.call(t.querySelectorAll("[data-del]"), function (b) {
+b.onclick = function () {
+if (!confirm("Take this product out of your shop?"))
+return;
+rpc("mall_owner_delete_product", { p_id: +b.getAttribute("data-del") }).then(function (o) { if (o !== "ok")
+return say(o, true); say("Removed."); load(); }).catch(fail);
+};
+});
+}
+function openForm(p) {
+editing = p || null;
+$("p-csv").classList.add("hidden");
+$("p-form").classList.remove("hidden");
+$("p-form-h").textContent = p ? "Edit " + p.name : "A new product";
+$("p-name").value = p ? p.name : "";
+$("p-sku").value = p ? p.sku : "";
+$("p-gold").value = p ? p.gold : 50;
+$("p-desc").value = p ? (p.description || "") : "";
+$("p-img").value = p ? (p.image || "") : "";
+$("p-real").value = p ? (p.real || "") : "";
+$("p-url").value = p ? (p.url || "") : "";
+$("p-active").value = (!p || p.active) ? "1" : "0";
+hint();
+$("p-name").focus();
+}
+function hint() {
+var g = +$("p-gold").value || 0, m = /([\d.,]+)/.exec($("p-real").value || "");
+var real = m ? parseFloat(m[1].replace(/,/g, "")) : 0;
+$("p-hint").innerHTML = g ? ("In the game <b>" + g.toLocaleString() + " gold</b> is about $" + (g / 100).toFixed(2) + " of value; dreamers can also buy gold at 200 for $1." +
+(real ? " A " + esc($("p-real").value.trim()) + " piece is " + Math.round(real * 100).toLocaleString() + " gold at the game's own value." : "")) : "";
+}
+$("p-gold").oninput = hint;
+$("p-real").oninput = hint;
+$("p-new").onclick = function () { openForm(null); };
+$("p-cancel").onclick = function () { $("p-form").classList.add("hidden"); editing = null; };
+$("p-save").onclick = function () {
+rpc("mall_owner_product", { p_id: editing ? editing.id : null, p_sku: $("p-sku").value.trim(), p_name: $("p-name").value.trim(), p_description: $("p-desc").value.trim(),
+p_image: $("p-img").value.trim() || null, p_gold: Math.round(+$("p-gold").value || 0), p_real: $("p-real").value.trim() || null, p_url: $("p-url").value.trim() || null, p_active: $("p-active").value === "1" })
+.then(function (o) { if (!o || !o.ok)
+return say((o && o.error) || "Could not save.", true); say("Saved."); $("p-form").classList.add("hidden"); editing = null; load(); }).catch(fail);
+};
+$("p-csv-open").onclick = function () { $("p-form").classList.add("hidden"); $("p-csv").classList.remove("hidden"); };
+$("p-csv-x").onclick = function () { $("p-csv").classList.add("hidden"); };
+$("p-csv-file").onchange = function () { var f = this.files && this.files[0]; if (!f)
+return; var r = new FileReader(); r.onload = function () { $("p-csv-text").value = r.result; csvCheck(); }; r.readAsText(f); };
+$("p-csv-text").oninput = csvCheck;
+function parseCsv(text) {
+var rows = [], row = [], cur = "", q = false;
+for (var i = 0; i < text.length; i++) {
+var ch = text[i];
+if (q) {
+if (ch === '"') {
+if (text[i + 1] === '"') {
+cur += '"';
+i++;
+}
+else
+q = false;
+}
+else
+cur += ch;
+}
+else if (ch === '"')
+q = true;
+else if (ch === ",") {
+row.push(cur);
+cur = "";
+}
+else if (ch === "\n" || ch === "\r") {
+if (ch === "\r" && text[i + 1] === "\n")
+i++;
+row.push(cur);
+rows.push(row);
+row = [];
+cur = "";
+}
+else
+cur += ch;
+}
+if (cur || row.length) {
+row.push(cur);
+rows.push(row);
+}
+rows = rows.filter(function (r) { return r.some(function (c) { return c.trim(); }); });
+if (rows.length < 2)
+return [];
+var head = rows[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g, "_"); });
+return rows.slice(1).map(function (r) { var o = {}; head.forEach(function (h, j) { o[h] = (r[j] || "").trim(); }); return o; })
+.filter(function (o) { return o.sku && o.name; });
+}
+function csvCheck() { var list = parseCsv($("p-csv-text").value); $("p-csv-msg").textContent = list.length ? (list.length + " products ready to import.") : "No products found yet — the first row must name the columns, with sku and name."; return list; }
+$("p-csv-go").onclick = function () {
+var list = csvCheck();
+if (!list.length)
+return;
+rpc("mall_owner_import", { p_products: list, p_replace: $("p-csv-replace").checked }).then(function (o) {
+if (!o || !o.ok)
+return say((o && o.error) || "Could not import.", true);
+say(o.synced + " products imported" + (o.taken_down ? (", " + o.taken_down + " taken down") : "") + ".");
+$("p-csv").classList.add("hidden");
+load();
+}).catch(fail);
+};
+function paintConnect() {
+var s = ME.store, open = s.status === "approved" && s.unit;
+$("c-closed").classList.toggle("hidden", !!open);
+var link = gameUrl() + "?mall=" + (s.unit || ""), acc = hexOf(s.color != null ? s.color : 0x7A2A3A);
+var badge = '<a href="' + link + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:12px 20px;background:#0D1017;color:#E4DAC4;border:2px solid ' + acc + ';border-radius:6px;font-family:Georgia,serif;text-decoration:none;line-height:1.2">' +
+'<span style="font-size:22px;color:' + acc + '">&#9790;</span><span><span style="display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#C9A868">Visit us in the</span>' +
+'<span style="font-size:17px">Somnucor World Mall</span></span></a>';
+$("c-badge-demo").innerHTML = badge;
+$("c-badge").textContent = "\n" + badge;
+$("c-shelf").textContent = '<div data-somnucor-store="' + s.id + '"></div>\n<script src="' + baseUrl() + 'mall-embed.js" async><\/script>';
+$("c-key-state").textContent = s.has_key ? "You have a store key. Make a new one if it has been lost or shared." : "No key yet.";
+$("c-api").textContent =
+"// keep your range in step (run it from your server whenever your stock changes)\n" +
+"fetch(\"" + DW_CONFIG.supabaseUrl + "/rest/v1/rpc/mall_api_sync\", {\n" +
+"  method: \"POST\",\n" +
+"  headers: { \"apikey\": \"" + DW_CONFIG.supabaseKey + "\", \"Content-Type\": \"application/json\" },\n" +
+"  body: JSON.stringify({\n" +
+"    p_store_key: \"YOUR_STORE_KEY\",\n" +
+"    p_replace: true,\n" +
+"    p_products: [\n" +
+"      { sku: \"LAMP-01\", name: \"Moon lamp\", description: \"A lamp shaped like the moon\",\n" +
+"        image_url: \"https://yourstore.com/lamp.jpg\", price_gold: 1200, real_price: \"$24\",\n" +
+"        buy_url: \"https://yourstore.com/lamp\" }\n" +
+"    ]\n" +
+"  })\n" +
+"}).then(r => r.json()).then(console.log);\n\n" +
+"// what has sold in the last month\n" +
+"fetch(\"" + DW_CONFIG.supabaseUrl + "/rest/v1/rpc/mall_api_sales\", {\n" +
+"  method: \"POST\",\n" +
+"  headers: { \"apikey\": \"" + DW_CONFIG.supabaseKey + "\", \"Content-Type\": \"application/json\" },\n" +
+"  body: JSON.stringify({ p_store_key: \"YOUR_STORE_KEY\" })\n" +
+"}).then(r => r.json()).then(console.log);";
+}
+$("c-key-go").onclick = function () {
+if (ME.store.has_key && !confirm("Make a new key? The old one stops working at once."))
+return;
+rpc("mall_owner_new_key").then(function (o) {
+if (!o || !o.ok)
+return say((o && o.error) || "Could not make a key.", true);
+var k = $("c-key");
+k.classList.remove("hidden");
+k.textContent = "Your store key — copy it now; it will not be shown again:\n\n" + o.key;
+$("c-api").textContent = $("c-api").textContent.split("YOUR_STORE_KEY").join(o.key);
+ME.store.has_key = true;
+$("c-key-state").textContent = "Copy it now.";
+}).catch(fail);
+};
+document.addEventListener("click", function (e) {
+var b = e.target.closest && e.target.closest("[data-copy]");
+if (!b)
+return;
+var t = $(b.getAttribute("data-copy")).textContent;
+(navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { say("Copied."); }, function () {
+var r = document.createRange();
+r.selectNodeContents($(b.getAttribute("data-copy")));
+var sel = getSelection();
+sel.removeAllRanges();
+sel.addRange(r);
+say("Selected — press Ctrl+C to copy.");
+});
+});
+function paintSales() {
+var x = ME.sales || {};
+$("x-stats").innerHTML = "<div class='stat'><b>" + (x.count || 0).toLocaleString() + "</b><span>pieces sold</span></div>" +
+"<div class='stat'><b>" + (x.gold || 0).toLocaleString() + "</b><span>gold taken, all time</span></div>" +
+"<div class='stat'><b>" + (x.month_gold || 0).toLocaleString() + "</b><span>gold in the last 30 days</span></div>" +
+"<div class='stat'><b>" + Math.floor((x.gold || 0) * 0.9).toLocaleString() + "</b><span>gold paid to you</span></div>";
+var top = x.top || [], rec = x.recent || [];
+$("x-top").innerHTML = top.length ? "<tr><th>Product</th><th>Sold</th><th>Gold</th></tr>" + top.map(function (t) { return "<tr><td>" + esc(t.name) + "</td><td>" + t.n + "</td><td>" + t.gold + "</td></tr>"; }).join("") : "<tr><td class='note'>Nothing sold yet.</td></tr>";
+$("x-recent").innerHTML = rec.length ? "<tr><th>When</th><th>Product</th><th>Gold</th></tr>" + rec.map(function (t) { return "<tr><td class='note'>" + new Date(t.at).toLocaleString() + "</td><td>" + esc(t.name || "(removed)") + "</td><td>" + t.gold + "</td></tr>"; }).join("") : "<tr><td class='note'>Nothing sold yet.</td></tr>";
+}
+start();
+</script>
+</body>
+</html>

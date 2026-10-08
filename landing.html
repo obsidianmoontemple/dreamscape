@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<!-- SomnuMatrix (c) 2026 Thaddeus (obsidianmoontemple). All rights reserved. Proprietary: no copying, hosting or reuse without written permission. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SomnuMatrix — write down the dream, then walk into it</title>
+<meta name="description" content="SomnuMatrix turns the dream you write down into a 3D place you can walk through, and opens a shared city with real jobs, shops, courts and homes. $29.99 for life, never a subscription.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+<meta property="og:title" content="SomnuMatrix">
+<meta property="og:description" content="Write down the dream. Walk into it. Then step out into a city every dreamer shares.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="shot-city.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{
+    --void:#08090D; --ink:#0E1017; --card:#13161F; --line:#242835;
+    --bone:#E8E4DA; --dim:#9A9DA8; --gold:#C9A868; --ember:#C0603A; --moon:#9FB4D8; --green:#7FB08A;
+    --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --sans:'Helvetica Neue',Arial,sans-serif;
+    --mono:'SF Mono',Menlo,Consolas,monospace;
+    --pad:clamp(18px,5vw,40px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{animation:none!important;transition:none!important}}
+  body{margin:0;background:var(--void);color:var(--bone);font-family:var(--serif);font-size:17px;line-height:1.65;overflow-x:hidden}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 var(--pad)}
+  a{color:var(--gold)}
+  h1,h2,h3{font-weight:400;letter-spacing:-.01em;margin:0}
+  .kicker{font-family:var(--sans);letter-spacing:.24em;text-transform:uppercase;font-size:11px;color:var(--gold)}
+
+  /* ---------- hero ---------- */
+  #sky{position:fixed;inset:0;z-index:0;opacity:.55}
+  header{position:relative;z-index:1;padding:clamp(60px,12vh,130px) 0 60px;text-align:center}
+  header h1{font-size:clamp(38px,7vw,74px);line-height:1.02;margin:22px 0 0}
+  header h1 em{font-style:normal;color:var(--gold)}
+  .sub{font-size:clamp(18px,2.4vw,23px);color:#CDC8BD;max-width:680px;margin:24px auto 0}
+  .price-line{font-family:var(--sans);font-size:14px;color:var(--dim);margin-top:18px}
+  .price-line b{color:var(--bone);font-weight:600}
+
+  /* ---------- the form ---------- */
+  .join{position:relative;z-index:1;max-width:620px;margin:38px auto 0;background:rgba(19,22,31,.92);
+        border:1px solid var(--line);border-radius:4px;padding:26px clamp(18px,4vw,30px)}
+  .join h3{font-size:20px;margin-bottom:6px}
+  .join p.note{font-family:var(--sans);font-size:13px;color:var(--dim);margin:0 0 18px;line-height:1.55}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1 1 200px}
+  label{display:block;font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--moon);margin:14px 0 6px}
+  input,select{width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);
+    padding:12px 13px;font-size:16px;font-family:var(--sans);border-radius:3px;outline:none}
+  input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,104,.18)}
+  button.cta{width:100%;margin-top:20px;background:var(--gold);color:#17120A;border:0;padding:15px 20px;font-family:var(--sans);
+    font-size:16px;font-weight:600;letter-spacing:.02em;border-radius:3px;cursor:pointer;transition:filter .15s}
+  button.cta:hover{filter:brightness(1.08)}
+  button.cta[disabled]{opacity:.6;cursor:wait}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .msg{font-family:var(--sans);font-size:14px;margin-top:14px;min-height:20px}
+  .msg.bad{color:var(--ember)} .msg.good{color:var(--green)}
+  .count{font-family:var(--sans);font-size:13px;color:var(--dim);text-align:center;margin-top:16px}
+  .count b{color:var(--gold);font-family:var(--mono)}
+  .done{display:none;text-align:center;padding:10px 0}
+  .done h3{color:var(--gold);font-size:22px;margin-bottom:10px}
+  body.joined .join-form{display:none} body.joined .done{display:block}
+
+  /* ---------- sections ---------- */
+  section{position:relative;z-index:1;padding:clamp(54px,9vw,96px) 0;border-top:1px solid var(--line);background:var(--void)}
+  section.plain{background:var(--ink)}
+  h2{font-size:clamp(26px,4vw,38px);margin-bottom:10px}
+  .lede{font-size:19px;color:#CDC8BD;max-width:720px}
+  .grid{display:grid;gap:16px;margin-top:30px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:22px 24px}
+  .card h3{font-size:19px;margin-bottom:8px;color:var(--bone)}
+  .card p{margin:0;font-size:16px;color:#C6C2B8}
+  .stat{background:var(--ink);border:1px solid var(--line);border-radius:3px;padding:18px}
+  .stat b{display:block;font-family:var(--sans);font-size:clamp(26px,4vw,34px);font-weight:300;color:var(--gold);line-height:1}
+  .stat span{display:block;font-family:var(--sans);font-size:12.5px;color:var(--dim);margin-top:8px;line-height:1.45}
+  .step{display:flex;gap:18px;align-items:flex-start;margin-bottom:26px}
+  .step .n{font-family:var(--mono);color:var(--gold);font-size:13px;border:1px solid var(--line);border-radius:50%;
+    width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex:0 0 36px}
+  .quote{font-size:clamp(19px,2.6vw,26px);color:#D8D3C8;border-left:2px solid var(--gold);padding-left:22px;margin:30px 0}
+  .frame{position:relative;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--ink);aspect-ratio:16/9;margin-top:30px}
+  .frame iframe,.frame video,.frame img{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover}
+  .frame .holder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dim);font-family:var(--sans);font-size:14px;text-align:center;padding:20px}
+  details{border-bottom:1px solid var(--line);padding:16px 0}
+  details summary{cursor:pointer;font-size:18px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary:before{content:"+";color:var(--gold);font-family:var(--mono);margin-right:12px}
+  details[open] summary:before{content:"\2013"}
+  details p{margin:12px 0 0;color:#C6C2B8;font-size:16px}
+  .tierlist{font-family:var(--sans);font-size:15px}
+  .tierlist div{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .tierlist div b{color:var(--gold);font-family:var(--mono);white-space:nowrap}
+  .pill{display:inline-block;font-family:var(--sans);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid var(--line);color:var(--dim);border-radius:2px;padding:3px 9px;margin:0 6px 6px 0}
+  .shots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+  .shots img{width:100%;aspect-ratio:16/10;object-fit:cover;border:1px solid var(--line);border-radius:3px;background:var(--ink)}
+  @media(max-width:700px){.shots{grid-template-columns:repeat(2,1fr)}}
+  footer{position:relative;z-index:1;background:var(--ink);border-top:1px solid var(--line);padding:46px 0;font-family:var(--sans);font-size:13px;color:var(--dim)}
+  footer a{color:var(--moon);text-decoration:none}
+  /* sticky bar */
+  #bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(10,11,15,.96);border-top:1px solid var(--line);
+    padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom,0px));display:none;align-items:center;justify-content:space-between;gap:14px}
+  #bar.show{display:flex}
+  #bar span{font-family:var(--sans);font-size:14px;color:var(--bone)}
+  #bar button{background:var(--gold);color:#17120A;border:0;padding:11px 18px;font-family:var(--sans);font-weight:600;border-radius:3px;cursor:pointer;white-space:nowrap}
+  body.joined #bar{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">SomnuMatrix</div>
+    <h1>Write down the dream.<br><em>Then walk into it.</em></h1>
+    <p class="sub">SomnuMatrix turns the dream you write down into a place you can walk through &mdash; built from your own words, growing every night you write. And when you want company, there's a whole city waiting outside your door.</p>
+    <p class="price-line"><b>$29.99 for life.</b> Computer or phone, in your browser. Never a subscription.</p>
+
+    <div class="join" id="join">
+      <div class="join-form">
+        <h3>Be there when it opens</h3>
+        <p class="note">Join the list and you'll get first access, the launch-day price, and a few letters as opening day gets close. No more than one a week. Leave whenever you like.</p>
+        <form id="form" novalidate>
+          <div class="row">
+            <div>
+              <label for="email">Your email</label>
+              <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div>
+              <label for="name">Your name <span style="text-transform:none;letter-spacing:0;color:var(--dim)">(optional)</span></label>
+              <input id="name" name="name" type="text" autocomplete="given-name" placeholder="What shall we call you?">
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="wants">What interests you most</label>
+              <select id="wants" name="wants">
+                <option value="">Choose one</option>
+                <option>Walking my own dreams</option>
+                <option>The shared city &mdash; work, homes, shops</option>
+                <option>Opening a store in the World Mall</option>
+                <option>The printed Dreamer's Atlas</option>
+                <option>A copy for a school, museum or practice</option>
+              </select>
+            </div>
+            <div>
+              <label for="often">How often do you remember your dreams</label>
+              <select id="often" name="often">
+                <option value="">Choose one</option>
+                <option>Most nights</option>
+                <option>A few times a week</option>
+                <option>Now and then</option>
+                <option>Rarely &mdash; I want to change that</option>
+              </select>
+            </div>
+          </div>
+          <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+          <button class="cta" id="go" type="submit">Join the list</button>
+          <div class="msg" id="msg" role="status" aria-live="polite"></div>
+          <div class="count" id="count"></div>
+        </form>
+      </div>
+      <div class="done" id="done">
+        <h3>You're on the list.</h3>
+        <p style="color:#C6C2B8;margin:0 0 6px">Watch for the first letter. It shows you how SomnuMatrix reads a dream.</p>
+        <p class="count" style="margin-top:14px"><a href="#demo">Watch the film &rarr;</a></p>
+      </div>
+    </div>
+  </header>
+</div>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="kicker">The film</div>
+    <h2>A dream, typed out, built in front of you &mdash; then the city</h2>
+    <p class="lede">No concept art. Everything in this film is SomnuMatrix as it runs today: a dream becoming a place, the city waking up, people at work, shops full, a ride across town by dragon.</p>
+    <div class="frame" id="videoFrame">
+      <div class="holder" id="videoHolder">
+        <div style="font-size:30px">&#9654;</div>
+        <div>The film goes here. Set <span style="font-family:var(--mono);color:var(--gold)">VIDEO</span> at the bottom of this file to a YouTube link or an mp4 in this folder.</div>
+      </div>
+    </div>
+    <div class="shots" id="shots">
+      <img src="shot-dream.jpg" alt="A dream built from a few written lines" loading="lazy" onerror="this.remove()">
+      <img src="shot-city.jpg" alt="The city of Somnucor" loading="lazy" onerror="this.remove()">
+      <img src="shot-inside.jpg" alt="Inside one of the city's buildings" loading="lazy" onerror="this.remove()">
+      <img src="shot-shop.jpg" alt="A shop stocked by its own workers" loading="lazy" onerror="this.remove()">
+      <img src="shot-court.jpg" alt="The courtroom" loading="lazy" onerror="this.remove()">
+      <img src="shot-ride.jpg" alt="Riding across the city" loading="lazy" onerror="this.remove()">
+    </div>
+    <p style="margin-top:22px"><a id="demoLink" href="#" style="font-family:var(--sans);font-size:16px">Or try it yourself, in your browser &rarr;</a></p>
+  </div>
+</section>
+
+<section class="plain">
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2>Three things, every morning</h2>
+    <div style="margin-top:34px;max-width:760px">
+      <div class="step"><div class="n">1</div><div><h3>Say it while it's still there</h3><p>Dreams fade within minutes of waking. Open SomnuMatrix, type what you saw, and stop. No menus, no decisions, nothing to set up.</p></div></div>
+      <div class="step"><div class="n">2</div><div><h3>It builds what you said</h3><p>The house with the red door. The woman who wouldn't speak. The road that sloped the wrong way. An AI reader goes through every word and builds only what you dreamt &mdash; the rest stays faint and unfinished, the way a half-remembered thing should.</p></div></div>
+      <div class="step"><div class="n">3</div><div><h3>Walk back in whenever you like</h3><p>Your dreamscape keeps everything. Dream of that house again and it's still standing, with whatever you've since added. A year of dreams becomes a world of your own, with your own people, your own gods and roads out to other worlds.</p></div></div>
+    </div>
+    <p class="quote">"I was in a tall house with arched windows and a red door. My grandmother was in the kitchen. Outside, a black dog followed me down a road that sloped the wrong way. Then I was under the sea."</p>
+    <p style="color:var(--dim);font-family:var(--sans);font-size:14px;margin:0">Every one of those becomes something you can stand in front of.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">What's in it</div>
+    <h2>Built, tested, and running today</h2>
+    <p class="lede">These aren't plans. They're counted from the thing that already works.</p>
+    <div class="grid g4">
+      <div class="stat"><b>607</b><span>Things it can build from a sentence</span></div>
+      <div class="stat"><b>275</b><span>Deities across 26 traditions</span></div>
+      <div class="stat"><b>117</b><span>Creatures, from fairies to the kraken</span></div>
+      <div class="stat"><b>18</b><span>Worlds beyond your own</span></div>
+      <div class="stat"><b>47</b><span>Kinds of building, each with its own floors and rooms</span></div>
+      <div class="stat"><b>12</b><span>Species to be, from elf to dragonkin</span></div>
+      <div class="stat"><b>37</b><span>Skins that glow, shimmer and mark your kind</span></div>
+      <div class="stat"><b>24/7</b><span>A day and night that turn, with weather and seasons</span></div>
+    </div>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card"><h3>The people stay themselves</h3><p>A figure you dream twice is the same figure, in the same place, remembering what was said. They keep their own hours, their own homes and their own work.</p></div>
+      <div class="card"><h3>Buildings you walk into</h3><p>Front doors open. A hospital has wards, theatres and a staff room; a skyscraper has a lobby, a lift and offices floor by floor; a mansion keeps a secret passage behind the bookcase.</p></div>
+      <div class="card"><h3>The gods speak as themselves</h3><p>Dream a deity by name and they come as their own tradition knows them &mdash; and in the manner you dreamt them: silent, stern, kind, riddling, grieving.</p></div>
+      <div class="card"><h3>Nightmares can be faced</h3><p>What chased you comes out after dark. You face it, and end it the way your dream ended it &mdash; or a way you choose, which then becomes true.</p></div>
+      <div class="card"><h3>It sounds alive</h3><p>Birdsong by day and crickets by night, wind and rain, footsteps and hooves, an engine that climbs as you speed up, and a soft score that follows the hour.</p></div>
+      <div class="card"><h3>The turning year</h3><p>The eight sabbats and the feasts beside them &mdash; yule trees and Samhain lanterns, Beltane fires, menorah, diyas and the harvest table.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="plain">
+  <div class="wrap">
+    <div class="kicker">And, if you want it</div>
+    <h2>Somnucor &mdash; a city every dreamer shares</h2>
+    <p class="lede">Step through the Hall of Doors into a working city full of other dreamers. Take a job and draw a real weekly wage. Keep money in the bank. Rent a room or buy ground and build on it. Run a shop whose shelves are stocked by the people who work there. Every place hires, pays and runs its own staff.</p>
+    <div class="grid g4" style="margin-top:26px">
+      <div class="stat"><b>220</b><span>Kinds of work, from runner to judge</span></div>
+      <div class="stat"><b>1,620</b><span>Positions the city keeps filled</span></div>
+      <div class="stat"><b>69</b><span>Workplaces, each with someone at its head</span></div>
+      <div class="stat"><b>155</b><span>Goods on real shelves, made by real workers</span></div>
+      <div class="stat"><b>37</b><span>Rides, from a skateboard to a dragon</span></div>
+      <div class="stat"><b>15</b><span>Underground stops on a shared timetable</span></div>
+      <div class="stat"><b>275</b><span>Temples on Temple Row, one for every power</span></div>
+      <div class="stat"><b>1</b><span>Court system &mdash; charges, pleas, hearings, verdicts</span></div>
+    </div>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card"><h3>Work that means something</h3><p>Doctors, bakers, guards, lighting makers, tailors, priests. Owners hire, fire and pay their own people every week; salaried posts are paid every two weeks.</p></div>
+      <div class="card"><h3>Shops worth walking into</h3><p>Bakeries, jewellers and the Dreamskin Atelier. The Lightworks sells neon, fairy lights, string lights, lamps and bar lights to dress your own home.</p></div>
+      <div class="card"><h3>Law and order</h3><p>Police can hold someone for a day, no longer. After that it goes to court: a charge, a plea, both sides argue, a judge rules. Fines are paid; sentences end.</p></div>
+      <div class="card"><h3>The World Mall</h3><p>Real stores can apply, list their goods and dress their storefront &mdash; and put the same shelf on their own website with one pasted line.</p></div>
+      <div class="card"><h3>Chat and trade</h3><p>See who else is in the city, talk, trade and meet up. Built to stay quick with a busy city full of dreamers.</p></div>
+      <div class="card"><h3>Gold, if you want it</h3><p>The city runs on gold you earn. Adults can also buy gold &mdash; 200 gold for $1 &mdash; but nothing in the city needs it.</p></div>
+    </div>
+    <div class="card" style="margin-top:26px">
+      <p style="margin:0"><b>It is entirely optional.</b> SomnuMatrix is whole without it: if you never join, none of the city is even built, and nothing you dream goes anywhere. Your dreamscape is yours either way &mdash; the city is a place you may walk into, not a condition of using this.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Why a map</div>
+    <h2>Because memory is built for places</h2>
+    <p class="lede">Dreams fade fast &mdash; most of a dream is gone within minutes of waking. But spatial memory is the strongest memory we have: it's why the old memory-palace technique works, and why trained volunteers using it roughly doubled what they could recall in a 2017 study published in Neuron.</p>
+    <p class="lede" style="margin-top:16px">SomnuMatrix takes a dream and gives it back its geography. Instead of a page you never re-read, you get a street you can walk down.</p>
+    <div class="grid g2" style="margin-top:28px">
+      <div class="card"><h3>Your dreams stay yours</h3><p>Your journal is kept on your own device. To build a dream, its words pass through our AI reader and come back as a place &mdash; we don't keep them, and nothing you dream reaches the city unless you take it there.</p></div>
+      <div class="card"><h3>It is not therapy</h3><p>SomnuMatrix isn't a medical device and makes no treatment claims. It's a journal that builds a world. If dreams are troubling you, talk to someone qualified.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="plain">
+  <div class="wrap">
+    <div class="kicker">When it opens</div>
+    <h2>One price, for life</h2>
+    <p class="lede">SomnuMatrix is $29.99, once, for your computer and your phone, and for every world it ever grows. Never a subscription for anybody.</p>
+    <div class="tierlist" style="margin-top:28px">
+      <div><span>SomnuMatrix &mdash; your dreams and the city, for life</span><b>$29.99</b></div>
+      <div><span>Gold for the city, if you want it (adults only)</span><b>200 for $1</b></div>
+      <div><span>A store of your own in the World Mall</span><b>apply inside</b></div>
+      <div><span>A self-hosted copy for a school, museum or practice</span><b>ask us</b></div>
+    </div>
+    <p style="margin-top:22px"><span class="pill">list members get first access</span><span class="pill">no subscription, ever</span><span class="pill">runs in your browser</span></p>
+    <p style="margin-top:26px"><a href="#join" class="joinlink" style="font-family:var(--sans);font-size:16px">Join the list &rarr;</a></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Questions</div>
+    <h2>The things people ask</h2>
+    <div style="margin-top:24px">
+      <details><summary>Is this real, or a concept?</summary><p>It's built and running. Everything on this page, and everything in the film, is counted or recorded from the working thing.</p></details>
+      <details><summary>Do I have to write a lot?</summary><p>No. A sentence builds something. The more you write, the more of the dream is there &mdash; but a line at four in the morning is enough.</p></details>
+      <details><summary>Is AI involved?</summary><p>Yes. An AI reader goes through every dream you write so it can build exactly what you saw, and it gives the people you dreamt a voice. It doesn't invent things you didn't dream.</p></details>
+      <details><summary>What happens to my dreams?</summary><p>Your journal stays on your device. The words go through the AI reader to be built and aren't kept by us. The shared city only ever sees what you choose to bring into it.</p></details>
+      <details><summary>Is it a game?</summary><p>Your dreamscape isn't &mdash; there's nothing to win; it's a journal you can walk in. The city is more like a living world: work, money, homes, shops and courts, run by the people in it.</p></details>
+      <details><summary>Which platforms?</summary><p>It runs in your browser, on a computer or a phone. Nothing to install.</p></details>
+      <details><summary>Do I pay now?</summary><p>No. The list is free and nothing is charged. You'll get word the day it opens, with the launch price.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="plain">
+  <div class="wrap" style="text-align:center">
+    <h2>Your dreams are already a place.</h2>
+    <p class="lede" style="margin:14px auto 0">You've just never been able to walk there.</p>
+    <p style="margin-top:28px"><a href="#join" class="joinlink" style="font-family:var(--sans);font-size:17px;border:1px solid var(--gold);padding:14px 26px;border-radius:3px;display:inline-block;text-decoration:none">Join the list</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center">
+    <div>SomnuMatrix</div>
+    <div><a href="#join" class="joinlink">Join the list</a> &middot; <a href="?leave=1">Leave the list</a> &middot; <a href="privacy.html">Privacy</a></div>
+  </div>
+</footer>
+
+<div id="bar"><span>$29.99 for life &mdash; be there when it opens</span><button type="button" id="barBtn">Join the list</button></div>
+
+<script>
+var SUPABASE_URL = "https://ryxmrkwgdyphcdlglwka.supabase.co";
+var SUPABASE_KEY = "sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY";
+var VIDEO = "https://video.wixstatic.com/video/d6c75e_e252aa24ee794a3c8d587a543263a976/720p/mp4/file.mp4";
+var DEMO = "";
+var COUNT_FROM = 0;
+function validEmail(v) { return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(v || "").trim()); }
+function sourceOf(search, ref) {
+var q = new URLSearchParams(search || ""), bits = [];
+["utm_source", "utm_medium", "utm_campaign", "utm_content", "ref"].forEach(function (k) {
+if (q.get(k))
+bits.push(k.replace("utm_", "") + "=" + q.get(k));
+});
+if (!bits.length && ref) {
+try {
+var h = new URL(ref).hostname;
+if (h && h !== location.hostname)
+bits.push("from=" + h);
+}
+catch (e) { }
+}
+return bits.join("&").slice(0, 120) || "direct";
+}
+function payloadFrom(f, search, ref, path) {
+return { p_email: String(f.email || "").trim(), p_name: f.name || null, p_wants: f.wants || null,
+p_often: f.often || null, p_source: sourceOf(search, ref), p_landed: (path || "/").slice(0, 200) };
+}
+function rpc(name, body) {
+return fetch(SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1/rpc/" + name, {
+method: "POST",
+headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
+body: JSON.stringify(body || {})
+});
+}
+if (typeof module !== "undefined" && module.exports)
+module.exports = { validEmail: validEmail, sourceOf: sourceOf, payloadFrom: payloadFrom };
+(function () {
+if (typeof document === "undefined")
+return;
+var $ = function (id) { return document.getElementById(id); };
+var started = Date.now();
+try {
+if (localStorage.getItem("dwa.joined"))
+document.body.classList.add("joined");
+}
+catch (e) { }
+if (VIDEO) {
+var f = $("videoFrame"), h = $("videoHolder");
+if (/youtu/.test(VIDEO)) {
+var id = (VIDEO.match(/[?&]v=([\w-]+)/) || VIDEO.match(/youtu\.be\/([\w-]+)/) || [])[1];
+if (id) {
+var ifr = document.createElement("iframe");
+ifr.src = "https://www.youtube.com/embed/" + id + "?rel=0";
+ifr.title = "SomnuMatrix";
+ifr.allow = "accelerometer; autoplay; encrypted-media; picture-in-picture";
+ifr.allowFullscreen = true;
+f.appendChild(ifr);
+h.remove();
+}
+}
+else {
+var v = document.createElement("video");
+v.src = VIDEO;
+v.controls = true;
+v.playsInline = true;
+v.preload = "metadata";
+v.poster = "shot-city.jpg";
+f.appendChild(v);
+h.remove();
+}
+}
+var dl = $("demoLink");
+if (dl) {
+if (DEMO) {
+dl.href = DEMO;
+dl.target = "_blank";
+dl.rel = "noopener";
+}
+else
+dl.style.display = "none";
+}
+rpc("waiting_count").then(function (r) { return r.json(); }).then(function (n) {
+var total = (parseInt(n, 10) || 0) + COUNT_FROM;
+if (total > 25)
+$("count").innerHTML = "<b>" + total.toLocaleString() + "</b> dreamers are already waiting.";
+}).catch(function () { });
+var q = new URLSearchParams(location.search);
+if (q.has("leave")) {
+var addr = q.get("leave");
+if (!validEmail(addr))
+addr = prompt("Which address should come off the list?") || "";
+if (validEmail(addr))
+rpc("leave_list", { p_email: addr }).then(function () {
+try {
+localStorage.removeItem("dwa.joined");
+}
+catch (e) { }
+alert("Taken off the list. Nothing of yours is kept.");
+}).catch(function () { alert("That didn't go through. Try again in a moment."); });
+}
+var form = $("form"), msg = $("msg"), go = $("go");
+if (form)
+form.addEventListener("submit", function (e) {
+e.preventDefault();
+msg.className = "msg";
+msg.textContent = "";
+var email = $("email").value.trim();
+if (!validEmail(email)) {
+msg.className = "msg bad";
+msg.textContent = "That doesn't look like an email address.";
+$("email").focus();
+return;
+}
+if ($("website").value || Date.now() - started < 1200) {
+msg.className = "msg good";
+msg.textContent = "You're on the list.";
+return;
+}
+go.disabled = true;
+go.textContent = "One moment\u2026";
+var body = payloadFrom({ email: email, name: $("name").value.trim(), wants: $("wants").value, often: $("often").value }, location.search, document.referrer, location.pathname);
+rpc("join_list", body).then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); }).then(function (out) {
+if (out === "bad_email") {
+msg.className = "msg bad";
+msg.textContent = "That address was refused. Check it over?";
+go.disabled = false;
+go.textContent = "Join the list";
+return;
+}
+try {
+localStorage.setItem("dwa.joined", email);
+}
+catch (e) { }
+document.body.classList.add("joined");
+$("done").scrollIntoView({ block: "center" });
+}).catch(function () {
+msg.className = "msg bad";
+msg.textContent = "That didn't go through. Try again in a moment.";
+go.disabled = false;
+go.textContent = "Join the list";
+});
+});
+var bar = $("bar"), join = $("join");
+function jump() { join.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(function () { $("email").focus(); }, 400); }
+if ($("barBtn"))
+$("barBtn").onclick = jump;
+Array.prototype.forEach.call(document.querySelectorAll(".joinlink"), function (a) { a.onclick = function (e) { e.preventDefault(); jump(); }; });
+if (bar && join && "IntersectionObserver" in window) {
+new IntersectionObserver(function (en) { bar.classList.toggle("show", !en[0].isIntersecting); }, { threshold: 0 }).observe(join);
+}
+var c = $("sky");
+if (c && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+var x = c.getContext("2d"), stars = [], W = 0, H = 0;
+function size() {
+W = c.width = innerWidth;
+H = c.height = Math.max(innerHeight, 700);
+stars = [];
+for (var i = 0; i < Math.min(220, Math.round(W * H / 9000)); i++)
+stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.3 + .2, p: Math.random() * 6.28, s: .4 + Math.random() * .8 });
+}
+size();
+addEventListener("resize", size);
+(function tick(t) {
+x.clearRect(0, 0, W, H);
+var g = x.createLinearGradient(0, 0, 0, H);
+g.addColorStop(0, "#0B0D14");
+g.addColorStop(1, "#08090D");
+x.fillStyle = g;
+x.fillRect(0, 0, W, H);
+for (var i = 0; i < stars.length; i++) {
+var s = stars[i], a = .25 + .55 * Math.abs(Math.sin(t / 1400 * s.s + s.p));
+x.fillStyle = "rgba(232,228,218," + a.toFixed(3) + ")";
+x.beginPath();
+x.arc(s.x, s.y, s.r, 0, 6.283);
+x.fill();
+}
+requestAnimationFrame(tick);
+})(0);
+}
+})();
+</script>
+</body>
+</html>

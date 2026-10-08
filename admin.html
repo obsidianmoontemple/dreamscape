@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<!-- SomnuMatrix (c) 2026 Thaddeus (obsidianmoontemple). All rights reserved. Proprietary: no copying, hosting or reuse without written permission. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'">
+<title>The Atlas &mdash; Keeper's Desk</title>
+<style>
+:root{
+  --void:#07080B; --deep:#0E1118; --panel:#11141C; --bone:#C9BEA8; --dim:#6C6757;
+  --moon:#7C93B8; --ember:#B8724A; --line:rgba(201,190,168,0.14); --ok:#7C9B82;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--void);color:var(--bone);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{background:transparent;border:1px solid var(--line);color:var(--dim);font-size:12.5px;padding:7px 12px;border-radius:2px;cursor:pointer}
+.btn:hover{color:var(--bone);border-color:var(--bone)}
+.btn.primary{color:var(--bone);border-color:var(--moon)}
+.btn.warn:hover{color:var(--ember);border-color:var(--ember)}
+.btn:disabled{opacity:.35;cursor:default}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],input[type=url],input:not([type]),select,textarea{
+  background:var(--void);border:1px solid var(--line);border-radius:2px;padding:8px 10px;font-size:14px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--moon)}
+textarea{font-family:var(--serif);line-height:1.6;resize:vertical}
+label{display:block;font-size:12px;color:var(--dim);margin:14px 0 5px}
+h1{font-family:var(--serif);font-weight:400;font-size:21px;margin:0;letter-spacing:.02em}
+h2{font-family:var(--serif);font-weight:400;font-size:19px;margin:0 0 4px}
+.dim{color:var(--dim)} .small{font-size:12px}
+.note{font-size:12.5px;color:var(--dim);line-height:1.6;max-width:70ch}
+.hidden{display:none!important}
+
+/* sign-in */
+#gate{min-height:100vh;display:grid;place-items:center;padding:24px}
+#gate .card{width:min(380px,100%);border:1px solid var(--line);background:var(--deep);padding:28px}
+#gate h1{margin-bottom:6px}
+
+/* the desk */
+#desk{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
+header{display:flex;align-items:baseline;gap:18px;padding:18px clamp(16px,4vw,40px) 12px;border-bottom:1px solid var(--line)}
+header h1{flex:1}
+#who{font-size:12px;color:var(--dim)}
+nav{display:flex;gap:4px;padding:0 clamp(16px,4vw,40px);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);padding:12px 12px 10px;font-size:13px;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--bone);border-bottom-color:var(--ember)}
+nav .count{color:var(--ember);margin-left:5px}
+main{padding:22px clamp(16px,4vw,40px) 40px}
+#bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);
+  padding:9px 16px;font-size:13px;max-width:90vw;opacity:0;transition:opacity .3s;pointer-events:none}
+#bar.on{opacity:1} #bar.err{border-color:var(--ember);color:var(--ember)}
+
+/* lists and details */
+.split{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:26px;align-items:start}
+@media (max-width:820px){.split{grid-template-columns:1fr}}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.filters .btn.on{color:var(--bone);border-color:var(--bone)}
+.row{padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
+.row:hover .rt,.row.on .rt{color:var(--moon)}
+.rt{font-family:var(--serif);font-size:15.5px}
+.rm{font-size:11.5px;color:var(--dim);margin-top:3px}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);
+  padding:1px 6px;margin-right:6px;color:var(--dim)}
+.tag.new{color:var(--ember);border-color:var(--ember)} .tag.dw{color:var(--moon);border-color:var(--moon)}
+.detail{border:1px solid var(--line);background:var(--deep);padding:20px 22px;min-height:200px}
+.detail .body{font-family:var(--serif);font-size:16px;line-height:1.75;white-space:pre-wrap;margin:14px 0}
+.detail .att{border-left:2px solid var(--line);padding-left:14px;margin:14px 0}
+.detail .att h4{margin:0 0 6px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.detail .att p{font-family:var(--serif);font-size:15px;line-height:1.7;margin:0 0 8px;white-space:pre-wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.empty{color:var(--dim);font-size:13px;padding:18px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;font-size:11.5px;color:var(--dim);letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td select,td input{padding:5px 7px;font-size:12.5px}
+.wrap{overflow-x:auto}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin:6px 0 20px}
+.stat b{display:block;font-family:var(--serif);font-weight:400;font-size:26px;color:var(--bone)}
+.stat span{font-size:11.5px;color:var(--dim)}
+.bar{height:4px;background:var(--line);margin-top:4px} .bar i{display:block;height:4px;background:var(--moon)}
+.hot td{color:var(--ember)}
+.held{border-top:1px solid var(--line);padding:14px 0}
+.held q{display:block;font-family:var(--serif);font-size:14.5px;line-height:1.65;color:var(--bone);margin:6px 0 10px;quotes:none}
+.switch{display:flex;align-items:center;gap:10px;font-size:13px;margin:14px 0}
+.switch input{width:auto}
+.narrow{max-width:620px}
+</style>
+</head>
+<body>
+
+
+<div id="gate">
+  <div class="card">
+    <h1>Keeper&rsquo;s Desk</h1>
+    <p class="note" id="gate-note">Sign in with your admin account.</p>
+    <div id="gate-form">
+      <label for="g-email">Email</label>
+      <input type="email" id="g-email" autocomplete="username">
+      <label for="g-pass">Password</label>
+      <input type="password" id="g-pass" autocomplete="current-password">
+      <div class="actions"><button class="btn primary" id="g-go">Sign in</button></div>
+    </div>
+    <div id="gate-mfa" class="hidden">
+      <div id="mfa-new" class="hidden">
+        <p class="note"><b>Set up your second step.</b> Open an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy or 1Password), add an account, and scan this code. You only do this once.</p>
+        <div style="background:#fff;padding:10px;display:inline-block;margin:6px 0"><img id="mfa-qr" alt="Code to scan" width="180" height="180"></div>
+        <p class="note small">Can&rsquo;t scan? Type this key into the app instead:<br><code id="mfa-secret" style="color:var(--bone);word-break:break-all"></code></p>
+      </div>
+      <p class="note" id="mfa-ask">Enter the six-digit code your authenticator app shows for the Keeper&rsquo;s Desk.</p>
+      <label for="mfa-code">Code</label>
+      <input type="text" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+      <div class="actions"><button class="btn primary" id="mfa-go">Confirm</button> <button class="btn" id="mfa-out">Sign out</button></div>
+    </div>
+  </div>
+</div>
+
+
+<div id="desk" class="hidden">
+  <header>
+    <h1>Keeper&rsquo;s Desk</h1>
+    <span id="who"></span>
+    <button class="btn" id="signout">Sign out</button>
+  </header>
+  <nav>
+    <button data-tab="inbox" class="on">Inbox<span class="count" id="n-inbox"></span></button>
+    <button data-tab="orders">Orders<span class="count" id="n-orders"></span></button>
+    <button data-tab="dreamers">Dreamers</button>
+    <button data-tab="list">The list<span class="count" id="n-list"></span></button>
+    <button data-tab="research">Research</button>
+    <button data-tab="books">The books</button>
+    <button data-tab="apps">Applications<span class="count" id="n-apps"></span></button>
+    <button data-tab="city">Somnucor city</button>
+    <button data-tab="gold">Gold exchange<span class="count" id="n-gold"></span></button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+  <main>
+
+    <section id="tab-inbox">
+      <div class="split">
+        <div>
+          <div class="filters" id="inbox-f">
+            <button class="btn on" data-f="open">Open</button>
+            <button class="btn" data-f="replied">Replied</button>
+            <button class="btn" data-f="closed">Closed</button>
+            <button class="btn" data-f="all">All</button>
+            <button class="btn" data-k="dreamwalker">Dream Walker</button>
+            <button class="btn" data-k="support">Support</button>
+            <button class="btn" data-k="bug">Bug reports</button>
+          </div>
+          <div id="inbox-list"></div>
+        </div>
+        <div class="detail" id="inbox-detail"><div class="empty">Choose a message.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-apps" class="hidden">
+      <div class="panel">
+        <h2>Applications to join the city</h2>
+        <p class="note">Dreamers who have applied for a city post that you choose for (the law, the courts, the Gaol, the Treasury and the head posts). Most other posts take the first dreamer who applies, while there is room, so those dreamers go straight into the city and appear under <b>Accepted into the city</b> below. Hire gives the dreamer the post and their entry pack; Turn down removes the application.</p>
+        <div class="wrap" style="max-height:420px;overflow-y:auto"><table id="ap-table"></table></div>
+        <div id="ap-msg" class="note" style="margin-top:8px"></div>
+        <h2 style="margin-top:36px">Accepted into the city</h2>
+        <p class="note">Every dreamer who has taken up a city post, newest first: their post, where they work, and their two months&rsquo; pay in advance.</p>
+        <div class="wrap" style="max-height:420px;overflow-y:auto"><table id="ap-packs"></table></div>
+      </div>
+    </section>
+
+    <section id="tab-orders" class="hidden">
+      <div class="split">
+        <div>
+          <div class="filters" id="orders-f">
+            <button class="btn on" data-f="active">Active</button>
+            <button class="btn" data-f="delivered">Delivered</button>
+            <button class="btn" data-f="cancelled">Cancelled</button>
+            <button class="btn" data-f="all">All</button>
+          </div>
+          <div id="orders-list"></div>
+        </div>
+        <div class="detail" id="orders-detail"><div class="empty">Choose an order.</div></div>
+      </div>
+    </section>
+
+    <section id="tab-dreamers" class="hidden">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Devices using the Atlas</h2>
+        <button class="btn" id="d-why" type="button">Why is a name missing?</button>
+      </div>
+      <pre id="d-diag" class="note" style="display:none;white-space:pre-wrap;background:var(--void);border:1px solid var(--line);padding:12px;border-radius:2px;margin:12px 0 0"></pre>
+      <p class="note">Every device that has opened the Atlas, each known only by a random code it made up for itself &mdash; no name, no email, nothing it has been told. A dreamer can switch counting off in Settings, which erases their device from this list.</p>
+      <div class="stats" id="v-stats"></div>
+      <div class="filters" id="v-f">
+        <button class="btn on" data-v="all">All</button>
+        <button class="btn" data-v="1">Today</button>
+        <button class="btn" data-v="7">This week</button>
+        <button class="btn" data-v="30">This month</button>
+      </div>
+      <div class="wrap" style="max-height:420px;overflow-y:auto;margin-bottom:34px"><table id="v-table"></table></div>
+      <h2>Accounts</h2>
+      <p class="note">Accounts and plans only. No dream can be seen here, or anywhere on this desk: a dreamer&rsquo;s dreamscape is encrypted on their own device before it is ever stored, and this account has no access to where it is kept.</p>
+      <div class="stats" id="d-stats"></div>
+      <div class="wrap"><table id="d-table"></table></div>
+    </section>
+
+    <section id="tab-list" class="hidden">
+      <h2>The prelaunch list</h2>
+      <p class="note">Everyone who has joined the list from the landing page. It is yours &mdash; nobody but you can read it, not even the people running the campaign, unless you hand them the export.</p>
+      <div class="stats" id="l-stats"></div>
+      <div class="filters" id="l-f">
+        <button class="btn on" data-l="all">All</button>
+        <button class="btn" data-l="1">Today</button>
+        <button class="btn" data-l="7">This week</button>
+        <button class="btn" data-l="30">This month</button>
+        <button class="btn" id="l-csv" style="margin-left:auto">Export as CSV</button>
+      </div>
+      <h3 style="font-weight:500;margin:24px 0 8px">Where they came from</h3>
+      <div class="wrap"><table id="l-src"></table></div>
+      <h3 style="font-weight:500;margin:24px 0 8px">What they want</h3>
+      <div class="wrap"><table id="l-wants"></table></div>
+      <h3 style="font-weight:500;margin:24px 0 8px">Everyone, newest first</h3>
+      <div class="wrap" style="max-height:460px;overflow-y:auto"><table id="l-table"></table></div>
+    </section>
+
+    <section id="tab-research" class="hidden">
+      <h2>Research</h2>
+      <p class="note">Abstract summaries from dreamers who agreed to share: a date, kinds of event, kinds of place, feelings, lucidity. Nothing here can be traced to an account. A convergence is several different dreamers reporting the same kind of event within three days of each other. With few dreamers, none of this means anything yet.</p>
+      <div class="stats" id="r-stats"></div>
+      <div class="split">
+        <div><h2 style="font-size:16px">How often each kind of event appears</h2><div class="wrap"><table id="r-events"></table></div></div>
+        <div><h2 style="font-size:16px">Convergences</h2><p class="note small" id="r-thresh"></p><div class="wrap"><table id="r-conv"></table></div></div>
+      </div>
+    </section>
+
+    <section id="tab-books" class="hidden">
+      <div class="narrow">
+        <h2>Held-back readings</h2>
+        <p class="note">Readings from Miller&rsquo;s 1901 text that are about a people outright, or use a people as an omen. They are held back from every dreamer&rsquo;s interpretations until you release them here. Releasing one applies to everyone. Nothing is ever deleted.</p>
+        <div id="b-list"><div class="empty">Loading the books&hellip;</div></div>
+        <div class="actions"><button class="btn primary" id="b-save" disabled>Save these decisions</button></div>
+      </div>
+    </section>
+
+    <section id="tab-city" class="hidden">
+      <div class="narrow">
+        <h2>Office codes</h2>
+        <p class="note">An office assigned on the Settings tab is on the books but stays locked until a code is set here. Only a keeper can set or clear one.</p>
+        <div class="wrap" style="margin-bottom:10px"><table id="oc-table"></table></div>
+        <div id="oc-msg" class="note"></div>
+
+        <h2 style="margin-top:36px">Catalogue</h2>
+        <p class="note">What everything in Somnucor sells for &mdash; the shop&rsquo;s wares, and what is built out of the quarry and the stand.</p>
+        <div class="wrap" style="max-height:340px;overflow-y:auto"><table id="cat-table"></table></div>
+        <div id="cat-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">Courts and the gaol</h2>
+        <p class="note">Who Somnucor currently holds. Nobody is sentenced without a trial: a charge filed here goes to The Courthouse, and they are held on remand until the court hears it. Anyone held can be released outright. It touches nothing in anybody&rsquo;s own dreamscape.</p>
+        <div class="filters">
+          <input id="pr-user" placeholder="their account id" style="flex:1 1 260px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <input id="pr-crime" placeholder="the charge" style="flex:1 1 160px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+        </div>
+        <div class="filters" style="margin-top:8px;align-items:center">
+          <label>Hours to ask the court for <input id="pr-hours" type="number" min="1" value="4" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px;border-radius:2px"></label>
+          <label><input type="checkbox" id="pr-workable" checked> can be worked off, in <input id="pr-work" type="number" min="1" value="4" style="width:64px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px;border-radius:2px"> hours worked</label>
+          <button class="btn" id="pr-sentence">Charge and hold for trial</button>
+        </div>
+        <p class="note" style="margin-top:6px">Find an account id in the Dreamers tab, or ask them for it. The judge (or the stand-in judge, if no dreamer holds the post) decides the sentence at the end of the trial.</p>
+        <div class="wrap" style="max-height:280px;overflow-y:auto;margin-top:8px"><table id="pr-table"></table></div>
+        <div id="pr-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">The Keeper&rsquo;s grants</h2>
+        <p class="note">For dreamers who cannot pay. Membership waives their dues (so they may hold a job, live in the city and earn gold); gold comes out of the Treasury; an item is anything the Wholesale Warehouse stocks, by name; a licence, a business permit or a job is granted outright. Every grant is written in the log below. The Keeper&rsquo;s own wallet never goes down: everything in game is free to the Keeper.</p>
+        <div class="filters">
+          <select id="kg-who" style="flex:1 1 260px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"><option value="">Choose the dreamer&hellip;</option></select>
+          <input id="kg-user" placeholder="or paste an account id" style="flex:1 1 200px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <select id="kg-what" style="flex:0 1 200px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+            <option value="membership">Membership (dues waived)</option>
+            <option value="gold">Gold from the Treasury</option>
+            <option value="item">An item from the warehouse</option>
+            <option value="driving">Driving licence</option>
+            <option value="flying">Flying licence</option>
+            <option value="permit">A business permit</option>
+            <option value="job">A job (by number)</option>
+            <option value="home">A home or palace (the address roll)</option>
+          </select>
+          <select id="kg-lot" style="display:none;flex:1 1 260px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></select>
+        </div>
+        <div class="filters" style="margin-top:8px;align-items:center">
+          <input id="kg-ref" placeholder="item name, business name, job number or a note" style="flex:1 1 260px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <label>Amount <input id="kg-amount" type="number" min="1" placeholder="gold or how many" style="width:120px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label>Days <input id="kg-days" type="number" min="0" placeholder="blank = for good" style="width:120px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="kg-go">Grant it</button>
+        </div>
+        <div id="kg-msg" class="note" style="margin-top:8px"></div>
+        <div class="wrap" style="max-height:240px;overflow-y:auto;margin-top:8px"><table id="kg-table"></table></div>
+
+        <h2 style="margin-top:36px">Business permits</h2>
+        <p class="note">A new business needs a permit from the Tower. Dreamers apply from their standing; grant or refuse here (a word of why goes back to them). Businesses already running, and the city&rsquo;s own, need none.</p>
+        <div class="wrap" style="max-height:300px;overflow-y:auto"><table id="bp-table"></table></div>
+        <div id="bp-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">The Tower: picture house and bank spaces</h2>
+        <p class="note">Extra spaces for cinemas and banks: six of each round the city, and four of each in the World Mall&rsquo;s Grand Arcade (through the arch at the east end of the hall). Each one stays dark until you grant it; then it stands under the name you give, lit, for everyone. A cinema shows the city&rsquo;s films; a bank&rsquo;s counter does the city&rsquo;s banking. Grant it to a dreamer&rsquo;s business (find them by name), to a partner&rsquo;s key, or to a name alone.</p>
+        <div class="wrap" style="max-height:340px;overflow-y:auto"><table id="ts-table"></table></div>
+        <div id="ts-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">Wages set by business heads</h2>
+        <p class="note">The head of any business (whoever runs a dreamer&rsquo;s business, or holds the head post of one of the city&rsquo;s own) sets its wages on their business panel. You can change any wage yourself under <b>Settings</b>, in <b>Positions and wages</b>. The city&rsquo;s own wages are paid by the Treasury, so every change is listed here, newest first.</p>
+        <div class="wrap" style="max-height:240px;overflow-y:auto"><table id="wl-table"></table></div>
+
+        <h2 style="margin-top:36px">Made to order</h2>
+        <p class="note">Order forms from dreamers for things the warehouse does not stock. Make it (it joins the warehouse for everyone, at the shop price you give) or decline it. The warehouse manager on shift can fill these in game too.</p>
+        <div class="wrap" style="max-height:300px;overflow-y:auto"><table id="co-table"></table></div>
+        <div id="co-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">The Grand Opening Extravaganza</h2>
+        <p class="note">Two weeks of the Carnival Bacchanal: decorations, night lights, fireworks, parades, games and prizes, open to everyone. It began when update 17 was run; start the two weeks again here for the real opening day. Tickets buy keepsakes only, never gold.</p>
+        <div class="filters" style="align-items:flex-end">
+          <label style="display:block">Opening day<br><input id="fx-start" type="datetime-local" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label style="display:block">Days<br><input id="fx-days" type="number" min="1" max="60" value="14" style="width:70px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="fx-set">Set the Extravaganza</button>
+          <button class="btn" id="fx-now">Start it now</button>
+        </div>
+        <div id="fx-msg" class="note" style="margin-top:8px"></div>
+        <div id="fx-books" class="note" style="margin-top:8px;color:var(--bone)"></div>
+
+        <h2 style="margin-top:36px">The Academy of the Arcane</h2>
+        <p class="note">Every power and magic is learned at the Academy. How many dreamers have learned what.</p>
+        <div id="ac-roll" class="note" style="color:var(--bone)"></div>
+
+        <h2 style="margin-top:36px">City entry packs</h2>
+        <p class="note">Every dreamer accepted into a city post gets a pack: the post, the attire to do it in, where it is, and two months' pay in advance (once per dreamer, from the mint). The latest packs.</p>
+        <div class="wrap" style="max-height:260px;overflow-y:auto"><table id="ep-table"></table></div>
+
+        <h2 style="margin-top:36px">Partners</h2>
+        <p class="note">A boon for the owner: a real cinema chain can send its listings, trailers, showtimes and booking links straight to the Picture House, and the gold bank can be linked to a real bank or payments account so gold purchases and sales settle by themselves. Make a key for each partner here and give it to them with the guide in docs/partners. A key is shown once.</p>
+        <div class="filters" style="align-items:flex-end">
+          <label style="display:block">Kind<br><select id="pk-kind" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"><option value="cinema">Cinema chain</option><option value="bank">Bank or payments</option></select></label>
+          <label style="display:block">Partner's name<br><input id="pk-name" type="text" maxlength="80" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="pk-make">Make a partner key</button>
+        </div>
+        <div id="pk-msg" class="note" style="margin-top:8px"></div>
+        <div class="wrap" style="max-height:220px;overflow-y:auto;margin-top:8px"><table id="pk-table"></table></div>
+        <h3 style="margin-top:20px">The bank link</h3>
+        <p class="note">Off until you switch it on, and it only works while the cash system is on. Purchases settle when the bank reports the full price received; sales can be paid out by the bank too, or left for you to mark by hand.</p>
+        <div class="filters" style="align-items:flex-end">
+          <label><input type="checkbox" id="bl-on"> Linked</label>
+          <label style="display:block">Bank or provider<br><input id="bl-provider" type="text" maxlength="80" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label><input type="checkbox" id="bl-buy" checked> Settle purchases</label>
+          <label><input type="checkbox" id="bl-sell"> Pay out sales</label>
+          <button class="btn" id="bl-save">Save the bank link</button>
+        </div>
+        <div id="bl-msg" class="note" style="margin-top:8px"></div>
+        <div id="bl-events" class="note" style="margin-top:8px;color:var(--bone)"></div>
+
+        <h2 style="margin-top:36px">The treasury</h2>
+        <p class="note">Tax on wages and the toll on the market, both in the hundred, and what the treasury presently holds.</p>
+        <div class="filters" style="align-items:flex-end">
+          <label style="display:block">Tax on wages, in the hundred<br><input id="tr-tax" type="number" min="0" max="100" style="width:80px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="tr-tax-set">Set tax</button>
+          <label style="display:block">Toll on the market, in the hundred<br><input id="tr-toll" type="number" min="0" max="100" style="width:80px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="tr-toll-set">Set toll</button>
+        </div>
+        <div id="tr-msg" class="note" style="margin-top:8px"></div>
+        <div id="tr-books" class="note" style="margin-top:10px;color:var(--bone)"></div>
+        <div class="filters" style="margin-top:8px;align-items:end">
+          <label style="display:block">Gold<br><input id="tr-amt" type="number" min="1" step="1000" style="width:130px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <button class="btn" id="tr-to-treasury">Mint &rarr; treasury</button>
+          <button class="btn" id="tr-to-mint">Treasury &rarr; mint</button>
+          <button class="btn" id="tr-add-mint">Strike new gold into the mint</button>
+        </div>
+        <div class="filters" style="margin-top:8px;align-items:end">
+          <label style="display:block">Payday<br><select id="tr-payday" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+            <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+          </select></label>
+          <button class="btn" id="tr-payday-set">Set payday</button>
+          <span id="tr-payday-next" class="note"></span>
+        </div>
+        <p class="note">Hourly wages are paid once a week on payday, salaries every second payday. The treasury pays the city&rsquo;s own posts (Somnucor&rsquo;s); a business a dreamer runs pays its own staff from the owner&rsquo;s wallet, and hires and lets go its own staff. The treasury pays every city wage and salary; taxes, tolls, fares and rents flow back into it. The mint issues new gold: each new worker&rsquo;s starting income and every purchase of gold for money, and it takes back gold sold for money. If the treasury runs short, the mint tops it up by itself.</p>
+
+        <h2 style="margin-top:36px">The Somnucor Employee &amp; Backer District</h2>
+        <p class="note">Addresses in the city held for our own backers and workers &mdash; never bought or leased, only assigned by a keeper or by whoever presently holds the penthouse.</p>
+        <div class="filters">
+          <select id="ph-holder" style="flex:1 1 240px"></select>
+          <button class="btn" id="ph-set">Set the penthouse holder</button>
+        </div>
+        <div id="ph-msg" class="note" style="margin-top:8px"></div>
+        <div style="margin-top:14px"><button class="btn" id="dist-section">Enter the District&rsquo;s plots in the books</button></div>
+        <div class="wrap" style="max-height:300px;overflow-y:auto;margin-top:10px"><table id="dist-table"></table></div>
+        <div id="dist-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">The address roll</h2>
+        <p class="note">Every lot in every world &mdash; Somnucor, the North Pole, Neverland, the Endless Sea, the Underdark, the Moon, Mars and the Orbital Station &mdash; with who holds it. Lots are bought and let at the Land Office in Somnucor; from here you assign any of them to anyone, as owner or as tenant (rent-free), or clear it. The Volcano Castle and the Palace of the North King are on the roll and are never sold or let: only you assign them. (Needs <b>RUN-THIS-update-23.sql</b>.)</p>
+        <div class="filters">
+          <select id="roll-world" style="flex:0 1 220px"><option value="">Every world</option><option value="somnucor">Somnucor</option><option value="northpole">The North Pole</option><option value="neverland">Neverland</option><option value="sea">The Endless Sea</option><option value="underdark">The Underdark</option><option value="moon">The Moon</option><option value="mars">Mars</option><option value="station">The Orbital Station</option></select>
+          <input id="roll-find" placeholder="Find a lot or a dreamer" style="flex:1 1 200px">
+          <button class="btn" id="roll-reload">Refresh</button>
+        </div>
+        <div class="wrap" style="max-height:420px;overflow-y:auto;margin-top:10px"><table id="roll-table"></table></div>
+        <div id="roll-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:36px">The World Mall</h2>
+        <p class="note">Forty shops round the glass hall, reached by the Underground. Stores apply through <b>store-portal.html</b>, where they design their own shopfront, stock their shelves and connect their website; their applications wait here for you to grant a unit. You can also let a unit to a store yourself: give it a name, a line and a colour, the address of its own site, and the account (by email) that is paid when its pieces sell &mdash; nine tenths to the store, one tenth to the treasury. Each store keeps its own range up to date through the mall&rsquo;s API with its own secret key, shown here once when it is issued.</p>
+        <div class="filters" style="align-items:flex-end;flex-wrap:wrap">
+          <label style="display:block">Unit (1&ndash;40)<br><input id="ml-unit" type="number" min="1" max="40" value="1" style="width:70px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label style="display:block;flex:1 1 200px">Store name<br><input id="ml-name" placeholder="leave empty to close the unit" style="width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label style="display:block;flex:1 1 240px">Its line<br><input id="ml-tag" style="width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label style="display:block">Colour<br><input id="ml-color" type="color" value="#C9A868" style="width:60px;height:36px;background:var(--void);border:1px solid var(--line);border-radius:2px"></label>
+        </div>
+        <div class="filters" style="align-items:flex-end;flex-wrap:wrap;margin-top:8px">
+          <label style="display:block;flex:1 1 220px">Logo address (https://&hellip;)<br><input id="ml-logo" style="width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label style="display:block;flex:1 1 220px">Their site (https://&hellip;)<br><input id="ml-site" style="width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+          <label style="display:block;flex:1 1 200px">Paid to (account email)<br><input id="ml-owner" style="width:100%;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px"></label>
+        </div>
+        <div class="filters" style="margin-top:8px;align-items:center">
+          <label><input type="checkbox" id="ml-newkey"> issue a new API key (the old one stops working)</label>
+          <button class="btn" id="ml-save">Save the unit</button>
+        </div>
+        <div id="ml-key" class="note" style="margin-top:8px"></div>
+        <div class="wrap" style="max-height:320px;overflow-y:auto;margin-top:10px"><table id="ml-table"></table></div>
+        <div id="ml-msg" class="note" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section id="tab-gold" class="hidden">
+      <div class="narrow" style="max-width:1100px">
+        <h2>Gold exchange</h2>
+        <div id="cash-box" style="border:1px solid var(--line);background:var(--deep);padding:14px 16px;margin:10px 0 16px;max-width:760px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <span style="font-size:15px">The cash system is <b id="cash-word">&hellip;</b></span>
+            <button class="btn primary" id="cash-flip">&hellip;</button>
+          </div>
+          <p class="note" style="margin:8px 0 0">One switch for real money in the whole game: buying gold with money, and selling it back. While it is <b>off</b>, nobody can buy or sell gold for money, and this desk and the penthouse need only a password and the door code. While it is <b>on</b>, this desk and the penthouse door also ask everyone for the code from their authenticator app.</p>
+          <div id="cash-msg" class="note" style="margin-top:6px"></div>
+        </div>
+        <p class="note"><b>Buying:</b> a dreamer asks for gold in the game and pays with the payment link below. When the money arrives, press <b>Payment received</b> and the gold is theirs at once.<br>
+        <b>Selling back:</b> a dreamer sells gold they earned or bought, and the gold is taken from them and held. Send them the money by hand to where they asked, then press <b>Payout sent</b>. <b>Refuse</b> gives the gold back. Starting income can never be sold.</p>
+        <p class="note">Paying out real money for game currency can carry legal duties (age and identity checks, tax forms, money-transfer rules) depending on where you and your players are. Every payout waits for you for that reason.</p>
+        <div id="gx-totals" class="note" style="color:var(--bone);margin:10px 0"></div>
+        <div class="filters" id="gx-f">
+          <button class="btn on" data-f="requested">Waiting</button>
+          <button class="btn" data-f="paid">Done</button>
+          <button class="btn" data-f="refused">Refused</button>
+          <button class="btn" data-f="">All</button>
+        </div>
+        <div class="wrap"><table id="gx-table"></table></div>
+        <div id="gx-msg" class="note" style="margin-top:10px"></div>
+        <h2 style="margin-top:26px">Rates</h2>
+        <div class="filters" style="align-items:end">
+          <label style="margin:0">Gold for $1 when buying<input id="gx-buy" type="number" min="1" step="1"></label>
+          <label style="margin:0">Gold for $1 when selling back<input id="gx-sell" type="number" min="1" step="1"></label>
+          <label style="margin:0">Smallest sale (gold)<input id="gx-min" type="number" min="0" step="100"></label>
+          <label style="margin:0">Selling back<select id="gx-on"><option value="true">Open</option><option value="false">Closed</option></select></label>
+        </div>
+        <label for="gx-url">Payment link dreamers are sent to when they buy (a payment button on your website)</label>
+        <input id="gx-url" type="url" placeholder="https://">
+        <div class="actions"><button class="btn primary" id="gx-save">Save rates</button></div>
+        <div id="gx-rmsg" class="note" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="hidden">
+      <div class="narrow">
+        <h2>Two-step sign-in</h2>
+        <p class="note" style="margin-bottom:22px">While the cash system is off, this desk and the penthouse door ask only for a password and the door code. While it is on, they also ask for the six-digit code from an authenticator app. The switch is on the <b>Gold exchange</b> tab.</p>
+
+        <h2>Keepers of the desk</h2>
+        <p class="note">A <b>keeper</b> sees and does everything here. A <b>watcher</b> sees only the Dreamers page &mdash; the accounts and the devices &mdash; and nothing else: no messages, no orders, no list, no settings. Neither can read anybody's dreamscape; nothing can.</p>
+        <p class="note">Whoever you are adding must sign in to this desk once first, so there is an account to attach. Then add their email here.</p>
+        <div class="wrap" style="margin-bottom:12px"><table id="k-table"></table></div>
+        <div class="filters">
+          <input id="k-email" type="email" placeholder="their email" style="flex:1 1 220px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <select id="k-role"><option value="watcher">Watcher &mdash; the Dreamers page only</option><option value="keeper">Keeper &mdash; everything</option></select>
+          <button class="btn" id="k-add">Add them</button>
+        </div>
+        <div id="k-msg" class="note" style="margin-top:10px"></div>
+
+        <h2 style="margin-top:40px">Somnucor &mdash; the city's work</h2>
+        <p class="note">Every city worker has an office in the tower, and you assign it. Assigning ties it to them on the books only &mdash; the office stays locked until a keeper sets a working code for it, on the <b>Somnucor city</b> tab.</p>
+        <div class="filters">
+          <select id="o-office" style="flex:1 1 220px"></select>
+          <input id="o-who" type="email" placeholder="their email" style="flex:1 1 200px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <input id="o-name" type="text" placeholder="what the office is called" style="flex:1 1 180px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <button class="btn" id="o-assign">Assign</button>
+          <button class="btn" id="o-clear">Clear it</button>
+        </div>
+        <div id="o-msg" class="note" style="margin-top:8px"></div>
+        <div class="wrap" style="max-height:320px;overflow-y:auto;margin-top:10px"><table id="o-table"></table></div>
+
+        <h3 style="font-weight:500;margin:26px 0 8px">Positions and wages</h3>
+        <p class="note">How many of each post the city keeps is yours alone. You can set any post&rsquo;s wage here: type the gold, choose an hour or a week, and press Set wage. A business head can also set their own. Every change shows in the wage log on the Somnucor city tab.</p>
+        <div id="j-msg" class="note" style="margin-bottom:8px"></div>
+        <div class="wrap" style="max-height:360px;overflow-y:auto"><table id="j-table"></table></div>
+
+        <h3 style="font-weight:500;margin:26px 0 8px">Shifts and the city clock</h3>
+        <p class="note">Every job in Somnucor is worked in shifts, in city time &mdash; one clock for every dreamer, wherever they are. Workers clock in at their post inside their hours and are paid for the minutes they actually work. Choose the city's time zone (for example <b>America/New_York</b>, <b>Europe/London</b>, <b>America/Phoenix</b>).</p>
+        <div class="filters">
+          <input id="tz-in" type="text" placeholder="America/New_York" style="flex:1 1 240px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px">
+          <button class="btn" id="tz-save">Set the city's time zone</button>
+          <span id="tz-now" class="note"></span>
+        </div>
+        <div class="wrap" style="max-height:300px;overflow-y:auto;margin-top:10px"><table id="sh-table"></table></div>
+
+        <h3 style="font-weight:500;margin:26px 0 8px">New words dreamers have used</h3>
+        <p class="note">When a dreamer names something SomnuMatrix had no word for, it is built on the spot and kept for everyone. These are the words, newest first, and how often they have been dreamt.</p>
+        <div class="wrap" style="max-height:300px;overflow-y:auto"><table id="dw-table"></table></div>
+
+        <h2 style="margin-top:40px">Somnucor security</h2>
+        <p class="note">Somnucor Tower stands at the heart of the city, and the penthouse is the only floor in the world that is shut. What you set here is what the lift and the stairs ask for.</p>
+        <label for="s-code">The code on the penthouse door</label>
+        <input id="s-code" type="text" maxlength="12" placeholder="4 to 12 characters" style="background:var(--void);border:1px solid var(--line);color:var(--bone);padding:8px 10px;border-radius:2px;width:180px">
+        <label for="s-who" style="margin-top:12px">Who the office admits</label>
+        <select id="s-who">
+          <option value="code">Anyone with the code</option>
+          <option value="keepers">Keepers and the penthouse holder only &mdash; the code is refused to everyone else</option>
+          <option value="shut">Nobody at all &mdash; the floor is sealed</option>
+        </select>
+        <label for="s-tower" style="margin-top:12px">The tower itself</label>
+        <select id="s-tower">
+          <option value="open">Open &mdash; anyone may walk the lobby and the offices</option>
+          <option value="lobby">Lobby only &mdash; the lift refuses the upper floors</option>
+        </select>
+        <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="s-code-save">Set the code</button>
+          <button class="btn" id="s-code-roll">Make me a new one</button>
+        </div>
+        <div id="s-code-msg" class="note" style="margin-top:8px"></div>
+        <p class="note" style="margin-top:14px">A code is a door, not a vault. It keeps the office private in the city; it is not what protects anybody's dreams &mdash; that is the encryption on their own device, which nothing here can reach.</p>
+
+        <h2 style="margin-top:40px">Payments (Stripe)</h2>
+        <p class="note">SomnuMatrix is sold once, for life. Buyers pay on Stripe's own page, through a Payment Link from <b>your</b> Stripe account; Stripe then tells this project who paid, and they are made a member. Nothing here is tied to anyone else's account. Step-by-step instructions are in <b>supabase/functions/purchase-webhook/README.md</b>.</p>
+        <label for="pay-link">Checkout link &mdash; your Stripe Payment Link (https://buy.stripe.com/&hellip;). Leave empty and the app says buying isn't open yet.</label>
+        <input type="url" id="pay-link" placeholder="https://buy.stripe.com/..." autocomplete="off">
+        <label for="pay-price">Price shown to buyers</label>
+        <input type="text" id="pay-price" placeholder="$29.99" maxlength="20" style="max-width:180px">
+        <label for="pay-cur">Currency (three letters, as in Stripe)</label>
+        <input type="text" id="pay-cur" placeholder="usd" maxlength="3" style="max-width:120px">
+        <label for="pay-help">Support email shown to buyers (optional)</label>
+        <input type="email" id="pay-help" placeholder="help@yourcompany.com">
+        <div class="actions"><button class="btn primary" id="pay-save">Save payment settings</button></div>
+        <h3 style="font-weight:500;margin:26px 0 8px">Stripe's webhook</h3>
+        <p class="note">In Stripe, go to <b>Developers &rarr; Webhooks &rarr; Add endpoint</b>, and paste this address:</p>
+        <div class="filters" style="align-items:center"><code id="pay-hook" style="flex:1 1 300px;word-break:break-all;background:var(--void);border:1px solid var(--line);padding:8px 10px;border-radius:2px"></code><button class="btn" id="pay-hook-copy" type="button">Copy</button></div>
+        <p class="note">Select these events: <b>checkout.session.completed</b>, <b>checkout.session.async_payment_succeeded</b> and <b>charge.refunded</b>. The function must be deployed with <b>Verify JWT</b> switched off. Then reveal the endpoint's <b>Signing secret</b> in Stripe and paste it here. It is kept where no browser can read it; this page only ever shows its last four characters.</p>
+        <label for="pay-secret">Webhook signing secret (whsec_&hellip;)</label>
+        <input type="password" id="pay-secret" placeholder="whsec_..." autocomplete="off">
+        <div id="pay-secret-state" class="note" style="margin-top:6px"></div>
+        <div class="actions"><button class="btn" id="pay-secret-save">Save the secret</button><button class="btn" id="pay-secret-clear">Remove it</button></div>
+        <div id="pay-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:40px">The Picture House feed</h2>
+        <p class="note">The Picture House shows public-domain films from the Internet Archive on its five screens. A real cinema can plug in here: give a screen an <b>embed</b> address (the cinema's own player, stream or trailer page, https only) or an <b>mp4</b> address (a trailer or film as a video file, which plays right on the in-game screen), <b>showtimes</b> such as [{"at":"19:30","book":"https://..."}], and a <b>book</b> address (where people buy seats in the real world). An optional <b>programme_url</b> is read by every dreamer's browser for fresh listings, so it must allow cross-site reading (CORS). Leave a screen out to keep its own programme. <b>docs/notes/cinema.md</b> explains it in full. A chain can also send this itself with a partner key (Partners, below).</p>
+        <label for="cin-feed">Feed (JSON)</label>
+        <textarea id="cin-feed" rows="8" style="font-family:monospace;font-size:12px" placeholder='{"name":"The Roxy, Main Street","book":"https://roxy.example/tickets","screens":{"1":{"title":"Dracula (1931)","embed":"https://player.example/roxy/1","book":"https://roxy.example/tickets/1","note":"Live from the Roxy"}}}'></textarea>
+        <div class="actions"><button class="btn primary" id="cin-feed-save">Save the feed</button><button class="btn" id="cin-feed-clear">Remove it</button></div>
+        <div id="cin-feed-msg" class="note" style="margin-top:8px"></div>
+
+        <h2 style="margin-top:40px">Settings for every dreamer</h2>
+        <label for="s-ann">Announcement shown when the app opens (leave empty for none)</label>
+        <textarea id="s-ann" rows="2"></textarea>
+        <div class="switch"><input type="checkbox" id="s-dw"><label for="s-dw" style="margin:0;color:var(--bone)">Ask a Dream Walker is open</label></div>
+        <label for="s-plans">Plans, separated by commas (lowercase, no spaces)</label>
+        <input type="text" id="s-plans">
+        <label for="s-thr">Research: dreamers needed for a convergence</label>
+        <input type="number" id="s-thr" min="2" max="1000" step="1" style="max-width:140px">
+        <div class="actions"><button class="btn primary" id="s-save">Save settings</button></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="bar"></div>
+
+<script>
+var DW_CONFIG = {
+supabaseUrl: "https://ryxmrkwgdyphcdlglwka.supabase.co",
+supabaseKey: "sb_publishable_rsf04iH4Pph9ZfLt8g6Ovg_EI_Zk9GY"
+};
+</script>
+
+<script src="assets/vendor/supabase-js-2.116.0.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+var sb = null, me = null, cfg = {}, plans = ["free", "member"];
+var inboxF = "open", inboxK = null, ordersF = "active", selMsg = null, selOrd = null, msgs = [], ords = [];
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function safeUrl(u) { u = String(u == null ? "" : u).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; }
+function when(t) { if (!t)
+return "\u2014"; var d = new Date(t); return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }); }
+function day(t) { return t ? new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "\u2014"; }
+var barT = null;
+function say(msg, err) {
+var b = $("bar");
+b.textContent = msg;
+b.className = "on" + (err ? " err" : "");
+clearTimeout(barT);
+barT = setTimeout(function () { b.className = ""; }, err ? 6000 : 2600);
+}
+function fail(e) { say((e && (e.message || e.error_description)) || String(e), true); }
+function start() {
+if (!window.DW_CONFIG || !DW_CONFIG.supabaseUrl || !DW_CONFIG.supabaseKey) {
+$("gate-note").innerHTML = "The Supabase project details near the top of this file are missing. Open the file and fill in the <b>DW_CONFIG</b> block with your project URL and publishable key.";
+$("gate-form").classList.add("hidden");
+return;
+}
+if (/^sb_secret_/.test(DW_CONFIG.supabaseKey)) {
+$("gate-note").innerHTML = "<b style='color:var(--ember)'>This file has a secret key in it.</b> Remove it, replace it with the publishable key, and rotate the secret key in your Supabase dashboard.";
+$("gate-form").classList.add("hidden");
+return;
+}
+if (!window.supabase) {
+$("gate-note").textContent = "The Supabase library didn't load. Check the connection and reload.";
+return;
+}
+sb = supabase.createClient(DW_CONFIG.supabaseUrl, DW_CONFIG.supabaseKey, { auth: { storage: window.sessionStorage } });
+sb.auth.getSession().then(function (r) { if (r.data && r.data.session)
+enter(r.data.session.user); });
+$("g-go").onclick = signIn;
+$("g-pass").onkeydown = function (e) { if (e.key === "Enter")
+signIn(); };
+}
+function signIn() {
+$("g-go").disabled = true;
+sb.auth.signInWithPassword({ email: $("g-email").value.trim(), password: $("g-pass").value })
+.then(function (r) {
+$("g-go").disabled = false;
+if (r.error)
+return fail(r.error);
+enter(r.data.user);
+});
+}
+function enter(user) {
+sb.rpc("is_admin").then(function (r) {
+if (r.error)
+return fail(r.error);
+if (r.data !== true) {
+$("gate-note").innerHTML = "That account isn&rsquo;t an admin. Run the last line of <b>schema.sql</b> (in the top folder of the project) with its email, then sign in again.";
+sb.auth.signOut();
+return;
+}
+me = user;
+secondStep().then(function (ok) {
+if (!ok)
+return;
+$("gate").classList.add("hidden");
+$("desk").classList.remove("hidden");
+$("who").textContent = user.email;
+loadConfig().then(function () { loadInbox(); loadOrders(); goldCount(); appsCount(); });
+});
+});
+}
+var mfaFactor = null, mfaDone = null;
+function secondStep() {
+return new Promise(function (done) {
+mfaDone = done;
+function shut(why) {
+$("gate-mfa").classList.add("hidden");
+$("gate-form").classList.add("hidden");
+$("gate-note").innerHTML = "";
+$("gate-note").appendChild(document.createTextNode("The two-step sign-in check didn't answer, so the desk stays shut. " +
+(/admin_mfa_state|function|schema/i.test(why || "") ? "If schema-update-24.sql hasn't been run yet, run it in the SQL Editor first. " : "") + "(" + (why || "no answer") + ") "));
+var b = document.createElement("button");
+b.className = "btn";
+b.textContent = "Try again";
+b.onclick = function () { $("gate-note").textContent = "Asking again\u2026"; secondStep().then(done); };
+$("gate-note").appendChild(b);
+}
+sb.rpc("admin_mfa_state").then(function (r) {
+if (r.error) {
+shut(r.error.message || String(r.error));
+return;
+}
+if (!r.data)
+return shut("an empty answer");
+if (r.data.required === false)
+return done(true);
+sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function (a) {
+if (a.data && a.data.currentLevel === "aal2")
+return done(true);
+sb.auth.mfa.listFactors().then(function (f) {
+var all = (f.data && f.data.all) || [];
+var good = all.filter(function (x) { return x.factor_type === "totp" && x.status === "verified"; })[0];
+$("gate-form").classList.add("hidden");
+$("gate-mfa").classList.remove("hidden");
+$("gate-note").textContent = "Password accepted. One more step.";
+if (good) {
+mfaFactor = good.id;
+$("mfa-new").classList.add("hidden");
+setTimeout(function () { $("mfa-code").focus(); }, 50);
+return;
+}
+var stale = all.filter(function (x) { return x.status !== "verified"; });
+Promise.all(stale.map(function (x) { return sb.auth.mfa.unenroll({ factorId: x.id }); })).then(function () {
+return sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "Keeper's Desk " + Date.now().toString(36) });
+}).then(function (e) {
+if (e.error)
+return fail(e.error);
+mfaFactor = e.data.id;
+var q = String(e.data.totp.qr_code || ""), ci = q.indexOf(",");
+if (/^data:image\/svg\+xml/.test(q) && ci > -1 && q.slice(ci + 1, ci + 2) === "<")
+q = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(q.slice(ci + 1));
+$("mfa-qr").src = q;
+$("mfa-secret").textContent = e.data.totp.secret;
+$("mfa-new").classList.remove("hidden");
+});
+});
+});
+}).catch(function (e) { shut((e && e.message) || String(e)); });
+});
+}
+function mfaConfirm() {
+var code = ($("mfa-code").value || "").replace(/\D/g, "");
+if (code.length !== 6)
+return say("The code is six digits.", true);
+$("mfa-go").disabled = true;
+sb.auth.mfa.challengeAndVerify({ factorId: mfaFactor, code: code }).then(function (r) {
+$("mfa-go").disabled = false;
+if (r.error) {
+$("mfa-code").value = "";
+return say("That code didn't match. Codes change every 30 seconds; try the newest one.", true);
+}
+$("gate-mfa").classList.add("hidden");
+say("Signed in with your authenticator code.");
+if (mfaDone)
+mfaDone(true);
+});
+}
+$("mfa-go").onclick = mfaConfirm;
+$("mfa-code").onkeydown = function (e) { if (e.key === "Enter")
+mfaConfirm(); };
+$("mfa-out").onclick = function () { sb.auth.signOut().then(function () { location.reload(); }); };
+function showMfaSetting() { }
+var cashOn = null;
+function paintCash() {
+$("cash-word").textContent = cashOn === null ? "\u2026" : (cashOn ? "ON" : "OFF");
+$("cash-word").style.color = cashOn ? "var(--ok)" : "var(--ember)";
+$("cash-flip").textContent = cashOn ? "Turn the cash system off" : "Turn the cash system on";
+}
+function loadCash() {
+return sb.rpc("admin_mfa_state").then(function (r) { if (!r.error && r.data) {
+cashOn = !!r.data.cash_on;
+paintCash();
+} });
+}
+$("cash-flip").onclick = function () {
+var on = !cashOn;
+if (on && !confirm("Turn the cash system ON?\n\nPlayers will be able to buy gold with money and sell it back. This desk and the penthouse door will also ask everyone for the code from their authenticator app, starting now."))
+return;
+if (!on && !confirm("Turn the cash system OFF?\n\nNobody will be able to buy or sell gold for money until it is turned on again. Requests already waiting stay on this page."))
+return;
+sb.rpc("cash_set", { p_on: on }).then(function (r) {
+if (r.error)
+return paneMsg("cash-msg", r.error.message, true);
+if (r.data !== "ok")
+return paneMsg("cash-msg", String(r.data), true);
+cashOn = on;
+paintCash();
+paneMsg("cash-msg", on ? "The cash system is on." : "The cash system is off.");
+if (on) {
+$("desk").classList.add("hidden");
+$("gate").classList.remove("hidden");
+secondStep().then(function (ok) { if (!ok)
+return; $("gate").classList.add("hidden"); $("desk").classList.remove("hidden"); loadGold(); });
+}
+else
+loadGold();
+});
+};
+var gxF = "requested";
+function money(n) { return "$" + Number(n || 0).toFixed(2); }
+function goldCount() {
+sb.rpc("gold_exchange_board", { p_status: "requested" }).then(function (r) {
+if (r.error || !r.data)
+return;
+var n = (r.data.rows || []).length;
+$("n-gold").textContent = n ? n : "";
+});
+}
+function loadGold() {
+loadCash();
+$("gx-table").innerHTML = '<tr><td class="dim">Looking\u2026</td></tr>';
+sb.rpc("gold_exchange_board", { p_status: gxF || null }).then(function (r) {
+if (r.error) {
+$("gx-table").innerHTML = '<tr><td class="dim">' + esc(/function|does not exist/i.test(r.error.message) ? "Run schema-update-24.sql in the SQL Editor to switch this on." : r.error.message) + "</td></tr>";
+return;
+}
+var d = r.data || {}, rows = d.rows || [], rt = d.rates || {};
+$("gx-totals").innerHTML = "Taken in from sales of gold: <b>" + money(d.bought_usd) + "</b> &middot; paid out to dreamers: <b>" + money(d.paid_out_usd) + "</b>" +
+" &middot; waiting to be paid out: <b>" + money(d.waiting_out_usd) + "</b> &middot; the city keeps <b>" + money((+d.bought_usd || 0) - (+d.paid_out_usd || 0)) + "</b>";
+$("gx-buy").value = rt.buy_per_dollar;
+$("gx-sell").value = rt.sell_per_dollar;
+$("gx-min").value = rt.sell_min;
+$("gx-on").value = rt.sell_on ? "true" : "false";
+$("gx-url").value = rt.pay_url || "";
+if (gxF === "requested")
+$("n-gold").textContent = rows.length ? rows.length : "";
+if (!rows.length) {
+$("gx-table").innerHTML = '<tr><td class="dim">Nothing here.</td></tr>';
+return;
+}
+$("gx-table").innerHTML = "<tr><th>When</th><th>Who</th><th>What</th><th>Gold</th><th>Money</th><th>Send to / reference</th><th></th></tr>" +
+rows.map(function (x) {
+var act = x.status === "requested"
+? '<input type="text" data-ref="' + x.id + '" placeholder="' + (x.kind === "buy" ? "payment reference" : "payout reference") + '" style="width:150px;display:inline-block"> ' +
+'<button class="btn primary" data-ok="' + x.id + '">' + (x.kind === "buy" ? "Payment received" : "Payout sent") + '</button> ' +
+'<button class="btn warn" data-no="' + x.id + '">' + (x.kind === "sell" ? "Refuse &amp; return gold" : "Refuse") + "</button>"
+: '<span class="dim">' + esc(x.status) + (x.decided_at ? " \u00b7 " + when(x.decided_at) : "") + "</span>";
+return "<tr><td>" + when(x.created_at) + "</td><td>" + esc(x.email || x.user_id) + "</td><td>" + (x.kind === "buy" ? "Buying gold" : "Selling gold back") +
+"</td><td>" + Number(x.gold).toLocaleString() + "</td><td>" + money(x.usd) + "</td><td>" + esc(x.kind === "sell" ? (x.payout_to || "") : "") +
+(x.payment_ref ? '<br><span class="dim">ref ' + esc(x.payment_ref) + "</span>" : "") + "</td><td>" + act + "</td></tr>";
+}).join("");
+Array.prototype.forEach.call($("gx-table").querySelectorAll("[data-ok],[data-no]"), function (b) {
+b.onclick = function () {
+var id = +(b.getAttribute("data-ok") || b.getAttribute("data-no")), ok = b.hasAttribute("data-ok");
+var ref = ($("gx-table").querySelector('[data-ref="' + id + '"]') || {}).value || "";
+if (!ok && !confirm("Refuse this request?"))
+return;
+sb.rpc("gold_exchange_decide", { p_id: id, p_status: ok ? "paid" : "refused", p_ref: ref || null, p_note: null }).then(function (r2) {
+if (r2.error)
+return paneMsg("gx-msg", r2.error.message, true);
+paneMsg("gx-msg", r2.data === "ok" ? (ok ? "Done." : "Refused.") : String(r2.data), r2.data !== "ok");
+loadGold();
+});
+};
+});
+});
+}
+Array.prototype.forEach.call(document.querySelectorAll("#gx-f .btn"), function (b) {
+b.onclick = function () {
+Array.prototype.forEach.call(document.querySelectorAll("#gx-f .btn"), function (x) { x.classList.toggle("on", x === b); });
+gxF = b.getAttribute("data-f");
+loadGold();
+};
+});
+$("gx-save").onclick = function () {
+sb.rpc("gold_set_rates", { p_buy: +$("gx-buy").value, p_sell: +$("gx-sell").value, p_min: +$("gx-min").value,
+p_on: $("gx-on").value === "true", p_pay_url: $("gx-url").value.trim() }).then(function (r) {
+if (r.error)
+return paneMsg("gx-rmsg", r.error.message, true);
+paneMsg("gx-rmsg", r.data === "ok" ? "Saved." : String(r.data), r.data !== "ok");
+});
+};
+$("signout").onclick = function () { sb.auth.signOut().then(function () { location.reload(); }); };
+var loaded = {};
+Array.prototype.forEach.call(document.querySelectorAll("nav button"), function (b) {
+b.onclick = function () {
+Array.prototype.forEach.call(document.querySelectorAll("nav button"), function (x) { x.classList.toggle("on", x === b); });
+var t = b.getAttribute("data-tab");
+["inbox", "apps", "orders", "dreamers", "list", "research", "books", "city", "gold", "settings"].forEach(function (n) { $("tab-" + n).classList.toggle("hidden", n !== t); });
+if (t === "dreamers")
+loadDreamers();
+if (t === "list")
+loadList();
+if (t === "research")
+loadResearch();
+if (t === "books" && !loaded.books)
+loadBooks();
+if (t === "apps")
+loadApps();
+if (t === "city")
+loadCityTab();
+if (t === "gold")
+loadGold();
+if (t === "settings") {
+showMfaSetting();
+showSettings();
+showPayments();
+loadKeepers();
+loadOffices();
+loadJobs();
+loadShifts();
+}
+};
+});
+function loadConfig() {
+return sb.from("app_config").select("key,value").then(function (r) {
+if (r.error)
+return fail(r.error);
+cfg = {};
+r.data.forEach(function (x) { cfg[x.key] = x.value; });
+if (Array.isArray(cfg.plans) && cfg.plans.length)
+plans = cfg.plans;
+});
+}
+function putConfig(key, value) {
+return sb.from("app_config").upsert({ key: key, value: value, updated_at: new Date().toISOString() });
+}
+function showSettings() {
+$("s-code").value = "";
+sb.rpc("penthouse_code_now").then(function (r) { if (r && !r.error && typeof r.data === "string")
+$("s-code").value = r.data; });
+$("s-who").value = cfg.penthouseWho || "code";
+$("s-tower").value = cfg.towerOpen === "lobby" ? "lobby" : "open";
+$("s-ann").value = typeof cfg.announcement === "string" ? cfg.announcement : "";
+$("s-dw").checked = cfg.dreamwalker_open !== false;
+$("s-plans").value = plans.join(", ");
+$("s-thr").value = cfg.research_threshold || 5;
+}
+if ($("s-code-roll"))
+$("s-code-roll").onclick = function () {
+var n = "";
+for (var i = 0; i < 6; i++)
+n += "0123456789"[Math.floor(Math.random() * 10)];
+$("s-code").value = n;
+$("s-code-msg").textContent = "A new code. Press Set the code to make it so.";
+};
+if ($("s-code-save"))
+$("s-code-save").onclick = function () {
+var code = $("s-code").value.trim();
+if (code && (code.length < 4 || code.length > 12))
+return say("A code wants between four and twelve characters.", true);
+Promise.all([
+sb.rpc("set_penthouse_code", { p_code: code || null }),
+putConfig("penthouseWho", $("s-who").value),
+putConfig("towerOpen", $("s-tower").value)
+]).then(function (rs) {
+var r0 = rs[0] || {};
+if (r0.error)
+return say("The code didn't take: " + r0.error.message + " — has schema-update-18 been run?", true);
+if (r0.data !== "ok")
+return say(String(r0.data), true);
+$("s-code-msg").textContent = code
+? "Set. The penthouse door now asks for " + code + "."
+: "Cleared. Only keepers and whoever holds the penthouse can go up now.";
+loadConfig();
+}).catch(fail);
+};
+$("s-save").onclick = function () {
+var ann = $("s-ann").value.trim();
+var pl = $("s-plans").value.split(",").map(function (x) { return x.trim().toLowerCase(); }).filter(function (x) { return /^[a-z_]{1,30}$/.test(x); });
+if (!pl.length)
+return say("At least one plan is needed.", true);
+var thr = Math.max(2, parseInt($("s-thr").value, 10) || 5);
+Promise.all([
+putConfig("announcement", ann ? ann : null),
+putConfig("dreamwalker_open", $("s-dw").checked),
+putConfig("plans", pl),
+putConfig("research_threshold", thr)
+]).then(function (rs) {
+var bad = rs.filter(function (r) { return r.error; });
+if (bad.length)
+return fail(bad[0].error);
+return loadConfig().then(function () { showSettings(); say("Saved. Dreamers see this the next time the app opens."); });
+});
+};
+function payMsg(t, bad) { var e = $("pay-msg"); if (e) {
+e.textContent = t || "";
+e.style.color = bad ? "#C0603A" : "var(--dim)";
+} }
+function str(v) { return typeof v === "string" ? v : ""; }
+function showPayments() {
+if (!$("pay-link"))
+return;
+$("pay-link").value = str(cfg.checkout_url);
+$("pay-price").value = str(cfg.price_label) || "$29.99";
+$("pay-cur").value = str(cfg.price_currency) || "usd";
+$("pay-help").value = str(cfg.support_email);
+$("pay-hook").textContent = DW_CONFIG.supabaseUrl.replace(/\/+$/, "") + "/functions/v1/purchase-webhook";
+$("pay-secret").value = "";
+paintSecret();
+cinFeedLoad();
+}
+function paintSecret() {
+var el = $("pay-secret-state");
+el.textContent = "Looking\u2026";
+sb.rpc("stripe_settings_get").then(function (r) {
+if (r.error) {
+el.textContent = /does not exist|not find/i.test(r.error.message) ? "The payments update has not been run on the database yet." : r.error.message;
+return;
+}
+var d = r.data || {};
+el.innerHTML = d.webhook_secret_set
+? "A signing secret is set, ending <b>" + esc(d.webhook_secret_last4 || "") + "</b>" + (d.updated_at ? " (set " + when(d.updated_at) + ")" : "") + "."
+: "<span style='color:var(--ember)'>No signing secret is set yet: payments can't be recorded until it is.</span>";
+});
+}
+function cinFeedMsg(t, bad) { var e = $("cin-feed-msg"); if (e) {
+e.textContent = t || "";
+e.style.color = bad ? "#C0603A" : "var(--dim)";
+} }
+function cinFeedLoad() {
+if (!$("cin-feed"))
+return;
+sb.rpc("city_cinema_state").then(function (r) {
+if (r.error) {
+cinFeedMsg(/does not exist|not find/i.test(r.error.message) ? "Update 8 has not been run on the database yet." : r.error.message, true);
+return;
+}
+var f = r.data && r.data.feed;
+$("cin-feed").value = f ? JSON.stringify(f, null, 2) : "";
+cinFeedMsg(f ? "A feed is on." : "No feed: the Picture House shows its own programme.");
+});
+}
+function cinFeedPut(v) {
+sb.rpc("set_cinema_feed", { p_feed: v }).then(function (r) {
+if (r.error)
+return cinFeedMsg(r.error.message, true);
+cinFeedMsg((r.data && r.data.say) || "Saved.", !(r.data && r.data.ok));
+if (r.data && r.data.ok)
+cinFeedLoad();
+});
+}
+if ($("cin-feed-save"))
+$("cin-feed-save").onclick = function () {
+var t = $("cin-feed").value.trim(), v;
+if (!t)
+return cinFeedPut(null);
+try {
+v = JSON.parse(t);
+}
+catch (e) {
+return cinFeedMsg("That is not valid JSON: " + e.message, true);
+}
+cinFeedPut(v);
+};
+if ($("cin-feed-clear"))
+$("cin-feed-clear").onclick = function () { if (confirm("Remove the cinema feed?"))
+cinFeedPut(null); };
+if ($("pay-hook-copy"))
+$("pay-hook-copy").onclick = function () {
+var t = $("pay-hook").textContent;
+(navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { payMsg("Copied."); }, function () { payMsg("Select the address and copy it."); });
+};
+if ($("pay-save"))
+$("pay-save").onclick = function () {
+var link = $("pay-link").value.trim(), price = $("pay-price").value.trim() || "$29.99", cur = $("pay-cur").value.trim().toLowerCase() || "usd", help = $("pay-help").value.trim();
+if (link && !/^https:\/\/[^\s"'<>]+$/.test(link))
+return payMsg("The checkout link must be a full https:// address.", true);
+if (link && !/^https:\/\/(buy\.stripe\.com|checkout\.stripe\.com)\//.test(link) && !confirm("That isn't a Stripe link (buy.stripe.com). Save it anyway?"))
+return;
+if (!/^[a-z]{3}$/.test(cur))
+return payMsg("The currency is three letters, like usd or gbp.", true);
+if (help && !/^[^@\s]+@[^@\s]+$/.test(help))
+return payMsg("That support email doesn't look right.", true);
+Promise.all([
+putConfig("checkout_url", link),
+putConfig("price_label", price),
+putConfig("price_currency", cur),
+putConfig("support_email", help)
+]).then(function (rs) {
+var bad = rs.filter(function (r) { return r.error; });
+if (bad.length)
+return payMsg(bad[0].error.message, true);
+return loadConfig().then(function () { showPayments(); payMsg(link ? "Saved. Buyers see it the next time the app opens." : "Saved. With no link, the app says buying isn't open yet."); });
+}).catch(function (e) { payMsg(String(e && e.message || e), true); });
+};
+function saveSecret(v) {
+sb.rpc("stripe_settings_set", { p: { webhook_secret: v } }).then(function (r) {
+if (r.error)
+return payMsg(/authenticator|keeper/i.test(r.error.message) ? "Only a keeper can change this, with their authenticator code while cash is on." : r.error.message, true);
+$("pay-secret").value = "";
+paintSecret();
+payMsg(v ? "The signing secret is saved." : "The signing secret is removed. Payments won't be recorded until a new one is set.");
+});
+}
+if ($("pay-secret-save"))
+$("pay-secret-save").onclick = function () {
+var v = $("pay-secret").value.trim();
+if (!/^whsec_[A-Za-z0-9+\/=_-]{8,200}$/.test(v))
+return payMsg("A Stripe signing secret starts whsec_. Copy it from the webhook's page in Stripe.", true);
+saveSecret(v);
+};
+if ($("pay-secret-clear"))
+$("pay-secret-clear").onclick = function () {
+if (confirm("Remove the signing secret? Stripe's payments won't be recorded until a new one is set."))
+saveSecret("");
+};
+function loadInbox() {
+sb.from("messages").select("id,kind,subject,body,attachments,status,reply,replied_at,created_at")
+.order("created_at", { ascending: false }).limit(500)
+.then(function (r) {
+if (r.error)
+return fail(r.error);
+msgs = r.data;
+var n = msgs.filter(function (m) { return m.status === "new"; }).length;
+$("n-inbox").textContent = n ? n : "";
+renderInbox();
+if (selMsg) {
+var m = msgs.find(function (x) { return x.id === selMsg; });
+if (m)
+showMessage(m);
+}
+});
+}
+Array.prototype.forEach.call(document.querySelectorAll("#inbox-f .btn"), function (b) {
+b.onclick = function () {
+if (b.hasAttribute("data-f")) {
+inboxF = b.getAttribute("data-f");
+Array.prototype.forEach.call(document.querySelectorAll("#inbox-f [data-f]"), function (x) { x.classList.toggle("on", x === b); });
+}
+else {
+var k = b.getAttribute("data-k");
+inboxK = (inboxK === k) ? null : k;
+Array.prototype.forEach.call(document.querySelectorAll("#inbox-f [data-k]"), function (x) { x.classList.toggle("on", x.getAttribute("data-k") === inboxK); });
+}
+renderInbox();
+};
+});
+function renderInbox() {
+var list = msgs.filter(function (m) {
+if (inboxK === "bug") {
+if (!(m.attachments && m.attachments.bug))
+return false;
+}
+else if (inboxK && m.kind !== inboxK)
+return false;
+if (inboxF === "open")
+return m.status === "new" || m.status === "read";
+if (inboxF === "all")
+return true;
+return m.status === inboxF;
+});
+$("inbox-list").innerHTML = list.length ? list.map(function (m) {
+return '<div class="row' + (m.id === selMsg ? " on" : "") + '" data-id="' + m.id + '">' +
+'<div class="rt">' + (m.status === "new" ? '<span class="tag new">new</span>' : "") +
+(m.attachments && m.attachments.bug ? '<span class="tag new">bug</span>' : m.kind === "dreamwalker" ? '<span class="tag dw">dream walker</span>' : '<span class="tag">support</span>') +
+esc(m.subject || m.body.slice(0, 60)) + "</div>" +
+'<div class="rm">' + when(m.created_at) + " \u00b7 " + m.status + "</div></div>";
+}).join("") : '<div class="empty">Nothing here.</div>';
+Array.prototype.forEach.call(document.querySelectorAll("#inbox-list .row"), function (d) {
+d.onclick = function () { var m = msgs.find(function (x) { return x.id === d.getAttribute("data-id"); }); if (m)
+showMessage(m); };
+});
+}
+function attachmentHTML(a) {
+if (!a || typeof a !== "object")
+return "";
+var h = "";
+if (a.bug && typeof a.bug === "object") {
+var b = a.bug, w = b.where || {}, dv = b.device || {};
+h += '<div class="att"><h4>Bug report from the game</h4>' +
+(b.shot && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+\/=]+$/.test(b.shot) ? '<img src="' + b.shot + '" alt="Their screen" style="max-width:100%;border:1px solid var(--line);border-radius:2px;margin:6px 0">' :
+'<p class="dim small">' + (b.shotDropped ? "The picture was too big to send." : "No picture came with it.") + '</p>') +
+'<p class="small"><b>Where:</b> ' + esc((w.city ? "in Somnucor" : "in their dream") + (w.inside ? ", inside " + w.inside : "") + (w.at ? " at " + w.at.join(", ") : "") + (w.walking ? ", walking" : "")) +
+(b.weather ? " &middot; <b>Weather:</b> " + esc(b.weather) : "") + " &middot; <b>Sent:</b> " + esc(b.at ? new Date(b.at).toLocaleString() : "") + '</p>' +
+(b.dream ? '<h4>Their dream, as they told it</h4><p>' + esc(b.dream) + '</p>' : '') +
+(Array.isArray(b.built) && b.built.length ? '<h4>What was built near them</h4><p class="small">' + b.built.map(function (o) {
+return esc((o.l || o.a || "") + (o.l && o.a && o.l !== o.a ? " (" + o.a + ")" : "")) + " &middot; " + (+o.d || 0) + " m" + (o.y ? " &middot; raised " + o.y + " m" : "");
+}).join("<br>") + '</p>' : '') +
+(b.ai ? '<details><summary class="small">What the dream AI read</summary><pre style="white-space:pre-wrap;font-size:12px">' + esc(b.ai) + '</pre></details>' : '') +
+'<p class="dim small">' + esc([dv.app ? "version " + dv.app : "", dv.screen || "", dv.gl || "", dv.touch ? "touch screen" : "", dv.ua || ""].filter(Boolean).join(" \u00b7 ")) + '</p></div>';
+}
+if (a.dream) {
+h += '<div class="att"><h4>The dream' + (a.dream.title ? " \u2014 " + esc(a.dream.title) : "") + (a.dream.sealed ? " \u00b7 sealed " + esc(String(a.dream.sealed).slice(0, 10)) : "") + '</h4><p>' + esc(a.dream.text || "") + "</p></div>";
+}
+if (Array.isArray(a.passages) && a.passages.length) {
+h += '<div class="att"><h4>Passages they included</h4>' + a.passages.map(function (p) {
+return '<p><span class="dim small">' + esc(p.book || "") + (p.head ? " \u2014 " + esc(p.head) : "") + "</span><br>" + esc(p.text || "") + "</p>";
+}).join("") + "</div>";
+}
+if (a.dreamer) {
+var d = a.dreamer, bits = [];
+if (d.name)
+bits.push("Called: " + d.name);
+if (d.about)
+bits.push("About them: " + d.about);
+if (d.practice)
+bits.push("Practice: " + d.practice);
+if (Array.isArray(d.abilities) && d.abilities.length)
+bits.push("In dreams they can: " + d.abilities.join(", "));
+if (bits.length)
+h += '<div class="att"><h4>Who is dreaming, as they described themselves</h4><p>' + esc(bits.join("\n")) + "</p></div>";
+}
+return h;
+}
+function showMessage(m) {
+selMsg = m.id;
+renderInbox();
+var el = $("inbox-detail");
+el.innerHTML = '<h2>' + esc(m.subject || "(no subject)") + "</h2>" +
+'<div class="rm">' + (m.kind === "dreamwalker" ? "Ask a Dream Walker" : "Support") + " \u00b7 " + when(m.created_at) + " \u00b7 " + m.status +
+' \u00b7 <span id="m-from" class="dim">finding sender\u2026</span></div>' +
+'<div class="body">' + esc(m.body) + "</div>" + attachmentHTML(m.attachments) +
+'<label for="m-reply">Your reply' + (m.replied_at ? " \u2014 last sent " + when(m.replied_at) : "") + '</label>' +
+'<textarea id="m-reply" rows="7" placeholder="Write your reading or answer. It appears in the dreamer\u2019s app.">' + esc(m.reply || "") + "</textarea>" +
+'<div class="actions">' +
+'<button class="btn primary" id="m-send">' + (m.reply ? "Update reply" : "Send reply") + "</button>" +
+(m.status !== "closed" ? '<button class="btn" id="m-close">Close</button>' : '<button class="btn" id="m-open">Reopen</button>') +
+"</div>" +
+'<p class="note small" style="margin-top:14px">Replies are delivered inside the app, under the practice name. Your own email never appears to the dreamer.</p>';
+sb.rpc("admin_message_sender", { p_message: m.id }).then(function (r) {
+var f = $("m-from");
+if (!f)
+return;
+f.textContent = r.error ? "sender unknown" : ("from " + (r.data || "a deleted account"));
+});
+if (m.status === "new")
+setStatus(m, "read", true);
+$("m-send").onclick = function () {
+var t = $("m-reply").value.trim();
+if (!t)
+return say("Write something first.", true);
+sb.from("messages").update({ reply: t, status: "replied", replied_at: new Date().toISOString() }).eq("id", m.id)
+.then(function (r) { if (r.error)
+return fail(r.error); say("Reply sent."); loadInbox(); });
+};
+if ($("m-close"))
+$("m-close").onclick = function () { setStatus(m, "closed"); };
+if ($("m-open"))
+$("m-open").onclick = function () { setStatus(m, m.reply ? "replied" : "read"); };
+}
+function setStatus(m, st, quiet) {
+sb.from("messages").update({ status: st }).eq("id", m.id).then(function (r) {
+if (r.error)
+return fail(r.error);
+m.status = st;
+if (!quiet)
+say("Marked " + st + ".");
+loadInbox();
+});
+}
+var STAGES = ["requested", "paid", "printing", "shipped", "delivered", "cancelled"];
+function loadOrders() {
+sb.from("orders").select("*").order("created_at", { ascending: false }).limit(500).then(function (r) {
+if (r.error)
+return fail(r.error);
+ords = r.data;
+var n = ords.filter(function (o) { return o.status === "requested" || o.status === "paid"; }).length;
+$("n-orders").textContent = n ? n : "";
+renderOrders();
+if (selOrd) {
+var o = ords.find(function (x) { return x.id === selOrd; });
+if (o)
+showOrder(o);
+}
+});
+}
+Array.prototype.forEach.call(document.querySelectorAll("#orders-f .btn"), function (b) {
+b.onclick = function () {
+ordersF = b.getAttribute("data-f");
+Array.prototype.forEach.call(document.querySelectorAll("#orders-f .btn"), function (x) { x.classList.toggle("on", x === b); });
+renderOrders();
+};
+});
+function renderOrders() {
+var list = ords.filter(function (o) {
+if (ordersF === "all")
+return true;
+if (ordersF === "active")
+return ["requested", "paid", "printing", "shipped"].indexOf(o.status) > -1;
+return o.status === ordersF;
+});
+$("orders-list").innerHTML = list.length ? list.map(function (o) {
+return '<div class="row' + (o.id === selOrd ? " on" : "") + '" data-id="' + o.id + '">' +
+'<div class="rt">' + (o.status === "requested" ? '<span class="tag new">new</span>' : "") + esc(o.item) + (o.ship_name ? " \u2014 " + esc(o.ship_name) : "") + "</div>" +
+'<div class="rm">' + when(o.created_at) + " \u00b7 " + o.status + "</div></div>";
+}).join("") : '<div class="empty">No orders here.</div>';
+Array.prototype.forEach.call(document.querySelectorAll("#orders-list .row"), function (d) {
+d.onclick = function () { var o = ords.find(function (x) { return x.id === d.getAttribute("data-id"); }); if (o)
+showOrder(o); };
+});
+}
+function showOrder(o) {
+selOrd = o.id;
+renderOrders();
+var addr = o.ship_address && typeof o.ship_address === "object" ? Object.keys(o.ship_address).map(function (k) { return o.ship_address[k]; }).filter(Boolean).join("\n") : "";
+$("orders-detail").innerHTML = '<h2>' + esc(o.item) + "</h2>" +
+'<div class="rm">Ordered ' + when(o.created_at) + " \u00b7 last changed " + when(o.updated_at) + "</div>" +
+(o.ship_name || addr ? '<div class="att" style="margin-top:14px"><h4>Ship to</h4><p>' + esc((o.ship_name || "") + (addr ? "\n" + addr : "")) + "</p></div>" : "") +
+'<label for="o-st">Stage</label><select id="o-st">' + STAGES.map(function (s) { return '<option' + (s === o.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select>" +
+'<label for="o-pay">Payment reference (from the Temple site)</label><input type="text" id="o-pay" value="' + esc(o.payment_ref || "") + '">' +
+'<label for="o-trk">Tracking</label><input type="text" id="o-trk" value="' + esc(o.tracking || "") + '">' +
+'<label for="o-notes">Notes</label><textarea id="o-notes" rows="3">' + esc(o.notes || "") + "</textarea>" +
+'<div class="actions"><button class="btn primary" id="o-save">Save</button></div>';
+$("o-save").onclick = function () {
+sb.from("orders").update({ status: $("o-st").value, payment_ref: $("o-pay").value.trim() || null,
+tracking: $("o-trk").value.trim() || null, notes: $("o-notes").value.trim() || null, updated_at: new Date().toISOString() })
+.eq("id", o.id).then(function (r) { if (r.error)
+return fail(r.error); say("Order saved."); loadOrders(); });
+};
+}
+function loadOffices() {
+if (!$("o-table"))
+return;
+sb.rpc("office_board").then(function (r) {
+if (r.error) {
+$("o-table").innerHTML = '<tr><td class="dim">Run <b>schema-update-8.sql</b> in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var d = r.data || [];
+$("o-office").innerHTML = d.map(function (o) {
+return '<option value="' + o.office_id + '">Floor ' + (o.floor + 1) + ' \u00b7 ' + esc(o.number) + (o.name ? " \u2014 " + esc(o.name) : "") + (o.occupied ? " (taken)" : "") + "</option>";
+}).join("");
+$("o-table").innerHTML = "<tr><th>Floor</th><th>Office</th><th>Called</th><th>Panel</th><th>Who</th></tr>" +
+d.map(function (o) {
+return "<tr><td>" + (o.floor + 1) + "</td><td>" + esc(o.number) + "</td><td>" + esc(o.name || "") + "</td><td>" + esc(o.panel || "") +
+"</td><td>" + (o.occupant ? esc(o.occupant) : '<span class="dim">empty</span>') + "</td></tr>";
+}).join("");
+});
+}
+function omsg(t, bad) { var e = $("o-msg"); if (e) {
+e.textContent = t;
+e.style.color = bad ? "#C0603A" : "var(--dim)";
+} }
+if ($("o-assign"))
+$("o-assign").onclick = function () {
+var email = ($("o-who").value || "").trim();
+if (!email)
+return omsg("Whose office is it?", true);
+sb.rpc("admin_list_dreamers").then(function (r) {
+var who = (r.data || []).filter(function (x) { return (x.email || "").toLowerCase() === email.toLowerCase(); })[0];
+if (!who)
+return omsg("No account with that email has signed in yet.", true);
+sb.rpc("assign_office", { p_office: +$("o-office").value, p_user: who.id || who.user_id,
+p_name: ($("o-name").value || "").trim() || null, p_panel: null }).then(function (r2) {
+if (r2.error)
+return omsg(r2.error.message, true);
+omsg(/^\d+$/.test(String(r2.data)) ? ("Assigned. Their door code is " + r2.data + " \u2014 they can change it themselves.") : String(r2.data));
+loadOffices();
+});
+});
+};
+if ($("o-clear"))
+$("o-clear").onclick = function () {
+sb.rpc("assign_office", { p_office: +$("o-office").value, p_user: null, p_name: null, p_panel: null }).then(function (r) {
+if (r.error)
+return omsg(r.error.message, true);
+omsg("The office is empty again.");
+loadOffices();
+});
+};
+function loadJobs() {
+if (!$("j-table"))
+return;
+sb.rpc("job_board").then(function (r) {
+if (r.error) {
+$("j-table").innerHTML = '<tr><td class="dim">Run <b>schema-update-7.sql</b> first.</td></tr>';
+return;
+}
+var d = r.data || [];
+var inp = "background:var(--void);border:1px solid var(--line);color:var(--bone);padding:4px";
+$("j-table").innerHTML = "<tr><th>Post</th><th>Business</th><th>Pay (gold)</th><th></th><th>Filled</th><th>Positions</th><th></th></tr>" +
+d.map(function (j, i) {
+return "<tr><td>" + esc(j.title) + "</td><td class='dim'>" + esc(j.employer || "") + "</td>" +
+"<td style='white-space:nowrap'><input id='jw-" + i + "' type='number' min='1' max='1000000' value='" + (+j.rate || 0) + "' style='width:90px;" + inp + "'> " +
+"<select id='jk-" + i + "' style='" + inp + "'><option value='hourly'" + (j.pay_kind !== "salary" ? " selected" : "") + ">an hour</option><option value='salary'" + (j.pay_kind === "salary" ? " selected" : "") + ">a week</option></select></td>" +
+'<td><button class="btn" data-jw="' + i + '">Set wage</button></td>' +
+"<td>" + j.taken + "</td><td><input id='jp-" + i + "' type='number' min='0' value='" + j.positions + "' style='width:70px;" + inp + "'></td>" +
+'<td><button class="btn" data-jp="' + i + '" data-job="' + j.job_id + '">Set</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#j-table [data-jw]"), function (b) {
+b.onclick = function () {
+var i = +b.getAttribute("data-jw"), j = d[i], rate = Math.round(+$("jw-" + i).value);
+sb.rpc("set_wage", { p_job: j.job_id, p_kind: $("jk-" + i).value, p_rate: rate, p_starting: j.starting || 0 })
+.then(function (r2) { paneMsg("j-msg", r2.error ? r2.error.message : (r2.data === "ok" ? "Wage set for " + j.title + ": " + rate + " gold." : String(r2.data)), !!r2.error || r2.data !== "ok"); if (!r2.error && r2.data === "ok")
+loadJobs(); });
+};
+});
+Array.prototype.forEach.call(document.querySelectorAll("#j-table [data-jp]"), function (b) {
+b.onclick = function () {
+sb.rpc("set_positions", { p_job: +b.getAttribute("data-job"), p_positions: +$("jp-" + b.getAttribute("data-jp")).value })
+.then(function (r2) { omsg(r2.error ? r2.error.message : String(r2.data === "ok" ? "Positions set." : r2.data), !!r2.error); loadJobs(); });
+};
+});
+});
+}
+function appsCount() {
+sb.rpc("applications_board").then(function (r) { if (r.error)
+return; var n = (r.data || []).length; $("n-apps").textContent = n ? n : ""; });
+}
+function loadApps() {
+sb.rpc("applications_board").then(function (r) {
+if (r.error) {
+$("ap-table").innerHTML = '<tr><td class="dim">' + esc(r.error.message) + '</td></tr>';
+return;
+}
+var L = r.data || [];
+$("n-apps").textContent = L.length ? L.length : "";
+$("ap-table").innerHTML = "<tr><th>Dreamer</th><th>Post</th><th>Where</th><th>What they said</th><th>Applied</th><th></th></tr>" + (L.length ? L.map(function (a) {
+return "<tr><td>" + esc(a.email || a.user_id) + "</td><td>" + esc(a.job || "") + "</td><td>" + esc(a.workplace || "") + "</td><td>" + (a.said ? "&ldquo;" + esc(a.said) + "&rdquo;" : "") +
+"</td><td>" + esc(new Date(a.at).toLocaleString()) + '</td><td style="white-space:nowrap"><button class="btn" data-ap-hire="' + a.application_id + '">Hire</button> ' +
+'<button class="btn" data-ap-no="' + a.application_id + '">Turn down</button></td></tr>';
+}).join("") : '<tr><td class="dim">Nobody is waiting.</td></tr>');
+Array.prototype.forEach.call($("ap-table").querySelectorAll("[data-ap-hire]"), function (b) {
+b.onclick = function () {
+b.disabled = true;
+sb.rpc("hire", { p_application: +b.getAttribute("data-ap-hire") }).then(function (x) {
+paneMsg("ap-msg", x.error ? x.error.message : (x.data === "ok" ? "Hired. Their entry pack is on its way." : x.data), !!x.error || x.data !== "ok");
+loadApps();
+});
+};
+});
+Array.prototype.forEach.call($("ap-table").querySelectorAll("[data-ap-no]"), function (b) {
+b.onclick = function () {
+if (!confirm("Turn down this application?"))
+return;
+sb.rpc("turn_down", { p_application: +b.getAttribute("data-ap-no") }).then(function (x) {
+paneMsg("ap-msg", x.error ? x.error.message : (x.data === "ok" ? "Turned down." : x.data), !!x.error || x.data !== "ok");
+loadApps();
+});
+};
+});
+});
+sb.rpc("entry_packs_board").then(function (r) {
+if (r.error) {
+$("ap-packs").innerHTML = "<tr><td class='dim'>Run update 18 in the SQL Editor to switch this on.</td></tr>";
+return;
+}
+var L = r.data || [];
+$("ap-packs").innerHTML = "<tr><th>Dreamer</th><th>Post</th><th>Where</th><th>Advance</th><th>Accepted</th><th>Pack opened</th></tr>" + (L.length ? L.map(function (p) {
+return "<tr><td>" + esc(p.who) + "</td><td>" + esc(p.job || "") + "</td><td>" + esc(p.workplace || "") + "</td><td>" + (+p.advance || 0).toLocaleString() + "</td><td>" + esc(new Date(p.given_at).toLocaleString()) + "</td><td>" + (p.opened ? "yes" : "not yet") + "</td></tr>";
+}).join("") : '<tr><td class="dim">Nobody yet.</td></tr>');
+});
+}
+function loadShifts() {
+if (!$("sh-table"))
+return;
+sb.rpc("city_clock").then(function (r) { if (r.data) {
+$("tz-in").value = r.data.tz || "";
+$("tz-now").textContent = "City time now: " + Math.floor(r.data.hour) + ":" + ("0" + Math.floor((r.data.hour % 1) * 60)).slice(-2);
+} });
+sb.from("job_shift").select("title,start1,len1,start2,len2").order("title").then(function (r) {
+if (r.error) {
+$("sh-table").innerHTML = '<tr><td class="dim">Run <b>schema-update-23.sql</b> to switch shifts on.</td></tr>';
+return;
+}
+function hh(h) { h = ((+h % 24) + 24) % 24; var H = Math.floor(h), M = Math.round((h - H) * 60); return ("0" + H).slice(-2) + ":" + ("0" + M).slice(-2); }
+$("sh-table").innerHTML = "<tr><th>Post</th><th>Hours (city time)</th></tr>" + (r.data || []).map(function (x) {
+return "<tr><td>" + esc(x.title) + "</td><td>" + hh(x.start1) + "&ndash;" + hh(+x.start1 + +x.len1) + (x.start2 !== null ? " and " + hh(x.start2) + "&ndash;" + hh(+x.start2 + +x.len2) : "") + "</td></tr>";
+}).join("");
+});
+sb.rpc("dream_words_board").then(function (r) {
+if (r.error) {
+$("dw-table").innerHTML = '<tr><td class="dim">Run <b>schema-update-23.sql</b> first.</td></tr>';
+return;
+}
+var d = r.data || [];
+$("dw-table").innerHTML = d.length ? ("<tr><th>Word</th><th>Built as</th><th>Times</th><th>Last dreamt</th></tr>" + d.map(function (w) {
+return "<tr><td><b>" + esc(w.word) + "</b></td><td>" + esc(w.kind || "") + "</td><td>" + w.times + "</td><td>" + new Date(w.last_at).toLocaleString() + "</td></tr>";
+}).join("")) :
+'<tr><td class="dim">No new words yet.</td></tr>';
+});
+$("tz-save").onclick = function () {
+var tz = $("tz-in").value.trim();
+if (!tz)
+return;
+try {
+new Intl.DateTimeFormat("en", { timeZone: tz });
+}
+catch (e) {
+omsg("That is not a time zone name (try America/New_York).", true);
+return;
+}
+putConfig("city_tz", tz).then(function (r) { omsg(r.error ? r.error.message : "The city now keeps " + tz + " time.", !!r.error); loadShifts(); });
+};
+}
+function paneMsg(id, t, bad) { var e = $(id); if (!e)
+return; e.textContent = t; e.style.color = bad ? "#C0603A" : "var(--dim)"; }
+function loadCityTab() {
+loadOfficeCodes();
+loadCatalogue();
+loadPrison();
+loadGrants();
+loadPermits();
+loadTowerSpaces();
+loadWageLog();
+loadCreationOrders();
+loadFestPane();
+loadAcademyRoll();
+loadEntryPacks();
+loadPartners();
+loadTreasuryPane();
+loadDistrictPane();
+loadRollPane();
+loadMallPane();
+}
+var mallRows = [];
+function loadMallPane() {
+sb.rpc("mall_keeper_board").then(function (r) {
+if (r.error) {
+$("ml-msg").textContent = "Run schema-update-21 to open the World Mall. (" + r.error.message + ")";
+return;
+}
+mallRows = r.data || [];
+var taken = {};
+mallRows.forEach(function (m) { if (m.unit)
+taken[m.unit] = 1; });
+var free = [];
+for (var u = 1; u <= 40; u++)
+if (!taken[u])
+free.push(u);
+var apps = mallRows.filter(function (m) { return m.status === "pending"; });
+var h = "";
+if (apps.length) {
+h += "<tr><th colspan='6' style='color:var(--ember)'>Waiting for a decision (" + apps.length + ")</th></tr>";
+apps.forEach(function (m) {
+h += "<tr><td colspan='6' style='padding:12px 10px'><b>" + esc(m.name) + "</b> <span class='note'>&middot; " + esc(m.category || "") + " &middot; " + esc(m.owner || "") + (m.contact && m.contact !== m.owner ? " &middot; " + esc(m.contact) : "") + "</span><br>" +
+"<span class='note'>" + esc(m.tagline || "") + "</span>" + (safeUrl(m.site) ? " &middot; <a href='" + esc(safeUrl(m.site)) + "' target='_blank' rel='noopener' style='color:var(--moon)'>their site</a>" : "") +
+(m.about ? "<div style='margin:6px 0;font-family:var(--serif);line-height:1.6'>" + esc(m.about) + "</div>" : "") +
+"<div class='note'>" + m.products + " products stocked already</div>" +
+"<div style='display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap'>Unit <select data-unit-for='" + m.id + "' style='width:auto'>" + free.map(function (u) { return "<option>" + u + "</option>"; }).join("") + "</select>" +
+"<input data-note-for='" + m.id + "' placeholder='a note to them (optional)' style='flex:1 1 200px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:6px 8px;border-radius:2px'>" +
+"<button class='btn' data-approve='" + m.id + "'>Grant the unit</button><button class='btn warn' data-reject='" + m.id + "'>Decline</button></div></td></tr>";
+});
+}
+h += "<tr><th>Unit</th><th>Store</th><th>Paid to</th><th>Pieces</th><th>Sold (gold)</th><th>Key</th></tr>";
+var open = mallRows.filter(function (m) { return m.unit; });
+open.forEach(function (m) {
+h += "<tr data-unit='" + m.unit + "' style='cursor:pointer'><td>" + m.unit + "</td><td>" + esc(m.name) + (m.active ? "" : " <span class='note'>(closed)</span>") + "<br><span class='note'>" + esc(m.tagline || "") + "</span></td><td>" + esc(m.owner || "\u2014") +
+"</td><td>" + m.products + "</td><td>" + m.sold + "</td><td>" + (m.has_key ? "issued" : "none") + "</td></tr>";
+});
+if (!open.length)
+h += "<tr><td colspan='6' class='note'>Every unit is to let.</td></tr>";
+var rej = mallRows.filter(function (m) { return m.status === "rejected"; });
+if (rej.length)
+h += "<tr><td colspan='6' class='note'>Declined: " + rej.map(function (m) { return esc(m.name); }).join(", ") + "</td></tr>";
+$("ml-table").innerHTML = h;
+function decide(id, ok) {
+var unit = ok ? +document.querySelector("[data-unit-for='" + id + "']").value : null, note = (document.querySelector("[data-note-for='" + id + "']") || {}).value || null;
+sb.rpc("mall_keeper_decide", { p_store: +id, p_unit: unit, p_approve: ok, p_note: note }).then(function (r) {
+$("ml-msg").textContent = r.error ? r.error.message : (r.data === "ok" ? (ok ? "Granted Unit " + unit + ". Their shop is open." : "Declined.") : r.data);
+loadMallPane();
+});
+}
+Array.prototype.forEach.call(document.querySelectorAll("#ml-table [data-approve]"), function (b) { b.onclick = function () { decide(b.getAttribute("data-approve"), true); }; });
+Array.prototype.forEach.call(document.querySelectorAll("#ml-table [data-reject]"), function (b) { b.onclick = function () { if (confirm("Decline this application?"))
+decide(b.getAttribute("data-reject"), false); }; });
+Array.prototype.forEach.call(document.querySelectorAll("#ml-table tr[data-unit]"), function (tr) {
+tr.onclick = function () {
+var m = mallRows.filter(function (x) { return String(x.unit) === tr.getAttribute("data-unit"); })[0];
+if (!m)
+return;
+$("ml-unit").value = m.unit;
+$("ml-name").value = m.name || "";
+$("ml-tag").value = m.tagline || "";
+$("ml-logo").value = m.logo || "";
+$("ml-site").value = m.site || "";
+$("ml-owner").value = m.owner || "";
+$("ml-color").value = "#" + ("000000" + ((m.color || 0) >>> 0).toString(16)).slice(-6);
+};
+});
+});
+}
+$("ml-save").onclick = function () {
+var col = parseInt(($("ml-color").value || "#C9A868").slice(1), 16);
+sb.rpc("mall_keeper_store", { p_unit: +$("ml-unit").value, p_name: $("ml-name").value.trim(), p_tagline: $("ml-tag").value.trim(), p_color: col,
+p_logo: $("ml-logo").value.trim() || null, p_site: $("ml-site").value.trim() || null, p_owner_email: $("ml-owner").value.trim() || null, p_new_key: $("ml-newkey").checked }).then(function (r) {
+if (r.error || !r.data || !r.data.ok) {
+$("ml-msg").textContent = (r.error && r.error.message) || (r.data && r.data.error) || "Could not save.";
+return;
+}
+$("ml-msg").textContent = r.data.closed ? ("Unit " + r.data.closed + " closed.") : "Saved.";
+$("ml-key").innerHTML = r.data.key ? ("<b>This store's API key \u2014 copy it now, it is shown only once:</b><br><code style='user-select:all;word-break:break-all'>" + esc(r.data.key) + "</code>") : "";
+$("ml-newkey").checked = false;
+loadMallPane();
+});
+};
+function loadOfficeCodes() {
+if (!$("oc-table"))
+return;
+sb.rpc("office_board").then(function (r) {
+if (r.error) {
+$("oc-table").innerHTML = '<tr><td class="dim">Run <b>schema-update-16.sql</b> in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var d = (r.data || []).filter(function (o) { return o.occupant; });
+if (!d.length) {
+$("oc-table").innerHTML = '<tr><td class="dim">No office is assigned to anybody yet — do that on the Settings tab first.</td></tr>';
+return;
+}
+$("oc-table").innerHTML = "<tr><th>Floor</th><th>Office</th><th>Who</th><th></th></tr>" +
+d.map(function (o, i) {
+return "<tr><td>" + (o.floor + 1) + "</td><td>" + esc(o.number) + (o.name ? " — " + esc(o.name) : "") + "</td><td>" + esc(o.occupant) + "</td>" +
+'<td><input id="oc-code-' + i + '" placeholder="4–12 chars" style="width:110px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:4px 6px;border-radius:2px"> ' +
+'<button class="btn" data-oc-set="' + o.office_id + '" data-i="' + i + '">Set code</button> ' +
+'<button class="btn" data-oc-lock="' + o.office_id + '">Lock</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#oc-table [data-oc-set]"), function (b) {
+b.onclick = function () {
+var code = ($("oc-code-" + b.getAttribute("data-i")).value || "").trim();
+sb.rpc("set_office_code", { p_office: +b.getAttribute("data-oc-set"), p_code: code }).then(function (r2) {
+if (r2.error)
+return paneMsg("oc-msg", r2.error.message, true);
+paneMsg("oc-msg", r2.data === "ok" ? "Code set. That office is unlocked now." : String(r2.data));
+loadOfficeCodes();
+});
+};
+});
+Array.prototype.forEach.call(document.querySelectorAll("#oc-table [data-oc-lock]"), function (b) {
+b.onclick = function () {
+sb.rpc("lock_office", { p_office: +b.getAttribute("data-oc-lock") }).then(function (r2) {
+if (r2.error)
+return paneMsg("oc-msg", r2.error.message, true);
+paneMsg("oc-msg", r2.data === "ok" ? "Locked. No code opens it now, except the occupant themself or a keeper." : String(r2.data));
+loadOfficeCodes();
+});
+};
+});
+});
+}
+function loadCatalogue() {
+if (!$("cat-table"))
+return;
+sb.rpc("catalogue_board").then(function (r) {
+if (r.error) {
+$("cat-table").innerHTML = '<tr><td class="dim">Run the Somnucor city schema files in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var cat = r.data || [];
+$("cat-table").innerHTML = "<tr><th>Thing</th><th>Kind</th><th>Listed</th><th>Price</th><th></th></tr>" +
+cat.map(function (c, i) {
+return "<tr><td>" + esc(c.name) + "</td><td>" + esc(c.kind) + "</td>" +
+'<td><input id="catl-' + i + '" type="checkbox" ' + (c.listed ? "checked" : "") + '></td>' +
+'<td><input id="catp-' + i + '" type="number" min="0" value="' + c.price + '" style="width:80px;background:var(--void);border:1px solid var(--line);color:var(--bone);padding:4px 6px;border-radius:2px"></td>' +
+'<td><button class="btn" data-cat="' + i + '" data-item="' + c.id + '">Set</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#cat-table [data-cat]"), function (b) {
+b.onclick = function () {
+var i = b.getAttribute("data-cat");
+sb.rpc("set_price", { p_item: +b.getAttribute("data-item"), p_price: +$("catp-" + i).value, p_listed: $("catl-" + i).checked })
+.then(function (r2) {
+if (r2.error)
+return paneMsg("cat-msg", r2.error.message, true);
+paneMsg("cat-msg", r2.data === "ok" ? "Set." : String(r2.data));
+loadCatalogue();
+});
+};
+});
+});
+}
+function loadPrison() {
+if (!$("pr-table"))
+return;
+sb.rpc("prison_board").then(function (r) {
+if (r.error) {
+$("pr-table").innerHTML = '<tr><td class="dim">Run the Somnucor city schema files in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var held = r.data || [];
+$("pr-table").innerHTML = "<tr><th>Held</th><th>For</th><th>Worked off</th><th>Until</th><th></th></tr>" +
+held.map(function (p) {
+return "<tr><td>" + esc(p.email || p.user) + "</td><td>" + esc(p.crime) + "</td>" +
+"<td>" + (p.work_off ? ((p.done || 0) + " of " + p.hours) : '<span class="dim">no</span>') + "</td>" +
+"<td>" + new Date(p.until).toLocaleString() + "</td>" +
+'<td><button class="btn" data-pr-release="' + p.sentence_id + '">Release</button></td></tr>';
+}).join("") + (!held.length ? '<tr><td class="dim">Nobody is held just now.</td></tr>' : "");
+Array.prototype.forEach.call(document.querySelectorAll("#pr-table [data-pr-release]"), function (b) {
+b.onclick = function () {
+sb.rpc("release", { p_sentence: +b.getAttribute("data-pr-release") }).then(function (r2) {
+if (r2.error)
+return paneMsg("pr-msg", r2.error.message, true);
+paneMsg("pr-msg", r2.data === "ok" ? "Released." : String(r2.data));
+loadPrison();
+});
+};
+});
+});
+}
+if ($("pr-sentence"))
+$("pr-sentence").onclick = function () {
+var u = ($("pr-user").value || "").trim(), crime = ($("pr-crime").value || "").trim();
+var hoursReal = +$("pr-hours").value || 1, workOff = $("pr-workable").checked, hoursWork = +$("pr-work").value || 1;
+if (!u || !crime)
+return paneMsg("pr-msg", "An account id and a charge are both needed.", true);
+sb.rpc("sentence", { p_user: u, p_crime: crime, p_hours_real: hoursReal, p_work_off: workOff, p_work_hours: hoursWork }).then(function (r2) {
+if (r2.error)
+return paneMsg("pr-msg", r2.error.message, true);
+paneMsg("pr-msg", r2.data === "ok" ? "Charged. Held on remand until the court hears the case." : String(r2.data));
+loadPrison();
+});
+};
+function loadGrants() {
+if (!$("kg-table"))
+return;
+loadGrantPickers();
+sb.rpc("keeper_grants_log").then(function (r) {
+if (r.error || !r.data || !r.data.ok) {
+$("kg-table").innerHTML = '<tr><td class="dim">Run update 15 in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var g = r.data.grants || [];
+$("kg-table").innerHTML = "<tr><th>When</th><th>To</th><th>What</th></tr>" + g.map(function (x) {
+return "<tr><td>" + new Date(x.at).toLocaleString() + "</td><td>" + esc(x.who || "") + "</td><td>" + esc(x.detail || x.what) + "</td></tr>";
+}).join("") +
+(!g.length ? '<tr><td class="dim">Nothing granted yet.</td></tr>' : "");
+});
+}
+var KG = { lots: null };
+function loadGrantPickers() {
+if (!$("kg-who"))
+return;
+sb.rpc("admin_list_dreamers").then(function (r) {
+var d = (r && r.data) || [];
+d.sort(function (a, b) { return String(a.email || "").localeCompare(String(b.email || "")); });
+$("kg-who").innerHTML = '<option value="">Choose the dreamer&hellip; (' + d.length + ')</option>' + d.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.email || x.id) + "</option>"; }).join("");
+});
+sb.rpc("address_roll").then(function (r) {
+if (r.error || !r.data || r.data.ok === false) {
+KG.lots = false;
+return paintGrantLots();
+}
+var L = (r.data.lots || []).slice();
+L.sort(function (a, b) { return (b.reserved ? 1 : 0) - (a.reserved ? 1 : 0) || String(a.world).localeCompare(String(b.world)) || String(a.name).localeCompare(String(b.name)); });
+KG.lots = L;
+paintGrantLots();
+}, function () { KG.lots = false; paintGrantLots(); });
+}
+function paintGrantLots() {
+if (!$("kg-lot"))
+return;
+if (KG.lots === false) {
+$("kg-lot").innerHTML = '<option value="">Homes and palaces appear once RUN-THIS-update-23.sql has been run</option>';
+return;
+}
+if (!KG.lots)
+return;
+$("kg-lot").innerHTML = '<option value="">Choose the home or palace&hellip;</option>' + KG.lots.map(function (l) {
+var held = l.owner_name ? " (held by " + l.owner_name + ")" : "";
+return '<option value="' + l.id + '">' + (l.reserved ? "\u2605 " : "") + esc(l.name) + " \u2014 " + esc((typeof ROLL_WORLD !== "undefined" && ROLL_WORLD[l.world]) || l.world) + esc(held) + "</option>";
+}).join("");
+}
+if ($("kg-what"))
+$("kg-what").onchange = function () { var h = $("kg-what").value === "home"; $("kg-lot").style.display = h ? "" : "none"; $("kg-ref").style.display = h ? "none" : ""; };
+if ($("kg-who"))
+$("kg-who").onchange = function () { if ($("kg-who").value)
+$("kg-user").value = ""; };
+if ($("kg-go"))
+$("kg-go").onclick = function () {
+var u = ($("kg-user").value || "").trim() || $("kg-who").value;
+if (!u)
+return paneMsg("kg-msg", "Choose the dreamer from the list first.", true);
+if ($("kg-what").value === "home") {
+var lot = $("kg-lot").value;
+if (!lot)
+return paneMsg("kg-msg", KG.lots === false ? "Run RUN-THIS-update-23.sql in Supabase first; then the homes and palaces show here." : "Choose the home or palace.", true);
+return sb.rpc("keeper_assign_lot", { p_lot: +lot, p_user: u, p_as: "owner" }).then(function (r) {
+if (r.error)
+return paneMsg("kg-msg", r.error.message, true);
+paneMsg("kg-msg", (r.data && r.data.say) || "Done.", r.data && r.data.ok === false);
+loadGrantPickers();
+if (typeof loadRollPane === "function")
+loadRollPane();
+});
+}
+var amt = +$("kg-amount").value || null, days = +$("kg-days").value || null;
+sb.rpc("keeper_grant", { p_user: u, p_what: $("kg-what").value, p_ref: ($("kg-ref").value || "").trim() || null, p_amount: amt, p_days: days }).then(function (r) {
+if (r.error)
+return paneMsg("kg-msg", r.error.message, true);
+paneMsg("kg-msg", (r.data && r.data.say) || "Done.", !(r.data && r.data.ok));
+loadGrants();
+});
+};
+function loadPermits() {
+if (!$("bp-table"))
+return;
+sb.rpc("business_permits_board").then(function (r) {
+if (r.error || !r.data || !r.data.ok) {
+$("bp-table").innerHTML = '<tr><td class="dim">Run update 14 in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var p = r.data.permits || [];
+$("bp-table").innerHTML = "<tr><th>Who</th><th>Business</th><th>Trade and plan</th><th>Status</th><th></th></tr>" + p.map(function (x) {
+return "<tr><td>" + esc(x.who || "") + "</td><td>" + esc(x.name) + (x.lot ? ' <span class="dim">lot ' + x.lot + '</span>' : "") + "</td><td>" + esc(x.kind || "") + (x.plan ? '<div class="dim">' + esc(x.plan) + '</div>' : "") + "</td>" +
+"<td>" + esc(x.status) + (x.note ? '<div class="dim">' + esc(x.note) + '</div>' : "") + "</td>" +
+"<td>" + (x.status === "pending" ? '<button class="btn" data-bp="' + x.id + '" data-ok="1">Grant</button> <button class="btn" data-bp="' + x.id + '" data-ok="0">Refuse</button>' : "") + "</td></tr>";
+}).join("") +
+(!p.length ? '<tr><td class="dim">No applications yet.</td></tr>' : "");
+Array.prototype.forEach.call(document.querySelectorAll("#bp-table [data-bp]"), function (b) {
+b.onclick = function () {
+var ok = b.getAttribute("data-ok") === "1", note = prompt(ok ? "A word for them (optional):" : "Why not? (they will see this)", "") || "";
+sb.rpc("decide_business_permit", { p_id: +b.getAttribute("data-bp"), p_grant: ok, p_note: note }).then(function (r2) {
+if (r2.error)
+return paneMsg("bp-msg", r2.error.message, true);
+paneMsg("bp-msg", r2.data === "ok" ? (ok ? "Granted." : "Refused.") : String(r2.data));
+loadPermits();
+});
+};
+});
+});
+}
+function loadTowerSpaces() {
+if (!$("ts-table"))
+return;
+sb.rpc("tower_sites_keeper").then(function (r) {
+if (r.error) {
+$("ts-table").innerHTML = "<tr><td class='dim'>Run update 19 in the SQL Editor to switch this on.</td></tr>";
+return;
+}
+var L = r.data || [];
+$("ts-table").innerHTML = "<tr><th>Space</th><th>Open as</th><th>Held by</th><th></th></tr>" + L.map(function (t) {
+var where = (t.kind === "cinema" ? "Picture house" : "Bank") + " " + t.slot + ' <span class="dim">' + (t.area === "mall" ? "Grand Arcade" : "the city") + "</span>";
+return "<tr><td>" + where + "</td><td>" + (t.open ? "<b>" + esc(t.name) + "</b>" : '<span class="dim">dark: not granted</span>') + "</td>" +
+"<td>" + (t.dreamer ? esc(t.dreamer) : "") + (t.partner ? ' <span class="dim">partner: ' + esc(t.partner) + "</span>" : "") + (t.note ? '<div class="dim">' + esc(t.note) + "</div>" : "") + "</td>" +
+"<td>" + (t.open ? '<button class="btn" data-tsr="' + t.id + '">Free it</button>' : '<button class="btn" data-tsg="' + t.id + '" data-kind="' + t.kind + '">Grant</button>') + "</td></tr>";
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#ts-table [data-tsg]"), function (b) {
+b.onclick = function () {
+var kind = b.getAttribute("data-kind"), name = prompt("The name it opens under (as it will be written over the door):", "");
+if (!name)
+return;
+var who = prompt("Whose is it? Type part of a dreamer's name, or leave empty for none (a partner, or the city):", "") || "";
+var go = function (uid) {
+sb.rpc("partner_keys_board").then(function (pk) {
+var keys = (pk && pk.data || []).filter(function (k) { return k.kind === kind && !k.revoked; }), pid = null;
+if (keys.length) {
+var pick = prompt("A partner " + kind + " key for it? Type its number, or leave empty for none:\n" + keys.map(function (k) { return k.id + ": " + k.name; }).join("\n"), "");
+if (pick)
+pid = +pick || null;
+}
+sb.rpc("tower_site_grant", { p_id: +b.getAttribute("data-tsg"), p_name: name, p_user: uid, p_partner: pid, p_note: null }).then(function (r2) {
+if (r2.error)
+return paneMsg("ts-msg", r2.error.message, true);
+paneMsg("ts-msg", (r2.data && r2.data.say) || "Done.", !(r2.data && r2.data.ok));
+loadTowerSpaces();
+});
+});
+};
+if (!who.trim())
+return go(null);
+sb.rpc("tower_find_dreamer", { p_q: who }).then(function (f) {
+var L2 = (f && f.data) || [];
+if (!L2.length)
+return paneMsg("ts-msg", "No dreamer by that name.", true);
+var i = L2.length === 1 ? 0 : (+prompt("Which one?\n" + L2.map(function (d, k) { return (k + 1) + ": " + d.name; }).join("\n"), "1") || 0) - 1;
+if (!L2[i])
+return;
+go(L2[i].id);
+});
+};
+});
+Array.prototype.forEach.call(document.querySelectorAll("#ts-table [data-tsr]"), function (b) {
+b.onclick = function () {
+if (!confirm("Free this space? It goes dark until it is granted again."))
+return;
+sb.rpc("tower_site_release", { p_id: +b.getAttribute("data-tsr") }).then(function (r2) { if (r2.error)
+return paneMsg("ts-msg", r2.error.message, true); paneMsg("ts-msg", (r2.data && r2.data.say) || "Done."); loadTowerSpaces(); });
+};
+});
+});
+}
+function loadWageLog() {
+if (!$("wl-table"))
+return;
+sb.rpc("wage_log_board").then(function (r) {
+if (r.error) {
+$("wl-table").innerHTML = "<tr><td class='dim'>Run update 19 in the SQL Editor to switch this on.</td></tr>";
+return;
+}
+var L = r.data || [];
+$("wl-table").innerHTML = "<tr><th>When</th><th>Who</th><th>Post</th><th>Was</th><th>Now</th><th></th></tr>" + (L.length ? L.map(function (w) {
+return "<tr><td>" + esc(new Date(w.at).toLocaleString()) + "</td><td>" + esc(w.by || "") + "</td><td>" + esc(w.title || "") + ' <span class="dim">' + esc(w.employer || "") + "</span></td><td>" + (w.was == null ? "" : w.was) + "</td><td>" + w.rate + " " + (w.kind === "salary" ? "a week" : "an hour") + "</td><td>" + (w.city ? '<span class="dim">Treasury pays</span>' : "") + "</td></tr>";
+}).join("") : "<tr><td colspan=6 class='dim'>No changes yet.</td></tr>");
+});
+}
+function loadFestPane() {
+if (!$("fx-books"))
+return;
+sb.rpc("fest_books").then(function (r) {
+if (r.error || !r.data || !r.data.ok) {
+$("fx-books").textContent = "Run update 17 in the SQL Editor to switch this on.";
+return;
+}
+var d = r.data, f = d.fest || {};
+$("fx-books").innerHTML = (f.on ? "<b>On now</b>: day " + f.day + " of " + f.days : "<b>Not on</b>") + (f.start ? " &middot; " + esc(new Date(f.start).toLocaleString()) + " to " + esc(new Date(f.end).toLocaleString()) : "") +
+"<br>" + d.players + " players &middot; " + d.earned + " tickets won &middot; " + d.tickets_out + " unspent &middot; " + d.prizes + " prizes given &middot; " + d.masks + " golden masks found" +
+"<br><span class='dim'>" + Object.keys(d.games || {}).map(function (k) { return esc(k) + ": " + d.games[k]; }).join(" &middot; ") + "</span>";
+if (f.start && $("fx-start") && !$("fx-start").value) {
+var t = new Date(f.start);
+t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+$("fx-start").value = t.toISOString().slice(0, 16);
+$("fx-days").value = f.days || 14;
+}
+});
+function set(start) { sb.rpc("fest_set", { p_start: start, p_days: +$("fx-days").value || 14 }).then(function (r) { if (r.error)
+return paneMsg("fx-msg", r.error.message, true); paneMsg("fx-msg", (r.data && r.data.say) || "Done.", !(r.data && r.data.ok)); $("fx-start").value = ""; loadFestPane(); }); }
+$("fx-set").onclick = function () { var v = $("fx-start").value; if (!v)
+return paneMsg("fx-msg", "Pick the opening day first.", true); set(new Date(v).toISOString()); };
+$("fx-now").onclick = function () { set(new Date().toISOString()); };
+}
+function loadEntryPacks() {
+if (!$("ep-table"))
+return;
+sb.rpc("entry_packs_board").then(function (r) {
+if (r.error) {
+$("ep-table").innerHTML = "<tr><td class='dim'>Run update 18 in the SQL Editor to switch this on.</td></tr>";
+return;
+}
+var L = r.data || [];
+$("ep-table").innerHTML = "<tr><th>Dreamer</th><th>Post</th><th>Where</th><th>Advance</th><th>Given</th><th>Opened</th></tr>" + (L.length ? L.map(function (p) {
+return "<tr><td>" + esc(p.who) + "</td><td>" + esc(p.job || "") + "</td><td>" + esc(p.workplace || "") + "</td><td>" + (+p.advance || 0).toLocaleString() + "</td><td>" + esc(new Date(p.given_at).toLocaleString()) + "</td><td>" + (p.opened ? "yes" : "not yet") + "</td></tr>";
+}).join("") : "<tr><td colspan=6 class='dim'>No packs given yet.</td></tr>");
+});
+}
+function loadPartners() {
+if (!$("pk-table"))
+return;
+sb.rpc("partner_keys_board").then(function (r) {
+if (r.error) {
+$("pk-table").innerHTML = "<tr><td class='dim'>Run update 18 in the SQL Editor to switch this on.</td></tr>";
+return;
+}
+var L = r.data || [];
+$("pk-table").innerHTML = "<tr><th>Partner</th><th>Kind</th><th>Key ends</th><th>Last used</th><th></th></tr>" + (L.length ? L.map(function (k) {
+return "<tr><td>" + esc(k.name || "") + "</td><td>" + esc(k.kind) + "</td><td>&hellip;" + esc(k.tail) + "</td><td>" + (k.last_used ? esc(new Date(k.last_used).toLocaleString()) : "never") + "</td><td>" + (k.revoked ? "<span class='dim'>revoked</span>" : "<button class='btn' data-pk='" + k.id + "'>Revoke</button>") + "</td></tr>";
+}).join("") : "<tr><td colspan=5 class='dim'>No partners yet.</td></tr>");
+Array.prototype.forEach.call($("pk-table").querySelectorAll("[data-pk]"), function (b) {
+b.onclick = function () {
+if (!confirm("Revoke this partner's key? Their system stops reaching the game at once."))
+return;
+sb.rpc("partner_key_revoke", { p_id: +b.getAttribute("data-pk") }).then(function (x) { paneMsg("pk-msg", x.error ? x.error.message : (x.data === "ok" ? "Revoked." : x.data), !!x.error || x.data !== "ok"); loadPartners(); });
+};
+});
+});
+sb.rpc("bank_link_get").then(function (r) {
+if (r.error || !r.data)
+return;
+var l = r.data.link || {};
+$("bl-on").checked = !!l.on;
+$("bl-provider").value = l.provider || "";
+$("bl-buy").checked = l.auto_buy !== false;
+$("bl-sell").checked = !!l.auto_sell;
+var ev = r.data.events || [];
+$("bl-events").innerHTML = ev.length ? ev.slice(0, 12).map(function (e) { return esc(new Date(e.at).toLocaleString()) + " &middot; " + esc(e.kind) + " &middot; " + (e.ok ? "" : "<b>not done</b>: ") + esc(e.said) + (e.ref ? " <span class='dim'>(" + esc(e.ref) + ")</span>" : ""); }).join("<br>") : "<span class='dim'>Nothing from partners yet.</span>";
+});
+$("pk-make").onclick = function () {
+var name = $("pk-name").value.trim();
+if (!name)
+return paneMsg("pk-msg", "Give the partner's name.", true);
+sb.rpc("partner_key_create", { p_kind: $("pk-kind").value, p_name: name }).then(function (r) {
+if (r.error)
+return paneMsg("pk-msg", r.error.message, true);
+var d = r.data || {};
+if (!d.ok)
+return paneMsg("pk-msg", d.say || "Not made.", true);
+$("pk-msg").innerHTML = "<b>Key for " + esc(name) + ":</b> <code style='user-select:all;word-break:break-all'>" + esc(d.key) + "</code><br>" + esc(d.say);
+$("pk-name").value = "";
+loadPartners();
+});
+};
+$("bl-save").onclick = function () {
+sb.rpc("bank_link_set", { p_on: $("bl-on").checked, p_provider: $("bl-provider").value.trim(), p_auto_buy: $("bl-buy").checked, p_auto_sell: $("bl-sell").checked }).then(function (r) {
+paneMsg("bl-msg", r.error ? r.error.message : (r.data === "ok" ? "Saved." : r.data), !!r.error || r.data !== "ok");
+loadPartners();
+});
+};
+}
+function loadAcademyRoll() {
+if (!$("ac-roll"))
+return;
+sb.rpc("academy_roll").then(function (r) {
+if (r.error || !r.data || !r.data.ok) {
+$("ac-roll").textContent = "Run update 17 in the SQL Editor to switch this on.";
+return;
+}
+var d = r.data, sub = d.subjects || {};
+$("ac-roll").innerHTML = d.students + " dreamers have learned something &middot; " + d.today + " lessons passed today<br><span class='dim'>" + (Object.keys(sub).sort().map(function (k) { return esc(k) + ": " + sub[k]; }).join(" &middot; ") || "No lessons passed yet.") + "</span>";
+});
+}
+function loadCreationOrders() {
+if (!$("co-table"))
+return;
+sb.rpc("creation_orders_board").then(function (r) {
+if (r.error || !r.data || !r.data.ok) {
+$("co-table").innerHTML = '<tr><td class="dim">Run update 15 in the SQL Editor to switch this on.</td></tr>';
+return;
+}
+var o = r.data.orders || [];
+$("co-table").innerHTML = "<tr><th>Who</th><th>What</th><th>Status</th><th></th></tr>" + o.map(function (x) {
+return "<tr><td>" + esc(x.who || "") + "</td><td><b>" + esc(x.name) + "</b> × " + x.units + (x.dept ? ' <span class="dim">' + esc(x.dept) + '</span>' : "") + (x.detail ? '<div class="dim">' + esc(x.detail) + '</div>' : "") + "</td>" +
+"<td>" + esc(x.status) + (x.note ? '<div class="dim">' + esc(x.note) + '</div>' : "") + "</td>" +
+"<td>" + (x.status === "open" ? '<button class="btn" data-co="' + x.id + '" data-ok="1">Make it</button> <button class="btn" data-co="' + x.id + '" data-ok="0">Decline</button>' : "") + "</td></tr>";
+}).join("") +
+(!o.length ? '<tr><td class="dim">No orders yet.</td></tr>' : "");
+Array.prototype.forEach.call(document.querySelectorAll("#co-table [data-co]"), function (b) {
+b.onclick = function () {
+var ok = b.getAttribute("data-ok") === "1", price = null, note = "";
+if (ok) {
+price = Math.floor(+prompt("Its shop price in gold (wholesale is half):", "10") || 0);
+if (price < 1)
+return;
+}
+else
+note = prompt("Why not? (they will see this)", "") || "";
+sb.rpc("creation_order_fill", { p_id: +b.getAttribute("data-co"), p_make: ok, p_retail: price, p_dept: null, p_note: note || (ok ? "made by the warehouse" : "") }).then(function (r2) {
+if (r2.error)
+return paneMsg("co-msg", r2.error.message, true);
+paneMsg("co-msg", (r2.data && r2.data.say) || "Done.", !(r2.data && r2.data.ok));
+loadCreationOrders();
+});
+};
+});
+});
+}
+function loadTreasuryPane() {
+if (!$("tr-tax"))
+return;
+sb.from("treasury").select("tax,market_toll,gold").limit(1).then(function (r) {
+var tr = (r.data && r.data[0]) || {};
+$("tr-tax").value = tr.tax == null ? "" : tr.tax;
+$("tr-toll").value = tr.market_toll == null ? "" : tr.market_toll;
+paneMsg("tr-msg", tr.gold != null ? ("The treasury itself holds " + Number(tr.gold).toLocaleString() + " gold.") : "");
+});
+loadPayday();
+sb.rpc("treasury_board").then(function (r) {
+if (r.error || !r.data) {
+$("tr-books").textContent = r.error && /function/.test(r.error.message) ? "Run schema-update-25.sql to switch on the mint." : "";
+return;
+}
+var d = r.data;
+$("tr-books").innerHTML = "Treasury: <b>" + Number(d.treasury).toLocaleString() + "</b> gold &middot; Mint: <b>" + Number(d.mint).toLocaleString() + "</b> gold &middot; in dreamers&rsquo; wallets: " + Number(d.in_wallets).toLocaleString() + " gold";
+});
+}
+function loadPayday() {
+if (!$("tr-payday"))
+return;
+sb.rpc("next_paydays").then(function (r) {
+if (r.error || !r.data) {
+$("tr-payday-next").textContent = r.error && /function/.test(r.error.message) ? "Run schema-update-27.sql to switch on paydays." : "";
+return;
+}
+var d = r.data, f = function (t) { return new Date(t).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }); };
+$("tr-payday").value = String(d.day);
+$("tr-payday-next").textContent = "Next wages: " + f(d.wage) + " · next salaries: " + f(d.salary);
+});
+}
+if ($("tr-payday-set"))
+$("tr-payday-set").onclick = function () {
+sb.rpc("set_payday", { p_day: +$("tr-payday").value }).then(function (r) {
+if (r.error)
+return paneMsg("tr-msg", r.error.message, true);
+paneMsg("tr-msg", r.data === "ok" ? "Payday set." : String(r.data), r.data !== "ok");
+loadPayday();
+});
+};
+function treasuryMove(to) {
+var n = Math.floor(+$("tr-amt").value || 0);
+if (n <= 0)
+return paneMsg("tr-msg", "How much gold?", true);
+if (to === "add_mint" && !confirm("Strike " + n.toLocaleString() + " new gold into the mint?"))
+return;
+sb.rpc("treasury_move", { p_to: to, p_gold: n }).then(function (r) {
+if (r.error)
+return paneMsg("tr-msg", r.error.message, true);
+paneMsg("tr-msg", r.data === "ok" ? "Done." : String(r.data), r.data !== "ok");
+loadTreasuryPane();
+});
+}
+if ($("tr-to-treasury"))
+$("tr-to-treasury").onclick = function () { treasuryMove("treasury"); };
+if ($("tr-to-mint"))
+$("tr-to-mint").onclick = function () { treasuryMove("mint"); };
+if ($("tr-add-mint"))
+$("tr-add-mint").onclick = function () { treasuryMove("add_mint"); };
+if ($("tr-tax-set"))
+$("tr-tax-set").onclick = function () {
+sb.rpc("set_tax", { p_per_cent: +$("tr-tax").value }).then(function (r2) {
+if (r2.error)
+return paneMsg("tr-msg", r2.error.message, true);
+paneMsg("tr-msg", r2.data === "ok" ? "Tax set." : String(r2.data));
+loadTreasuryPane();
+});
+};
+if ($("tr-toll-set"))
+$("tr-toll-set").onclick = function () {
+sb.rpc("set_toll", { p_per_cent: +$("tr-toll").value }).then(function (r2) {
+if (r2.error)
+return paneMsg("tr-msg", r2.error.message, true);
+paneMsg("tr-msg", r2.data === "ok" ? "Toll set." : String(r2.data));
+loadTreasuryPane();
+});
+};
+function loadDistrictPane() {
+if (!$("dist-table"))
+return;
+Promise.all([
+sb.rpc("lot_board").catch(function () { return { data: [] }; }),
+sb.rpc("admin_list_dreamers").catch(function () { return { data: [] }; }),
+sb.rpc("penthouse_holder").catch(function () { return { data: null }; })
+]).then(function (r) {
+var rows = (r[0] && r[0].data) || [], dreamers = (r[1] && r[1].data) || [], holder = r[2] && r[2].data;
+var who = dreamers.map(function (d) { return '<option value="' + d.id + '"' + (d.id === holder ? " selected" : "") + '>' + esc(d.email || d.id) + "</option>"; }).join("");
+$("ph-holder").innerHTML = '<option value="">— nobody —</option>' + who;
+var district = rows.filter(function (l) { return l.quarter === "The Somnucor Employee & Backer District"; });
+if (!district.length) {
+$("dist-table").innerHTML = '<tr><td class="dim">Nothing entered yet. Press the button above once the District has been laid out (a dreamer joining Somnucor builds it), or run <b>schema-update-17.sql</b> first if the button below errors.</td></tr>';
+}
+else {
+$("dist-table").innerHTML = "<tr><th>Address</th><th>Held</th><th></th></tr>" +
+district.map(function (l) {
+return "<tr><td>" + esc(l.name) + "</td><td>" + (l.held ? "held" : '<span class="dim">empty</span>') + "</td>" +
+'<td><select data-dwho="' + l.lot_id + '" style="max-width:220px">' + '<option value="">— nobody —</option>' + who + '</select> ' +
+'<button class="btn" data-dassign="' + l.lot_id + '">Assign</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#dist-table [data-dassign]"), function (b) {
+b.onclick = function () {
+var lot = b.getAttribute("data-dassign");
+var u = document.querySelector('[data-dwho="' + lot + '"]').value || null;
+sb.rpc("assign_district_plot", { p_lot: +lot, p_user: u }).then(function (r2) {
+if (r2.error)
+return paneMsg("dist-msg", r2.error.message, true);
+paneMsg("dist-msg", r2.data === "ok" ? "Assigned." : String(r2.data));
+loadDistrictPane();
+});
+};
+});
+}
+});
+}
+if ($("ph-set"))
+$("ph-set").onclick = function () {
+var u = $("ph-holder").value || null;
+sb.rpc("set_penthouse_holder", { p_user: u }).then(function (r2) {
+if (r2.error)
+return paneMsg("ph-msg", r2.error.message, true);
+paneMsg("ph-msg", r2.data === "ok" ? "Set." : String(r2.data));
+});
+};
+if ($("dist-section"))
+$("dist-section").onclick = function () {
+paneMsg("dist-msg", "This is done from inside the game, at the Keeper's Desk (housing pane) — the plots have to be walked and measured before the books can hold them. Sign in as a keeper in the game itself and press “Enter the District’s plots in the books” there.");
+};
+var ROLL = { lots: [], who: "" };
+var ROLL_WORLD = { somnucor: "Somnucor", northpole: "The North Pole", neverland: "Neverland", sea: "The Endless Sea", underdark: "The Underdark", moon: "The Moon", mars: "Mars", station: "The Orbital Station" };
+function loadRollPane() {
+if (!$("roll-table"))
+return;
+Promise.all([
+sb.rpc("address_roll").catch(function (e) { return { error: e }; }),
+sb.rpc("admin_list_dreamers").catch(function () { return { data: [] }; })
+]).then(function (r) {
+if (r[0].error || !r[0].data || r[0].data.ok === false) {
+$("roll-table").innerHTML = '<tr><td class="dim">' + esc((r[0].data && r[0].data.say) || "The address roll opens once RUN-THIS-update-23.sql has been run in Supabase.") + '</td></tr>';
+return;
+}
+ROLL.lots = r[0].data.lots || [];
+ROLL.who = ((r[1] && r[1].data) || []).map(function (d) { return '<option value="' + d.id + '">' + esc(d.email || d.id) + "</option>"; }).join("");
+paintRoll();
+});
+}
+function paintRoll() {
+var w = $("roll-world").value, f = ($("roll-find").value || "").toLowerCase();
+var rows = ROLL.lots.filter(function (l) { return (!w || l.world === w) && (!f || [l.name, l.quarter, l.owner_name, l.tenant_name].join(" ").toLowerCase().indexOf(f) > -1); });
+if (!rows.length) {
+$("roll-table").innerHTML = '<tr><td class="dim">No lots match.</td></tr>';
+return;
+}
+$("roll-table").innerHTML = "<tr><th>World</th><th>Address</th><th>Held by</th><th>Terms</th><th>Assign</th></tr>" + rows.slice(0, 400).map(function (l) {
+var held = l.owner_name ? "owner: " + esc(l.owner_name) : "";
+if (l.tenant_name)
+held += (held ? "<br>" : "") + "tenant: " + esc(l.tenant_name);
+var terms = l.reserved ? "<b>Keeper assigns only</b>" : l.kind === "district" ? "District (assigned)" :
+[l.for_sale && l.price != null ? "for sale " + l.price + " gold" : "", l.to_let && l.rent != null ? "to let " + l.rent + " a week" : ""].filter(Boolean).join(", ") || '<span class="dim">off the market</span>';
+return "<tr><td>" + esc(ROLL_WORLD[l.world] || l.world) + "</td><td>" + esc(l.name) + '<br><span class="dim">' + esc(l.quarter || "") + "</span></td><td>" + (held || '<span class="dim">nobody</span>') + "</td><td>" + terms + "</td>" +
+'<td><select data-rwho="' + l.id + '" style="max-width:200px"><option value="">— nobody (clear) —</option>' + ROLL.who + '</select> ' +
+'<select data-ras="' + l.id + '"><option value="owner">as owner</option><option value="tenant">as tenant</option></select> ' +
+'<button class="btn" data-rassign="' + l.id + '">Assign</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#roll-table [data-rassign]"), function (b) {
+b.onclick = function () {
+var lot = b.getAttribute("data-rassign"), u = document.querySelector('[data-rwho="' + lot + '"]').value || null, as = document.querySelector('[data-ras="' + lot + '"]').value;
+sb.rpc("keeper_assign_lot", { p_lot: +lot, p_user: u, p_as: as }).then(function (r2) {
+if (r2.error)
+return paneMsg("roll-msg", r2.error.message, true);
+paneMsg("roll-msg", (r2.data && r2.data.say) || "Done.", r2.data && r2.data.ok === false);
+loadRollPane();
+});
+};
+});
+}
+if ($("roll-world"))
+$("roll-world").onchange = paintRoll;
+if ($("roll-find"))
+$("roll-find").oninput = paintRoll;
+if ($("roll-reload"))
+$("roll-reload").onclick = loadRollPane;
+function keeperMsg(t, bad) { var e = $("k-msg"); if (!e)
+return; e.textContent = t; e.style.color = bad ? "#C0603A" : "var(--dim)"; }
+function loadKeepers() {
+if (!$("k-table"))
+return;
+sb.rpc("admin_list_admins").then(function (r) {
+if (r.error) {
+$("k-table").innerHTML = /admin_list_admins/.test(r.error.message || "")
+? '<tr><td class="dim">Run <b>supabase/schema-update-4.sql</b> in the SQL Editor to switch this on.</td></tr>'
+: '<tr><td class="dim">' + esc(r.error.message) + "</td></tr>";
+return;
+}
+var d = r.data || [];
+$("k-table").innerHTML = "<tr><th>Who</th><th>Standing</th><th>Added</th><th></th></tr>" + d.map(function (x, i) {
+return "<tr><td>" + esc(x.email || "") + (x.is_me ? ' <span class="dim">(you)</span>' : "") + "</td>" +
+'<td><select id="kr-' + i + '"><option value="watcher"' + (x.role === "watcher" ? " selected" : "") + '>watcher</option>' +
+'<option value="keeper"' + (x.role === "keeper" ? " selected" : "") + '>keeper</option></select></td>' +
+"<td>" + day(x.added_at) + "</td>" +
+'<td><button class="btn" data-kr="' + i + '">Save</button> <button class="btn" data-kx="' + i + '">Remove</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#k-table [data-kr]"), function (b) {
+b.onclick = function () {
+var i = +b.getAttribute("data-kr");
+sb.rpc("admin_set_role", { p_user: d[i].user_id, p_role: $("kr-" + i).value }).then(function (r) {
+if (r.error)
+return keeperMsg(r.error.message, true);
+keeperMsg("Standing changed.");
+loadKeepers();
+});
+};
+});
+Array.prototype.forEach.call(document.querySelectorAll("#k-table [data-kx]"), function (b) {
+b.onclick = function () {
+var i = +b.getAttribute("data-kx");
+if (!confirm("Remove " + (d[i].email || "them") + " from the desk?"))
+return;
+sb.rpc("admin_remove", { p_user: d[i].user_id }).then(function (r) {
+if (r.error)
+return keeperMsg(r.error.message, true);
+keeperMsg("Removed.");
+loadKeepers();
+});
+};
+});
+});
+}
+if ($("k-add"))
+$("k-add").onclick = function () {
+var em = $("k-email").value.trim();
+if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em))
+return keeperMsg("That doesn't look like an email address.", true);
+sb.rpc("admin_add", { p_email: em, p_role: $("k-role").value }).then(function (r) {
+if (r.error)
+return keeperMsg(r.error.message, true);
+if (r.data !== "ok")
+return keeperMsg(r.data, true);
+$("k-email").value = "";
+keeperMsg("Added.");
+loadKeepers();
+});
+};
+if ($("d-why"))
+$("d-why").onclick = function () {
+var box = $("d-diag");
+if (box.style.display === "block") {
+box.style.display = "none";
+return;
+}
+box.style.display = "block";
+box.textContent = "Looking\u2026";
+sb.rpc("admin_diagnose").then(function (r) {
+if (r.error) {
+box.textContent = /admin_diagnose/.test(r.error.message || "")
+? "Run supabase/schema-update-4.sql in the SQL Editor to switch this on."
+: r.error.message;
+return;
+}
+var d = r.data || {}, L = [];
+L.push("Accounts in Supabase: " + d.accounts_in_auth);
+L.push("Of those, signed in at least once: " + d.signed_in_ever);
+if (d.confirmed_accounts !== null && d.confirmed_accounts !== undefined)
+L.push("Of those, confirmed their email: " + d.confirmed_accounts);
+L.push("Profile rows: " + d.profiles + (d.accounts_without_profile ? "   (missing for " + d.accounts_without_profile + ")" : "   (none missing)"));
+L.push("New-account trigger in place: " + (d.new_account_trigger ? "yes" : "NO \u2014 run schema-update-4.sql"));
+L.push("Keepers and watchers: " + d.admins + " (" + d.keepers + " keeper" + (d.keepers === 1 ? "" : "s") + ").   You are a " + (d.you_are || "?") + ".");
+L.push("Devices using the Atlas: " + d.devices);
+L.push("");
+L.push("Worth knowing: the Atlas itself has no sign-in yet \u2014 only this desk does.");
+L.push("So a dreamer using the Atlas creates no account, and cannot appear in the list above.");
+L.push("They appear as a device instead, with nothing attached to them. Accounts here are");
+L.push("people who signed in to this desk, or ones you made in Supabase by hand.");
+box.textContent = L.join("\n");
+});
+};
+var listRows = [], lWindow = "all";
+function loadList() {
+sb.from("signups").select("email,name,wants,dreams_often,source,landed,created_at")
+.order("created_at", { ascending: false }).limit(50000)
+.then(function (r) {
+if (r.error) {
+if (/signups/.test(r.error.message || ""))
+$("l-stats").innerHTML = '<p class="note">Run <b>supabase/schema-update-3.sql</b> in the SQL Editor to switch this list on.</p>';
+else
+fail(r.error);
+return;
+}
+listRows = r.data || [];
+renderList();
+});
+}
+function tally(rows, key, label) {
+var by = {};
+rows.forEach(function (x) { var k = (x[key] || "unknown").trim() || "unknown"; by[k] = (by[k] || 0) + 1; });
+var keys = Object.keys(by).sort(function (a, b) { return by[b] - by[a]; }).slice(0, 14);
+return "<tr><th>" + label + "</th><th>People</th><th>Share</th></tr>" +
+(keys.length ? keys.map(function (k) { return "<tr><td>" + esc(k) + "</td><td>" + by[k] + "</td><td>" + Math.round(by[k] / rows.length * 100) + "%</td></tr>"; }).join("")
+: '<tr><td colspan="3" class="dim">Nobody yet.</td></tr>');
+}
+function renderList() {
+var now = Date.now(), D = 864e5;
+function within(d, x) { return now - new Date(x.created_at).getTime() <= d * D; }
+var day = listRows.filter(function (x) { return within(1, x); }).length;
+var week = listRows.filter(function (x) { return within(7, x); }).length;
+var paid = listRows.filter(function (x) { return x.source && x.source !== "direct"; }).length;
+$("n-list").textContent = listRows.length ? listRows.length : "";
+$("l-stats").innerHTML = '<div class="stat"><b>' + listRows.length + '</b><span>on the list</span></div>' +
+'<div class="stat"><b>' + day + '</b><span>joined today</span></div>' +
+'<div class="stat"><b>' + week + '</b><span>this week</span></div>' +
+'<div class="stat"><b>' + Math.round(week / 7) + '</b><span>a day, this week</span></div>' +
+'<div class="stat"><b>' + paid + '</b><span>came from a link or advert</span></div>' +
+'<div class="stat"><b>' + (listRows.length - paid) + '</b><span>came on their own</span></div>';
+var rows = lWindow === "all" ? listRows : listRows.filter(function (x) { return within(+lWindow, x); });
+$("l-src").innerHTML = tally(rows, "source", "Where from");
+$("l-wants").innerHTML = tally(rows, "wants", "What interests them");
+$("l-table").innerHTML = "<tr><th>Email</th><th>Name</th><th>Wants</th><th>Dreams</th><th>From</th><th>Joined</th></tr>" +
+(rows.length ? rows.slice(0, 3000).map(function (x) {
+return "<tr><td>" + esc(x.email) + "</td><td>" + esc(x.name || "") + "</td><td>" + esc(x.wants || "") + "</td><td>" + esc(x.dreams_often || "") +
+"</td><td>" + esc(x.source || "") + "</td><td>" + when(x.created_at) + "</td></tr>";
+}).join("") : '<tr><td colspan="6" class="dim">Nobody in this window yet.</td></tr>');
+}
+function listCsv() {
+var rows = lWindow === "all" ? listRows : listRows.filter(function (x) { return Date.now() - new Date(x.created_at).getTime() <= (+lWindow) * 864e5; });
+function q(v) { return '"' + String(v === null || v === undefined ? "" : v).replace(/"/g, '""') + '"'; }
+var csv = ["email,name,wants,dreams_often,source,landed,created_at"].concat(rows.map(function (x) {
+return [x.email, x.name, x.wants, x.dreams_often, x.source, x.landed, x.created_at].map(q).join(",");
+})).join("\r\n");
+var a = document.createElement("a");
+a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+a.download = "dream-walker-list-" + new Date().toISOString().slice(0, 10) + ".csv";
+a.click();
+setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+}
+Array.prototype.forEach.call(document.querySelectorAll("#l-f .btn"), function (b) {
+b.onclick = function () {
+if (b.id === "l-csv") {
+listCsv();
+return;
+}
+lWindow = b.getAttribute("data-l");
+Array.prototype.forEach.call(document.querySelectorAll("#l-f .btn"), function (x) { if (x.id !== "l-csv")
+x.classList.toggle("on", x === b); });
+renderList();
+};
+});
+var devices = [], vWindow = "all";
+function loadDevices() {
+sb.from("installs").select("id,first_seen,last_seen,opens,platform,app_version")
+.order("last_seen", { ascending: false }).limit(5000)
+.then(function (r) {
+if (r.error) {
+if (/installs/.test(r.error.message || ""))
+$("v-stats").innerHTML = '<p class="note">Run <b>supabase/schema-update-2.sql</b> in the SQL Editor to switch this list on.</p>';
+else
+fail(r.error);
+return;
+}
+devices = r.data || [];
+renderDevices();
+});
+}
+function renderDevices() {
+var now = Date.now(), D = 864e5;
+function within(d, x) { return now - new Date(x.last_seen).getTime() <= d * D; }
+var byPlat = {};
+devices.forEach(function (x) { var k = x.platform || "unknown"; byPlat[k] = (byPlat[k] || 0) + 1; });
+var newWeek = devices.filter(function (x) { return now - new Date(x.first_seen).getTime() <= 7 * D; }).length;
+$("v-stats").innerHTML = '<div class="stat"><b>' + devices.length + '</b><span>devices in all</span></div>' +
+'<div class="stat"><b>' + devices.filter(function (x) { return within(1, x); }).length + '</b><span>used today</span></div>' +
+'<div class="stat"><b>' + devices.filter(function (x) { return within(7, x); }).length + '</b><span>this week</span></div>' +
+'<div class="stat"><b>' + devices.filter(function (x) { return within(30, x); }).length + '</b><span>this month</span></div>' +
+'<div class="stat"><b>' + newWeek + '</b><span>new this week</span></div>' +
+Object.keys(byPlat).map(function (k) { return '<div class="stat"><b>' + byPlat[k] + '</b><span>' + esc(k) + "s</span></div>"; }).join("");
+var list = vWindow === "all" ? devices : devices.filter(function (x) { return within(+vWindow, x); });
+$("v-table").innerHTML = "<tr><th>Device</th><th>Kind</th><th>First seen</th><th>Last used</th><th>Times opened</th><th>Version</th></tr>" +
+(list.length ? list.map(function (x) {
+return '<tr><td style="font-family:var(--mono);font-size:12px">' + esc(String(x.id).slice(0, 8)) + "</td><td>" + esc(x.platform || "") + "</td><td>" + day(x.first_seen) +
+"</td><td>" + when(x.last_seen) + "</td><td>" + x.opens + "</td><td>" + esc(x.app_version || "") + "</td></tr>";
+}).join("") : '<tr><td colspan="6" class="dim">No devices in this window yet.</td></tr>');
+}
+Array.prototype.forEach.call(document.querySelectorAll("#v-f .btn"), function (b) {
+b.onclick = function () {
+vWindow = b.getAttribute("data-v");
+Array.prototype.forEach.call(document.querySelectorAll("#v-f .btn"), function (x) { x.classList.toggle("on", x === b); });
+renderDevices();
+};
+});
+function loadBuyers() {
+return sb.from("purchases").select("user_id,email,status,amount_cents,currency,created_at,order_ref").order("created_at", { ascending: false })
+.then(function (r) { return r.error ? null : (r.data || []); });
+}
+function boughtText(list) {
+if (!list || !list.length)
+return "\u2014";
+var paid = list.filter(function (p) { return p.status === "paid"; });
+var p = paid[0] || list[0];
+var amt = p.amount_cents != null ? (" \u00b7 " + (p.amount_cents / 100).toFixed(2) + " " + String(p.currency || "").toUpperCase()) : "";
+return (paid.length ? "bought " + day(p.created_at) : "refunded " + day(p.created_at)) + amt + (list.length > 1 ? " (" + list.length + " orders)" : "");
+}
+function loadDreamers() {
+loadDevices();
+Promise.all([sb.rpc("admin_list_dreamers"),
+sb.from("profiles").select("id,plan,plan_until,plan_source,research_consent").then(function (r) { return r.error ? [] : (r.data || []); }),
+loadBuyers()]).then(function (all) {
+var r = all[0], prof = {}, buys = {}, loose = [];
+if (r.error)
+return fail(r.error);
+(all[1] || []).forEach(function (p) { prof[p.id] = p; });
+(all[2] || []).forEach(function (b) { if (b.user_id)
+(buys[b.user_id] = buys[b.user_id] || []).push(b);
+else if (b.status === "paid")
+loose.push(b); });
+(r.data || []).forEach(function (x) {
+var p = prof[x.id];
+if (p) {
+x.plan = p.plan || "free";
+x.plan_until = p.plan_until;
+x.plan_source = p.plan_source;
+if (x.research_consent === undefined)
+x.research_consent = p.research_consent;
+}
+if (!x.plan)
+x.plan = "free";
+});
+var d = r.data || [], byPlan = {}, res = 0, recent = 0, weekAgo = Date.now() - 7 * 864e5, nBought = 0;
+d.forEach(function (x) { if ((buys[x.id] || []).some(function (b) { return b.status === "paid"; }))
+nBought++; });
+d.forEach(function (x) {
+byPlan[x.plan] = (byPlan[x.plan] || 0) + 1;
+if (x.research_consent)
+res++;
+if (x.last_sign_in_at && new Date(x.last_sign_in_at).getTime() > weekAgo)
+recent++;
+});
+$("d-stats").innerHTML = '<div class="stat"><b>' + d.length + '</b><span>accounts</span></div>' +
+'<div class="stat"><b>' + recent + '</b><span>signed in this week</span></div>' +
+Object.keys(byPlan).map(function (p) { return '<div class="stat"><b>' + byPlan[p] + '</b><span>' + esc(p) + "</span></div>"; }).join("") +
+'<div class="stat"><b>' + res + '</b><span>sharing for research</span></div>' +
+'<div class="stat"><b>' + nBought + '</b><span>bought SomnuMatrix</span></div>';
+$("d-table").innerHTML = "<tr><th>Account</th><th>Joined</th><th>Last seen</th><th>Plan</th><th>Until</th><th>Bought</th><th>Research</th><th></th></tr>" +
+d.map(function (x, i) {
+return "<tr><td>" + esc(x.email || "") + '<br><span class="dim" style="font-size:11px;word-break:break-all">' + esc(x.id || "") + '</span> <button class="btn" data-copyid="' + esc(x.id || "") + '" style="padding:2px 8px;font-size:11px">Copy id</button>' + "</td><td>" + day(x.created_at) + "</td><td>" + day(x.last_sign_in_at) + "</td>" +
+'<td><select id="p-' + i + '">' + plans.concat(plans.indexOf(x.plan) > -1 ? [] : [x.plan]).map(function (p) { return "<option" + (p === x.plan ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") + "</select></td>" +
+'<td><input type="date" id="u-' + i + '" value="' + (x.plan_until ? String(x.plan_until).slice(0, 10) : "") + '"></td>' +
+"<td>" + esc(boughtText(buys[x.id])) + (x.plan_source === "manual" && x.plan !== "free" ? ' <span class="tag">by hand</span>' : "") + "</td>" +
+"<td>" + (x.research_consent ? "yes" : "no") + "</td>" +
+'<td><button class="btn" data-i="' + i + '">Save plan</button></td></tr>';
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#d-table [data-copyid]"), function (b) {
+b.onclick = function () {
+var t = b.getAttribute("data-copyid");
+(navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = "Copied"; }, function () { window.prompt("Account id:", t); });
+};
+});
+Array.prototype.forEach.call(document.querySelectorAll("#d-table [data-i]"), function (b) {
+b.onclick = function () {
+var i = +b.getAttribute("data-i"), u = $("u-" + i).value;
+sb.rpc("admin_set_plan", { p_user: d[i].id, p_plan: $("p-" + i).value, p_until: u ? new Date(u + "T23:59:59").toISOString() : null })
+.then(function (r2) { if (r2.error)
+return fail(r2.error); say("Plan saved for " + d[i].email + "."); });
+};
+});
+var oldLoose = $("d-loose");
+if (oldLoose)
+oldLoose.remove();
+if (loose.length)
+$("d-table").insertAdjacentHTML("afterend", '<div id="d-loose" class="note" style="margin-top:14px"><b>Paid, with no account matched:</b> ' +
+loose.map(function (b) { return esc(b.email || "no email") + " (" + day(b.created_at) + ", " + esc(b.order_ref) + ")"; }).join("; ") +
+". Find their account above and give them the member plan by hand.</div>");
+});
+}
+function loadResearch() {
+var since = new Date(Date.now() - 180 * 864e5).toISOString();
+sb.from("research_summaries").select("research_id,received_at,night_of,events,forms,feelings,lucidity")
+.gte("received_at", since).order("received_at", { ascending: false }).limit(10000)
+.then(function (r) {
+if (r.error)
+return fail(r.error);
+var rows = r.data || [], people = {}, ev = {}, evPeople = {};
+rows.forEach(function (x) {
+people[x.research_id] = 1;
+(x.events || []).forEach(function (e) { ev[e] = (ev[e] || 0) + 1; (evPeople[e] = evPeople[e] || {})[x.research_id] = 1; });
+});
+var np = Object.keys(people).length, thr = cfg.research_threshold || 5;
+$("r-stats").innerHTML = '<div class="stat"><b>' + rows.length + '</b><span>summaries, last 180 days</span></div>' +
+'<div class="stat"><b>' + np + '</b><span>different dreamers</span></div>' +
+'<div class="stat"><b>' + (rows.length ? day(rows[rows.length - 1].received_at) : "\u2014") + '</b><span>earliest</span></div>';
+var keys = Object.keys(ev).sort(function (a, b) { return ev[b] - ev[a]; });
+$("r-events").innerHTML = "<tr><th>Event</th><th>Summaries</th><th>Dreamers</th><th>Share of all</th></tr>" +
+(keys.length ? keys.map(function (k) {
+var pct = rows.length ? Math.round(ev[k] / rows.length * 100) : 0;
+return "<tr><td>" + esc(k) + "</td><td>" + ev[k] + "</td><td>" + Object.keys(evPeople[k]).length + '</td><td>' + pct + '%<div class="bar"><i style="width:' + pct + '%"></i></div></td></tr>';
+}).join("") : '<tr><td colspan="4" class="dim">Nothing shared yet.</td></tr>');
+var byDay = {};
+rows.forEach(function (x) {
+var dk = String(x.received_at).slice(0, 10);
+(x.events || []).forEach(function (e) { var k = e + "|" + dk; (byDay[k] = byDay[k] || {})[x.research_id] = 1; });
+});
+var found = [];
+keys.forEach(function (e) {
+var days = Object.keys(byDay).filter(function (k) { return k.indexOf(e + "|") === 0; }).map(function (k) { return k.split("|")[1]; }).sort();
+days.forEach(function (d0) {
+var t0 = new Date(d0 + "T00:00:00Z").getTime(), who = {};
+days.forEach(function (d1) {
+var t1 = new Date(d1 + "T00:00:00Z").getTime();
+if (t1 >= t0 && t1 <= t0 + 2 * 864e5)
+Object.keys(byDay[e + "|" + d1]).forEach(function (p) { who[p] = 1; });
+});
+var n = Object.keys(who).length;
+if (n >= 2)
+found.push({ e: e, from: d0, n: n, base: rows.length ? ev[e] / rows.length : 0 });
+});
+});
+found.sort(function (a, b) { return b.n - a.n; });
+var seen = {};
+found = found.filter(function (f) { var k = f.e + f.from; if (seen[k])
+return false; seen[k] = 1; return true; }).slice(0, 40);
+$("r-thresh").textContent = "Shown when two or more dreamers converge; marked when " + thr + " or more do. The share column is how common that event is anyway \u2014 a convergence on something rare means more than one on something everyone dreams.";
+$("r-conv").innerHTML = "<tr><th>Event</th><th>Three days from</th><th>Dreamers</th><th>Usual share</th></tr>" +
+(found.length ? found.map(function (f) {
+return '<tr class="' + (f.n >= thr ? "hot" : "") + '"><td>' + esc(f.e) + "</td><td>" + day(f.from) + "</td><td>" + f.n + "</td><td>" + Math.round(f.base * 100) + "%</td></tr>";
+}).join("") : '<tr><td colspan="4" class="dim">None yet.</td></tr>');
+});
+}
+var heldItems = [], releasedSet = {};
+function loadBooks() {
+var s = document.createElement("script");
+s.src = "data/books.js";
+s.onload = function () { loaded.books = true; buildHeld(); };
+s.onerror = function () { $("b-list").innerHTML = '<div class="empty">Couldn\u2019t load data/books.js. This page must sit beside index.html.</div>'; };
+document.body.appendChild(s);
+}
+function buildHeld() {
+heldItems = [];
+window.DW_BOOKS.miller.entries.forEach(function (e) {
+if (e.hold)
+heldItems.push({ key: "w:" + e.w, w: e.w, what: "the whole entry", text: e.p.join("\n\n") });
+(e.hr || []).forEach(function (k) { heldItems.push({ key: "r:" + e.w + ":" + k, w: e.w, what: "reading " + (k + 1) + " of " + e.p.length, text: e.p[k] }); });
+});
+releasedSet = {};
+(Array.isArray(cfg.miller_released) ? cfg.miller_released : []).forEach(function (k) { releasedSet[k] = 1; });
+renderHeld();
+}
+function renderHeld() {
+$("b-list").innerHTML = heldItems.map(function (it, i) {
+var on = !!releasedSet[it.key];
+return '<div class="held"><b style="font-family:var(--serif);font-weight:400;font-size:16px">' + esc(it.w) + '</b> <span class="dim small">\u2014 ' + it.what + " \u00b7 " + (on ? "released to everyone" : "held back") + "</span>" +
+"<q>" + esc(it.text) + "</q>" +
+'<button class="btn ' + (on ? "" : "warn") + '" data-i="' + i + '">' + (on ? "Hold it back again" : "Release it") + "</button></div>";
+}).join("");
+Array.prototype.forEach.call(document.querySelectorAll("#b-list [data-i]"), function (b) {
+b.onclick = function () {
+var it = heldItems[+b.getAttribute("data-i")];
+if (releasedSet[it.key])
+delete releasedSet[it.key];
+else
+releasedSet[it.key] = 1;
+$("b-save").disabled = false;
+renderHeld();
+};
+});
+}
+$("b-save").onclick = function () {
+putConfig("miller_released", Object.keys(releasedSet)).then(function (r) {
+if (r.error)
+return fail(r.error);
+$("b-save").disabled = true;
+loadConfig().then(function () { say("Saved. Every dreamer\u2019s interpretations follow this the next time the app opens."); });
+});
+};
+start();
+})();
+</script>
+</body>
+</html>
