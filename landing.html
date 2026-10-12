@@ -56,6 +56,10 @@
   button.cta{width:100%;margin-top:20px;background:var(--gold);color:#17120A;border:0;padding:15px 20px;font-family:var(--sans);
     font-size:16px;font-weight:600;letter-spacing:.02em;border-radius:3px;cursor:pointer;transition:filter .15s}
   button.cta:hover{filter:brightness(1.08)}
+  .play-line{margin:18px 0 26px}
+  a.play{display:inline-block;background:var(--gold);color:#17120A;text-decoration:none;font-family:var(--sans);font-weight:600;font-size:17px;letter-spacing:.04em;padding:15px 30px;border-radius:3px}
+  a.play:hover{filter:brightness(1.08)}
+  a.play:focus-visible{outline:2px solid var(--bone,#E8E4DA);outline-offset:3px}
   button.cta[disabled]{opacity:.6;cursor:wait}
   .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
   .msg{font-family:var(--sans);font-size:14px;margin-top:14px;min-height:20px}
@@ -122,6 +126,7 @@
     <h1>Write down the dream.<br><em>Then walk into it.</em></h1>
     <p class="sub">SomnuMatrix turns the dream you write down into a place you can walk through &mdash; built from your own words, growing every night you write. And when you want company, there's a whole city waiting outside your door.</p>
     <p class="price-line"><b>$29.99 for life.</b> Computer or phone, in your browser. Never a subscription.</p>
+    <p class="play-line"><a class="play" href="index.html?play">Play now &rarr;</a></p>
 
     <div class="join" id="join">
       <div class="join-form">
@@ -324,7 +329,7 @@
 <footer>
   <div class="wrap" style="display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center">
     <div>SomnuMatrix</div>
-    <div><a href="#join" class="joinlink">Join the list</a> &middot; <a href="?leave=1">Leave the list</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="invest.html">Investors and buyers</a></div>
+    <div><a href="index.html?play">Play now</a> &middot; <a href="#join" class="joinlink">Join the list</a> &middot; <a href="?leave=1">Leave the list</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="invest.html">Investors and buyers</a></div>
   </div>
 </footer>
 
