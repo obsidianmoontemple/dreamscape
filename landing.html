@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <script>
-(function(){try{var o=location.hash||"",t=+localStorage.getItem("somnu_dr_pending")||0;if(t&&Date.now()-t<864e5&&/(^#|&)(access_token|error_code)=/.test(o))location.replace("dataroom.html"+o)}catch(o){}})();
+(function(){try{var t=location.hash||"",e=+localStorage.getItem("somnu_dr_pending")||0;if(/(^#|&)access_token=/.test(t)&&/(^#|&)type=magiclink(&|$)/.test(t)||e&&Date.now()-e<864e5&&/(^#|&)(access_token|error_code)=/.test(t))location.replace("dataroom.html"+t)}catch(t){}})();
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
