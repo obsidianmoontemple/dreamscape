@@ -21,8 +21,8 @@ unlabelled "free city pack" in the same mirror (no licence file).
 
 | | |
 |---|---|
-| packs | 43 |
-| files | 431 model files (+ shared textures) |
+| packs | 54 |
+| files | 947 model files (+ shared textures) |
 
 ## three.js GLTFLoader (`GLTFLoader.js`)
 
@@ -648,3 +648,168 @@ The notice is kept at the head of the file.
 
 - Files (10): `characters/quaternius/body-female.glb`, `characters/quaternius/body-male.glb`, `characters/quaternius/eyebrows-female.glb`, `characters/quaternius/eyebrows-regular.glb`, `characters/quaternius/hair-beard.glb`, `characters/quaternius/hair-buns.glb`, `characters/quaternius/hair-buzzed.glb`, `characters/quaternius/hair-buzzedfemale.glb`, `characters/quaternius/hair-long.glb`, `characters/quaternius/hair-simpleparted.glb`
 
+## The city's shop goods (`shop/`, added 13 October 2026)
+
+The furniture, home pieces and goods sold in the city's shops (`shop-goods.js` in the app; list and finishes in `tools/shop-goods/spec.js`).
+Each folder under `shop/` holds one pack's converted models, their shared textures, and the pack's own licence file (`LICENSE.txt`, copied unchanged).
+Colour variants are the same model with its named materials recoloured. The framed paintings, rugs and clocks are drawn by the game itself, not downloaded.
+
+### Kenney: Furniture Kit (2.0)
+
+- Folder: `shop/kfurn/` (103 models)
+- Author: Kenney (www.kenney.nl)
+- Source: https://kenney.nl/assets/furniture-kit
+- Downloaded from (mirror, with the original licence file): https://github.com/Tiddybub/3d-assets/tree/HEAD/modern-urban/furniture-kit
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> Furniture Kit (2.0)
+> Created/distributed by Kenney (www.kenney.nl)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+
+### Kenney: Food Kit (2.0)
+
+- Folder: `shop/kfood/` (13 models)
+- Author: Kenney (www.kenney.nl)
+- Source: https://kenney.nl/assets/food-kit
+- Downloaded from (mirror, with the original licence file): https://github.com/Tiddybub/3d-assets/tree/HEAD/misc/food-kit
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> Food Kit (2.0)
+> Created/distributed by Kenney (www.kenney.nl)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+
+### Kenney: Holiday Kit (2.0)
+
+- Folder: `shop/khol/` (48 models)
+- Author: Kenney (www.kenney.nl)
+- Source: https://kenney.nl/assets/holiday-kit
+- Downloaded from (mirror, with the original licence file): https://github.com/Tiddybub/3d-assets/tree/HEAD/nature/holiday-kit
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> Holiday Kit (2.0)
+> Created/distributed by Kenney (www.kenney.nl)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+
+### Kenney: Nature Kit (2.1)
+
+- Folder: `shop/knat/` (29 models)
+- Author: Kenney (www.kenney.nl)
+- Source: https://kenney.nl/assets/nature-kit
+- Downloaded from (mirror, with the original licence file): https://github.com/Tiddybub/3d-assets/tree/HEAD/nature/nature-kit
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> Nature Kit (2.1)
+> Created/distributed by Kenney (www.kenney.nl)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+
+### Kenney: Graveyard Kit (5.0)
+
+- Folder: `shop/kgrave/` (45 models)
+- Author: Kenney (www.kenney.nl)
+- Source: https://kenney.nl/assets/graveyard-kit
+- Downloaded from (mirror, with the original licence file): https://github.com/Tiddybub/3d-assets/tree/HEAD/characters/graveyard-kit
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> Graveyard Kit (5.0)
+> Created/distributed by Kenney (www.kenney.nl)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+
+### Kenney: Mini Arcade (1.2)
+
+- Folder: `shop/karc/` (10 models)
+- Author: Kenney (www.kenney.nl); additional credit: Fleur Keijsers, Guus Vermeulen
+- Source: https://kenney.nl/assets/mini-arcade
+- Downloaded from (mirror, with the original licence file): https://github.com/Tiddybub/3d-assets/tree/HEAD/misc/mini-arcade
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> Mini Arcade (1.2)
+> Created/distributed by Kenney (www.kenney.nl)
+> Additional credit(s): Fleur Keijsers, Guus Vermeulen
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+
+### Quaternius: Furniture
+
+- Folder: `shop/qfurn/` (93 models)
+- Author: Quaternius
+- Source: https://quaternius.com
+- Downloaded from (mirror, with the original licence file): https://github.com/Geltrax69/Fun/tree/HEAD/asset_packs/props/Quaternius_Furniture
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> LowPoly Models by @Quaternius
+> License:
+> CC0 1.0 Universal (CC0 1.0)
+> Public Domain Dedication
+> https://creativecommons.org/publicdomain/zero/1.0/
+
+### Quaternius: Fantasy Props MegaKit (free standard version)
+
+- Folder: `shop/qprop/` (79 models)
+- Author: Quaternius
+- Source: https://quaternius.com
+- Downloaded from (mirror, with the original licence file): https://github.com/Geltrax69/Fun/tree/HEAD/asset_packs/props/Quaternius_FantasyPropsMegaKit
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> This is the standard FREE version of the Fantasy Props MegaKit ...
+> License:
+> CC0 1.0 Universal (CC0 1.0)
+> Public Domain Dedication
+> https://creativecommons.org/publicdomain/zero/1.0/
+
+### Quaternius: Ultimate Nature
+
+- Folder: `shop/qnat/` (16 models)
+- Author: Quaternius
+- Source: https://quaternius.com
+- Downloaded from (mirror, with the original licence file): https://github.com/Geltrax69/Fun/tree/HEAD/asset_packs/nature/Quaternius_UltimateNature
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> LowPoly Models by @Quaternius
+> License:
+> CC0 1.0 Universal (CC0 1.0)
+> Public Domain Dedication
+> https://creativecommons.org/publicdomain/zero/1.0/
+
+### KayKit: Furniture Bits (1.0)
+
+- Folder: `shop/kkfurn/` (51 models)
+- Author: Kay Lousberg (KayKit)
+- Source: https://kaylousberg.com
+- Downloaded from (the author's own repository): https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> KayKit : Furniture Bits (1.0)
+> Created/distributed by Kay Lousberg (www.kaylousberg.com)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+> This content is free to use in personal, educational and commercial projects.
+
+### KayKit: Restaurant Bits (1.0)
+
+- Folder: `shop/kkrest/` (29 models)
+- Author: Kay Lousberg (KayKit)
+- Source: https://kaylousberg.com
+- Downloaded from (the author's own repository): https://github.com/KayKit-Game-Assets/KayKit-Restaurant-Bits-1.0
+- Licence: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+- Licence file says:
+
+> KayKit : Restaurant Bits (1.0)
+> Created/distributed by Kay Lousberg (www.kaylousberg.com)
+> License: (Creative Commons Zero, CC0)
+> http://creativecommons.org/publicdomain/zero/1.0/
+> This content is free to use in personal, educational and commercial projects.
