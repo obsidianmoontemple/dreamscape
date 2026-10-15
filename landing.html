@@ -57,6 +57,16 @@
     font-size:16px;font-weight:600;letter-spacing:.02em;border-radius:3px;cursor:pointer;transition:filter .15s}
   button.cta:hover{filter:brightness(1.08)}
   .play-line{margin:18px 0 26px}
+  /* how to get started: the steps a new player follows, in order */
+  .start{position:relative;z-index:1;max-width:620px;margin:6px auto 0;background:rgba(19,22,31,.92);border:1px solid rgba(201,168,104,.45);border-radius:6px;padding:20px 22px;text-align:left;font-family:var(--sans)}
+  .start h3{margin:0 0 4px;font-family:Georgia,serif;font-weight:500;font-size:21px;color:var(--bone)}
+  .start .lead{margin:0 0 12px;font-size:14px;color:var(--dim);line-height:1.55}
+  .start ol{margin:0;padding:0;list-style:none;counter-reset:st}
+  .start li{counter-increment:st;position:relative;padding:0 0 12px 42px;font-size:15px;line-height:1.5;color:#D8D4CA}
+  .start li:before{content:counter(st);position:absolute;left:0;top:-1px;width:28px;height:28px;border-radius:50%;background:var(--gold);color:#17120A;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .start li b{color:var(--bone)}
+  .start .more{margin:4px 0 0;font-size:13px;color:var(--dim);line-height:1.6}
+  .start .more b{color:var(--gold);font-weight:600}
   a.play{display:inline-block;background:var(--gold);color:#17120A;text-decoration:none;font-family:var(--sans);font-weight:600;font-size:17px;letter-spacing:.04em;padding:15px 30px;border-radius:3px}
   a.play:hover{filter:brightness(1.08)}
   a.play:focus-visible{outline:2px solid var(--bone,#E8E4DA);outline-offset:3px}
@@ -139,10 +149,23 @@
     <p class="price-line"><b>$29.99 for life.</b> Computer, phone or VR headset, in your browser. Never a subscription.</p>
     <p class="play-line"><a class="play" href="index.html?play">Play now &rarr;</a><a class="play vr" href="index.html?play&amp;vr">Play in VR &#129405;</a></p>
 
+    <div class="start" id="start">
+      <h3>How to get started</h3>
+      <p class="lead">It takes about two minutes. You make your account inside the game.</p>
+      <ol>
+        <li>Press <b>Play now</b> above (or <b>Play in VR</b> in a Quest 2 headset's own browser).</li>
+        <li>When the welcome card appears, type <b>your email</b> and choose <b>a password</b> (10 or more letters or numbers), then press <b>Create an account</b>.</li>
+        <li>Fill in <b>your date of birth</b> and press <b>Create an account</b> again. You must be 13 or older.</li>
+        <li>Open the <b>letter we email you</b> and press its link. Then come back and press <b>Sign in</b>.</li>
+        <li>A short <b>step-by-step guide</b> shows you how to play: telling a dream, moving on a computer, phone or headset, the city, jobs and your backpack. Open it again any time from <b>&#9776; Menu &rsaquo; &#128214; How to play</b>.</li>
+      </ol>
+      <p class="more"><b>Visitors</b> can walk the city and every world. <b>Members</b> also hold a job, have a home and earn gold. Holding a <b>Golden Invitation</b>? Sign in, open your Backpack and press <b>Open it</b>. On each new device, sign in once and it remembers you.</p>
+    </div>
+
     <div class="join" id="join">
       <div class="join-form">
         <h3>Be there when it opens</h3>
-        <p class="note">Join the list and you'll get first access, the launch-day price, and a few letters as opening day gets close. No more than one a week. Leave whenever you like.</p>
+        <p class="note">Join the list and you'll get first access, the launch-day price, and a few letters as opening day gets close. No more than one a week. Leave whenever you like. <b style="color:var(--bone)">This list is only for letters:</b> your game account is made in the game itself (see How to get started above).</p>
         <form id="form" novalidate>
           <div class="row">
             <div>
