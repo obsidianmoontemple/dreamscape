@@ -34,3 +34,9 @@ own colour for a wall or floor still decides its colour) and saved at 512 pixels
 | paving | PavingStones006 |
 
 No brand names or trademarks appear in any of these pictures.
+
+## Window reflection (`env/city.jpg`, added 16 October 2026)
+
+A street panorama from **Poly Haven** (https://polyhaven.com/hdris), released under **CC0 1.0 (public domain dedication)**,
+taken from the `hdri/city.exr` file of the npm package `@pmndrs/assets` 1.7.0 (CC0), which ships Poly Haven panoramas resized to
+512 x 256. It was tone-mapped to an ordinary picture and is used only as the reflection seen in windows and glass walls.
