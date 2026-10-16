@@ -40,3 +40,8 @@ No brand names or trademarks appear in any of these pictures.
 A street panorama from **Poly Haven** (https://polyhaven.com/hdris), released under **CC0 1.0 (public domain dedication)**,
 taken from the `hdri/city.exr` file of the npm package `@pmndrs/assets` 1.7.0 (CC0), which ships Poly Haven panoramas resized to
 512 x 256. It was tone-mapped to an ordinary picture and is used only as the reflection seen in windows and glass walls.
+
+## Leaf sprays (`photo/leaves.png`, added 16 October 2026)
+
+Drawn for the game (leaf shapes, veins and twigs placed by a script), with the mottling inside each leaf taken from the ambientCG
+material Grass004 (CC0, above). Stored grey with see-through gaps, so the season's colour still decides the tree's colour.
