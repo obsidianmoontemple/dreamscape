@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- SomnuMatrix (c) 2026 Thaddeus (obsidianmoontemple). All rights reserved. Proprietary: no copying, hosting or reuse without written permission. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Bringing your things over</title>
+
+<style>
+html,body{margin:0;background:#0d0b16;color:#ece6f7;font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:30rem;margin:12vh auto;padding:1.5rem;background:#1a1628;border-radius:14px}
+a{color:#d8b45a}
+</style>
+</head>
+<body>
+<main>
+  <p id="say">Bringing your things over…</p>
+</main>
+<script>
+(function(){"use strict";var e="https://obsidianmoontemple.github.io",t="/dreamscape/";var n=["sm-memory-book","somnu-home-media"];var r=new URL(".",location.href).href;function o(e){document.getElementById("say").textContent=e}function a(e){try{var t=new URL(e||"",r);if(t.origin===location.origin)return t.href}catch(e){}return r}function i(){var n=document.getElementById("say");n.innerHTML="Something stopped the move. Your things are still safe at the old address. ";var r=document.createElement("a");r.href=e+t+"#carry-again";r.textContent="Try again";n.appendChild(r)}if(location.origin===e)return;function c(e){if(!e||typeof e!=="object")return;Object.keys(e).forEach(function(t){if(typeof e[t]!=="string")return;try{if(localStorage.getItem(t)===null)localStorage.setItem(t,e[t])}catch(e){}})}function u(e){return new Promise(function(t){if(!e||n.indexOf(e.name)<0||!Array.isArray(e.stores)||!window.indexedDB)return t();var r;try{r=indexedDB.open(e.name,Math.max(1,e.version|0))}catch(e){return t()}r.onupgradeneeded=function(){var t=r.result;e.stores.forEach(function(e){if(!t.objectStoreNames.contains(e.name)){var n={autoIncrement:!!e.autoIncrement};if(e.keyPath!=null)n.keyPath=e.keyPath;t.createObjectStore(e.name,n)}})};r.onerror=function(e){if(e&&e.preventDefault)e.preventDefault();t()};r.onsuccess=function(){var n=r.result,o=e.stores.filter(function(e){return n.objectStoreNames.contains(e.name)});if(!o.length){n.close();return t()}var a=n.transaction(o.map(function(e){return e.name}),"readwrite");o.forEach(function(e){var t=a.objectStore(e.name);(e.records||[]).forEach(function(e){try{var n=t.keyPath!=null?t.add(e[1]):t.add(e[1],e[0]);n.onerror=function(e){e.preventDefault();e.stopPropagation()}}catch(e){}})});a.oncomplete=a.onabort=a.onerror=function(){n.close();t()}}})}function s(e){c(e&&e.ls);var t=Array.isArray(e&&e.idb)?e.idb:[];return t.reduce(function(e,t){return e.then(function(){return u(t)})},Promise.resolve())}function f(e){var t=e.replace(/-/g,"+").replace(/_/g,"/"),n=atob(t),r=new Uint8Array(n.length);for(var o=0;o<n.length;o++)r[o]=n.charCodeAt(o);return new Response(new Blob([r]).stream().pipeThrough(new DecompressionStream("gzip"))).text()}if(/[?&]by=tab\b/.test(location.search)){if(!window.opener)return location.replace(r);window.addEventListener("message",function(t){if(t.origin!==e||!t.data||t.data.t!=="carry")return;s(t.data.data).then(function(){o("All moved.");try{t.source.postMessage({t:"carry-done"},e)}catch(e){}setTimeout(function(){window.close();location.replace(r)},400)}).catch(i)});window.opener.postMessage({t:"carry-ready"},e);return}var d=new URLSearchParams(location.hash.slice(1)),l=a(d.get("to")),m=d.get("d");try{history.replaceState(null,"",location.pathname)}catch(e){}var h="";try{h=document.referrer?new URL(document.referrer).origin:""}catch(e){}if(!m||h&&h!==e||typeof DecompressionStream==="undefined")return location.replace(l);function p(){f(m).then(function(e){return s(JSON.parse(e))}).then(function(){location.replace(l)}).catch(i)}if(h)return p();o("Did you just come from SomnuMatrix's old address?");var y=document.querySelector("main");[["Yes, bring my things",p],["No",function(){location.replace(l)}]].forEach(function(e){var t=document.createElement("button");t.textContent=e[0];t.onclick=e[1];t.style.cssText="font:inherit;margin:.8rem .4rem 0 0;padding:.6rem 1rem;border-radius:10px;border:1px solid #d8b45a;background:#d8b45a;color:#1a1405";y.appendChild(t)})})();
+</script>
+</body>
+</html>
