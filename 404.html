@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SomnuMatrix has moved</title>
+<!-- The game's old address. tools/build-old-address.js writes this page as every
+     page of the old site (and its 404), with https://play.obsidianmoontemple.com/ filled in. It sends the
+     visitor to the same page at the new address, keeping everything after the
+     address (?play&invite=..., #tokens) so printed links and QR codes still work.
+     Anything this device kept at the old address (dreams, settings, photos) is
+     carried over first: small things in the link itself, photos and films by
+     handing them to the new address in a second tab, which needs one tap. -->
+<style>
+:root{--bg:#0d0b16;--fg:#ece6f7;--mute:#a79cbf;--card:#1a1628;--gold:#d8b45a}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:30rem;margin:12vh auto;padding:1.5rem;background:var(--card);border-radius:14px}
+h1{font-size:1.3rem;margin:0 0 .6rem}
+p{margin:.5rem 0;color:var(--mute)}
+a{color:var(--gold)}
+button{font:inherit;background:var(--gold);color:#1a1405;border:0;border-radius:10px;padding:.7rem 1.1rem;margin:.8rem .4rem 0 0;cursor:pointer}
+button.plain{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+[hidden]{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>SomnuMatrix has a new home</h1>
+  <p id="say">Taking you there now…</p>
+  <div id="ask" hidden>
+    <p>Your dreams, photos and films on this device are coming with you. Tap below and they will open at the new address.</p>
+    <button id="go">Bring everything with me</button>
+    <button id="skip" class="plain">Go without them</button>
+  </div>
+  <p><a id="link" href="#">Open the new address</a></p>
+</main>
+<script>
+(function(){
+"use strict";
+var NEW_BASE="https://play.obsidianmoontemple.com/";            /* e.g. https://somnumatrix.com/ */
+var NEW_ORIGIN=new URL(NEW_BASE).origin;
+var OLD_DIR="/dreamscape/";              /* e.g. /dreamscape/ */
+var MOVED="somnu.movedTo", DBS=["sm-memory-book","somnu-home-media"];
+var FRAG_MAX=600000;                    /* longest link we hand over; longer goes by tab */
+
+var rest=location.pathname.indexOf(OLD_DIR)===0?location.pathname.slice(OLD_DIR.length):location.pathname.replace(/^\/+/,"");
+if(rest==="404.html") rest="";
+var again=/(^#|&)carry-again\b/.test(location.hash);
+var hash=again?"":location.hash;
+var target=NEW_BASE+rest+location.search+hash;
+document.getElementById("link").href=target;
+
+function go(){ location.replace(target); }
+function say(t){ document.getElementById("say").textContent=t; }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+/* the old helper kept copies of the old pages; let it go so nothing stale opens here */
+try{ if(navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }).catch(function(){}); }catch(e){}
+try{ if(window.caches) caches.keys().then(function(ks){ ks.forEach(function(k){ if(/^somnu-/.test(k)) caches.delete(k); }); }).catch(function(){}); }catch(e){}
+
+if(lsGet(MOVED)&&!again) return go();
+
+function readLs(){
+  var o={}; try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k!==MOVED) o[k]=localStorage.getItem(k); } }catch(e){}
+  return o;
+}
+function req(r){ return new Promise(function(res,rej){ r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; }); }
+function dbNames(){
+  if(!window.indexedDB) return Promise.resolve([]);
+  var known=indexedDB.databases?indexedDB.databases().then(function(l){ return l.map(function(d){ return d.name; }); }).catch(function(){ return DBS; }):Promise.resolve(DBS);
+  return known.then(function(l){ return l.filter(function(n){ return DBS.indexOf(n)>-1; }); });
+}
+function readDb(name){
+  return new Promise(function(res){
+    var made=false, r;
+    try{ r=indexedDB.open(name); }catch(e){ return res(null); }
+    r.onupgradeneeded=function(){ made=true; };     /* it was not here: nothing to carry */
+    r.onerror=function(){ res(null); };
+    r.onsuccess=function(){
+      var db=r.result, names=[].slice.call(db.objectStoreNames);
+      if(made||!names.length){ db.close(); if(made) try{ indexedDB.deleteDatabase(name); }catch(e){} return res(null); }
+      var out={name:name,version:db.version,stores:[]}, tx=db.transaction(names,"readonly");
+      Promise.all(names.map(function(sn){
+        var st=tx.objectStore(sn);
+        return Promise.all([req(st.getAllKeys()),req(st.getAll())]).then(function(kv){
+          var recs=kv[0].map(function(k,i){ return [k,kv[1][i]]; });
+          if(recs.length) out.stores.push({name:sn,keyPath:st.keyPath,autoIncrement:st.autoIncrement,records:recs});
+        });
+      })).then(function(){ db.close(); res(out.stores.length?out:null); }).catch(function(){ db.close(); res(null); });
+    };
+  });
+}
+function hasBlob(v){
+  if(typeof Blob!=="undefined"&&v instanceof Blob) return true;
+  if(v&&typeof v==="object") for(var k in v) if(Object.prototype.hasOwnProperty.call(v,k)&&hasBlob(v[k])) return true;
+  return false;
+}
+function gzip(str){
+  var s=new Blob([str]).stream().pipeThrough(new CompressionStream("gzip"));
+  return new Response(s).arrayBuffer().then(function(buf){
+    var b=new Uint8Array(buf), bin="";
+    for(var i=0;i<b.length;i+=32768) bin+=String.fromCharCode.apply(null,b.subarray(i,i+32768));
+    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  });
+}
+
+/* photos and films (or a lot of saved dreams) go hand to hand: the new address
+   opens in a tab of its own, says it is ready, and is handed everything */
+function byTab(data){
+  document.getElementById("ask").hidden=false;
+  say("We moved to a new address.");
+  var sent=false;
+  window.addEventListener("message",function(e){
+    if(e.origin!==NEW_ORIGIN||!e.data) return;
+    if(e.data.t==="carry-ready"&&!sent){ sent=true; e.source.postMessage({t:"carry",data:data},NEW_ORIGIN); say("Bringing your things over…"); }
+    if(e.data.t==="carry-done"){ lsSet(MOVED,NEW_BASE); say("Everything is moved. Taking you there…"); go(); }
+  });
+  document.getElementById("go").onclick=function(){
+    var w=window.open(NEW_BASE+"carry.html?by=tab","_blank");
+    if(!w) say("Your browser stopped the new tab. Please allow it and tap again.");
+  };
+  document.getElementById("skip").onclick=function(){ lsSet(MOVED,NEW_BASE); go(); };
+}
+
+dbNames().then(function(names){ return Promise.all(names.map(readDb)); }).then(function(dbs){
+  dbs=dbs.filter(Boolean);
+  var data={ls:readLs(),idb:dbs};
+  if(!Object.keys(data.ls).length&&!dbs.length) return go();
+  if(hasBlob(dbs)||typeof CompressionStream==="undefined") return byTab(data);
+  return gzip(JSON.stringify(data)).then(function(d){
+    if(d.length>FRAG_MAX) return byTab(data);
+    lsSet(MOVED,NEW_BASE);
+    location.replace(NEW_BASE+"carry.html#to="+encodeURIComponent(rest+location.search+hash)+"&d="+d);
+  });
+}).catch(go);
+})();
+</script>
+</body>
+</html>

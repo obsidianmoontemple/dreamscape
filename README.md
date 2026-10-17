@@ -1,3 +1,5 @@
-# SomnuMatrix
+# SomnuMatrix has moved
 
-SomnuMatrix (c) 2026 Thaddeus (obsidianmoontemple). All rights reserved. Proprietary: no copying, hosting or reuse without written permission.
+The game now lives at https://play.obsidianmoontemple.com/
+
+This repository only forwards the old address there. Do not publish the game here.
